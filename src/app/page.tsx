@@ -1,5 +1,5 @@
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
+import { Button } from '@/shared/ui/button'
+import { Input } from '@/shared/ui/input'
 
 export default function Home() {
   return (
@@ -7,5 +7,5 @@ export default function Home() {
       <Button>Click me</Button>
       <Input placeholder="Enter your name" />
     </div>
-  );
+  )
 }
