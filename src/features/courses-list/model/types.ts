@@ -1,4 +1,4 @@
-type CourseListElement = {
+export type CourseListElement = {
   id: string
   name: string
   description: string
@@ -8,7 +8,7 @@ type CourseListElement = {
   //   reviewsCount: number
 }
 
-type CreateCourseListElementCommand = {
+export type CreateCourseListElementCommand = {
   name: string
   description: string
   // image: string
@@ -17,6 +17,6 @@ type CreateCourseListElementCommand = {
   // reviewsCount: number
 }
 
-type DeleteCourseListElementCommand = {
+export type DeleteCourseListElementCommand = {
   id: string
 }

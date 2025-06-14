@@ -1,4 +1,4 @@
-import { PrismaClient } from '@/services/db/generated/prisma'
+import { PrismaClient } from '@prisma/client'
 
 // Создаем глобальный экземпляр PrismaClient
 export const dbClient = new PrismaClient()
