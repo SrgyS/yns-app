@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { cn } from '@/shared/ui/utils'
+import { AppProvider } from './_providers/app-provider'
 
 const inter = Inter({
   subsets: ['latin', 'cyrillic'],
@@ -20,9 +21,9 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={cn('min-h-screen bg-background inter antialiased', inter.variable)}>
-        {children}
+        <AppProvider>{children}</AppProvider>
       </body>
     </html>
   )
