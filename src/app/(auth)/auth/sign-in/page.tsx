@@ -1,4 +1,4 @@
-import { SignInForm } from '@/features/auth/sign-in-form.server'
+import { SignInFormServer } from '@/features/auth/sign-in-form.server'
 import { Card, CardContent, CardHeader } from '@/shared/ui/card'
 import Link from 'next/link'
 
@@ -11,7 +11,7 @@ export default function AuthenticationPage() {
             <h1 className="text-2xl font-semibold tracking-tight">Войти в аккаунт</h1>
           </CardHeader>
           <CardContent className="grid gap-4">
-            <SignInForm />
+            <SignInFormServer />
             <p className="px-0 text-center text-sm text-muted-foreground">
               Нажимая продолжить вы соглашаетесь с{' '}
               <Link href="/terms" className="underline underline-offset-4 hover:text-primary">
