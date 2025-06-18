@@ -9,6 +9,14 @@ import { privateConfig } from '@/shared/config/private'
 
 export const nextAuthConfig: AuthOptions = {
   adapter: PrismaAdapter(dbClient) as AuthOptions['adapter'],
+  pages: {
+    signIn: '/auth/sign-in',
+    // TODO: add signOut and error
+    // signOut: '/auth/sign-out',
+    // error: '/auth/error',
+    verifyRequest: '/auth/verify-request',
+    newUser: '/auth/new-user',
+  },
   providers: compact([
     EmailProvider({
       server: {
