@@ -4,10 +4,12 @@ import { Separator } from '@/shared/ui/separator'
 import { redirect } from 'next/navigation'
 
 export default async function NewUserPage({
-  searchParams,
+  searchParams: searchParamsPromise,
 }: {
-  searchParams: { callbackUrl?: string }
+  searchParams: Promise<{ callbackUrl?: string }>
 }) {
+  const searchParams = await searchParamsPromise
+
   const session = await getAppSessionServer()
 
   if (!session) {
