@@ -1,18 +1,12 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import NextAuth from 'next-auth'
+import { SessionEntity, UserEntity } from './_domain/types'
 
 declare module 'next-auth' {
   interface Session {
-    user: {
-      name?: string
-      email: string
-      image?: string
-    }
+    user: SessionEntity['user']
   }
-  interface User {
-    id: string
-    email: string
-    name?: string
-    image?: string
-  }
+
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  interface User extends UserEntity {}
 }

@@ -26,6 +26,7 @@ model User {
   email         String          @unique
   emailVerified DateTime?
   image         String?
+  role          ROLE            @default(USER)
   accounts      Account[]
   sessions      Session[]
   // Optional for WebAuthn support
@@ -74,6 +75,10 @@ model VerificationToken {
   @@id([identifier, token])
 }
  
+ enum ROLE {
+  ADMIN
+  USER
+ }
 // // Optional for WebAuthn support
 // model Authenticator {
 //   credentialID         String
