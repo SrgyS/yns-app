@@ -1,6 +1,20 @@
+import { UpdateProfileForm } from '@/features/update-profile/update-profile-form'
+import { getAppSessionServer } from '@/services/user/session.server'
 import { Separator } from '@/shared/ui/separator'
+import { redirect } from 'next/navigation'
 
-export default async function NewUserPage() {
+export default async function NewUserPage({
+  searchParams: searchParamsPromise,
+}: {
+  searchParams: Promise<{ callbackUrl?: string }>
+}) {
+  const searchParams = await searchParamsPromise
+
+  const session = await getAppSessionServer()
+
+  if (!session) {
+    return redirect('/auth/sign-in')
+  }
   return (
     <main className="space-y-6 py-14 container  max-w-[600px]">
       <div>
@@ -10,6 +24,7 @@ export default async function NewUserPage() {
         </p>
       </div>
       <Separator />
+      <UpdateProfileForm userId={session.user.id} callbackUrl={searchParams.callbackUrl} />
     </main>
   )
 }
