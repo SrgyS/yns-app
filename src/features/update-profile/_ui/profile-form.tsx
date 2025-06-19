@@ -12,6 +12,7 @@ import { Spinner } from '@/shared/ui/spinner'
 import { Profile } from '@/services/user/profile'
 import { UserId } from '@/services/user/user'
 import { useUpdateProfile } from '../_vm/use-update-profile'
+import { AvatarField } from './avatar-field'
 
 const profileFormSchema = z.object({
   name: z
@@ -94,7 +95,7 @@ export function ProfileForm({
         <FormField
           control={form.control}
           name="image"
-          disabled
+          //   disabled
           render={({ field }) => (
             <FormItem>
               <FormLabel>Аватарка</FormLabel>

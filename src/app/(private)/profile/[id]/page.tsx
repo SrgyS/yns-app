@@ -1,7 +1,9 @@
 import { UpdateProfileForm } from '@/features/update-profile/update-profile-form'
 import { Separator } from '@/shared/ui/separator'
 
-export default function ProfilePage({ params }: { params: { id: string } }) {
+export default async function ProfilePage({ params }: { params: { id: string } }) {
+  const { id } = await params
+
   return (
     <main className="space-y-6 py-14 container  max-w-[600px]">
       <div>
@@ -11,7 +13,7 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
         </p>
       </div>
       <Separator />
-      <UpdateProfileForm userId={params.id} />
+      <UpdateProfileForm userId={id} />
     </main>
   )
 }

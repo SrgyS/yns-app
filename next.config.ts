@@ -1,7 +1,12 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  rewrites: async () => [
+    {
+      source: '/storage/:path*',
+      destination: `${process.env.S3_ENDPOINT}/:path*`,
+    },
+  ],
 }
 
 export default nextConfig
