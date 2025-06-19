@@ -11,11 +11,11 @@ import {
 import { LogOut, User } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
 import Link from 'next/link'
-import { useAppSession } from '@/services/user/session.client'
+import { useAppSession } from '@/services/user/session'
 import { useSignOut } from '@/features/auth/use-sign-out'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { SignInButton } from '@/features/auth/sign-in-button'
-import { Avatar, AvatarImage } from '@/shared/ui/avatar'
+import { getProfileDisplayName, ProfileAvatar } from '@/services/user/profile'
 
 export function Profile() {
   const session = useAppSession()
@@ -35,18 +35,14 @@ export function Profile() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="p-px rounded-full self-center h-8 w-8">
-          {/* <ProfileAvatar profile={user} className="w-8 h-8" /> */}
-          <Avatar className="w-8 h-8">
-            <AvatarImage src={user?.image ?? undefined} />
-          </Avatar>
+          <ProfileAvatar profile={user} className="w-8 h-8" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 mr-2 ">
         <DropdownMenuLabel>
           <p>Мой аккаунт</p>
           <p className="text-xs text-muted-foreground overflow-hidden text-ellipsis">
-            {/* {user ? getProfileDisplayName(user) : undefined} */}
-            {user?.name}
+            {user ? getProfileDisplayName(user) : undefined}
           </p>
         </DropdownMenuLabel>
         <DropdownMenuGroup></DropdownMenuGroup>
