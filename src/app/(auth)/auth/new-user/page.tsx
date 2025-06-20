@@ -3,12 +3,8 @@ import { getAppSessionServer } from '@/services/user/session.server'
 import { Separator } from '@/shared/ui/separator'
 import { redirect } from 'next/navigation'
 
-export default async function NewUserPage({
-  searchParams: searchParamsPromise,
-}: {
-  searchParams: Promise<{ callbackUrl?: string }>
-}) {
-  const searchParams = await searchParamsPromise
+export default async function NewUserPage({ searchParams }: { searchParams: Promise<{ callbackUrl?: string }> }) {
+  const { callbackUrl } = await searchParams
 
   const session = await getAppSessionServer()
 
@@ -24,7 +20,7 @@ export default async function NewUserPage({
         </p>
       </div>
       <Separator />
-      <UpdateProfileForm userId={session.user.id} callbackUrl={searchParams.callbackUrl} />
+      <UpdateProfileForm userId={session.user.id} callbackUrl={callbackUrl} />
     </main>
   )
 }
