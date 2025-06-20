@@ -2,7 +2,9 @@
 import { z } from 'zod'
 import { AVATAR_FILE_KEY } from '../_constants'
 import { BadRequest } from '@/shared/lib/errors'
-import { fileStorage } from '@/shared/lib/file-storage'
+import { getAppSessionServer } from '@/services/user/session.server'
+import { redirect } from 'next/navigation'
+import { fileStorage } from '@/shared/lib/file-storage/file-storage'
 
 const resultSchema = z.object({
   avatar: z.object({
@@ -16,8 +18,15 @@ export const uploadAvatarAction = async (formData: FormData) => {
   if (!(file instanceof File)) {
     throw new BadRequest()
   }
+  const session = await getAppSessionServer()
 
-  const storedFile = await fileStorage.uploadImage(file, 'avatar')
+  if (!session) {
+    return redirect('/auth/sign-in')
+  }
+
+  const userId = session.user.id
+
+  const storedFile = await fileStorage.uploadImage(file, 'avatar', userId)
 
   return resultSchema.parse({
     avatar: storedFile,

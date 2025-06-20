@@ -23,6 +23,10 @@ const privateConfigSchema = z.object({
   S3_IMAGES_BUCKET: z.string(),
   S3_ENDPOINT: z.string(),
   S3_REGION: z.string(),
+
+  SUPABASE_URL: z.string(),
+  SUPABASE_SERVICE_KEY: z.string(),
+  SUPABASE_IMAGE_BUCKET: z.string(),
 })
 
 export const privateConfig = privateConfigSchema.parse(process.env)

@@ -1,18 +1,10 @@
+import { privateConfig } from '@/shared/config/private'
 import { S3Client } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
 import { createId } from '@paralleldrive/cuid2'
-import { privateConfig } from '../config/private'
+import { StoredFile } from '../types'
 
-export type StoredFile = {
-  id: string
-  name: string
-  path: string
-  prefix: string
-  type: string
-  eTag?: string
-}
-
-class FileStorage {
+export class MinioStorage {
   private s3Client = new S3Client({
     forcePathStyle: true,
     endpoint: privateConfig.S3_ENDPOINT,
@@ -51,5 +43,3 @@ class FileStorage {
     }
   }
 }
-
-export const fileStorage = new FileStorage()
