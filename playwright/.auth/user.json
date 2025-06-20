@@ -1,0 +1,45 @@
+{
+  "cookies": [
+    {
+      "name": "next-auth.csrf-token",
+      "value": "b67e61a8a99ceaac1fb09b8a6bb7cc9d7d7f8664d0bff784d905fc9fb6d68602%7C4184f1a87affa9f550b646e8d66ab80b4a87a50d9f6e79e05bb21c1d0ef71f8b",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "next-auth.callback-url",
+      "value": "http%3A%2F%2Flocalhost%3A3000%2F",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "next-auth.session-token",
+      "value": "984b7003-62d5-4c95-8f3e-beb78b20760c",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1753019972.034904,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "http://localhost:3000",
+      "localStorage": [
+        {
+          "name": "nextauth.message",
+          "value": "{\"event\":\"session\",\"data\":{\"trigger\":\"getSession\"},\"timestamp\":1750427972}"
+        }
+      ]
+    }
+  ]
+}
