@@ -1,13 +1,22 @@
 'use client'
-import { Form, FormControl, FormField, FormItem, FormLabel } from '@/shared/ui/form'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/ui/form'
 import { useForm } from 'react-hook-form'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Spinner } from '@/shared/ui/spinner'
 import { useEmailSignIn } from '../_vm/use-email-sign-in'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+
+const emailSignInSchema = z.object({
+  email: z.string().min(3, 'Email обязателен').email('Введите корректный email'),
+})
+
+type EmailSignInFormValues = z.infer<typeof emailSignInSchema>
 
 export function EmailSignInForm() {
-  const form = useForm<{ email: string }>({
+  const form = useForm<EmailSignInFormValues>({
+    resolver: zodResolver(emailSignInSchema),
     defaultValues: {
       email: '',
     },
@@ -15,9 +24,13 @@ export function EmailSignInForm() {
 
   const emailSignIn = useEmailSignIn()
 
+  const handleSubmit = form.handleSubmit(async data => {
+    await emailSignIn.signIn(data.email)
+  })
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(data => emailSignIn.signIn(data.email))}>
+      <form onSubmit={handleSubmit}>
         <div className="grid gap-2">
           <FormField
             control={form.control}
@@ -36,6 +49,7 @@ export function EmailSignInForm() {
                     {...field}
                   />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />

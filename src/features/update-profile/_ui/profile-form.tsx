@@ -18,7 +18,7 @@ const profileFormSchema = z.object({
   name: z
     .string()
     .max(30, {
-      message: 'Username must not be longer than 30 characters.',
+      message: 'Длина имени пользователя не должна превышать 30 символов',
     })
     .transform(name => name.trim())
     .optional(),
