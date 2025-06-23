@@ -46,8 +46,8 @@ next-env.d.ts
 .prettierrc
 
 # prisma
-prisma/migrations
-prisma/seed.ts
+# prisma/migrations
+# prisma/seed.ts
 
 # Playwright
 node_modules/
@@ -55,3 +55,5 @@ node_modules/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/playwright/.auth/
+/playwright/.user/
