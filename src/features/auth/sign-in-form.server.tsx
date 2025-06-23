@@ -5,7 +5,10 @@ import { cn } from '@/shared/ui/utils'
 import { EmailSignInForm } from './_ui/email-sign-in-form'
 import { Divider } from './_ui/divider'
 import { ProviderButton } from './_ui/provider-button'
-// import { env } from "@/shared/config";
+import { TestEmailSignInForm } from './_ui/test-email-sign-in-form'
+import { privateConfig } from '@/shared/config/private'
+
+const testToken = privateConfig.TEST_EMAIL_TOKEN
 
 export async function SignInForm({ className }: { className?: string }) {
   const providers = await getProviders()
@@ -15,7 +18,7 @@ export async function SignInForm({ className }: { className?: string }) {
 
   return (
     <div className={cn('grid gap-6', className)}>
-      <EmailSignInForm />
+      {testToken ? <TestEmailSignInForm testToken={testToken} /> : <EmailSignInForm />}
       <Divider />
       {oauthProviders.map(provider => (
         <ProviderButton key={provider.id} provider={provider} />
