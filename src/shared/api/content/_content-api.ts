@@ -8,7 +8,8 @@ import { Lesson } from './_schemas/lesson.schema'
 import manifestSchema from '@/shared/api/content/_schemas/manifest.schema.json'
 import courseSchema from '@/shared/api/content/_schemas/course.schema.json'
 import lessonSchema from '@/shared/api/content/_schemas/lesson.schema.json'
-
+// import { loggedMethod } from '@/shared/lib/logger'
+// import { pick } from 'lodash-es'
 interface Deps {
   cacheStrategy: CacheStrategy
   contentParser: ContentParser
@@ -25,36 +26,46 @@ export class ContentApi {
   ) {}
 
   async fetchManifest() {
-    const fetchData = async () => {
-      console.log('fetch data')
-      const text = await this.d.fileFetcher.fetchText(this.getManifestUrl())
+    return this.d.cacheStrategy.fetch(['manifest'], () => this.fetchManifestQuery())
+  }
 
-      return await this.d.contentParser.parse<Manifest>(text, manifestSchema)
-    }
-
-    return this.d.cacheStrategy.fetch(['manifest'], fetchData)
+  // @loggedMethod({
+  //   logRes: (res: Manifest) => res,
+  // })
+  private async fetchManifestQuery() {
+    const text = await this.d.fileFetcher.fetchText(this.getManifestUrl())
+    return await this.d.contentParser.parse<Manifest>(text, manifestSchema)
   }
 
   async fetchCourse(slug: CourseSlug) {
-    const fetchData = async () => {
-      console.log('fetch data')
-      const text = await this.d.fileFetcher.fetchText(this.getCourseUrl(slug))
+    return this.d.cacheStrategy.fetch(['course', slug], () => this.fetchCourseQuery(slug))
+  }
 
-      return await this.d.contentParser.parse<Course>(text, courseSchema)
-    }
-
-    return this.d.cacheStrategy.fetch(['manifest'], fetchData)
+  // @loggedMethod({
+  //   logArgs: (slug: CourseSlug) => ({ slug }),
+  //   logRes: (res: Course, slug) => pick({ ...res, slug }, ['id', 'title', 'slug']),
+  // })
+  private async fetchCourseQuery(slug: string) {
+    const text = await this.d.fileFetcher.fetchText(this.getCourseUrl(slug))
+    return await this.d.contentParser.parse<Course>(text, courseSchema)
   }
 
   async fetchLesson(courseSlug: CourseSlug, lessonSlug: LessonSlug) {
-    const fetchData = async () => {
-      console.log('fetch data')
-      const text = await this.d.fileFetcher.fetchText(this.getLessonUrl(courseSlug, lessonSlug))
+    return this.d.cacheStrategy.fetch(['lesson', courseSlug, lessonSlug], () =>
+      this.fetchLessonQuery(courseSlug, lessonSlug)
+    )
+  }
 
-      return await this.d.contentParser.parse<Lesson>(text, lessonSchema)
-    }
-
-    return this.d.cacheStrategy.fetch(['manifest'], fetchData)
+  // @loggedMethod({
+  //   logArgs: (courseSlug: CourseSlug, lessonSlug: LessonSlug) => ({
+  //     courseSlug,
+  //     lessonSlug,
+  //   }),
+  //   logRes: (res: Lesson) => pick(res, ['id', 'title', 'slug']),
+  // })
+  private async fetchLessonQuery(courseSlug: CourseSlug, lessonSlug: LessonSlug) {
+    const text = await this.d.fileFetcher.fetchText(this.getLessonUrl(courseSlug, lessonSlug))
+    return await this.d.contentParser.parse<Lesson>(text, lessonSchema)
   }
 
   private getManifestUrl() {
@@ -64,6 +75,6 @@ export class ContentApi {
     return join(this.baseUrl, `/courses/${slug}/course.yaml`)
   }
   private getLessonUrl(courseSlug: CourseSlug, lessonSlug: LessonSlug) {
-    return join(this.baseUrl, `/courses/${courseSlug}/lessons/${lessonSlug}/lesson.yaml`)
+    return join(this.baseUrl, `/courses/${courseSlug}/lesson/${lessonSlug}/lesson.yaml`)
   }
 }
