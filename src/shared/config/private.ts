@@ -25,6 +25,9 @@ const privateConfigSchema = z.object({
   SUPABASE_URL: z.string(),
   SUPABASE_SERVICE_KEY: z.string(),
   SUPABASE_IMAGE_BUCKET: z.string(),
+
+  CONTENT_URL: z.string(),
+  CONTENT_TOKEN: z.string().optional(),
 })
 
 export const privateConfig = privateConfigSchema.parse(process.env)
