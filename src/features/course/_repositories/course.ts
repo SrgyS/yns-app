@@ -1,6 +1,7 @@
 import { cache } from 'react'
 import { CourseEntity } from '../_domain/types'
 import { contentApi } from '@/shared/api/content'
+import { logger } from '@/shared/lib/logger'
 
 class CoursesRepository {
   getCoursesList = cache(async (): Promise<CourseEntity[]> => {
@@ -18,8 +19,13 @@ class CoursesRepository {
 
     const setteledCourses = await Promise.allSettled(manifest.courses.map(fetchCourse))
 
-    setteledCourses.forEach(value => {
+    setteledCourses.forEach((value, i) => {
       if (value.status === 'rejected') {
+        logger.error({
+          msg: 'Course by slug not found',
+          slug: manifest.courses[i],
+          error: value.reason,
+        })
       }
     })
 

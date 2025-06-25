@@ -8,8 +8,8 @@ import { Lesson } from './_schemas/lesson.schema'
 import manifestSchema from '@/shared/api/content/_schemas/manifest.schema.json'
 import courseSchema from '@/shared/api/content/_schemas/course.schema.json'
 import lessonSchema from '@/shared/api/content/_schemas/lesson.schema.json'
-// import { loggedMethod } from '@/shared/lib/logger'
-// import { pick } from 'lodash-es'
+import { loggedMethod } from '@/shared/lib/logger'
+import { pick } from 'lodash-es'
 interface Deps {
   cacheStrategy: CacheStrategy
   contentParser: ContentParser
@@ -29,9 +29,9 @@ export class ContentApi {
     return this.d.cacheStrategy.fetch(['manifest'], () => this.fetchManifestQuery())
   }
 
-  // @loggedMethod({
-  //   logRes: (res: Manifest) => res,
-  // })
+  @loggedMethod({
+    logRes: (res: Manifest) => res,
+  })
   private async fetchManifestQuery() {
     const text = await this.d.fileFetcher.fetchText(this.getManifestUrl())
     return await this.d.contentParser.parse<Manifest>(text, manifestSchema)
@@ -41,10 +41,10 @@ export class ContentApi {
     return this.d.cacheStrategy.fetch(['course', slug], () => this.fetchCourseQuery(slug))
   }
 
-  // @loggedMethod({
-  //   logArgs: (slug: CourseSlug) => ({ slug }),
-  //   logRes: (res: Course, slug) => pick({ ...res, slug }, ['id', 'title', 'slug']),
-  // })
+  @loggedMethod({
+    logArgs: (slug: CourseSlug) => ({ slug }),
+    logRes: (res: Course, slug) => pick({ ...res, slug }, ['id', 'title', 'slug']),
+  })
   private async fetchCourseQuery(slug: string) {
     const text = await this.d.fileFetcher.fetchText(this.getCourseUrl(slug))
     return await this.d.contentParser.parse<Course>(text, courseSchema)
@@ -56,13 +56,13 @@ export class ContentApi {
     )
   }
 
-  // @loggedMethod({
-  //   logArgs: (courseSlug: CourseSlug, lessonSlug: LessonSlug) => ({
-  //     courseSlug,
-  //     lessonSlug,
-  //   }),
-  //   logRes: (res: Lesson) => pick(res, ['id', 'title', 'slug']),
-  // })
+  @loggedMethod({
+    logArgs: (courseSlug: CourseSlug, lessonSlug: LessonSlug) => ({
+      courseSlug,
+      lessonSlug,
+    }),
+    logRes: (res: Lesson) => pick(res, ['id', 'title', 'slug']),
+  })
   private async fetchLessonQuery(courseSlug: CourseSlug, lessonSlug: LessonSlug) {
     const text = await this.d.fileFetcher.fetchText(this.getLessonUrl(courseSlug, lessonSlug))
     return await this.d.contentParser.parse<Lesson>(text, lessonSchema)

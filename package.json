@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "postinstall": "patch-package",
-    "dev": "next dev --turbopack",
+    "dev": "next dev | pino-pretty",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -15,7 +15,7 @@
     "upload-content-schemas": "ts-node --project tsconfig.script.json ./scripts/upload-content-schema https://raw.githubusercontent.com/SrgyS/content-shema/refs/heads/main/schemas/ ./src/shared/api/content/_schemas"
   },
   "prisma": {
-    "seed": "ts-node --project tsconfig.scripts.json prisma/seed.ts"
+    "seed": "ts-node --project tsconfig.script.json prisma/seed.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.9.1",
