@@ -1,19 +1,36 @@
 import { cache } from 'react'
 import { CourseEntity } from '../_domain/types'
-import { fetchManifest } from '@/shared/api/content'
+import { contentApi } from '@/shared/api/content'
 
 class CoursesRepository {
   getCoursesList = cache(async (): Promise<CourseEntity[]> => {
-    const manifest = await fetchManifest()
-    console.log('manifest', manifest)
-    return [
-      {
-        id: '1',
-        name: 'Course 1',
-        description: 'Description 1',
-        slug: 'course-1',
-      },
-    ]
+    const manifest = await contentApi.fetchManifest()
+
+    const fetchCourse = async (courseSlug: string): Promise<CourseEntity> => {
+      const course = await contentApi.fetchCourse(courseSlug)
+      return {
+        id: course.id,
+        title: course.title,
+        description: course.description,
+        slug: courseSlug,
+      }
+    }
+
+    const setteledCourses = await Promise.allSettled(manifest.courses.map(fetchCourse))
+
+    setteledCourses.forEach(value => {
+      if (value.status === 'rejected') {
+      }
+    })
+
+    return setteledCourses
+      .filter(
+        (courseResult): courseResult is PromiseFulfilledResult<CourseEntity> =>
+          courseResult.status === 'fulfilled'
+      )
+      .map(course => {
+        return course.value
+      })
   })
 }
 
