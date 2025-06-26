@@ -6,4 +6,4 @@ export class GetCoursesListService {
   }
 }
 
-export const createUserService = new GetCoursesListService()
+export const getCoursesListService = new GetCoursesListService()
