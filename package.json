@@ -12,7 +12,7 @@
     "prettier": "prettier -w .",
     "test": "jest",
     "test:e2e": "npx prisma migrate reset --force && playwright test",
-    "upload-content-schemas": "ts-node --project tsconfig.script.json ./scripts/upload-content-schema https://raw.githubusercontent.com/SrgyS/content-shema/refs/heads/main/schemas/ ./src/shared/api/content/_schemas"
+    "upload-content-schema": "ts-node --project tsconfig.script.json ./scripts/upload-content-schema https://raw.githubusercontent.com/SrgyS/content-shema/refs/heads/main/schemas/ ./src/shared/api/content/_schemas"
   },
   "prisma": {
     "seed": "ts-node --project tsconfig.script.json prisma/seed.ts"
