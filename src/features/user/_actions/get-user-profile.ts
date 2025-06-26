@@ -1,8 +1,9 @@
 'use server'
 import { z } from 'zod'
-import { getUserService } from '@/services/user/_services/get-user'
-import { getAppSessionStrictServer } from '../session.server'
+
+import { getAppSessionStrictServer } from '../../../kernel/lib/next-auth/server'
 import { profileSchema } from '../_domain/schema'
+import { getUserService } from '@/features/user/_services/get-user'
 
 const propsSchema = z.object({
   userId: z.string(),

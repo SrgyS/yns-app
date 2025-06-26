@@ -6,8 +6,8 @@ import { PrismaAdapter } from '@auth/prisma-adapter'
 import { dbClient } from '@/shared/lib/db'
 import { compact } from 'lodash-es'
 import { privateConfig } from '@/shared/config/private'
-import { createUserService } from '@/services/user/_services/create-user'
-import { UserEntity } from './_domain/types'
+import { ROLES, SharedUser } from '@/kernel/domain/user'
+import { generateId } from '@/shared/lib/id'
 
 const prismaAdapter = PrismaAdapter(dbClient)
 
@@ -21,8 +21,17 @@ const emailToken = privateConfig.TEST_EMAIL_TOKEN
 export const nextAuthConfig: AuthOptions = {
   adapter: {
     ...prismaAdapter,
-    createUser: (user: UserEntity) => {
-      return createUserService.exec(user)
+    createUser: async (data: SharedUser) => {
+      const adminEmails = privateConfig.ADMIN_EMAILS?.split(',') ?? []
+      const role = adminEmails.includes(data.email) ? ROLES.ADMIN : ROLES.USER
+
+      const user: SharedUser = {
+        ...data,
+        id: generateId(),
+        role,
+      }
+
+      return await dbClient.user.create({ data: user })
     },
   } as AuthOptions['adapter'],
   callbacks: {

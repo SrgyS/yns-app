@@ -6,7 +6,7 @@ export const ROLES: Record<Role, Role> = {
   USER: 'USER',
 }
 
-export type UserEntity = {
+export type SharedUser = {
   id: UserId
   email: string
   role: Role
@@ -15,7 +15,7 @@ export type UserEntity = {
   image?: string | null
 }
 
-export type SessionEntity = {
+export type SharedSession = {
   user: {
     id: UserId
     email: string
@@ -24,12 +24,4 @@ export type SessionEntity = {
     image?: string | null
   }
   expires: string
-}
-
-// Projections
-
-export type Profile = {
-  email: string
-  name?: string | null
-  image?: string | null
 }

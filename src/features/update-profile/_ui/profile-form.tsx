@@ -9,10 +9,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/shared/ui/input'
 import { Spinner } from '@/shared/ui/spinner'
 // import { AvatarField } from './avatar-field'
-import { Profile } from '@/services/user/profile'
-import { UserId } from '@/services/user/user'
+import { Profile } from '@/features/user/profile'
+
 import { useUpdateProfile } from '../_vm/use-update-profile'
 import { AvatarField } from './avatar-field'
+import { UserId } from '@/kernel/domain/user'
 
 const profileFormSchema = z.object({
   name: z
@@ -53,10 +54,10 @@ export function ProfileForm({
   const updateProfile = useUpdateProfile()
 
   const handleSubmit = form.handleSubmit(async data => {
-    const newProfile = await updateProfile.update({
+    const newProfile = (await updateProfile.update({
       userId,
       data,
-    })
+    })) as { profile: Profile } 
 
     form.reset(getDefaultValues(newProfile.profile))
     onSuccess?.()

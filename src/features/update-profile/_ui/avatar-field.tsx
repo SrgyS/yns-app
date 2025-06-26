@@ -1,8 +1,9 @@
 import { Button } from '@/shared/ui/button'
 //import { selectFile } from "@/shared/lib/file";
 import { Spinner } from '@/shared/ui/spinner'
-import { ProfileAvatar } from '@/services/user/profile'
+
 import { useUploadAvatar } from '../_vm/use-upload-avatar'
+import { ProfileAvatar } from '@/features/user/profile'
 
 export function AvatarField({
   value,
