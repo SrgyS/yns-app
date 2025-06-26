@@ -1,9 +1,7 @@
 import { coursesRepository } from '../_repositories/course'
 
-type GetCoursesList = {}
-
 export class GetCoursesListUseCase {
-  async exec(data?: GetCoursesList) {
+  async exec() {
     return coursesRepository.getCoursesList()
   }
 }
