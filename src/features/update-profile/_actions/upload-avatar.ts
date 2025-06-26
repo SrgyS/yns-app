@@ -2,9 +2,10 @@
 import { z } from 'zod'
 import { AVATAR_FILE_KEY } from '../_constants'
 import { BadRequest } from '@/shared/lib/errors'
-import { getAppSessionServer } from '@/services/user/session.server'
+
 import { redirect } from 'next/navigation'
 import { fileStorage } from '@/shared/lib/file-storage/file-storage'
+import { getAppSessionServer } from '@/kernel/lib/next-auth/server'
 
 const resultSchema = z.object({
   avatar: z.object({

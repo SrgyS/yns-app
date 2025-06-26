@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { ProfileForm } from './_ui/profile-form'
 import { Spinner } from '@/shared/ui/spinner'
 import { useRouter } from 'next/navigation'
-import { getProfileQuery } from '@/services/user/_queries'
+import { getProfileQuery } from '../user/profile'
+
 
 export function UpdateProfileForm({
   userId,

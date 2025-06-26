@@ -11,11 +11,13 @@ import {
 import { LogOut, User } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
 import Link from 'next/link'
-import { useAppSession } from '@/services/user/session'
+
 import { useSignOut } from '@/features/auth/use-sign-out'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { SignInButton } from '@/features/auth/sign-in-button'
-import { getProfileDisplayName, ProfileAvatar } from '@/services/user/profile'
+
+import { useAppSession } from '@/kernel/lib/next-auth/client'
+import { getProfileDisplayName, ProfileAvatar } from '@/features/user/profile'
 
 export function Profile() {
   const session = useAppSession()

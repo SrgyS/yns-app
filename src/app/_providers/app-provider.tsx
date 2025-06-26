@@ -1,17 +1,34 @@
 'use client'
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import React, { useState } from 'react'
 import { ThemeProvider } from '@/features/theme/theme-provider'
-import { AppSessionProvider } from '@/services/user/session'
-import { queryClient } from '@/shared/api/query-client'
+import { AppSessionProvider } from '@/kernel/lib/next-auth/client'
 import { ComposeChildren } from '@/shared/lib/react'
-import { QueryClientProvider } from '@tanstack/react-query'
+import { sharedApi } from '@/kernel/lib/trpc/client'
+import { httpBatchLink } from '@trpc/client'
+import { publicConfig } from '@/shared/config/public'
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  const [queryClient] = useState(() => new QueryClient())
+  const [trpcClient] = useState(() =>
+    sharedApi.createClient({
+      links: [
+        httpBatchLink({
+          url: `${publicConfig.PUBLIC_URL}/api/trpc`,
+        }),
+      ],
+    })
+  )
+
   return (
     <ComposeChildren>
+      <sharedApi.Provider client={trpcClient} queryClient={queryClient}>
+        <></>
+      </sharedApi.Provider>
+      <QueryClientProvider client={queryClient} />
       <ThemeProvider />
       <AppSessionProvider />
-      <QueryClientProvider client={queryClient} />
       {children}
     </ComposeChildren>
   )
