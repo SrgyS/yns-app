@@ -1,6 +1,6 @@
 'use server'
 import { z } from 'zod'
-import { getUserUseCase } from '../_use-cases/get-user'
+import { getUserService } from '@/services/user/_services/get-user'
 import { getAppSessionStrictServer } from '../session.server'
 import { profileSchema } from '../_domain/schema'
 
@@ -17,7 +17,7 @@ export const getUserProfileAction = async (props: z.infer<typeof propsSchema>) =
 
   const session = await getAppSessionStrictServer()
 
-  const user = await getUserUseCase.exec({
+  const user = await getUserService.exec({
     session,
     userId,
   })
