@@ -10,7 +10,7 @@ export function CoursesListClient({
 }: {
   defaultList: CourseEntity[]
 }) {
-  const { data: coursesList } = coursesListApi.corusesList.get.useQuery(
+  const { data: coursesList } = coursesListApi.coursesList.get.useQuery(
     undefined,
     {
       initialData: defaultList,

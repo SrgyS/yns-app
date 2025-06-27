@@ -41,6 +41,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "esbuild": "^0.25.5",
+    "inversify": "^7.5.4",
     "json-schema-to-typescript": "^15.0.4",
     "lodash-es": "^4.17.21",
     "lucide-react": "^0.513.0",
@@ -56,6 +57,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.57.0",
+    "reflect-metadata": "^0.2.2",
     "tailwind-merge": "^3.3.0",
     "yaml": "^2.8.0",
     "zod": "^3.25.64"
