@@ -3,14 +3,18 @@ import { Button } from '@/shared/ui/button'
 import { Spinner } from '@/shared/ui/spinner'
 
 import { useUploadAvatar } from '../_vm/use-upload-avatar'
-import { ProfileAvatar } from '@/features/user/profile'
+import { ProfileAvatar } from '@/features/user/client'
 
 export function AvatarField({
   value,
   onChange,
+  name,
+  email,
 }: {
   value?: string
   onChange: (value?: string) => void
+  name?: string
+  email: string
 }) {
   const { handleFileSelect, isPending } = useUploadAvatar({
     onSuccess: onChange,
@@ -28,7 +32,10 @@ export function AvatarField({
           <Spinner className="w-10 h-10" aria-label="Загрузка новой аватарки" />
         </div>
       )}
-      <ProfileAvatar className="w-full h-full" profile={{ email: '', image: value }} />
+      <ProfileAvatar
+        className="w-full h-full"
+        profile={{ email, image: value, name }}
+      />
     </Button>
   )
 }

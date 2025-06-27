@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/shared/ui/input'
 import { Spinner } from '@/shared/ui/spinner'
 // import { AvatarField } from './avatar-field'
-import { Profile } from '@/features/user/profile'
+import { Profile } from '@/features/user/client'
 
 import { useUpdateProfile } from '../_vm/use-update-profile'
 import { AvatarField } from './avatar-field'
@@ -54,14 +54,17 @@ export function ProfileForm({
   const updateProfile = useUpdateProfile()
 
   const handleSubmit = form.handleSubmit(async data => {
-    const newProfile = (await updateProfile.update({
+    const newProfile = await updateProfile.update({
       userId,
       data,
-    })) as { profile: Profile } 
+    })
 
-    form.reset(getDefaultValues(newProfile.profile))
+    form.reset(getDefaultValues(newProfile))
     onSuccess?.()
   })
+
+  const email = form.watch('email')
+  const name = form.watch('name')
 
   return (
     <Form {...form}>
@@ -101,7 +104,12 @@ export function ProfileForm({
             <FormItem>
               <FormLabel>Аватарка</FormLabel>
               <FormControl>
-                <AvatarField value={field.value} onChange={field.onChange} />
+                <AvatarField
+                  value={field.value}
+                  onChange={field.onChange}
+                  name={name}
+                  email={email ?? ''}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -109,7 +117,10 @@ export function ProfileForm({
         />
         <Button type="submit">
           {updateProfile.isPending && (
-            <Spinner className="mr-2 h-4 w-4 animate-spin" aria-label="Обновление профиля" />
+            <Spinner
+              className="mr-2 h-4 w-4 animate-spin"
+              aria-label="Обновление профиля"
+            />
           )}
           {submitText}
         </Button>
