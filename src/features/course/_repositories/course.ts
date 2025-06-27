@@ -1,9 +1,11 @@
 import { cache } from 'react'
+import { injectable } from 'inversify'
 import { CourseEntity } from '../_domain/types'
 import { contentApi } from '@/shared/api/content'
 import { logger } from '@/shared/lib/logger'
 
-class CoursesRepository {
+@injectable()
+export class CoursesRepository {
   getCoursesList = cache(async (): Promise<CourseEntity[]> => {
     const manifest = await contentApi.fetchManifest()
 
@@ -17,7 +19,9 @@ class CoursesRepository {
       }
     }
 
-    const setteledCourses = await Promise.allSettled(manifest.courses.map(fetchCourse))
+    const setteledCourses = await Promise.allSettled(
+      manifest.courses.map(fetchCourse)
+    )
 
     setteledCourses.forEach((value, i) => {
       if (value.status === 'rejected') {
