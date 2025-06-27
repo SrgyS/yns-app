@@ -3,7 +3,7 @@
 'use client'
 import { CourseEntity } from '@/features/course/course'
 import { CourseItem } from './course-item'
-import { coursesListApi } from '@/features/courses-list/api'
+import { coursesListApi } from '@/features/courses-list/_api'
 
 export function CoursesListClient({
   defaultList,
