@@ -1,11 +1,12 @@
 'use server'
+import { server } from '@/app/server'
 import { z } from 'zod'
 import { AVATAR_FILE_KEY } from '../_constants'
 import { BadRequest } from '@/shared/lib/errors'
 
 import { redirect } from 'next/navigation'
 import { fileStorage } from '@/shared/lib/file-storage/file-storage'
-import { getAppSessionServer } from '@/kernel/lib/next-auth/server'
+import { SessionService } from '@/kernel/lib/next-auth/server'
 
 const resultSchema = z.object({
   avatar: z.object({
@@ -19,7 +20,8 @@ export const uploadAvatarAction = async (formData: FormData) => {
   if (!(file instanceof File)) {
     throw new BadRequest()
   }
-  const session = await getAppSessionServer()
+  const sessionService = server.get(SessionService)
+  const session = await sessionService.get()
 
   if (!session) {
     return redirect('/auth/sign-in')
@@ -33,3 +35,4 @@ export const uploadAvatarAction = async (formData: FormData) => {
     avatar: storedFile,
   })
 }
+

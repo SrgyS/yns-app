@@ -1,5 +1,12 @@
 'use client'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/ui/form'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/shared/ui/form'
 import { useForm } from 'react-hook-form'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
@@ -9,7 +16,10 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 
 const emailSignInSchema = z.object({
-  email: z.string().min(3, 'Email обязателен').email('Введите корректный email'),
+  email: z
+    .string()
+    .min(3, 'Email обязателен')
+    .email('Введите корректный email'),
 })
 
 type EmailSignInFormValues = z.infer<typeof emailSignInSchema>

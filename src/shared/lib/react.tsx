@@ -33,7 +33,11 @@ export function useAppearanceDelay(
     minDisplay?: number
   }
 ) {
-  const { minDisplay = 500, defaultValue = false, appearenceDelay = 500 } = options
+  const {
+    minDisplay = 500,
+    defaultValue = false,
+    appearenceDelay = 500,
+  } = options
 
   const [delayedShow, setDelayedShow] = useState(defaultValue)
 
@@ -61,7 +65,9 @@ export function ComposeChildren({ children }: { children: ReactNode }) {
     <>
       {array.reduceRight(
         (child, element) =>
-          isValidElement(element) ? createElement(element.type, element.props, child) : child,
+          isValidElement(element)
+            ? createElement(element.type, element.props, child)
+            : child,
         last
       )}
     </>

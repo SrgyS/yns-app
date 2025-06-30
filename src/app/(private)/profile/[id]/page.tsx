@@ -1,7 +1,11 @@
 import { UpdateProfileForm } from '@/features/update-profile/update-profile-form'
 import { Separator } from '@/shared/ui/separator'
 
-export default async function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProfilePage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
   const { id } = await params
 
   return (

@@ -11,9 +11,16 @@ export const loggedMethod = <A extends any[] = any[], R = any>({
   logArgs?: (...args: A) => unknown
   logRes?: (res: R, ...args: A) => unknown
 }) => {
-  return function loggedMethodDecorator<This, Args extends A, Return extends R | Promise<R>>(
+  return function loggedMethodDecorator<
+    This,
+    Args extends A,
+    Return extends R | Promise<R>,
+  >(
     target: (this: This, ...args: Args) => Return,
-    context: ClassMethodDecoratorContext<This, (this: This, ...args: Args) => Return>
+    context: ClassMethodDecoratorContext<
+      This,
+      (this: This, ...args: Args) => Return
+    >
   ) {
     const methodName = String(context.name)
 

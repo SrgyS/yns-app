@@ -1,5 +1,11 @@
 'use client'
-import { Form, FormControl, FormField, FormItem, FormLabel } from '@/shared/ui/form'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from '@/shared/ui/form'
 import { useForm } from 'react-hook-form'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
@@ -18,7 +24,9 @@ export function TestEmailSignInForm({ testToken }: { testToken: string }) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(data => emailSignIn.signIn(data.email))}>
+      <form
+        onSubmit={form.handleSubmit(data => emailSignIn.signIn(data.email))}
+      >
         <div className="grid gap-2">
           <FormField
             control={form.control}
@@ -42,7 +50,10 @@ export function TestEmailSignInForm({ testToken }: { testToken: string }) {
           />
           <Button disabled={emailSignIn.isPending}>
             {emailSignIn.isPending && (
-              <Spinner className="mr-2 h-4 w-4 animate-spin" aria-label="Вход" />
+              <Spinner
+                className="mr-2 h-4 w-4 animate-spin"
+                aria-label="Вход"
+              />
             )}
             Войти через Email
           </Button>
