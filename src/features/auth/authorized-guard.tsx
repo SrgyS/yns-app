@@ -1,13 +1,16 @@
 'use client'
 
-
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { FullPageSpinner } from '@/shared/ui/full-page-spinner'
 import { signIn } from 'next-auth/react'
 import { usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 
-export default function AuthorizedGuard({ children }: { children: React.ReactNode }) {
+export default function AuthorizedGuard({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const session = useAppSession()
 
   const isUnauthenticated = session.status === 'unauthenticated'
@@ -19,7 +22,8 @@ export default function AuthorizedGuard({ children }: { children: React.ReactNod
     }
   }, [isUnauthenticated, pathname])
 
-  const isLoading = session.status === 'loading' || session.status === 'unauthenticated'
+  const isLoading =
+    session.status === 'loading' || session.status === 'unauthenticated'
 
   return (
     <>

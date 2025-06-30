@@ -17,7 +17,7 @@ import { Skeleton } from '@/shared/ui/skeleton'
 import { SignInButton } from '@/features/auth/sign-in-button'
 
 import { useAppSession } from '@/kernel/lib/next-auth/client'
-import { getProfileDisplayName, ProfileAvatar } from '@/features/user/profile'
+import { getProfileDisplayName, ProfileAvatar } from '@/features/user/client'
 
 export function Profile() {
   const session = useAppSession()
@@ -36,7 +36,10 @@ export function Profile() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="p-px rounded-full self-center h-8 w-8">
+        <Button
+          variant="ghost"
+          className="p-px rounded-full self-center h-8 w-8"
+        >
           <ProfileAvatar profile={user} className="w-8 h-8" />
         </Button>
       </DropdownMenuTrigger>
@@ -56,7 +59,10 @@ export function Profile() {
               <span>Профиль</span>
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem disabled={isLoadingSignOut} onClick={() => signOut()}>
+          <DropdownMenuItem
+            disabled={isLoadingSignOut}
+            onClick={() => signOut()}
+          >
             <LogOut className="mr-2 h-4 w-4" />
             <span>Выход</span>
           </DropdownMenuItem>

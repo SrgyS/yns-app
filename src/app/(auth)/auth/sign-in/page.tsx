@@ -52,17 +52,25 @@ export default function AuthenticationPage() {
       <div className="container relative  flex-col items-center justify-center self-center pt-24">
         <Card className="max-w-[350px] mx-auto">
           <CardHeader className="flex flex-col space-y-2 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">Войти в аккаунт</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Войти в аккаунт
+            </h1>
           </CardHeader>
           <CardContent className="grid gap-4">
             <SignInFormWrapper />
             <p className="px-0 text-center text-sm text-muted-foreground">
               Нажимая продолжить вы соглашаетесь с{' '}
-              <Link href="/terms" className="underline underline-offset-4 hover:text-primary">
+              <Link
+                href="/terms"
+                className="underline underline-offset-4 hover:text-primary"
+              >
                 Пользовательским соглашением
               </Link>{' '}
               и{' '}
-              <Link href="/privacy" className="underline underline-offset-4 hover:text-primary">
+              <Link
+                href="/privacy"
+                className="underline underline-offset-4 hover:text-primary"
+              >
                 Политикой конфиденциальности
               </Link>
               .

@@ -22,7 +22,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={cn('min-h-screen bg-background inter antialiased', inter.variable)}>
+      <body
+        className={cn(
+          'min-h-screen bg-background inter antialiased',
+          inter.variable
+        )}
+      >
         <AppProvider>{children}</AppProvider>
       </body>
     </html>

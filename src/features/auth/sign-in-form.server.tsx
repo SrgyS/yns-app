@@ -18,7 +18,11 @@ export async function SignInForm({ className }: { className?: string }) {
 
   return (
     <div className={cn('grid gap-6', className)}>
-      {testToken ? <TestEmailSignInForm testToken={testToken} /> : <EmailSignInForm />}
+      {testToken ? (
+        <TestEmailSignInForm testToken={testToken} />
+      ) : (
+        <EmailSignInForm />
+      )}
       <Divider />
       {oauthProviders.map(provider => (
         <ProviderButton key={provider.id} provider={provider} />
@@ -26,4 +30,3 @@ export async function SignInForm({ className }: { className?: string }) {
     </div>
   )
 }
-

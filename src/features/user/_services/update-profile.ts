@@ -1,25 +1,17 @@
 import { Profile } from '../_domain/types'
-import { createProfileAbility } from '../_domain/abbility'
-import { AuthorizatoinError } from '@/shared/lib/errors'
-import { profileRepository } from '../_repositories/profile'
-import { SharedSession, UserId } from '@/kernel/domain/user'
+import { ProfileRepository } from '../_repositories/profile'
+import { UserId } from '@/kernel/domain/user'
+import { injectable } from 'inversify'
 
 type UpdateProfile = {
   userId: UserId
   data: Partial<Profile>
-  session: SharedSession
 }
 
+@injectable()
 export class UpdateProfileService {
-  async exec({ userId, session, data }: UpdateProfile): Promise<Profile> {
-    const profileAbility = createProfileAbility(session)
-
-    if (!profileAbility.canUpdateProfile(userId)) {
-      throw new AuthorizatoinError()
-    }
-
-    return await profileRepository.update(userId, data)
+  constructor(private profileRepository: ProfileRepository) {}
+  async exec({ userId, data }: UpdateProfile): Promise<Profile> {
+    return await this.profileRepository.update(userId, data)
   }
 }
-
-export const updateProfileService = new UpdateProfileService()
