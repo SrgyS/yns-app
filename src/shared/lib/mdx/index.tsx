@@ -1,7 +1,6 @@
-import { cn } from '@/shared/ui/utils'
-import { cva } from 'class-variance-authority'
-import { getMDXComponent } from 'mdx-bundler/client'
 import { useMemo } from 'react'
+import { getMDXComponent } from 'mdx-bundler/client'
+import { cva } from 'class-variance-authority'
 
 const variants = cva('prose dark:prose-invert prose-slate', {
   variants: {
@@ -16,9 +15,14 @@ const variants = cva('prose dark:prose-invert prose-slate', {
   },
 })
 
-export const useMdxComponent = (code: string) => {
+type CustomComponents = Record<string, any>
+
+export function useMdxComponent(
+  code: string,
+  customComponents?: CustomComponents
+) {
   return useMemo(() => {
-    const Component = getMDXComponent(code)
+    const Component = getMDXComponent(code, {})
 
     return function MdxComponent({
       className,
@@ -29,16 +33,28 @@ export const useMdxComponent = (code: string) => {
     }) {
       return (
         <div
-          className={cn(
-            variants({
-              className,
-              size,
-            })
-          )}
+          className={variants({
+            className,
+            size,
+          })}
         >
-          <Component />
+          <Component components={{ ...customComponents }} />
         </div>
       )
     }
-  }, [code])
+  }, [code, customComponents])
+}
+
+type MdxComponentProps = {
+  className?: string
+  size?: 'lg' | 'md' | 'sm'
+}
+
+export function MdxCode({
+  code,
+  components,
+  ...props
+}: MdxComponentProps & { code: string; components?: CustomComponents }) {
+  const Component = useMdxComponent(code, components)
+  return <Component {...props} />
 }
