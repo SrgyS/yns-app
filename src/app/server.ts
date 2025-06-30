@@ -1,7 +1,6 @@
 import 'reflect-metadata'
 
 import { CourseEntityModule } from '@/features/course/server'
-import { CoursesListModule } from '@/features/courses-list/server'
 import { UpdateProfileModule } from '@/features/update-profile/server'
 import { UserEntityModule } from '@/features/user/server'
 import { NextAuthModule } from '@/kernel/lib/next-auth/server'
@@ -13,11 +12,10 @@ export function createServer() {
 
   container.load(
     NextAuthModule,
-    CoursesListModule,
     CourseEntityModule,
     UserEntityModule,
     UpdateProfileModule,
-    TrpcModule,
+    TrpcModule
   )
 
   return container
