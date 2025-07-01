@@ -4,7 +4,6 @@ import { MdxCode } from '@/shared/lib/mdx'
 import { Card, CardHeader, CardTitle } from '@/shared/ui/card'
 
 export function CourseItem({ course }: { course: Course }) {
-  console.log('description', course.description)
   return (
     <Card>
       <CardHeader>

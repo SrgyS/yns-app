@@ -13,13 +13,6 @@ export class CoursesListController extends Controller {
     coursesList: router({
       get: publicProcedure.query(async () => {
         const coursesList = await this.getCoursesListService.exec()
-
-        // const compiledCourses = await Promise.all(
-        //   coursesList.map(async course => ({
-        //     ...course,
-        //   }))
-        // )
-
         return coursesList
       }),
     }),

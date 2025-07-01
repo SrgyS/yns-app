@@ -12,7 +12,7 @@ export function CoursesListClient({ defaultList }: { defaultList: Course[] }) {
       initialData: defaultList,
     }
   )
-  console.log('coursesList', coursesList)
+
   return (
     <div className="flex flex-col gap-3">
       {coursesList.map(course => (
