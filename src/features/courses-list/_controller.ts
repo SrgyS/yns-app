@@ -1,6 +1,6 @@
 import { Controller, publicProcedure, router } from '@/kernel/lib/trpc/server'
-import { compileMDX } from '@/shared/lib/mdx/server'
-import { GetCoursesListService } from '@/features/course/server'
+
+import { GetCoursesListService } from '@/entity/course/server'
 import { injectable } from 'inversify'
 
 @injectable()
@@ -14,14 +14,13 @@ export class CoursesListController extends Controller {
       get: publicProcedure.query(async () => {
         const coursesList = await this.getCoursesListService.exec()
 
-        const compiledCourses = await Promise.all(
-          coursesList.map(async course => ({
-            ...course,
-            description: await compileMDX(course.description).then(r => r.code),
-          }))
-        )
+        // const compiledCourses = await Promise.all(
+        //   coursesList.map(async course => ({
+        //     ...course,
+        //   }))
+        // )
 
-        return compiledCourses
+        return coursesList
       }),
     }),
   })

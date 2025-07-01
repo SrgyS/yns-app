@@ -3,11 +3,14 @@ import {
   Controller,
   router,
 } from '@/kernel/lib/trpc/server'
-import { GetProfileService, UpdateProfileService } from '../user/server'
+import {
+  GetProfileService,
+  UpdateProfileService,
+} from '../../entity/user/server'
 import { injectable } from 'inversify'
 import { createProfileAbility } from './_domain/ability'
 import z from 'zod'
-import { profileSchema } from '../user/client'
+import { profileSchema } from '../../entity/user/client'
 
 const withUseridSchema = z.object({
   userId: z.string(),
