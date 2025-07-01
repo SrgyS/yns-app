@@ -1,9 +1,9 @@
 import 'reflect-metadata'
 
-import { CourseEntityModule } from '@/features/course/server'
+import { CourseEntityModule } from '@/entity/course/server'
 import { CoursesListModule } from '@/features/courses-list/server'
 import { UpdateProfileModule } from '@/features/update-profile/server'
-import { UserEntityModule } from '@/features/user/server'
+import { UserEntityModule } from '@/entity/user/server'
 import { NextAuthModule } from '@/kernel/lib/next-auth/server'
 import { Container } from 'inversify'
 import { TrpcModule } from '@/kernel/lib/trpc/server'

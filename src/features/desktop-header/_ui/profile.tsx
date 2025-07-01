@@ -17,7 +17,7 @@ import { Skeleton } from '@/shared/ui/skeleton'
 import { SignInButton } from '@/features/auth/sign-in-button'
 
 import { useAppSession } from '@/kernel/lib/next-auth/client'
-import { getProfileDisplayName, ProfileAvatar } from '@/features/user/client'
+import { getProfileDisplayName, ProfileAvatar } from '@/entity/user/client'
 
 export function Profile() {
   const session = useAppSession()

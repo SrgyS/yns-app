@@ -8,6 +8,7 @@ import { Lesson } from './_schemas/lesson.schema'
 import manifestSchema from '@/shared/api/content/_schemas/manifest.schema.json'
 import courseSchema from '@/shared/api/content/_schemas/course.schema.json'
 import lessonSchema from '@/shared/api/content/_schemas/lesson.schema.json'
+import { compileMDX } from '@/shared/lib/mdx/server'
 // import { loggedMethod } from '@/shared/lib/logger'
 // import { pick } from 'lodash-es'
 interface Deps {
@@ -51,7 +52,17 @@ export class ContentApi {
   // })
   private async fetchCourseQuery(slug: string) {
     const text = await this.d.fileFetcher.fetchText(this.getCourseUrl(slug))
-    return await this.d.contentParser.parse<Course>(text, courseSchema)
+      const course = await this.d.contentParser.parse<Course>(
+        text,
+        courseSchema
+      )
+      return {
+        ...course,
+        description: (await compileMDX(course.description)).code,
+        shortDescription: course.shortDescription
+          ? (await compileMDX(course.shortDescription)).code
+          : undefined,
+      }
   }
 
   async fetchLesson(courseSlug: CourseSlug, lessonSlug: LessonSlug) {

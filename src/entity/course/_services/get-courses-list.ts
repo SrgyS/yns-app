@@ -5,6 +5,6 @@ import { CoursesRepository } from '../_repositories/course'
 export class GetCoursesListService {
   constructor(private coursesRepository: CoursesRepository) {}
   async exec() {
-    return this.coursesRepository.getCoursesList()
+    return this.coursesRepository.coursesList()
   }
 }
