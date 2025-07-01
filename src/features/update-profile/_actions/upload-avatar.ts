@@ -1,5 +1,6 @@
 'use server'
-import { server } from '@/app/'
+
+import { server } from '@/app/server'
 import { z } from 'zod'
 import { AVATAR_FILE_KEY } from '../_constants'
 import { BadRequest } from '@/shared/lib/errors'
