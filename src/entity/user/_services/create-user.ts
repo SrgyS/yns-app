@@ -33,6 +33,8 @@ export class CreateUserServiceImpl implements CreateUserService {
       role,
       password: hashedPassword,
     }
+
+    //TODO: sent verification email if email is not verified
     const res = await this.userRepository.create(user)
 
     return {
