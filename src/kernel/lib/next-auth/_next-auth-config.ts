@@ -2,6 +2,7 @@ import { AuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 import GithubProvider from 'next-auth/providers/github'
 import EmailProvider from 'next-auth/providers/email'
+import CredentialsProvider from 'next-auth/providers/credentials'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import { dbClient } from '@/shared/lib/db'
 import { compact } from 'lodash-es'
@@ -18,18 +19,8 @@ export class NextAuthConfig {
   options: AuthOptions = {
     adapter: {
       ...prismaAdapter,
-      createUser: async (data: Omit<AdapterUser, 'id'>) => {
+      createUser: async (data: Omit<AdapterUser, 'id'>& { password: string }) => {
         return this.createUserService.exec(data)
-        // const adminEmails = privateConfig.ADMIN_EMAILS?.split(',') ?? []
-        // const role = adminEmails.includes(data.email) ? ROLES.ADMIN : ROLES.USER
-
-        // const user: SharedUser = {
-        //   ...data,
-        //   id: generateId(),
-        //   role,
-        // }
-
-        // return await dbClient.user.create({ data: user })
       },
     } as AuthOptions['adapter'],
     callbacks: {
@@ -53,6 +44,19 @@ export class NextAuthConfig {
       newUser: '/auth/new-user',
     },
     providers: compact([
+      CredentialsProvider({
+        name: 'Credentials',
+        credentials: {
+          email: { label: 'Email', type: 'email' },
+          password: { label: 'Password', type: 'password' },
+        },
+        async authorize(credentials) {
+          if (!credentials?.email || !credentials?.password) {
+            return null
+          }
+          return null
+        },
+      }),
       EmailProvider({
         ...this.emailToken,
         server: {

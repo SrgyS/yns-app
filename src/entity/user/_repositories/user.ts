@@ -1,5 +1,5 @@
 import { dbClient } from '@/shared/lib/db'
-import { SharedUser } from '@/kernel/domain/user'
+import { SharedUser, UserId } from '@/kernel/domain/user'
 import { injectable } from 'inversify'
 
 @injectable()
@@ -10,5 +10,17 @@ export class UserRepository {
     })
 
     return user
+  }
+
+  async findByEmail(email: string): Promise<SharedUser | null> {
+    return await dbClient.user.findUnique({
+      where: { email },
+    })
+  }
+
+  async findUserById(id: UserId): Promise<SharedUser | null> {
+    return await dbClient.user.findUnique({
+      where: { id },
+    })
   }
 }

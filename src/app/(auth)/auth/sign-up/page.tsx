@@ -1,5 +1,5 @@
 import { BackButton } from '@/features/auth/_ui/back-button'
-import { SignInForm } from '@/features/auth/sign-in-form.server'
+import { SignUpForm } from '@/features/auth/sign-up-form.server'
 import { Card, CardContent, CardFooter, CardHeader } from '@/shared/ui/card'
 import { Skeleton } from '@/shared/ui/skeleton'
 import Link from 'next/link'
@@ -42,25 +42,25 @@ function SignInFormSkeleton() {
 function SignInFormWrapper() {
   return (
     <Suspense fallback={<SignInFormSkeleton />}>
-      <SignInForm />
+      <SignUpForm />
     </Suspense>
   )
 }
 
-export default function AuthenticationPage() {
+export default function RegisterPage() {
   return (
     <>
       <div className="container relative  flex-col items-center justify-center self-center pt-24">
         <Card className="max-w-[350px] mx-auto">
           <CardHeader className="flex flex-col space-y-2 text-center">
             <h1 className="text-2xl font-semibold tracking-tight">
-              Войти в аккаунт
+              Регистрация
             </h1>
           </CardHeader>
           <CardContent className="grid gap-4">
             <SignInFormWrapper />
             <p className="px-0 text-center text-sm text-muted-foreground">
-              Нажимая продолжить вы соглашаетесь с{' '}
+              Нажимая &ldquo;Cоздать аккаунт&ldquo; вы соглашаетесь с<br />
               <Link
                 href="/terms"
                 className="underline underline-offset-4 hover:text-primary"
@@ -77,11 +77,8 @@ export default function AuthenticationPage() {
               .
             </p>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-2">
-            <BackButton
-              href="/auth/sign-up"
-              label="Нет аккаунта? Зарегистрироваться"
-            />
+             <CardFooter className="flex flex-col space-y-2">
+            <BackButton href="/auth/sign-in" label="Есть аккаунт? Войти" />
           </CardFooter>
         </Card>
       </div>
