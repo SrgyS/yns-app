@@ -33,11 +33,17 @@ export class NextAuthConfig {
       },
     } as AuthOptions['adapter'],
     callbacks: {
-      jwt: async ({ token, user }) => {
+      jwt: async ({ token, user, trigger, session }) => {
         if (user) {
           token.id = user.id
           token.role = user.role
+          token.picture = user.image
         }
+
+        if (trigger === 'update' && session?.user?.image !== undefined) {
+          token.picture = session.user.image
+        }
+
         return token
       },
       session: async ({ session, token }) => {
@@ -47,6 +53,7 @@ export class NextAuthConfig {
             ...session.user,
             id: token.id,
             role: token.role,
+            image: token.picture,
           },
         }
       },
