@@ -15,10 +15,14 @@ import { useEmailSignIn } from '../_vm/use-email-sign-in'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { emailSignInSchema } from '../schemas'
+import { useState } from 'react'
+import { FormError } from '@/shared/ui/form-error'
 
 type EmailSignInFormValues = z.infer<typeof emailSignInSchema>
 
 export function EmailSignInForm() {
+  const [error, setError] = useState<string | undefined>()
+
   const form = useForm<EmailSignInFormValues>({
     resolver: zodResolver(emailSignInSchema),
     defaultValues: {
@@ -30,7 +34,11 @@ export function EmailSignInForm() {
   const emailSignIn = useEmailSignIn()
 
   const handleSubmit = form.handleSubmit(async data => {
-    await emailSignIn.signIn(data.email)
+    setError('')
+    const res = await emailSignIn.signIn(data)
+    if (res && res.error) {
+      setError('Неверный email или пароль')
+    }
   })
 
   return (
@@ -79,6 +87,7 @@ export function EmailSignInForm() {
               </FormItem>
             )}
           />
+          <FormError message={error} />
           <Button disabled={emailSignIn.isPending}>
             {emailSignIn.isPending && (
               <Spinner className="mr-2 h-4 w-4 " aria-label="Загрузка выхода" />

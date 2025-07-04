@@ -9,3 +9,5 @@ export const publicConfig = publicConfigSchema.parse({
   isDev: process.env.NODE_ENV === 'development',
   PUBLIC_URL: process.env.NEXT_PUBLIC_PUBLIC_URL,
 })
+
+export const DEAFAULT_LOGIN_REDIRECT = '/course'
