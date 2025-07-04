@@ -35,10 +35,16 @@ export function EmailSignInForm() {
 
   const handleSubmit = form.handleSubmit(async data => {
     setError('')
-    const res = await emailSignIn.signIn(data)
-    if (res && res.error) {
-      setError('Неверный email или пароль')
+    try {
+      const res = await emailSignIn.signIn(data)
+      if (res && res.error) {
+        setError('Неверный email или пароль')
+      }
+    } catch (error: unknown) {
+      console.error(error)
+      setError('Что-то пошло не так. Попробуйте позже.')
     }
+   
   })
 
   return (

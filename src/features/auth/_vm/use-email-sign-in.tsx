@@ -19,7 +19,6 @@ export function useEmailSignIn() {
         email,
         password,
         callbackUrl: DEAFAULT_LOGIN_REDIRECT,
-        redirect: false,
       })
     },
   })

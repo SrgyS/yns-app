@@ -20,7 +20,6 @@ export function AppSessionProvider({
 
 export function useAbbility<T>(abilityFactory: (session: SharedSession) => T) {
   const session = useAppSession()
-  console.log('session', session)
 
   if (session.status === 'authenticated') {
     return abilityFactory(session.data)
