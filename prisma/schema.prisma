@@ -69,11 +69,11 @@ model Session {
 }
  
 model VerificationToken {
-  identifier String
+  email String
   token      String
   expires    DateTime
  
-  @@id([identifier, token])
+  @@id([email, token])
 }
  
  enum ROLE {

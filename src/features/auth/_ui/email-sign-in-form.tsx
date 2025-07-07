@@ -1,4 +1,8 @@
 'use client'
+
+import { useSearchParams, useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import {
   Form,
   FormControl,
@@ -7,7 +11,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/shared/ui/form'
-import { useForm } from 'react-hook-form'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Spinner } from '@/shared/ui/spinner'
@@ -15,12 +18,20 @@ import { useEmailSignIn } from '../_vm/use-email-sign-in'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { emailSignInSchema } from '../schemas'
-import { useState } from 'react'
 import { FormError } from '@/shared/ui/form-error'
+import { ERROR_MESSAGES } from '@/shared/constants'
 
 type EmailSignInFormValues = z.infer<typeof emailSignInSchema>
 
 export function EmailSignInForm() {
+  const router = useRouter()
+
+  const searchParams = useSearchParams()
+
+  const errorUrl =
+    searchParams.get('error') === 'OAuthAccountNotLinked'
+      ? 'Email уже используется'
+      : ''
   const [error, setError] = useState<string | undefined>()
 
   const form = useForm<EmailSignInFormValues>({
@@ -37,14 +48,18 @@ export function EmailSignInForm() {
     setError('')
     try {
       const res = await emailSignIn.signIn(data)
+ 
       if (res && res.error) {
-        setError('Неверный email или пароль')
+        console.error(res)
+        const errorMessage = ERROR_MESSAGES[res.error] || 'Ошибка авторизации'
+        setError(errorMessage)
+      } else if (res && res.ok && res.url) {
+        router.push(res.url)
       }
     } catch (error: unknown) {
       console.error(error)
       setError('Что-то пошло не так. Попробуйте позже.')
     }
-   
   })
 
   return (
@@ -93,7 +108,7 @@ export function EmailSignInForm() {
               </FormItem>
             )}
           />
-          <FormError message={error} />
+          <FormError message={error || errorUrl} />
           <Button disabled={emailSignIn.isPending}>
             {emailSignIn.isPending && (
               <Spinner className="mr-2 h-4 w-4 " aria-label="Загрузка выхода" />

@@ -1,6 +1,7 @@
 import { AuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 import GithubProvider from 'next-auth/providers/github'
+
 // import EmailProvider from 'next-auth/providers/email'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { PrismaAdapter } from '@auth/prisma-adapter'
@@ -11,6 +12,7 @@ import { AdapterUser } from 'next-auth/adapters'
 import { injectable } from 'inversify'
 import { CreateUserService } from './_create-user-service'
 import { AuthCredentialsService } from '@/entity/user/_services/auth-credentials'
+import { UserRepository } from '@/entity/user/_repositories/user'
 
 const prismaAdapter = PrismaAdapter(dbClient)
 
@@ -18,6 +20,7 @@ const prismaAdapter = PrismaAdapter(dbClient)
 export class NextAuthConfig {
   constructor(
     private createUserService: CreateUserService,
+    private userRepository: UserRepository,
     private authCredentialsService: AuthCredentialsService
   ) {}
   options: AuthOptions = {
@@ -32,7 +35,23 @@ export class NextAuthConfig {
         return this.createUserService.exec(data)
       },
     } as AuthOptions['adapter'],
+    events: {
+      linkAccount: async ({ user }) => {
+        await dbClient.user.update({
+          where: { id: user.id },
+          data: { emailVerified: new Date() },
+        })
+      },
+    },
     callbacks: {
+      // signIn: async ({ user }) => {
+      //   const existingUser = await this.userRepository.findUserById(user.id)
+      //   if (!existingUser || !existingUser.emailVerified) {
+      //     return false
+      //   }
+
+      //   return true
+      // },
       jwt: async ({ token, user, trigger, session }) => {
         if (user) {
           token.id = user.id
@@ -62,7 +81,7 @@ export class NextAuthConfig {
       signIn: '/auth/sign-in',
       // TODO: add signOut and error
       // signOut: '/auth/sign-out',
-      // error: '/auth/error',
+      error: '/auth/error',
       verifyRequest: '/auth/verify-request',
       newUser: '/auth/new-user',
     },

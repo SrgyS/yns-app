@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader } from '@/shared/ui/card'
-
+//TODO: удалить, т.к. не используется magic link
 export default function VerifyRequestPage() {
   return (
     <>
