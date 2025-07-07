@@ -14,13 +14,12 @@ import {
   FormMessage,
 } from '@/shared/ui/form'
 import { Input } from '@/shared/ui/input'
-import { Spinner } from '@/shared/ui/spinner'
-// import { AvatarField } from './avatar-field'
 import { Profile } from '@/entity/user/client'
 
 import { useUpdateProfile } from '../_vm/use-update-profile'
 import { AvatarField } from './avatar-field'
 import { UserId } from '@/kernel/domain/user'
+import { SmallSpinner } from '@/shared/ui/small-spinner'
 
 const profileFormSchema = z.object({
   name: z
@@ -123,12 +122,7 @@ export function ProfileForm({
           )}
         />
         <Button type="submit">
-          {updateProfile.isPending && (
-            <Spinner
-              className="mr-2 h-4 w-4 animate-spin"
-              aria-label="Обновление профиля"
-            />
-          )}
+          <SmallSpinner isLoading={updateProfile.isPending} />
           {submitText}
         </Button>
       </form>
