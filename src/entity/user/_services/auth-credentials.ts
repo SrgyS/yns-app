@@ -4,6 +4,12 @@ import { SharedUser } from '@/kernel/domain/user'
 import { UserRepository } from '../_repositories/user'
 import { emailSignInSchema } from '@/features/auth/schemas'
 import z from 'zod'
+import { generateVerificationToken } from '@/features/auth/_lib/tokens'
+
+export type AuthResult =
+  | { success: true; user: SharedUser }
+  | { success: false; error: 'EMAIL_UNVERIFIED' }
+  | null
 
 @injectable()
 export class AuthCredentialsService {
@@ -13,36 +19,53 @@ export class AuthCredentialsService {
    * и возвращает объект SharedUser, если они действительны.
    *
    * @param credentials - Объект с email и опциональным паролем.
-   * @returns SharedUser если учетные данные верны, иначе null.
+   * @returns SharedUser если учетные данные верны и status верификации email или null, если нет.
    */
   async validateCredentials(
     credentials: z.infer<typeof emailSignInSchema>
-  ): Promise<SharedUser | null> {
+  ): Promise<AuthResult> {
     const validatedFields = emailSignInSchema.safeParse(credentials)
 
     if (!validatedFields.success) {
-      console.warn('Validation failed for credentials:', validatedFields.error)
       return null
     }
 
     const { email, password } = validatedFields.data
 
-    const user = await this.userRepository.findByEmail(email)
+    const existingUser = await this.userRepository.findByEmail(email)
 
-    if (!user || !user.password) {
+    if (!existingUser || !existingUser.email || !existingUser.password) {
       return null
     }
-    const isValidPassword = await bcrypt.compare(password, user.password)
+
+    const isValidPassword = await bcrypt.compare(
+      password,
+      existingUser.password
+    )
+
     if (!isValidPassword) {
       return null
     }
-    return {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      name: user.name,
-      image: user.image,
-      emailVerified: user.emailVerified,
-    }
+
+  if (!existingUser?.emailVerified) {
+        await generateVerificationToken(validatedFields.data.email)
+
+        return {
+          success: false,
+          error: 'EMAIL_UNVERIFIED',
+        }
+      }
+
+      return {
+        success: true,
+        user: {
+          id: existingUser.id,
+          email: existingUser.email,
+          role: existingUser.role,
+          name: existingUser.name,
+          image: existingUser.image,
+          emailVerified: existingUser.emailVerified,
+        },
+      }
   }
 }

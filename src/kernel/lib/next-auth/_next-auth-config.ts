@@ -96,9 +96,16 @@ export class NextAuthConfig {
           if (!credentials) {
             return null
           }
-          return await this.authCredentialsService.validateCredentials(
-            credentials
-          )
+         const result =
+           await this.authCredentialsService.validateCredentials(credentials)
+         if (result?.success) {
+           return result.user
+         }
+         if (result?.error === 'EMAIL_UNVERIFIED') {
+           throw new Error('EmailUnverified')
+         }
+
+         return null
         },
       }),
       // EmailProvider({

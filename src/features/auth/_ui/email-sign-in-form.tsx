@@ -20,6 +20,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { emailSignInSchema } from '../schemas'
 import { FormError } from '@/shared/ui/form-error'
 import { ERROR_MESSAGES } from '@/shared/constants'
+import { FormSuccess } from '@/shared/ui/form-success'
 
 type EmailSignInFormValues = z.infer<typeof emailSignInSchema>
 
@@ -33,7 +34,7 @@ export function EmailSignInForm() {
       ? 'Email уже используется'
       : ''
   const [error, setError] = useState<string | undefined>()
-
+  const [success, setSuccess] = useState<string | undefined>()
   const form = useForm<EmailSignInFormValues>({
     resolver: zodResolver(emailSignInSchema),
     defaultValues: {
@@ -46,13 +47,19 @@ export function EmailSignInForm() {
 
   const handleSubmit = form.handleSubmit(async data => {
     setError('')
+    setSuccess('')
+
     try {
       const res = await emailSignIn.signIn(data)
- 
+
       if (res && res.error) {
-        console.error(res)
-        const errorMessage = ERROR_MESSAGES[res.error] || 'Ошибка авторизации'
-        setError(errorMessage)
+        if (res.error === 'EmailUnverified') {
+          setSuccess(ERROR_MESSAGES.EmailUnverified)
+        } else {
+          console.log({ res })
+          const errorMessage = ERROR_MESSAGES[res.error] || 'Ошибка авторизации'
+          setError(errorMessage)
+        }
       } else if (res && res.ok && res.url) {
         router.push(res.url)
       }
@@ -109,6 +116,7 @@ export function EmailSignInForm() {
             )}
           />
           <FormError message={error || errorUrl} />
+          <FormSuccess message={success} />
           <Button disabled={emailSignIn.isPending}>
             {emailSignIn.isPending && (
               <Spinner className="mr-2 h-4 w-4 " aria-label="Загрузка выхода" />
