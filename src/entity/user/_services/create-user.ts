@@ -7,6 +7,7 @@ import { ROLES, SharedUser } from '@/kernel/domain/user'
 import { generateId } from '@/shared/lib/id'
 import bcrypt from 'bcryptjs'
 import { generateVerificationToken } from '@/features/auth/_lib/tokens'
+import { sendVerificationEmail } from '@/shared/lib/mail'
 
 @injectable()
 export class CreateUserServiceImpl implements CreateUserService {
@@ -35,9 +36,14 @@ export class CreateUserServiceImpl implements CreateUserService {
       password: hashedPassword,
     }
 
-    await generateVerificationToken(data.email)
+    const verificationToken = await generateVerificationToken(data.email)
 
     //TODO: sent verification email if email is not verified
+    await sendVerificationEmail(
+      verificationToken.email,
+      verificationToken.token
+    )
+
     const res = await this.userRepository.create(user)
 
     return {

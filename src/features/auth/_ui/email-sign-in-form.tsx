@@ -19,7 +19,7 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { emailSignInSchema } from '../schemas'
 import { FormError } from '@/shared/ui/form-error'
-import { ERROR_MESSAGES } from '@/shared/constants'
+import { AUTH_MESSAGES } from '@/shared/constants'
 import { FormSuccess } from '@/shared/ui/form-success'
 
 type EmailSignInFormValues = z.infer<typeof emailSignInSchema>
@@ -54,10 +54,10 @@ export function EmailSignInForm() {
 
       if (res && res.error) {
         if (res.error === 'EmailUnverified') {
-          setSuccess(ERROR_MESSAGES.EmailUnverified)
+          setSuccess(AUTH_MESSAGES.EmailUnverified)
         } else {
           console.log({ res })
-          const errorMessage = ERROR_MESSAGES[res.error] || 'Ошибка авторизации'
+          const errorMessage = AUTH_MESSAGES[res.error] || 'Ошибка авторизации'
           setError(errorMessage)
         }
       } else if (res && res.ok && res.url) {

@@ -44,14 +44,19 @@ export class NextAuthConfig {
       },
     },
     callbacks: {
-      // signIn: async ({ user }) => {
-      //   const existingUser = await this.userRepository.findUserById(user.id)
-      //   if (!existingUser || !existingUser.emailVerified) {
-      //     return false
-      //   }
+      signIn: async ({ user, account }) => {
+        console.log({ account })
+        //Allow OAuth withput email verification
+        if (account?.type !== 'oauth') {
+          return true
+        }
+        const existingUser = await this.userRepository.findUserById(user.id)
+        if (!existingUser || !existingUser.emailVerified) {
+          return false
+        }
 
-      //   return true
-      // },
+        return true
+      },
       jwt: async ({ token, user, trigger, session }) => {
         if (user) {
           token.id = user.id
@@ -96,16 +101,16 @@ export class NextAuthConfig {
           if (!credentials) {
             return null
           }
-         const result =
-           await this.authCredentialsService.validateCredentials(credentials)
-         if (result?.success) {
-           return result.user
-         }
-         if (result?.error === 'EMAIL_UNVERIFIED') {
-           throw new Error('EmailUnverified')
-         }
+          const result =
+            await this.authCredentialsService.validateCredentials(credentials)
+          if (result?.success) {
+            return result.user
+          }
+          if (result?.error === 'EMAIL_UNVERIFIED') {
+            throw new Error('EmailUnverified')
+          }
 
-         return null
+          return null
         },
       }),
       // EmailProvider({

@@ -1,90 +1,31 @@
-import { BackButton } from '@/features/auth/_ui/back-button'
+import { AuthFormSkeleton } from '@/shared/ui/auth-form-skeleton'
+
+import { CardWrapper } from '@/features/auth/_ui/card-wrapper'
 import { SignInForm } from '@/features/auth/sign-in-form.server'
-import { Card, CardContent, CardFooter, CardHeader } from '@/shared/ui/card'
-import { Skeleton } from '@/shared/ui/skeleton'
-import Link from 'next/link'
+
 import { Suspense } from 'react'
 
-// Skeleton для формы входа
-function SignInFormSkeleton() {
-  return (
-    <div className="grid gap-6">
-      {/* Email форма skeleton */}
-      <div className="grid gap-2">
-        {/* Email input skeleton */}
-        <div className="space-y-2">
-          <Skeleton className="h-10 w-full" /> {/* Input */}
-        </div>
-        {/* Submit button skeleton */}
-        <Skeleton className="h-10 w-full" />
-      </div>
-
-      {/* Разделитель skeleton */}
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <Skeleton className="w-full h-px" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <Skeleton className="bg-background px-2 text-muted-foreground w-16 h-4" />
-        </div>
-      </div>
-
-      {/* OAuth кнопки skeleton - Google*/}
-      <div className="grid gap-2">
-        <Skeleton className="h-10 w-full" />
-        {/* <Skeleton className="h-10 w-full" /> */}
-      </div>
-    </div>
-  )
-}
-
 // Компонент-обертка для клиентских компонентов с useSearchParams
-function SignInFormWrapper() {
+function SignInFormWrapper({
+  showOauthProviders,
+}: {
+  showOauthProviders?: boolean
+}) {
   return (
-    <Suspense fallback={<SignInFormSkeleton />}>
-      <SignInForm />
+    <Suspense fallback={<AuthFormSkeleton />}>
+      <SignInForm showOauthProviders={showOauthProviders} />
     </Suspense>
   )
 }
 
-export default function AuthenticationPage() {
+export default function SignInPage() {
   return (
-    <>
-      <div className="container relative  flex-col items-center justify-center self-center pt-24">
-        <Card className="max-w-[350px] mx-auto">
-          <CardHeader className="flex flex-col space-y-2 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Войти в аккаунт
-            </h1>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            <SignInFormWrapper />
-            <p className="px-0 text-center text-sm text-muted-foreground">
-              Нажимая продолжить вы соглашаетесь с{' '}
-              <Link
-                href="/terms"
-                className="underline underline-offset-4 hover:text-primary"
-              >
-                Пользовательским соглашением
-              </Link>{' '}
-              и{' '}
-              <Link
-                href="/privacy"
-                className="underline underline-offset-4 hover:text-primary"
-              >
-                Политикой конфиденциальности
-              </Link>
-              .
-            </p>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-2">
-            <BackButton
-              href="/auth/sign-up"
-              label="Нет аккаунта? Зарегистрироваться"
-            />
-          </CardFooter>
-        </Card>
-      </div>
-    </>
+    <CardWrapper
+      headerLabel="Авторизация"
+      backButtonLabel="Зарегистрироваться"
+      backButtonHref="/auth/sign-up"
+    >
+      <SignInFormWrapper showOauthProviders />
+    </CardWrapper>
   )
 }

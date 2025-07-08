@@ -10,7 +10,13 @@ import { privateConfig } from '@/shared/config/private'
 
 const testToken = privateConfig.TEST_EMAIL_TOKEN
 
-export async function SignInForm({ className }: { className?: string }) {
+export async function SignInForm({
+  className,
+  showOauthProviders,
+}: {
+  className?: string
+  showOauthProviders?: boolean
+}) {
   const providers = await getProviders()
   const oauthProviders = Object.values(providers ?? {}).filter(
     provider => provider.type === 'oauth'
@@ -23,10 +29,14 @@ export async function SignInForm({ className }: { className?: string }) {
       ) : (
         <EmailSignInForm />
       )}
-      <Divider />
-      {oauthProviders.map(provider => (
-        <ProviderButton key={provider.id} provider={provider} />
-      ))}
+      {showOauthProviders && (
+        <>
+          <Divider />{' '}
+          {oauthProviders.map(provider => (
+            <ProviderButton key={provider.id} provider={provider} />
+          ))}
+        </>
+      )}
     </div>
   )
 }

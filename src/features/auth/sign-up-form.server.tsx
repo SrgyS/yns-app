@@ -6,7 +6,13 @@ import { Divider } from './_ui/divider'
 import { ProviderButton } from './_ui/provider-button'
 import { EmailSignUpForm } from './_ui/email-sign-up-form'
 
-export async function SignUpForm({ className }: { className?: string }) {
+export async function SignUpForm({
+  className,
+  showOauthProviders,
+}: {
+  className?: string
+  showOauthProviders?: boolean
+}) {
   const providers = await getProviders()
   const oauthProviders = Object.values(providers ?? {}).filter(
     provider => provider.type === 'oauth'
@@ -15,10 +21,14 @@ export async function SignUpForm({ className }: { className?: string }) {
   return (
     <div className={cn('grid gap-6', className)}>
       <EmailSignUpForm />
-      <Divider />
-      {oauthProviders.map(provider => (
-        <ProviderButton key={provider.id} provider={provider} />
-      ))}
+      {showOauthProviders && (
+        <>
+          <Divider />
+          {oauthProviders.map(provider => (
+            <ProviderButton key={provider.id} provider={provider} />
+          ))}
+        </>
+      )}
     </div>
   )
 }
