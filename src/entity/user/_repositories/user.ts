@@ -12,7 +12,7 @@ export class UserRepository {
     return user
   }
 
-  async findByEmail(email: string): Promise<SharedUser | null> {
+  async findUserByEmail(email: string): Promise<SharedUser | null> {
     return await dbClient.user.findUnique({
       where: { email },
     })

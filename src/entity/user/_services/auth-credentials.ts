@@ -5,6 +5,7 @@ import { UserRepository } from '../_repositories/user'
 import { emailSignInSchema } from '@/features/auth/schemas'
 import z from 'zod'
 import { generateVerificationToken } from '@/features/auth/_lib/tokens'
+import { sendVerificationEmail } from '@/shared/lib/mail'
 
 export type AuthResult =
   | { success: true; user: SharedUser }
@@ -32,7 +33,7 @@ export class AuthCredentialsService {
 
     const { email, password } = validatedFields.data
 
-    const existingUser = await this.userRepository.findByEmail(email)
+    const existingUser = await this.userRepository.findUserByEmail(email)
 
     if (!existingUser || !existingUser.email || !existingUser.password) {
       return null
@@ -48,7 +49,14 @@ export class AuthCredentialsService {
     }
 
   if (!existingUser?.emailVerified) {
-        await generateVerificationToken(validatedFields.data.email)
+      const verificationToken = await generateVerificationToken(
+        validatedFields.data.email
+      )
+
+      await sendVerificationEmail(
+        verificationToken.email,
+        verificationToken.token
+      )
 
         return {
           success: false,

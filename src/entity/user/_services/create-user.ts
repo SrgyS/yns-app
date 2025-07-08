@@ -17,7 +17,7 @@ export class CreateUserServiceImpl implements CreateUserService {
     data: Omit<AdapterUser, 'id'> & { password?: string }
   ): Promise<AdapterUser> {
     // Check if user already exists
-    const existingUser = await this.userRepository.findByEmail(data.email)
+    const existingUser = await this.userRepository.findUserByEmail(data.email)
     if (existingUser) {
       throw new Error('Такой пользователь уже существует')
     }
@@ -38,7 +38,6 @@ export class CreateUserServiceImpl implements CreateUserService {
 
     const verificationToken = await generateVerificationToken(data.email)
 
-    //TODO: sent verification email if email is not verified
     await sendVerificationEmail(
       verificationToken.email,
       verificationToken.token
