@@ -1,6 +1,5 @@
 'use client'
 
-// import { useSearchParams, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import {
@@ -42,7 +41,7 @@ export function ResetPasswordForm() {
   const handleSubmit = form.handleSubmit(async data => {
     setError('')
     setSuccess('')
-    debugger
+
     try {
       const res = await authCredentialsHttpApi.auth.resetPassword.mutate(data)
       setSuccess(res.success)
