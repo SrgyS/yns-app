@@ -1,21 +1,31 @@
+import { DEAFAULT_LOGIN_REDIRECT } from '@/shared/config/public'
 import { useMutation } from '@tanstack/react-query'
 import { signIn } from 'next-auth/react'
-import { useSearchParams } from 'next/navigation'
+// import { useSearchParams } from 'next/navigation'
 
 export function useEmailSignIn() {
-  const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl')
+  // const searchParams = useSearchParams()
+  // const callbackUrl = searchParams.get('callbackUrl')
 
   const emailSignInMutation = useMutation({
-    mutationFn: (email: string) =>
-      signIn('email', {
+    mutationFn: async ({
+      email,
+      password,
+    }: {
+      email: string
+      password: string
+    }) => {
+      return await signIn('credentials', {
         email,
-        callbackUrl: callbackUrl ?? undefined,
-      }),
+        password,
+        callbackUrl: DEAFAULT_LOGIN_REDIRECT,
+        redirect: false,
+      })
+    },
   })
 
   return {
     isPending: emailSignInMutation.isPending,
-    signIn: emailSignInMutation.mutate,
+    signIn: emailSignInMutation.mutateAsync,
   }
 }

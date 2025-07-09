@@ -14,7 +14,7 @@ import Link from 'next/link'
 
 import { useSignOut } from '@/features/auth/use-sign-out'
 import { Skeleton } from '@/shared/ui/skeleton'
-import { SignInButton } from '@/features/auth/sign-in-button'
+import { SignInButton } from '@/features/auth/_ui/sign-in-button'
 
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { getProfileDisplayName, ProfileAvatar } from '@/entity/user/client'

@@ -26,6 +26,7 @@ export function ProviderButton({ provider }: { provider: ClientSafeProvider }) {
       type="button"
       disabled={oauthSignIn.isPending}
       onClick={() => oauthSignIn.signIn()}
+      className="cursor-pointer"
     >
       {oauthSignIn.isPending ? (
         <Spinner className="mr-2 h-4 w-4 animate-spin" aria-label="Вход" />

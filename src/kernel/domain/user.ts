@@ -13,6 +13,7 @@ export type SharedUser = {
   emailVerified?: Date | null
   name?: string | null
   image?: string | null
+  password?: string | null // Password is optional for OAuth users
 }
 
 export type SharedSession = {

@@ -7,7 +7,7 @@ setup.describe('auth', () => {
   setup('authenticate as admin', async ({ page }) => {
     await page.goto('/auth/sign-in?callbackUrl=/')
     await page.getByLabel('Email').fill(ADMIN.email)
-    await page.getByRole('button', { name: 'Войти через Email' }).click()
+    await page.getByRole('button', { name: 'Войти' }).click()
 
     await page.getByRole('link', { name: 'Упрощённый тестовый вход' }).click()
     await page.waitForURL('/')
@@ -19,7 +19,7 @@ setup.describe('auth', () => {
   setup('authenticate as user', async ({ page }) => {
     await page.goto('/auth/sign-in?callbackUrl=/')
     await page.getByLabel('Email').fill(USER.email)
-    await page.getByRole('button', { name: 'Войти через Email' }).click()
+    await page.getByRole('button', { name: 'Войти' }).click()
     // To handle verification emails
     await page.getByRole('link', { name: 'Упрощённый тестовый вход' }).click()
     await page.waitForURL('/')

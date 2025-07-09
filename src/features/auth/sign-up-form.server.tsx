@@ -2,15 +2,11 @@
 
 import { getProviders } from 'next-auth/react'
 import { cn } from '@/shared/ui/utils'
-import { EmailSignInForm } from './_ui/email-sign-in-form'
 import { Divider } from './_ui/divider'
 import { ProviderButton } from './_ui/provider-button'
-import { TestEmailSignInForm } from './_ui/test-email-sign-in-form'
-import { privateConfig } from '@/shared/config/private'
+import { EmailSignUpForm } from './_ui/email-sign-up-form'
 
-const testToken = privateConfig.TEST_EMAIL_TOKEN
-
-export async function SignInForm({
+export async function SignUpForm({
   className,
   showOauthProviders,
 }: {
@@ -24,14 +20,10 @@ export async function SignInForm({
 
   return (
     <div className={cn('grid gap-6', className)}>
-      {testToken ? (
-        <TestEmailSignInForm testToken={testToken} />
-      ) : (
-        <EmailSignInForm />
-      )}
+      <EmailSignUpForm />
       {showOauthProviders && (
         <>
-          <Divider />{' '}
+          <Divider />
           {oauthProviders.map(provider => (
             <ProviderButton key={provider.id} provider={provider} />
           ))}

@@ -1,15 +1,16 @@
+import { DEAFAULT_LOGIN_REDIRECT } from '@/shared/config/public'
 import { useMutation } from '@tanstack/react-query'
 import { ClientSafeProvider, signIn } from 'next-auth/react'
-import { useSearchParams } from 'next/navigation'
+// import { useSearchParams } from 'next/navigation'
 
 export function useOAuthSignIn(provider: ClientSafeProvider) {
-  const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl')
+  // const searchParams = useSearchParams()
+  // const callbackUrl = searchParams.get('callbackUrl')
 
   const oauthSignInMutation = useMutation({
     mutationFn: () =>
       signIn(provider.id, {
-        callbackUrl: callbackUrl ?? undefined,
+        callbackUrl: DEAFAULT_LOGIN_REDIRECT,
       }),
   })
 

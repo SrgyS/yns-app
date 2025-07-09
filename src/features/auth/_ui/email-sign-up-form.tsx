@@ -1,8 +1,4 @@
 'use client'
-
-import { useSearchParams, useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
 import {
   Form,
   FormControl,
@@ -11,69 +7,68 @@ import {
   FormLabel,
   FormMessage,
 } from '@/shared/ui/form'
+import { useForm } from 'react-hook-form'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Spinner } from '@/shared/ui/spinner'
-import { useEmailSignIn } from '../_vm/use-email-sign-in'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { emailSignInSchema } from '../schemas'
+import { emailSignUpSchema } from '../schemas'
+import { useCredentialsSignUp } from '../_vm/use-credentials-sign-up'
 import { FormError } from '@/shared/ui/form-error'
-import { AUTH_MESSAGES } from '@/shared/constants'
+import { useState } from 'react'
 import { FormSuccess } from '@/shared/ui/form-success'
-import Link from 'next/link'
 
-type EmailSignInFormValues = z.infer<typeof emailSignInSchema>
+type EmailSignUpFormValues = z.infer<typeof emailSignUpSchema>
 
-export function EmailSignInForm() {
-  const router = useRouter()
-
-  const searchParams = useSearchParams()
-
-  const errorUrl =
-    searchParams.get('error') === 'OAuthAccountNotLinked'
-      ? 'Email уже используется'
-      : ''
+export function EmailSignUpForm() {
   const [error, setError] = useState<string | undefined>()
   const [success, setSuccess] = useState<string | undefined>()
-  const form = useForm<EmailSignInFormValues>({
-    resolver: zodResolver(emailSignInSchema),
+
+  const form = useForm<EmailSignUpFormValues>({
+    resolver: zodResolver(emailSignUpSchema),
     defaultValues: {
       email: '',
       password: '',
+      name: '',
     },
   })
 
-  const emailSignIn = useEmailSignIn()
+  const register = useCredentialsSignUp()
 
-  const handleSubmit = form.handleSubmit(async data => {
+  const handleSubmit = form.handleSubmit(async values => {
     setError('')
     setSuccess('')
 
-    try {
-      const res = await emailSignIn.signIn(data)
-
-      if (res && res.error) {
-        if (res.error === 'EmailUnverified') {
-          setSuccess(AUTH_MESSAGES.EmailUnverified)
-        } else {
-          console.log({ res })
-          const errorMessage = AUTH_MESSAGES[res.error] || 'Ошибка авторизации'
-          setError(errorMessage)
-        }
-      } else if (res && res.ok && res.url) {
-        router.push(res.url)
-      }
-    } catch (error: unknown) {
-      console.error(error)
-      setError('Что-то пошло не так. Попробуйте позже.')
-    }
+    await register.credentialsSignUp(values).then(data => {
+      setError(data.error)
+      setSuccess(data.success)
+    })
   })
 
   return (
     <Form {...form}>
       <form onSubmit={handleSubmit}>
-        <div className="grid gap-4">
+        <div className="grid gap-2">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="sr-only">Email</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Ваше имя"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    disabled={register.isPending}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="email"
@@ -87,7 +82,7 @@ export function EmailSignInForm() {
                     autoCapitalize="none"
                     autoComplete="email"
                     autoCorrect="off"
-                    disabled={emailSignIn.isPending}
+                    disabled={register.isPending}
                     {...field}
                   />
                 </FormControl>
@@ -99,7 +94,7 @@ export function EmailSignInForm() {
             control={form.control}
             name="password"
             render={({ field }) => (
-              <FormItem className="gap-0">
+              <FormItem>
                 <FormLabel className="sr-only">Email</FormLabel>
                 <FormControl>
                   <Input
@@ -108,29 +103,21 @@ export function EmailSignInForm() {
                     autoCapitalize="none"
                     autoComplete="password"
                     autoCorrect="off"
-                    disabled={emailSignIn.isPending}
+                    disabled={register.isPending}
                     {...field}
                   />
                 </FormControl>
-                <Button
-                  size="sm"
-                  variant="link"
-                  asChild
-                  className="p-0 mr-auto font-normal"
-                >
-                  <Link href="/auth/password-reset">Забыли пароль?</Link>
-                </Button>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <FormError message={error || errorUrl} />
+          <FormError message={error} />
           <FormSuccess message={success} />
-          <Button disabled={emailSignIn.isPending} className="cursor-pointer">
-            {emailSignIn.isPending && (
+          <Button disabled={register.isPending}>
+            {register.isPending && (
               <Spinner className="mr-2 h-4 w-4 " aria-label="Загрузка выхода" />
             )}
-            Войти
+            Создать аккаунт
           </Button>
         </div>
       </form>

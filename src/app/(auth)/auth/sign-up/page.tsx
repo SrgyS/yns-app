@@ -1,19 +1,18 @@
 import { AuthFormSkeleton } from '@/shared/ui/auth-form-skeleton'
-
 import { CardWrapper } from '@/features/auth/_ui/card-wrapper'
-import { SignInForm } from '@/features/auth/sign-in-form.server'
+import { SignUpForm } from '@/features/auth/sign-up-form.server'
 
 import { Suspense } from 'react'
 
 // Компонент-обертка для клиентских компонентов с useSearchParams
-function SignInFormWrapper({
+function SignUpFormWrapper({
   showOauthProviders,
 }: {
   showOauthProviders?: boolean
 }) {
   return (
     <Suspense fallback={<AuthFormSkeleton />}>
-      <SignInForm showOauthProviders={showOauthProviders} />
+      <SignUpForm showOauthProviders={showOauthProviders} />
     </Suspense>
   )
 }
@@ -21,11 +20,12 @@ function SignInFormWrapper({
 export default function SignInPage() {
   return (
     <CardWrapper
-      headerLabel="Авторизация"
-      backButtonLabel="Зарегистрироваться"
-      backButtonHref="/auth/sign-up"
+      headerLabel="Создать аккаунт"
+      backButtonLabel="Есть аккаунт? Войти"
+      backButtonHref="/auth/sign-in"
+      showPolicy
     >
-      <SignInFormWrapper showOauthProviders />
+      <SignUpFormWrapper showOauthProviders />
     </CardWrapper>
   )
 }

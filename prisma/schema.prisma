@@ -26,6 +26,7 @@ model User {
   email         String          @unique
   emailVerified DateTime?
   image         String?
+  password      String?
   role          ROLE            @default(USER)
   accounts      Account[]
   sessions      Session[]
@@ -68,29 +69,24 @@ model Session {
 }
  
 model VerificationToken {
-  identifier String
-  token      String
+  email String
+  token      String @unique
   expires    DateTime
  
-  @@id([identifier, token])
+  @@id([email, token])
 }
  
+ model PasswordResetToken {
+  email String
+  token      String @unique
+  expires    DateTime
+ 
+  @@id([email, token])
+}
  enum ROLE {
   ADMIN
   USER
  }
-// // Optional for WebAuthn support
-// model Authenticator {
-//   credentialID         String
-//   userId               String
-//   providerAccountId    String
-//   credentialPublicKey  String
-//   counter              Int
-//   credentialDeviceType String
-//   credentialBackedUp   Boolean
-//   transports           String?
- 
-//   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
- 
-//   @@id([userId, credentialID])
-// }
+
+
+
