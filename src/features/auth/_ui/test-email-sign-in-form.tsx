@@ -55,7 +55,7 @@ export function TestEmailSignInForm({ testToken }: { testToken: string }) {
                 aria-label="Вход"
               />
             )}
-            Войти через Email
+            Войти
           </Button>
           {emailSignIn.isSuccess && (
             <a

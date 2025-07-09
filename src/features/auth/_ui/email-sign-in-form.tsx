@@ -21,6 +21,7 @@ import { emailSignInSchema } from '../schemas'
 import { FormError } from '@/shared/ui/form-error'
 import { AUTH_MESSAGES } from '@/shared/constants'
 import { FormSuccess } from '@/shared/ui/form-success'
+import Link from 'next/link'
 
 type EmailSignInFormValues = z.infer<typeof emailSignInSchema>
 
@@ -72,7 +73,7 @@ export function EmailSignInForm() {
   return (
     <Form {...form}>
       <form onSubmit={handleSubmit}>
-        <div className="grid gap-2">
+        <div className="grid gap-4">
           <FormField
             control={form.control}
             name="email"
@@ -98,7 +99,7 @@ export function EmailSignInForm() {
             control={form.control}
             name="password"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="gap-0">
                 <FormLabel className="sr-only">Email</FormLabel>
                 <FormControl>
                   <Input
@@ -111,17 +112,25 @@ export function EmailSignInForm() {
                     {...field}
                   />
                 </FormControl>
+                <Button
+                  size="sm"
+                  variant="link"
+                  asChild
+                  className="p-0 mr-auto font-normal"
+                >
+                  <Link href="/auth/password-reset">Забыли пароль?</Link>
+                </Button>
                 <FormMessage />
               </FormItem>
             )}
           />
           <FormError message={error || errorUrl} />
           <FormSuccess message={success} />
-          <Button disabled={emailSignIn.isPending}>
+          <Button disabled={emailSignIn.isPending} className="cursor-pointer">
             {emailSignIn.isPending && (
               <Spinner className="mr-2 h-4 w-4 " aria-label="Загрузка выхода" />
             )}
-            Войти через Email
+            Войти
           </Button>
         </div>
       </form>

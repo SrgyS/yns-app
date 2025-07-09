@@ -23,4 +23,14 @@ export class UserRepository {
       where: { id },
     })
   }
+
+  async update(
+    id: UserId,
+    updateData: Partial<SharedUser>
+  ): Promise<SharedUser> {
+    return await dbClient.user.update({
+      where: { id },
+      data: updateData,
+    })
+  }
 }

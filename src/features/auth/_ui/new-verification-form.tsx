@@ -12,6 +12,7 @@ import { FormError } from '@/shared/ui/form-error'
 export const NewVerificationForm = () => {
   const [error, setError] = useState<string | undefined>()
   const [success, setSuccess] = useState<string | undefined>()
+
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
 
@@ -39,7 +40,7 @@ export const NewVerificationForm = () => {
 
   useEffect(() => {
     onSubmit()
-  }, [])
+  }, [onSubmit])
 
   return (
     <CardWrapper
@@ -53,7 +54,7 @@ export const NewVerificationForm = () => {
         )}
 
         <FormSuccess message={success} />
-        <FormError message={error} />
+        {!success && <FormError message={error} />}
       </div>
     </CardWrapper>
   )

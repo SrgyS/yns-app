@@ -2,19 +2,27 @@ import { injectable } from 'inversify'
 import { Controller, publicProcedure, router } from '@/kernel/lib/trpc/server'
 
 import { CreateUserService } from '@/kernel/lib/next-auth/_create-user-service'
-import { emailSignUpSchema } from './schemas'
+import {
+  emailSignUpSchema,
+  newPasswordSchemaWithToken,
+  resetPasswordSchema,
+} from './schemas'
 import { VerificationTokenService } from '@/entity/user/_services/new-verification'
 import { z } from 'zod'
 import { UserRepository } from '@/entity/user/_repositories/user'
 import { dbClient } from '@/shared/lib/db'
 import { TRPCError } from '@trpc/server'
+import { ResetPasswordService } from '@/entity/user/_services/reset-password'
+import { NewPasswordService } from '@/entity/user/_services/new-password'
 
 @injectable()
 export class AuthCredentialsController extends Controller {
   constructor(
     private createUserService: CreateUserService,
     private verificationTokenService: VerificationTokenService,
-    private userReository: UserRepository
+    private userRepository: UserRepository,
+    private resetPasswordService: ResetPasswordService,
+    private newPasswordService: NewPasswordService
   ) {
     super()
   }
@@ -50,7 +58,7 @@ export class AuthCredentialsController extends Controller {
             })
           }
 
-          const existingUser = await this.userReository.findUserByEmail(
+          const existingUser = await this.userRepository.findUserByEmail(
             existingToken.email
           )
           if (!existingUser) {
@@ -73,6 +81,18 @@ export class AuthCredentialsController extends Controller {
             },
           })
           return { success: 'Email успешно подтвержден' }
+        }),
+      resetPassword: publicProcedure
+        .input(resetPasswordSchema)
+        .mutation(async ({ input }) => {
+          const result = await this.resetPasswordService.exec(input)
+          return result
+        }),
+      newPassword: publicProcedure
+        .input(newPasswordSchemaWithToken)
+        .mutation(async ({ input }) => {
+          const result = await this.newPasswordService.exec(input)
+          return result
         }),
     }),
   })

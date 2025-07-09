@@ -1,6 +1,15 @@
-import { NewVerificationForm } from '@/features/auth/_ui/new-verification-form'
+'use client'
 
-//TODO: удалить, т.к. не используется magic link
+import dynamic from 'next/dynamic'
+
+const NewVerificationForm = dynamic(
+  () =>
+    import('@/features/auth/_ui/new-verification-form').then(
+      mod => mod.NewVerificationForm
+    ),
+  { ssr: false }
+)
+
 export default function VerifyRequestPage() {
   return (
     <>
