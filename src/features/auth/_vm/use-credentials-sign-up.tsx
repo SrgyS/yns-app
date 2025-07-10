@@ -13,7 +13,7 @@ export function useCredentialsSignUp() {
       return { success: AUTH_MESSAGES.EmailUnverified, data }
     } catch (error) {
       if (error instanceof Error) {
-        return { error: 'Ошибка при регистрации: ' + error.message }
+        return { error: error.message }
       }
       return { error: 'Неизвестная ошибка при регистрации' }
     }
