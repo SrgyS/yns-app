@@ -1,22 +1,16 @@
-'use client'
+import { Suspense } from 'react'
+import { CardWrapper } from '@/features/auth/_ui/card-wrapper'
+import { NewPasswordForm } from '@/features/auth/_ui/new-password-form'
+import { AuthFormSkeleton } from '@/shared/ui/auth-form-skeleton'
 
-import dynamic from 'next/dynamic'
-
-const NewPasswordForm = dynamic(
-  () =>
-    import('@/features/auth/_ui/new-password-form').then(
-      mod => mod.NewPasswordForm
-    ),
-  { ssr: false }
-)
-
-const CardWrapper = dynamic(
-  () =>
-    import('@/features/auth/_ui/card-wrapper').then(
-      mod => mod.CardWrapper
-    ),
-  { ssr: false }
-)
+// Компонент-обертка для клиентских компонентов с useSearchParams
+function NewPasswordFormWrapper() {
+  return (
+    <Suspense fallback={<AuthFormSkeleton />}>
+      <NewPasswordForm />
+    </Suspense>
+  )
+}
 
 export default function NewPasswordPage() {
   return (
@@ -25,7 +19,7 @@ export default function NewPasswordPage() {
       backButtonLabel="Назад к входу"
       backButtonHref="/auth/sign-in"
     >
-      <NewPasswordForm />
+      <NewPasswordFormWrapper />
     </CardWrapper>
   )
 }

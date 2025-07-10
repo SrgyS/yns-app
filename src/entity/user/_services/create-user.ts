@@ -19,7 +19,7 @@ export class CreateUserServiceImpl implements CreateUserService {
     // Check if user already exists
     const existingUser = await this.userRepository.findUserByEmail(data.email)
     if (existingUser) {
-      throw new Error('Такой пользователь уже существует')
+      throw new Error('Пользователь с таким email уже зарегистрирован')
     }
 
     const adminEmails = privateConfig.ADMIN_EMAILS?.split(',') ?? []

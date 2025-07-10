@@ -1,7 +1,6 @@
 'use client'
 
 import { Spinner } from '@/shared/ui/spinner'
-import { CardWrapper } from './card-wrapper'
 import { useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import { authCredentialsHttpApi } from '../_api'
@@ -43,19 +42,12 @@ export const NewVerificationForm = () => {
   }, [onSubmit])
 
   return (
-    <CardWrapper
-      headerLabel="Подтверждение"
-      backButtonLabel="Назад к входу"
-      backButtonHref="/auth/sign-in"
-    >
-      <div className="flex w-full justify-center">
-        {!success && !error && (
-          <Spinner className="w-10 h-10" aria-label="Подтверждение" />
-        )}
-
-        <FormSuccess message={success} />
-        {!success && <FormError message={error} />}
-      </div>
-    </CardWrapper>
+    <div className="flex w-full justify-center">
+      {!success && !error && (
+        <Spinner className="w-10 h-10" aria-label="Подтверждение" />
+      )}
+      <FormSuccess message={success} />
+      {!success && <FormError message={error} />}
+    </div>
   )
 }
