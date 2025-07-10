@@ -1,7 +1,7 @@
 'use client'
 
 import { useSearchParams, useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import {
   Form,
@@ -14,7 +14,7 @@ import {
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Spinner } from '@/shared/ui/spinner'
-import { useEmailSignIn } from '../_vm/use-email-sign-in'
+
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { emailSignInSchema } from '../schemas'
@@ -22,6 +22,8 @@ import { FormError } from '@/shared/ui/form-error'
 import { AUTH_MESSAGES } from '@/shared/constants'
 import { FormSuccess } from '@/shared/ui/form-success'
 import Link from 'next/link'
+import { signIn } from 'next-auth/react'
+import { DEAFAULT_LOGIN_REDIRECT } from '@/shared/config/public'
 
 type EmailSignInFormValues = z.infer<typeof emailSignInSchema>
 
@@ -36,6 +38,8 @@ export function EmailSignInForm() {
       : ''
   const [error, setError] = useState<string | undefined>()
   const [success, setSuccess] = useState<string | undefined>()
+  const [isPending, startTransition] = useTransition()
+
   const form = useForm<EmailSignInFormValues>({
     resolver: zodResolver(emailSignInSchema),
     defaultValues: {
@@ -44,30 +48,35 @@ export function EmailSignInForm() {
     },
   })
 
-  const emailSignIn = useEmailSignIn()
+  // const emailSignIn = useEmailSignIn()
 
   const handleSubmit = form.handleSubmit(async data => {
     setError('')
     setSuccess('')
 
-    try {
-      const res = await emailSignIn.signIn(data)
+    startTransition(async () => {
+      try {
+        const res = await signIn('credentials', {
+          ...data,
+          callbackUrl: DEAFAULT_LOGIN_REDIRECT,
+          redirect: false,
+        })
 
-      if (res && res.error) {
-        if (res.error === 'EmailUnverified') {
-          setSuccess(AUTH_MESSAGES.EmailUnverified)
-        } else {
-          console.log({ res })
-          const errorMessage = AUTH_MESSAGES[res.error] || 'Ошибка авторизации'
-          setError(errorMessage)
+        if (res && res.error) {
+          if (res.error === 'EmailUnverified') {
+            setSuccess(AUTH_MESSAGES.EmailUnverified)
+          } else {
+            const errorMessage =
+              AUTH_MESSAGES[res.error] || 'Ошибка авторизации'
+            setError(errorMessage)
+          }
+        } else if (res && res.ok && res.url) {
+          router.push(res.url)
         }
-      } else if (res && res.ok && res.url) {
-        router.push(res.url)
+      } catch {
+        setError('Что-то пошло не так. Попробуйте позже.')
       }
-    } catch (error: unknown) {
-      console.error(error)
-      setError('Что-то пошло не так. Попробуйте позже.')
-    }
+    })
   })
 
   return (
@@ -87,7 +96,7 @@ export function EmailSignInForm() {
                     autoCapitalize="none"
                     autoComplete="email"
                     autoCorrect="off"
-                    disabled={emailSignIn.isPending}
+                    disabled={isPending}
                     {...field}
                   />
                 </FormControl>
@@ -108,7 +117,7 @@ export function EmailSignInForm() {
                     autoCapitalize="none"
                     autoComplete="password"
                     autoCorrect="off"
-                    disabled={emailSignIn.isPending}
+                    disabled={isPending}
                     {...field}
                   />
                 </FormControl>
@@ -126,8 +135,8 @@ export function EmailSignInForm() {
           />
           <FormError message={error || errorUrl} />
           <FormSuccess message={success} />
-          <Button disabled={emailSignIn.isPending} className="cursor-pointer">
-            {emailSignIn.isPending && (
+          <Button disabled={isPending} className="cursor-pointer">
+            {isPending && (
               <Spinner className="mr-2 h-4 w-4 " aria-label="Загрузка выхода" />
             )}
             Войти

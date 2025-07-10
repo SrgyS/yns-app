@@ -5,10 +5,10 @@ import { VerificationToken } from '@/kernel/domain/verification-token';
 
 @injectable()
 export class VerificationTokenService {
-  async getVerificationToken(token: string): Promise<VerificationToken | null> {
+  async exec(token: string): Promise<VerificationToken | null> {
     const verificationToken = await dbClient.verificationToken.findFirst({
       where: { token },
-    });
-    return verificationToken;
+    })
+    return verificationToken
   }
 }

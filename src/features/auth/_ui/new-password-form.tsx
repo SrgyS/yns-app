@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { useSearchParams } from 'next/navigation'
 import {
@@ -14,7 +14,6 @@ import {
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Spinner } from '@/shared/ui/spinner'
-import { useEmailSignIn } from '../_vm/use-email-sign-in'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { newPasswordSchema } from '../schemas'
@@ -28,6 +27,8 @@ type NewPasswordFormValues = z.infer<typeof newPasswordSchema>
 export function NewPasswordForm() {
   const [error, setError] = useState<string | undefined>()
   const [success, setSuccess] = useState<string | undefined>()
+  const [isPending, startTransition] = useTransition()
+
   const form = useForm<NewPasswordFormValues>({
     resolver: zodResolver(newPasswordSchema),
     defaultValues: {
@@ -37,8 +38,6 @@ export function NewPasswordForm() {
 
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
-  console.log({ token })
-  const emailSignIn = useEmailSignIn()
 
   const handleSubmit = form.handleSubmit(async data => {
     setError('')
@@ -49,19 +48,21 @@ export function NewPasswordForm() {
       return
     }
 
-    try {
-      const res = await authCredentialsHttpApi.auth.newPassword.mutate({
-        password: data.password,
-        token,
-      })
-      setSuccess(res.success)
-    } catch (err) {
-      if (err instanceof TRPCClientError) {
-        setError(err.message)
-      } else {
-        setError('Что-то пошло не так. Попробуйте позже.')
+    startTransition(async () => {
+      try {
+        const res = await authCredentialsHttpApi.auth.newPassword.mutate({
+          password: data.password,
+          token,
+        })
+        setSuccess(res.success)
+      } catch (err) {
+        if (err instanceof TRPCClientError) {
+          setError(err.message)
+        } else {
+          setError('Что-то пошло не так. Попробуйте позже.')
+        }
       }
-    }
+    })
   })
 
   return (
@@ -81,7 +82,7 @@ export function NewPasswordForm() {
                     autoCapitalize="none"
                     autoComplete="password"
                     autoCorrect="off"
-                    disabled={emailSignIn.isPending}
+                    disabled={isPending}
                     {...field}
                   />
                 </FormControl>
@@ -91,8 +92,8 @@ export function NewPasswordForm() {
           />
           <FormError message={error} />
           <FormSuccess message={success} />
-          <Button disabled={emailSignIn.isPending} className="cursor-pointer">
-            {emailSignIn.isPending && (
+          <Button disabled={isPending} className="cursor-pointer">
+            {isPending && (
               <Spinner className="mr-2 h-4 w-4 " aria-label="Загрузка выхода" />
             )}
             Установить новый пароль

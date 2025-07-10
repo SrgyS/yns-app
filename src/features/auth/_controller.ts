@@ -40,8 +40,7 @@ export class AuthCredentialsController extends Controller {
       getVerificationToken: publicProcedure
         .input(z.string())
         .query(async ({ input }) => {
-          const existingToken =
-            await this.verificationTokenService.getVerificationToken(input)
+          const existingToken = await this.verificationTokenService.exec(input)
           if (!existingToken) {
             throw new TRPCError({
               code: 'NOT_FOUND',

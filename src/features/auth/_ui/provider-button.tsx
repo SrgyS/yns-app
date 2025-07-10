@@ -1,13 +1,14 @@
 'use client'
 
+import { useState } from 'react'
+import { ClientSafeProvider, signIn } from 'next-auth/react'
+import { Github, Globe } from 'lucide-react'
+import { DEAFAULT_LOGIN_REDIRECT } from '@/shared/config/public'
 import { Button } from '@/shared/ui/button'
 import { Spinner } from '@/shared/ui/spinner'
-import { Github, Globe } from 'lucide-react'
-import { ClientSafeProvider } from 'next-auth/react'
-import { useOAuthSignIn } from '../_vm/use-oauth-sign-in'
 
 export function ProviderButton({ provider }: { provider: ClientSafeProvider }) {
-  const oauthSignIn = useOAuthSignIn(provider)
+  const [isLoading, setIsLoading] = useState(false)
 
   const getIcon = (provider: ClientSafeProvider) => {
     switch (provider.id) {
@@ -20,15 +21,22 @@ export function ProviderButton({ provider }: { provider: ClientSafeProvider }) {
     }
   }
 
+  const oauthSignIn = () => {
+    setIsLoading(true)
+    signIn(provider.id, {
+      callbackUrl: DEAFAULT_LOGIN_REDIRECT,
+    })
+  }
+
   return (
     <Button
       variant="outline"
       type="button"
-      disabled={oauthSignIn.isPending}
-      onClick={() => oauthSignIn.signIn()}
+      disabled={isLoading}
+      onClick={oauthSignIn}
       className="cursor-pointer"
     >
-      {oauthSignIn.isPending ? (
+      {isLoading ? (
         <Spinner className="mr-2 h-4 w-4 animate-spin" aria-label="Вход" />
       ) : (
         getIcon(provider)

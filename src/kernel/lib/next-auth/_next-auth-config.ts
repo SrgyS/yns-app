@@ -47,7 +47,7 @@ export class NextAuthConfig {
       signIn: async ({ user, account }) => {
         console.log({ account })
         //Allow OAuth withput email verification
-        if (account?.type !== 'oauth') {
+        if (account?.type === 'oauth') {
           return true
         }
         const existingUser = await this.userRepository.findUserById(user.id)
@@ -101,8 +101,7 @@ export class NextAuthConfig {
           if (!credentials) {
             return null
           }
-          const result =
-            await this.authCredentialsService.validateCredentials(credentials)
+          const result = await this.authCredentialsService.exec(credentials)
           if (result?.success) {
             return result.user
           }

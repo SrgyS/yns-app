@@ -1,21 +1,26 @@
-'use client'
+import { Suspense } from 'react'
+import { CardWrapper } from '@/features/auth/_ui/card-wrapper'
+import { AuthFormSkeleton } from '@/shared/ui/auth-form-skeleton'
+import { NewVerificationForm } from '@/features/auth/_ui/new-verification-form'
 
-import dynamic from 'next/dynamic'
-
-const NewVerificationForm = dynamic(
-  () =>
-    import('@/features/auth/_ui/new-verification-form').then(
-      mod => mod.NewVerificationForm
-    ),
-  { ssr: false }
-)
-
+// Компонент-обертка для клиентских компонентов с useSearchParams
+function NewVerificationFormWrapper() {
+  return (
+    <Suspense fallback={<AuthFormSkeleton />}>
+      <NewVerificationForm />
+    </Suspense>
+  )
+}
 export default function VerifyRequestPage() {
   return (
     <>
-      <div className="container relative  flex-col items-center justify-center self-center pt-24">
-        <NewVerificationForm />
-      </div>
+      <CardWrapper
+        headerLabel="Подтверждение"
+        backButtonLabel="Назад к входу"
+        backButtonHref="/auth/sign-in"
+      >
+        <NewVerificationFormWrapper />
+      </CardWrapper>
     </>
   )
 }

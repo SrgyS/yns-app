@@ -22,7 +22,7 @@ export class AuthCredentialsService {
    * @param credentials - Объект с email и опциональным паролем.
    * @returns SharedUser если учетные данные верны и status верификации email или null, если нет.
    */
-  async validateCredentials(
+  async exec(
     credentials: z.infer<typeof emailSignInSchema>
   ): Promise<AuthResult> {
     const validatedFields = emailSignInSchema.safeParse(credentials)
@@ -48,7 +48,7 @@ export class AuthCredentialsService {
       return null
     }
 
-  if (!existingUser?.emailVerified) {
+    if (!existingUser?.emailVerified) {
       const verificationToken = await generateVerificationToken(
         validatedFields.data.email
       )
@@ -58,22 +58,22 @@ export class AuthCredentialsService {
         verificationToken.token
       )
 
-        return {
-          success: false,
-          error: 'EMAIL_UNVERIFIED',
-        }
-      }
-
       return {
-        success: true,
-        user: {
-          id: existingUser.id,
-          email: existingUser.email,
-          role: existingUser.role,
-          name: existingUser.name,
-          image: existingUser.image,
-          emailVerified: existingUser.emailVerified,
-        },
+        success: false,
+        error: 'EMAIL_UNVERIFIED',
       }
+    }
+
+    return {
+      success: true,
+      user: {
+        id: existingUser.id,
+        email: existingUser.email,
+        role: existingUser.role,
+        name: existingUser.name,
+        image: existingUser.image,
+        emailVerified: existingUser.emailVerified,
+      },
+    }
   }
 }
