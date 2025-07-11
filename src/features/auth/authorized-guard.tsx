@@ -18,7 +18,7 @@ export default function AuthorizedGuard({
 
   useEffect(() => {
     if (isUnauthenticated) {
-      signIn()
+      signIn(undefined, { callbackUrl: pathname })
     }
   }, [isUnauthenticated, pathname])
 
