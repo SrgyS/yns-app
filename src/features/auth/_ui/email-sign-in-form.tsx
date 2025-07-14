@@ -31,6 +31,7 @@ export function EmailSignInForm() {
   const router = useRouter()
 
   const searchParams = useSearchParams()
+  const callBackUrl = searchParams.get('callbackUrl')
 
   const errorUrl =
     searchParams.get('error') === 'OAuthAccountNotLinked'
@@ -48,8 +49,6 @@ export function EmailSignInForm() {
     },
   })
 
-  // const emailSignIn = useEmailSignIn()
-
   const handleSubmit = form.handleSubmit(async data => {
     setError('')
     setSuccess('')
@@ -58,7 +57,7 @@ export function EmailSignInForm() {
       try {
         const res = await signIn('credentials', {
           ...data,
-          callbackUrl: DEAFAULT_LOGIN_REDIRECT,
+          callbackUrl: callBackUrl || DEAFAULT_LOGIN_REDIRECT,
           redirect: false,
         })
 
