@@ -49,8 +49,6 @@ export function EmailSignInForm() {
     },
   })
 
-  // const emailSignIn = useEmailSignIn()
-
   const handleSubmit = form.handleSubmit(async data => {
     setError('')
     setSuccess('')
@@ -60,6 +58,7 @@ export function EmailSignInForm() {
         const res = await signIn('credentials', {
           ...data,
           callbackUrl: callBackUrl || DEAFAULT_LOGIN_REDIRECT,
+          redirect: false,
         })
 
         if (res && res.error) {
