@@ -7,6 +7,7 @@ import { UserEntityModule } from '@/entity/user/server'
 import { NextAuthModule } from '@/kernel/lib/next-auth/server'
 import { Container } from 'inversify'
 import { TrpcModule } from '@/kernel/lib/trpc/server'
+import { CourseDetailsModule } from '@/features/course-details/server'
 
 export function createServer() {
   const container = new Container()
@@ -18,6 +19,7 @@ export function createServer() {
     UserEntityModule,
     UpdateProfileModule,
     TrpcModule,
+    CourseDetailsModule
   )
 
   return container

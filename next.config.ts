@@ -6,6 +6,14 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '5mb',
     },
   },
+  // images: {
+  //   remotePatterns: [
+  //     {
+  //       protocol: "https",
+  //       hostname: "**",
+  //     },
+  //   ],
+  // },
   rewrites: async () => [
     {
       source: '/storage/:path*',

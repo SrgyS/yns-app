@@ -1,7 +1,7 @@
 import { ContainerModule } from 'inversify'
 import { GetCoursesListService } from './_services/get-courses-list'
 import { CoursesRepository } from './_repositories/course'
-import { GetCourseByIdService } from './_services/get-course-by-id'
+import { GetCourseService } from './_services/get-course'
 import { LessonRepository } from './_repositories/lesson'
 import { GetCourseLessonsService } from './_services/get-course-lessons'
 
@@ -9,9 +9,9 @@ export const CourseEntityModule = new ContainerModule(context => {
   const { bind } = context
   bind(GetCoursesListService).toSelf()
   bind(CoursesRepository).toSelf()
-  bind(GetCourseByIdService).toSelf()
+  bind(GetCourseService).toSelf()
   bind(LessonRepository).toSelf()
   bind(GetCourseLessonsService).toSelf()
 })
 
-export { GetCoursesListService, GetCourseByIdService, GetCourseLessonsService }
+export { GetCoursesListService, GetCourseService, GetCourseLessonsService }
