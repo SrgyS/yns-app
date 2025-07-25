@@ -12,7 +12,8 @@
     "prettier": "prettier -w .",
     "test": "jest",
     "test:e2e": "npx prisma migrate reset --force && playwright test",
-    "upload-content-schema": "ts-node --project tsconfig.script.json ./scripts/upload-content-schema https://raw.githubusercontent.com/SrgyS/content-shema/refs/heads/main/schemas/ ./src/shared/api/content/_schemas"
+    "upload-content-schema": "ts-node --project tsconfig.script.json ./scripts/upload-content-schema https://raw.githubusercontent.com/SrgyS/content-shema/main/schemas/ ./src/shared/api/content/_schemas",
+    "upload-content": "ts-node --project tsconfig.script.json -r tsconfig-paths/register ./scripts/upload-content"
   },
   "prisma": {
     "seed": "ts-node --project tsconfig.script.json prisma/seed.ts"
@@ -40,6 +41,7 @@
     "@trpc/server": "^11.4.2",
     "@types/bcryptjs": "^2.4.6",
     "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
     "bcryptjs": "^3.0.2",
     "ci": "^2.3.0",
     "class-variance-authority": "^0.7.1",
@@ -65,6 +67,7 @@
     "reflect-metadata": "^0.2.2",
     "resend": "^4.6.0",
     "tailwind-merge": "^3.3.0",
+    "tsconfig-paths": "^4.2.0",
     "yaml": "^2.8.0",
     "zod": "^3.25.64"
   },
@@ -84,6 +87,7 @@
     "@types/nodemailer": "^6.4.17",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/yaml": "^1.9.6",
     "dotenv": "^16.5.0",
     "eslint": "^9",
     "eslint-config-next": "15.3.3",
