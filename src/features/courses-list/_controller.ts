@@ -1,6 +1,6 @@
-import { Controller, publicProcedure, router } from '@/kernel/lib/trpc/server'
+import { Controller, publicProcedure, router } from '@/kernel/lib/trpc/module'
 
-import { GetCoursesListService } from '@/entity/course/server'
+import { GetCoursesListService } from '@/entity/course/module'
 import { injectable } from 'inversify'
 
 @injectable()

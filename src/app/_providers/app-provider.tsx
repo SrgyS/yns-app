@@ -8,6 +8,7 @@ import { ComposeChildren } from '@/shared/lib/react'
 import { sharedApi } from '@/kernel/lib/trpc/client'
 import { httpBatchLink } from '@trpc/client'
 import { publicConfig } from '@/shared/config/public'
+import { Toaster } from '@/shared/ui/sonner'
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient())
@@ -26,10 +27,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       <sharedApi.Provider client={trpcClient} queryClient={queryClient}>
         <></>
       </sharedApi.Provider>
+
       <QueryClientProvider client={queryClient} />
       <ThemeProvider />
       <AppSessionProvider />
-      {children}
+      <>
+        <Toaster />
+        {children}
+      </>
     </ComposeChildren>
   )
 }

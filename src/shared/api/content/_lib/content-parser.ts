@@ -29,9 +29,7 @@ export class ContentParser {
       }
 
       const dataToValidate = { ...parsedObject, ...metadata }
-      console.log({ dataToValidate })
       if (this.ajv.validate(schema, dataToValidate)) {
-        console.log('valid')
         return dataToValidate as T
       } else {
         console.error('AJV errors:', this.ajv.errors)

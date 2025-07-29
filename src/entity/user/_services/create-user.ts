@@ -1,13 +1,13 @@
-import { CreateUserService } from '@/kernel/lib/next-auth/server'
 import { injectable } from 'inversify'
-import { UserRepository } from '../_repositories/user'
 import { AdapterUser } from 'next-auth/adapters'
+import bcrypt from 'bcryptjs'
+import { UserRepository } from '../_repositories/user'
 import { privateConfig } from '@/shared/config/private'
 import { ROLES, SharedUser } from '@/kernel/domain/user'
 import { generateId } from '@/shared/lib/id'
-import bcrypt from 'bcryptjs'
 import { generateVerificationToken } from '@/features/auth/_lib/tokens'
 import { sendVerificationEmail } from '@/shared/lib/mail'
+import { CreateUserService } from '@/kernel/services/create-user'
 
 @injectable()
 export class CreateUserServiceImpl implements CreateUserService {

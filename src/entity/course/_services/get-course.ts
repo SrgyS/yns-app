@@ -12,10 +12,11 @@ type Query =
 export class GetCourseService {
   constructor(private coursesRepository: CoursesRepository) {}
   async exec(query: Query) {
-    if ('slug' in query) {
-      return this.coursesRepository.courseSlug(query.slug)
-    }
+    // if ('slug' in query) {
+    //   return this.coursesRepository.courseSlug(query.slug)
+    // }
 
-    return this.coursesRepository.courseById(query.id)
+    // return this.coursesRepository.courseById(query.id)
+    return query
   }
 }

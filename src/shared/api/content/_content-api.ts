@@ -3,7 +3,6 @@ import { CacheStrategy } from './_lib/cache-strategy'
 import { ContentParser } from './_lib/content-parser'
 import { FileFetcher } from './_lib/file-fetcher'
 import { Manifest } from './_schemas/manifest.schema'
-
 import { Lesson } from './_schemas/lesson.schema'
 import manifestSchema from '@/shared/api/content/_schemas/manifest.schema.json'
 import courseSchema from '@/shared/api/content/_schemas/course.schema.json'

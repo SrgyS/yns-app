@@ -96,9 +96,10 @@ model Course {
   image              String
   draft              Boolean
   durationWeeks Int
+  product    CourseProduct?
 
   dailyPlans DailyPlan[] // Дни (планы) в фиксированном курсе
-  product    CourseProduct?
+
   enrollments        UserCourseEnrollment[]
   mealPlans          MealPlan[] 
 
@@ -114,8 +115,8 @@ model UserCourseEnrollment {
   courseId          String
   course            Course       @relation(fields: [courseId], references: [id])
 
-  selectedWorkoutDays DayOfWeek[] // <-- Здесь! Enum DayOfWeek
-  startDate         DateTime     // Дата начала прохождения курса
+  selectedWorkoutDays DayOfWeek[]
+  startDate         DateTime
 
   hasFeedback       Boolean      @default(false) // Куплена ли версия с обратной связью
 

@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DailyPlan",
+  "description": "Схема для описания ежедневного плана в рамках курса",
+  "type": "object",
+  "properties": {
+    "slug": {
+      "type": "string",
+      "description": "Уникальный идентификатор тренировки",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "readOnly": true
+    },
+    "dayNumber": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Порядковый номер дня в курсе"
+    },
+    "weekNumber": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Порядковый номер недели в курсе"
+    },
+    "description": {
+      "type": "string",
+      "description": "Описание дня",
+      "nullable": true
+    },
+    "courseSlug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "description": "Слаг курса, к которому относится этот ежедневный план"
+    },
+    "warmupId": {
+      "type": "string",
+      "description": "ID разминки (slug Workout)"
+    },
+    "mainWorkoutId": {
+      "type": "string",
+      "description": "ID основной тренировки (slug Workout)",
+      "nullable": true
+    },
+    "mealPlanId": {
+      "type": "string",
+      "description": "ID плана питания (slug MealPlan)"
+    },
+    "contentBlocks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "text"
+            ],
+            "description": "Тип блока контента"
+          },
+          "text": {
+            "type": "string",
+            "description": "Текст блока контента"
+          }
+        },
+        "required": [
+          "type",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Дополнительные блоки контента для этого дня"
+    }
+  },
+  "required": [
+    "dayNumber",
+    "weekNumber",
+    "courseSlug",
+    "warmupId",
+    "mealPlanId"
+  ],
+  "additionalProperties": false
+}

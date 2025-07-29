@@ -1,8 +1,9 @@
 export type {
-  Course,
   CourseBaseInfo,
   CourseFullInfo,
   Product,
   Lesson,
   ContentBlock,
-} from "./_domain/types";
+} from './_domain/types'
+
+export type { Course } from './_domain/course'

@@ -7,8 +7,8 @@ import { CourseSlug, LessonSlug } from '@/kernel/domain/course'
 import { isDefined } from '@/shared/api/content/_lib/assert'
 
 @injectable()
-export class LessonRepository {
-  courseLessons = async (courseSlug: CourseSlug): Promise<Lesson[]> => {
+export class DailyPlanRepository {
+  dailyPlan = async (courseSlug: CourseSlug): Promise<Lesson[]> => {
     const course = await contentApi.fetchCourse(courseSlug)
 
     const fetchLesson = async (lessonSlug: LessonSlug): Promise<Lesson> => {
@@ -22,16 +22,24 @@ export class LessonRepository {
           .filter(isDefined),
         title,
         shortDescription,
-        courseId: course.id,
+        courseId: course.slug ?? '',
         slug: lessonSlug,
       }
     }
 
-    return allSuccess(course.lessons.map(fetchLesson), (value, i) => {
+    if (!course.dailyPlans) {
+      logger.error({
+        msg: 'Course dailyPlans is undefined',
+        slug: course.slug,
+      })
+      return []
+    }
+
+    return allSuccess(course.dailyPlans.map(fetchLesson), (value, i) => {
       if (value.status === 'rejected') {
         logger.error({
           msg: 'Lesson by slug not found',
-          slug: course.lessons[i],
+          slug: course.dailyPlans?.[i],
           error: value.reason,
         })
       }

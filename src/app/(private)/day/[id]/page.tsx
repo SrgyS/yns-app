@@ -1,4 +1,4 @@
-import { CalendarTabs } from '@/features/practice/ui/calendar-tabs'
+import { CalendarTabs } from '@/features/practice/_ui/calendar-tabs'
 import { Button } from '@/shared/ui/button'
 
 export default function DayPage() {

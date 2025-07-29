@@ -2,7 +2,7 @@ import {
   checkAbilityInputProcedure,
   Controller,
   router,
-} from '@/kernel/lib/trpc/server'
+} from '@/kernel/lib/trpc/module'
 import {
   GetProfileService,
   UpdateProfileService,

@@ -1,90 +1,75 @@
 {
-"$schema": "http://json-schema.org/draft-07/schema#",
-"type": "object",
-"required": [
-    "id",
-    "title",
-    "description",
-    "lessons",
-    "thumbnail",
-    "image",
-    "product"
-],
-"additionalProperties": false,
-"properties": {
-    "id": {
-    "$ref": "#/definitions/cuid"
-    },
-    "title": {
-    "type": "string",
-    "maxLength": 100
-    },
-    "description": {
-    "type": "string"
-    },
-    "shortDescription": {
-    "type": "string"
-    },
-    "thumbnail": {
-    "type": "string",
-    "$comment": "url to image sizes 600x300"
-    },
-    "image": {
-    "type": "string",
-    "$comment": "url to image sizes 1920x600"
-    },
-    "dependencies": {
-    "type": "array",
-    "items": {
-        "$ref": "#/definitions/cuid"
-    }
-    },
-    "lessons": {
-    "type": "array",
-    "items": {
-        "$ref": "#/definitions/cuid"
-    }
-},
-"product": {
-    "$ref": "#/definitions/product"
-}
-},
-"definitions": {
-"cuid": {
-    "type": "string",
-    "title": "cuid"
-    },
-    "product": {
-    "oneOf": [
-        {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-                "access"
-            ],
-            "properties": {
-                "access": {
-                    "const": "free"
-                }
-            }
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Course",
+    "description": "Схема для описания курса",
+    "type": "object",
+    "properties": {
+        "slug": {
+            "type": "string",
+            "description": "Уникальный идентификатор тренировки",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "readOnly": true
         },
-        {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-            "access",
-            "price"
-        ],
-        "properties": {
-            "access": {
-                "const": "paid"
+        "title": {
+            "type": "string",
+            "description": "Название курса"
+        },
+        "description": {
+            "type": "string",
+            "description": "Полное описание курса"
+        },
+        "shortDescription": {
+            "type": "string",
+            "description": "Краткое описание курса",
+            "nullable": true
+        },
+        "thumbnail": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL миниатюры курса"
+        },
+        "image": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL основного изображения курса"
+        },
+        "draft": {
+            "type": "boolean",
+            "description": "Является ли курс черновиком (неопубликованным)"
+        },
+        "durationWeeks": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Продолжительность курса в неделях"
+        },
+        "dailyPlans": {
+            "type": "array",
+            "description": "Список слагов ежедневных планов, входящих в курс",
+            "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "description": "Слаг ежедневного плана"
             },
-            "price": {
-                "type": "number"
-            }
+            "uniqueItems": true
+        },
+        "mealPlans": {
+            "type": "array",
+            "description": "Список слагов планов питания, входящих в курс",
+            "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "description": "Слаг плана питания"
+            },
+            "uniqueItems": true
         }
-        }
-    ]
-}
-}
+    },
+    "required": [
+        "title",
+        "description",
+        "thumbnail",
+        "image",
+        "draft",
+        "durationWeeks"
+    ],
+    "additionalProperties": false
 }

@@ -1,0 +1,48 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "MealPlan",
+    "description": "Схема для описания плана питания",
+    "type": "object",
+    "properties": {
+        "slug": {
+            "type": "string",
+            "description": "Уникальный идентификатор тренировки",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "readOnly": true
+        },
+        "title": {
+            "type": "string",
+            "description": "Название плана питания"
+        },
+        "description": {
+            "type": "string",
+            "description": "Описание плана питания",
+            "nullable": true
+        },
+        "courseSlug": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "description": "Слаг курса, к которому относится этот план питания"
+        },
+        "breakfastRecipeId": {
+            "type": "string",
+            "description": "ID рецепта для завтрака (slug Recipe)"
+        },
+        "lunchRecipeId": {
+            "type": "string",
+            "description": "ID рецепта для обеда (slug Recipe)"
+        },
+        "dinnerRecipeId": {
+            "type": "string",
+            "description": "ID рецепта для ужина (slug Recipe)"
+        }
+    },
+    "required": [
+        "title",
+        "courseSlug",
+        "breakfastRecipeId",
+        "lunchRecipeId",
+        "dinnerRecipeId"
+    ],
+    "additionalProperties": false
+}

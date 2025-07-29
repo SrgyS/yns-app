@@ -1,7 +1,7 @@
 'use client'
 
-'use client'
-import { Course } from '@/entity/course/course'
+
+import { Course } from '@/entity/course'
 import { CourseItem } from './course-item'
 import { coursesListApi } from '@/features/courses-list/_api'
 

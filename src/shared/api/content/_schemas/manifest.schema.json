@@ -2,15 +2,38 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
     "properties": {
-    "courses": {
-        "type": "array",
-        "items": {
-            "type": "string"
+        "courses": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "description": "Path to a course YAML file (e.g., 'courses/my-course.yaml')"
+            },
+            "description": "List of paths to course content YAML files."
+        },
+        "workouts": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "description": "Path to a workout YAML file (e.g., 'workouts/warmup-basic.yaml')"
+            },
+            "description": "List of paths to workout content YAML files."
+        },
+        "recipes": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "description": "Path to a recipe YAML file (e.g., 'recipes/oatmeal-apple.yaml')"
+            },
+            "description": "List of paths to recipe content YAML files."
         }
-    }
     },
     "additionalProperties": false,
     "required": [
-        "courses"
+        "courses",
+        "workouts",
+        "recipes"
     ]
 }

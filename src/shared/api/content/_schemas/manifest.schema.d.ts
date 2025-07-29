@@ -6,5 +6,16 @@
  */
 
 export interface Manifest {
+  /**
+   * List of paths to course content YAML files.
+   */
   courses: string[];
+  /**
+   * List of paths to workout content YAML files.
+   */
+  workouts: string[];
+  /**
+   * List of paths to recipe content YAML files.
+   */
+  recipes: string[];
 }
