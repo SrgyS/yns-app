@@ -1,15 +1,27 @@
-import { Controller, authorizedProcedure, router } from '@/kernel/lib/trpc/module'
+import {
+  Controller,
+  authorizedProcedure,
+  router,
+} from '@/kernel/lib/trpc/module'
 import { injectable } from 'inversify'
 import { z } from 'zod'
 import { DayOfWeek } from '@prisma/client'
-import { CreateCourseEnrollmentService, GetCourseEnrollmentService, GetUserDailyPlanService} from '@/entity/course/module'
+import {
+  CreateCourseEnrollmentService,
+  GetCourseEnrollmentService,
+  GetUserDailyPlanService,
+  UpdateWorkoutDaysService,
+  GetEnrollmentByIdService,
+} from '@/entity/course/module'
 
 @injectable()
 export class CourseEnrollmentController extends Controller {
   constructor(
     private createCourseEnrollmentService: CreateCourseEnrollmentService,
     private getCourseEnrollmentService: GetCourseEnrollmentService,
-    private getUserDailyPlanService: GetUserDailyPlanService
+    private getUserDailyPlanService: GetUserDailyPlanService,
+    private updateWorkoutDaysService: UpdateWorkoutDaysService,
+    private getEnrollmentByIdService: GetEnrollmentByIdService
   ) {
     super()
   }
@@ -20,7 +32,7 @@ export class CourseEnrollmentController extends Controller {
         .input(
           z.object({
             courseId: z.string(),
-            startDate: z.date(),
+            startDate: z.coerce.date(),
             selectedWorkoutDays: z.array(z.nativeEnum(DayOfWeek)),
             hasFeedback: z.boolean().optional(),
           })
@@ -58,6 +70,25 @@ export class CourseEnrollmentController extends Controller {
         .query(async ({ input }) => {
           const dailyPlan = await this.getUserDailyPlanService.execute(input)
           return dailyPlan
+        }),
+
+      updateWorkoutDays: authorizedProcedure
+        .input(
+          z.object({
+            enrollmentId: z.string(),
+            selectedWorkoutDays: z.array(z.nativeEnum(DayOfWeek)),
+          })
+        )
+        .mutation(async ({ input }) => {
+          await this.updateWorkoutDaysService.execute(input)
+          return { success: true }
+        }),
+
+      getEnrollmentById: authorizedProcedure
+        .input(z.string())
+        .query(async ({ input }) => {
+          const enrollment = await this.getEnrollmentByIdService.execute(input)
+          return enrollment
         }),
     }),
   })

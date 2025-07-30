@@ -7,6 +7,8 @@ import { courseEnrollmentApi } from '../_api'
 export function useCourseEnrollment() {
   const createEnrollmentMutation = courseEnrollmentApi.course.createEnrollment.useMutation()
   const getEnrollmentQuery = courseEnrollmentApi.course.getEnrollment.useQuery
+  const getEnrollmentByIdQuery =
+    courseEnrollmentApi.course.getEnrollmentById.useQuery
 
   const createEnrollment = useCallback(
     async (params: {
@@ -34,9 +36,17 @@ export function useCourseEnrollment() {
     [getEnrollmentQuery]
   )
 
+  const getEnrollmentById = useCallback(
+    (enrollmentId: string) => {
+      return getEnrollmentByIdQuery(enrollmentId)
+    },
+    [getEnrollmentByIdQuery]
+  )
+
   return {
     createEnrollment,
     getEnrollment,
+    getEnrollmentById,
     isCreating: createEnrollmentMutation.isPending,
   }
 }

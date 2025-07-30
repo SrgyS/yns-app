@@ -8,6 +8,8 @@ import { UserCourseEnrollmentRepository } from './_repositories/user-course-enro
 import { CreateCourseEnrollmentService } from './_services/create-course-enrollment'
 import { GetCourseEnrollmentService } from './_services/get-course-enrollment'
 import { GetUserDailyPlanService } from './_services/get-user-daily-plan'
+import { UpdateWorkoutDaysService } from './_services/update-workout-days'
+import { GetEnrollmentByIdService } from './_services/get-enrollment-by-id'
 
 export const CourseEntityModule = new ContainerModule(context => {
   const { bind } = context
@@ -20,6 +22,8 @@ export const CourseEntityModule = new ContainerModule(context => {
   bind(CreateCourseEnrollmentService).toSelf()
   bind(GetCourseEnrollmentService).toSelf()
   bind(GetUserDailyPlanService).toSelf()
+  bind(UpdateWorkoutDaysService).toSelf()
+  bind(GetEnrollmentByIdService).toSelf()
 })
 
 export {
@@ -29,4 +33,6 @@ export {
   CreateCourseEnrollmentService,
   GetCourseEnrollmentService,
   GetUserDailyPlanService,
+  UpdateWorkoutDaysService,
+  GetEnrollmentByIdService,
 }

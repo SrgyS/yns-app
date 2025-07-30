@@ -11,11 +11,16 @@ export class CreateCourseEnrollmentService {
     private userDailyPlanRepository: UserDailyPlanRepository
   ) {}
 
-  async execute(params: CreateUserCourseEnrollmentParams): Promise<UserCourseEnrollment> {
+  async execute(
+    params: CreateUserCourseEnrollmentParams
+  ): Promise<UserCourseEnrollment> {
     try {
-      const enrollment = await this.userCourseEnrollmentRepository.createEnrollment(params)
+      const enrollment =
+        await this.userCourseEnrollmentRepository.createEnrollment(params)
 
-      await this.userDailyPlanRepository.generateUserDailyPlansForEnrollment(enrollment.id)
+      await this.userDailyPlanRepository.generateUserDailyPlansForEnrollment(
+        enrollment.id
+      )
 
       logger.info({
         msg: 'Successfully created course enrollment with daily plans',
