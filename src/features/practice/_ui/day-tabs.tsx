@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react"
-import { addDays, format, startOfWeek } from "date-fns"
+import { useMemo, useState } from 'react'
+import { addDays, format, startOfWeek } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { DAY_KEYS } from "../constant"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs"
-import { WarmUp } from "./warm-up"
+import { DAY_KEYS } from '../constant'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
+import { WarmUp } from './warm-up'
 
 export function DayTabs({
   weekNumber,
@@ -24,7 +24,7 @@ export function DayTabs({
       const date = addDays(startOfWeek(weekStart, { weekStartsOn: 1 }), i)
       return {
         key: DAY_KEYS[i],
-        label: format(date, 'ЕEE', { locale: ru }).slice(1,3),
+        label: format(date, 'ЕEE', { locale: ru }).slice(1, 3),
         dateStr: format(date, 'd', { locale: ru }),
         date,
         isToday:
@@ -51,10 +51,8 @@ export function DayTabs({
     data-[state=active]:text-primary-foreground
     data-[state=active]:border-primary"
           >
-            <span className='text-lg'>{d.label}</span>
-            <span className="text-sm">
-              {d.dateStr}
-            </span>
+            <span className="text-lg">{d.label}</span>
+            <span className="text-sm">{d.dateStr}</span>
           </TabsTrigger>
         ))}
       </TabsList>
@@ -62,8 +60,7 @@ export function DayTabs({
       {days.map(d => (
         <TabsContent key={d.key} value={d.key} className="flex flex-col gap-4">
           <WarmUp title={'Зарядка'} />
-            <WarmUp title={'Тренировка'}/>
-            
+          <WarmUp title={'Тренировка'} />
         </TabsContent>
       ))}
     </Tabs>

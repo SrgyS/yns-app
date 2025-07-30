@@ -41,7 +41,7 @@ export type CourseProduct =
       dayNumberInCourse: number
       isWorkoutDay: boolean
       warmupId: string
-      mainWorkoutId?: string
+      mainWorkoutId: string | null
       mealPlanId: string
       warmupProgress: CompletionStatus
       mainWorkoutProgress: CompletionStatus

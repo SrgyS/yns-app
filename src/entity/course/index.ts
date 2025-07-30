@@ -6,4 +6,12 @@ export type {
   ContentBlock,
 } from './_domain/types'
 
-export type { Course } from './_domain/course'
+export type {
+  Course,
+  CourseProduct,
+  UserCourseEnrollment,
+  UserDailyPlan,
+  CreateUserCourseEnrollmentParams,
+  GetUserDailyPlanByEnrollmentParams,
+  GetUserDailyPlanParams,
+} from './_domain/course'

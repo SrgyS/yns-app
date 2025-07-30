@@ -1,7 +1,7 @@
 import { injectable } from 'inversify'
 import { allSuccess } from '@/shared/lib/promise'
 import { dbClient } from '@/shared/lib/db'
-import { Course, CourseProduct } from '../_domain/course'
+import { Course, CourseProduct } from '../../course'
 import { logger } from '@/shared/lib/logger'
 import {
   CourseDependency as PrismaCourseDependency,

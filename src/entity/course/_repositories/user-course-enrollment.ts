@@ -1,6 +1,6 @@
 import { injectable } from 'inversify'
 import { dbClient } from '@/shared/lib/db'
-import { UserCourseEnrollment, CreateUserCourseEnrollmentParams } from '../_domain/course'
+import { UserCourseEnrollment, CreateUserCourseEnrollmentParams } from '../../course'
 import { logger } from '@/shared/lib/logger'
 import { UserCourseEnrollment as PrismaUserCourseEnrollment } from '@prisma/client'
 
