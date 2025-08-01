@@ -7,21 +7,23 @@ import { injectable } from 'inversify'
 import { z } from 'zod'
 import { DayOfWeek } from '@prisma/client'
 import {
-  CreateCourseEnrollmentService,
+  CreateUserCourseEnrollmentService,
   GetCourseEnrollmentService,
   GetUserDailyPlanService,
-  UpdateWorkoutDaysService,
-  GetEnrollmentByIdService,
+  GetUserEnrollmentsService,
+  GetActiveEnrollmentService,
+  GetUserWorkoutDaysService,
 } from '@/entity/course/module'
 
 @injectable()
 export class CourseEnrollmentController extends Controller {
   constructor(
-    private createCourseEnrollmentService: CreateCourseEnrollmentService,
+    private CreateUserCourseEnrollmentService: CreateUserCourseEnrollmentService,
     private getCourseEnrollmentService: GetCourseEnrollmentService,
     private getUserDailyPlanService: GetUserDailyPlanService,
-    private updateWorkoutDaysService: UpdateWorkoutDaysService,
-    private getEnrollmentByIdService: GetEnrollmentByIdService
+    private getUserEnrollmentsService: GetUserEnrollmentsService,
+    private getActiveEnrollmentService: GetActiveEnrollmentService,
+    private getUserWorkoutDaysService: GetUserWorkoutDaysService
   ) {
     super()
   }
@@ -38,10 +40,11 @@ export class CourseEnrollmentController extends Controller {
           })
         )
         .mutation(async ({ input, ctx }) => {
-          const enrollment = await this.createCourseEnrollmentService.execute({
-            userId: ctx.session.user.id,
-            ...input,
-          })
+          const enrollment =
+            await this.CreateUserCourseEnrollmentService.execute({
+              userId: ctx.session.user.id,
+              ...input,
+            })
           return enrollment
         }),
 
@@ -64,6 +67,7 @@ export class CourseEnrollmentController extends Controller {
         .input(
           z.object({
             userId: z.string(),
+            courseId: z.string(),
             date: z.date(),
           })
         )
@@ -72,23 +76,37 @@ export class CourseEnrollmentController extends Controller {
           return dailyPlan
         }),
 
-      updateWorkoutDays: authorizedProcedure
+      getUserEnrollments: authorizedProcedure
         .input(
           z.object({
-            enrollmentId: z.string(),
-            selectedWorkoutDays: z.array(z.nativeEnum(DayOfWeek)),
+            userId: z.string(),
           })
         )
-        .mutation(async ({ input }) => {
-          await this.updateWorkoutDaysService.execute(input)
-          return { success: true }
+        .query(async ({ input }) => {
+          const enrollments = await this.getUserEnrollmentsService.execute(
+            input.userId
+          )
+          return enrollments
         }),
 
-      getEnrollmentById: authorizedProcedure
+      getActiveEnrollment: authorizedProcedure
+        .input(
+          z.object({
+            userId: z.string(),
+          })
+        )
+        .query(async ({ input }) => {
+          const enrollment = await this.getActiveEnrollmentService.execute(
+            input.userId
+          )
+          return enrollment
+        }),
+      getUserWorkoutDays: authorizedProcedure
         .input(z.string())
         .query(async ({ input }) => {
-          const enrollment = await this.getEnrollmentByIdService.execute(input)
-          return enrollment
+          const workoutDays =
+            await this.getUserWorkoutDaysService.execute(input)
+          return workoutDays
         }),
     }),
   })

@@ -4,16 +4,21 @@ import { ru } from 'date-fns/locale'
 import { DAY_KEYS } from '../constant'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
 import { WarmUp } from './warm-up'
+import { useDailyPlan } from '../_vm/use-daily-plan'
 
 export function DayTabs({
   weekNumber,
   programStart,
   currentDate,
+  courseId,
 }: {
   weekNumber: number
   programStart: Date
   currentDate: Date
+  courseId: string
 }) {
+  const { getDailyPlan } = useDailyPlan()
+
   const weekStart = useMemo(
     () => addDays(programStart, (weekNumber - 1) * 7),
     [weekNumber, programStart]
@@ -57,12 +62,41 @@ export function DayTabs({
         ))}
       </TabsList>
 
-      {days.map(d => (
-        <TabsContent key={d.key} value={d.key} className="flex flex-col gap-4">
-          <WarmUp title={'Зарядка'} />
-          <WarmUp title={'Тренировка'} />
-        </TabsContent>
-      ))}
+      {days.map(d => {
+        const dailyPlanQuery = getDailyPlan(courseId, d.date)
+
+        return (
+          <TabsContent
+            key={d.key}
+            value={d.key}
+            className="flex flex-col gap-4"
+          >
+            {dailyPlanQuery?.data ? (
+              <>
+                {dailyPlanQuery.data.warmupId && (
+                  <WarmUp
+                    title="Зарядка"
+                    workoutId={dailyPlanQuery.data.warmupId}
+                    isWorkoutDay={dailyPlanQuery.data.isWorkoutDay}
+                  />
+                )}
+                {dailyPlanQuery.data.mainWorkoutId && (
+                  <WarmUp
+                    title="Тренировка"
+                    workoutId={dailyPlanQuery.data.mainWorkoutId}
+                    isWorkoutDay={dailyPlanQuery.data.isWorkoutDay}
+                  />
+                )}
+              </>
+            ) : (
+              <>
+                <WarmUp title="Зарядка" />
+                <WarmUp title="Тренировка" />
+              </>
+            )}
+          </TabsContent>
+        )
+      })}
     </Tabs>
   )
 }

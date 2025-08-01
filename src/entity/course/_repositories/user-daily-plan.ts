@@ -56,55 +56,22 @@ export class UserDailyPlanRepository {
 
         const dayOfWeek = this.getDayOfWeek(planDate)
         const isWorkoutDay = selectedWorkoutDays.includes(dayOfWeek)
-
-        // Проверяем, существует ли уже запись для этой даты и пользователя
-        const existingPlan = await dbClient.userDailyPlan.findUnique({
-          where: {
-            userId_date: {
-              userId: enrollment.userId,
-              date: planDate,
-            },
+        const userDailyPlan = await dbClient.userDailyPlan.create({
+          data: {
+            userId: enrollment.userId,
+            enrollmentId: enrollment.id,
+            date: planDate,
+            dayNumberInCourse: dailyPlan.dayNumber,
+            isWorkoutDay,
+            warmupId: dailyPlan.warmupId,
+            mainWorkoutId: dailyPlan.mainWorkoutId,
+            mealPlanId: dailyPlan.mealPlanId,
+            warmupProgress: 'NOT_STARTED',
+            mainWorkoutProgress: 'NOT_STARTED',
+            mealPlanProgress: 'NOT_STARTED',
           },
         })
-
-        if (existingPlan) {
-          // Если запись уже существует, обновляем её данными нового enrollment
-          const updatedPlan = await dbClient.userDailyPlan.update({
-            where: { id: existingPlan.id },
-            data: {
-              enrollmentId: enrollment.id,
-              dayNumberInCourse: dailyPlan.dayNumber,
-              isWorkoutDay,
-              warmupId: dailyPlan.warmupId,
-              mainWorkoutId: dailyPlan.mainWorkoutId,
-              mealPlanId: dailyPlan.mealPlanId,
-              warmupProgress: 'NOT_STARTED',
-              mainWorkoutProgress: 'NOT_STARTED',
-              mealPlanProgress: 'NOT_STARTED',
-            },
-          })
-          userDailyPlans.push(this.mapPrismaUserDailyPlanToDomain(updatedPlan))
-        } else {
-          // Если записи нет, создаём новую
-          const userDailyPlan = await dbClient.userDailyPlan.create({
-            data: {
-              userId: enrollment.userId,
-              enrollmentId: enrollment.id,
-              date: planDate,
-              dayNumberInCourse: dailyPlan.dayNumber,
-              isWorkoutDay,
-              warmupId: dailyPlan.warmupId,
-              mainWorkoutId: dailyPlan.mainWorkoutId,
-              mealPlanId: dailyPlan.mealPlanId,
-              warmupProgress: 'NOT_STARTED',
-              mainWorkoutProgress: 'NOT_STARTED',
-              mealPlanProgress: 'NOT_STARTED',
-            },
-          })
-          userDailyPlans.push(
-            this.mapPrismaUserDailyPlanToDomain(userDailyPlan)
-          )
-        }
+        userDailyPlans.push(this.mapPrismaUserDailyPlanToDomain(userDailyPlan))
       }
       logger.info({
         msg: 'Generated user daily plans for enrollment',
@@ -139,10 +106,22 @@ export class UserDailyPlanRepository {
     params: GetUserDailyPlanParams
   ): Promise<UserDailyPlan | null> {
     try {
+      // Теперь нужно найти enrollment для пользователя и курса
+      const enrollment = await dbClient.userCourseEnrollment.findFirst({
+        where: {
+          userId: params.userId,
+          courseId: params.courseId,
+        },
+      })
+
+      if (!enrollment) {
+        return null
+      }
+
       const userDailyPlan = await dbClient.userDailyPlan.findUnique({
         where: {
-          userId_date: {
-            userId: params.userId,
+          enrollmentId_date: {
+            enrollmentId: enrollment.id,
             date: params.date,
           },
         },
@@ -203,6 +182,7 @@ export class UserDailyPlanRepository {
       throw new Error('Failed to get user daily plans')
     }
   }
+
   async updateFutureWorkoutDays(
     enrollmentId: string,
     selectedWorkoutDays: DayOfWeek[]
@@ -270,7 +250,6 @@ export class UserDailyPlanRepository {
       throw new Error('Failed to update future workout days')
     }
   }
-
   // deleteFuturePlans(enrollmentId: string) {
   //   return dbClient.userDailyPlan.deleteMany({
   //     where: {

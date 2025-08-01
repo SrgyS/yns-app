@@ -5,7 +5,7 @@ export function MainNav() {
     <nav className="flex items-center gap-6 text-sm font-medium flex-row">
       <Link
         className="transition-colors hover:text-foreground/80 text-foreground/60"
-        href="/course"
+        href="/"
       >
         Главная
       </Link>

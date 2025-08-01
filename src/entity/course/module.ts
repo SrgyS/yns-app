@@ -5,11 +5,12 @@ import { GetCourseService } from './_services/get-course'
 import { UserDailyPlanRepository } from './_repositories/user-daily-plan'
 import { GetCourseLessonsService } from './_services/get-daily-plan'
 import { UserCourseEnrollmentRepository } from './_repositories/user-course-enrollment'
-import { CreateCourseEnrollmentService } from './_services/create-course-enrollment'
+import { CreateUserCourseEnrollmentService } from './_services/create-user-course-enrollment'
 import { GetCourseEnrollmentService } from './_services/get-course-enrollment'
 import { GetUserDailyPlanService } from './_services/get-user-daily-plan'
-import { UpdateWorkoutDaysService } from './_services/update-workout-days'
-import { GetEnrollmentByIdService } from './_services/get-enrollment-by-id'
+import { GetUserEnrollmentsService } from './_services/get-user-enrollments'
+import { GetActiveEnrollmentService } from './_services/get-active-enrollment'
+import { GetUserWorkoutDaysService } from './_services/get-user-workout-days'
 
 export const CourseEntityModule = new ContainerModule(context => {
   const { bind } = context
@@ -19,20 +20,22 @@ export const CourseEntityModule = new ContainerModule(context => {
   bind(UserDailyPlanRepository).toSelf()
   bind(GetCourseLessonsService).toSelf()
   bind(UserCourseEnrollmentRepository).toSelf()
-  bind(CreateCourseEnrollmentService).toSelf()
+  bind(CreateUserCourseEnrollmentService).toSelf()
   bind(GetCourseEnrollmentService).toSelf()
   bind(GetUserDailyPlanService).toSelf()
-  bind(UpdateWorkoutDaysService).toSelf()
-  bind(GetEnrollmentByIdService).toSelf()
+  bind(GetUserEnrollmentsService).toSelf()
+  bind(GetActiveEnrollmentService).toSelf()
+  bind(GetUserWorkoutDaysService).toSelf()
 })
 
 export {
   GetCoursesListService,
   GetCourseService,
   GetCourseLessonsService,
-  CreateCourseEnrollmentService,
+  CreateUserCourseEnrollmentService,
   GetCourseEnrollmentService,
   GetUserDailyPlanService,
-  UpdateWorkoutDaysService,
-  GetEnrollmentByIdService,
+  GetUserEnrollmentsService,
+  GetActiveEnrollmentService,
+  GetUserWorkoutDaysService,
 }

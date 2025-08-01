@@ -133,4 +133,9 @@ export class UserCourseEnrollmentRepository {
       throw new Error('Failed to update selected workout days')
     }
   }
+
+  async getUserWorkoutDays(userId: string, courseId: string): Promise<DayOfWeek[]> {
+    const enrollment = await this.getEnrollment(userId, courseId)
+    return enrollment?.selectedWorkoutDays ?? []
+  }
 }

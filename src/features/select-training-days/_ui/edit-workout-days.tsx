@@ -1,16 +1,16 @@
-import { Button } from "@/shared/ui/button";
-import { DayOfWeek } from "@prisma/client";
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
-import { useCurrentDay } from "../_vm/use-current-day";
-import { DayItem } from "./day-item";
+import { Button } from '@/shared/ui/button'
+import { DayOfWeek } from '@prisma/client'
+import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
+import { useCurrentDay } from '../_vm/use-current-day'
+import { DayItem } from './day-item'
 
 interface EditWorkoutDaysProps {
-  currentSelectedDays: DayOfWeek[];
-  onUpdateDays: (selectedDays: DayOfWeek[]) => void;
-  minDays?: number;
-  maxDays?: number;
-  isLoading?: boolean;
+  currentSelectedDays: DayOfWeek[]
+  onUpdateDays: (selectedDays: DayOfWeek[]) => void
+  minDays?: number
+  maxDays?: number
+  isLoading?: boolean
 }
 
 export function EditWorkoutDays({
@@ -20,61 +20,65 @@ export function EditWorkoutDays({
   maxDays = 5,
   isLoading = false,
 }: EditWorkoutDaysProps) {
-  const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([]);
-  const today = useCurrentDay();
+  const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([])
+  const today = useCurrentDay()
 
   useEffect(() => {
-    setSelectedDays(currentSelectedDays);
-  }, [currentSelectedDays]);
+    setSelectedDays(currentSelectedDays)
+  }, [currentSelectedDays])
 
   const handleDayToggle = (day: DayOfWeek, checked: boolean) => {
     setSelectedDays(prevDays => {
       if (checked) {
         if (prevDays.length >= maxDays) {
-          toast.error(`Вы можете выбрать не более ${maxDays} дней.`);
-          return prevDays;
+          toast.error(`Вы можете выбрать не более ${maxDays} дней.`)
+          return prevDays
         }
-        return [...prevDays, day];
+        return [...prevDays, day]
       } else {
-        return prevDays.filter(d => d !== day);
+        return prevDays.filter(d => d !== day)
       }
-    });
-  };
+    })
+  }
 
   const handleSubmit = () => {
     if (selectedDays.length < minDays || selectedDays.length > maxDays) {
-      toast.error(`Пожалуйста, выберите от ${minDays} до ${maxDays} дней.`);
-      return;
+      toast.error(`Пожалуйста, выберите от ${minDays} до ${maxDays} дней.`)
+      return
     }
 
-    const hasChanges = selectedDays.length !== currentSelectedDays.length ||
+    const hasChanges =
+      selectedDays.length !== currentSelectedDays.length ||
       selectedDays.some(day => !currentSelectedDays.includes(day)) ||
-      currentSelectedDays.some(day => !selectedDays.includes(day));
+      currentSelectedDays.some(day => !selectedDays.includes(day))
 
     if (!hasChanges) {
-      toast.info("Дни тренировок не изменились.");
-      return;
+      toast.info('Дни тренировок не изменились.')
+      return
     }
 
-    onUpdateDays(selectedDays);
-  };
+    onUpdateDays(selectedDays)
+  }
 
   return (
     <div className="space-y-6 p-4 border rounded-lg shadow-sm bg-card">
-      <h2 className="text-xl font-semibold text-center">Изменить дни тренировок</h2>
+      <h2 className="text-xl font-semibold text-center">
+        Изменить дни тренировок
+      </h2>
       <p className="text-sm text-muted-foreground text-center">
-        Выберите {minDays} дней в неделю для ваших тренировок. Изменения применятся только к будущим дням.
+        Выберите {minDays} дней в неделю для ваших тренировок. Изменения
+        применятся только к будущим дням.
       </p>
 
       <div className="flex flex-wrap justify-center gap-4">
         {Object.values(DayOfWeek).map(day => (
-          <DayItem 
-            day={day} 
-            today={today} 
-            maxDays={maxDays} 
-            key={day} 
-            selectedDays={selectedDays} 
-            onToggle={handleDayToggle} 
+          <DayItem
+            day={day}
+            today={today}
+            maxDays={maxDays}
+            key={day}
+            selectedDays={selectedDays}
+            onToggle={handleDayToggle}
           />
         ))}
       </div>
@@ -82,9 +86,13 @@ export function EditWorkoutDays({
       <div className="flex justify-center gap-4">
         <Button
           onClick={handleSubmit}
-          disabled={selectedDays.length < minDays || selectedDays.length > maxDays || isLoading}
+          disabled={
+            selectedDays.length < minDays ||
+            selectedDays.length > maxDays ||
+            isLoading
+          }
         >
-          {isLoading ? 'Сохранение...' : 'Сохранить изменения'}
+          Сохранить изменения
         </Button>
       </div>
 
@@ -94,5 +102,5 @@ export function EditWorkoutDays({
         </p>
       )}
     </div>
-  );
-} 
+  )
+}

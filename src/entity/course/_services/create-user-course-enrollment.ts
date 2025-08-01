@@ -1,11 +1,11 @@
 import { injectable } from 'inversify'
 import { UserCourseEnrollmentRepository } from '../_repositories/user-course-enrollment'
 import { UserDailyPlanRepository } from '../_repositories/user-daily-plan'
-import { CreateUserCourseEnrollmentParams, UserCourseEnrollment } from '../../course'
+import { CreateUserCourseEnrollmentParams, UserCourseEnrollment } from '..'
 import { logger } from '@/shared/lib/logger'
 
 @injectable()
-export class CreateCourseEnrollmentService {
+export class CreateUserCourseEnrollmentService {
   constructor(
     private userCourseEnrollmentRepository: UserCourseEnrollmentRepository,
     private userDailyPlanRepository: UserDailyPlanRepository
@@ -15,8 +15,25 @@ export class CreateCourseEnrollmentService {
     params: CreateUserCourseEnrollmentParams
   ): Promise<UserCourseEnrollment> {
     try {
+      const existingEnrollments =
+        await this.userCourseEnrollmentRepository.getUserEnrollments(
+          params.userId
+        )
+
+      let selectedWorkoutDays = params.selectedWorkoutDays
+
+      if (existingEnrollments.length > 0) {
+        const existingWorkoutDays = existingEnrollments[0].selectedWorkoutDays
+        if (existingWorkoutDays.length > 0) {
+          selectedWorkoutDays = existingWorkoutDays
+        }
+      }
+
       const enrollment =
-        await this.userCourseEnrollmentRepository.createEnrollment(params)
+        await this.userCourseEnrollmentRepository.createEnrollment({
+          ...params,
+          selectedWorkoutDays,
+        })
 
       await this.userDailyPlanRepository.generateUserDailyPlansForEnrollment(
         enrollment.id

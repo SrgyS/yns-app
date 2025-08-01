@@ -5,10 +5,11 @@ import { toast } from 'sonner'
 import { courseEnrollmentApi } from '../_api'
 
 export function useCourseEnrollment() {
-  const createEnrollmentMutation = courseEnrollmentApi.course.createEnrollment.useMutation()
+  const createEnrollmentMutation =
+    courseEnrollmentApi.course.createEnrollment.useMutation()
   const getEnrollmentQuery = courseEnrollmentApi.course.getEnrollment.useQuery
-  const getEnrollmentByIdQuery =
-    courseEnrollmentApi.course.getEnrollmentById.useQuery
+  const getUserWorkoutDaysQuery =
+    courseEnrollmentApi.course.getUserWorkoutDays.useQuery
 
   const createEnrollment = useCallback(
     async (params: {
@@ -36,17 +37,50 @@ export function useCourseEnrollment() {
     [getEnrollmentQuery]
   )
 
-  const getEnrollmentById = useCallback(
-    (enrollmentId: string) => {
-      return getEnrollmentByIdQuery(enrollmentId)
+  const getUserDailyPlanQuery =
+    courseEnrollmentApi.course.getUserDailyPlan.useQuery
+
+  const getUserEnrollmentsQuery =
+    courseEnrollmentApi.course.getUserEnrollments.useQuery
+
+  const getActiveEnrollmentQuery =
+    courseEnrollmentApi.course.getActiveEnrollment.useQuery
+
+  const getUserDailyPlan = useCallback(
+    (userId: string, courseId: string, date: Date) => {
+      return getUserDailyPlanQuery({ userId, courseId, date })
     },
-    [getEnrollmentByIdQuery]
+    [getUserDailyPlanQuery]
+  )
+
+  const getUserEnrollments = useCallback(
+    (userId: string) => {
+      return getUserEnrollmentsQuery({ userId })
+    },
+    [getUserEnrollmentsQuery]
+  )
+
+  const getActiveEnrollment = useCallback(
+    (userId: string) => {
+      return getActiveEnrollmentQuery({ userId })
+    },
+    [getActiveEnrollmentQuery]
+  )
+
+  const getUserWorkoutDays = useCallback(
+    (userId: string) => {
+      return getUserWorkoutDaysQuery(userId)
+    },
+    [getUserWorkoutDaysQuery]
   )
 
   return {
     createEnrollment,
     getEnrollment,
-    getEnrollmentById,
+    getUserDailyPlan,
+    getUserEnrollments,
+    getActiveEnrollment,
+    getUserWorkoutDays,
     isCreating: createEnrollmentMutation.isPending,
   }
 }

@@ -21,7 +21,7 @@ export function createServer() {
     UpdateProfileModule,
     TrpcModule,
     CourseDetailsModule,
-    CourseEnrollmentControllerModule
+    CourseEnrollmentControllerModule,
   )
 
   return container

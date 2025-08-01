@@ -4,15 +4,16 @@ import { Card, CardContent } from "@/shared/ui/card";
 import { KinescopePlayer } from "./kinescope-player";
 
 interface WarmUpProps {
-  title: string;
+  title: string
+  workoutId?: string
+  isWorkoutDay?: boolean
 }
-export function WarmUp({ title }: WarmUpProps) {
+export function WarmUp({ title, workoutId, isWorkoutDay }: WarmUpProps) {
+  const [isFavorite, setIsFavorite] = useState(false)
 
-const [isFavorite, setIsFavorite] = useState(false)
-
-const toggleFavorite = () => {
+  const toggleFavorite = () => {
     setIsFavorite(!isFavorite)
-}
+  }
 
   return (
     <Card>
@@ -22,17 +23,23 @@ const toggleFavorite = () => {
           <button onClick={toggleFavorite}>{isFavorite ? '❤️' : '🤍'}</button>
         </div>
 
-        <KinescopePlayer videoId={'https://kinescope.io/mGQYnNqTyjmNQid3qGHXW1'} />
+        {isWorkoutDay ? (
+          <>
+            <KinescopePlayer
+              videoId={'https://kinescope.io/mGQYnNqTyjmNQid3qGHXW1'}
+            />
 
-        <div className="flex gap-2 mt-3 flex-wrap">
-          <Badge variant="secondary">{'40'} мин</Badge>
-          <Badge variant="outline">{'зарядка'}</Badge>
-          {/* {workout.tags.map(tag => (
-            <Badge key={tag} variant="outline">
-              {tag}
-            </Badge>
-          ))} */}
-        </div>
+            <div className="flex gap-2 mt-3 flex-wrap">
+              <Badge variant="secondary">{'40'} мин</Badge>
+              <Badge variant="outline">{'зарядка'}</Badge>
+              {workoutId && <Badge variant="outline">ID: {workoutId}</Badge>}
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            <p>Сегодня не тренировочный день</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

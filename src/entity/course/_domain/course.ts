@@ -1,19 +1,19 @@
 import { CourseId, CourseSlug } from "@/kernel/domain/course";
 import { CompletionStatus, DayOfWeek } from '@prisma/client'
 
-export type Course ={
-  id: CourseId;
-  slug: CourseSlug;
-  title: string;
-  description: string;
-  shortDescription?:string;
-  thumbnail: string;
-  image: string;
-  draft: boolean;
-  durationWeeks: number;
-  // Теперь это массив ID курсов, от которых зависит данный курс
-  dependencies: CourseId[];
-  product?: CourseProduct;
+export type Course = {
+  id: CourseId
+  slug: CourseSlug
+  title: string
+  description: string
+  shortDescription?: string
+  thumbnail: string
+  image: string
+  draft: boolean
+  durationWeeks: number
+  //массив ID курсов, от которых зависит данный курс
+  dependencies: CourseId[]
+  product?: CourseProduct
 }
 export type CourseProduct =
   | {
@@ -30,6 +30,15 @@ export type CourseProduct =
       courseId: string
       selectedWorkoutDays: DayOfWeek[]
       startDate: Date
+      hasFeedback: boolean
+    }
+
+    export type UserCourseEnrollmentApi = {
+      id: string
+      userId: string
+      courseId: string
+      selectedWorkoutDays: DayOfWeek[]
+      startDate: string
       hasFeedback: boolean
     }
 
@@ -58,6 +67,7 @@ export type CourseProduct =
 
     export type GetUserDailyPlanParams = {
       userId: string
+      courseId: string
       date: Date
     }
 
