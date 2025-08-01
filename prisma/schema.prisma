@@ -175,7 +175,7 @@ model UserDailyPlan {
   mainWorkoutProgress CompletionStatus @default(NOT_STARTED)
   mealPlanProgress   CompletionStatus @default(NOT_STARTED)
 
-  @@unique([userId, date]) // Один план на день для каждого пользователя
+  @@unique([enrollmentId, date]) // Один план на день для каждого enrollment
   @@index([enrollmentId])
   @@index([userId, date])
 }

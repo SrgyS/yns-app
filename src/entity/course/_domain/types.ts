@@ -31,6 +31,8 @@ export type CourseBaseInfo = {
 export type CourseFullInfo = CourseBaseInfo & {
   description: string
   image: ImageSrc
+  draft: boolean
+  durationWeeks: number
 }
 
 export interface Lesson {
