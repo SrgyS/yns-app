@@ -141,6 +141,26 @@ export class UserCourseEnrollmentRepository {
     return enrollment?.selectedWorkoutDays ?? []
   }
 
+  async getActiveEnrollment(userId: string): Promise<UserCourseEnrollment | null> {
+    try {
+      const enrollment = await dbClient.userCourseEnrollment.findFirst({
+        where: { 
+          userId: userId,
+          active: true 
+        },
+      })
+
+      return enrollment ? this.mapPrismaEnrollmentToDomain(enrollment) : null
+    } catch (error) {
+      logger.error({
+        msg: 'Error getting active enrollment',
+        userId,
+        error,
+      })
+      throw new Error('Failed to get active enrollment')
+    }
+  }
+
   async deactivateUserEnrollments(userId: string): Promise<number> {
     try {
       const result = await dbClient.userCourseEnrollment.updateMany({
@@ -158,6 +178,24 @@ export class UserCourseEnrollmentRepository {
         error,
       })
       throw new Error('Failed to deactivate user enrollments')
+    }
+  }
+
+  async activateEnrollment(enrollmentId: string): Promise<UserCourseEnrollment> {
+    try {
+      const enrollment = await dbClient.userCourseEnrollment.update({
+        where: { id: enrollmentId },
+        data: { active: true },
+      })
+
+      return this.mapPrismaEnrollmentToDomain(enrollment)
+    } catch (error) {
+      logger.error({
+        msg: 'Error activating enrollment',
+        enrollmentId,
+        error,
+      })
+      throw new Error('Failed to activate enrollment')
     }
   }
 }

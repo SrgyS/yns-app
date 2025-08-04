@@ -9,33 +9,29 @@ export class GetActiveEnrollmentService {
     private userCourseEnrollmentRepository: UserCourseEnrollmentRepository
   ) {}
 
-  async execute(userId: string): Promise<UserCourseEnrollment | null> {
+  async exec(userId: string): Promise<UserCourseEnrollment | null> {
     try {
-      const enrollments = await this.userCourseEnrollmentRepository.getUserEnrollments(userId)
-
-      if (enrollments.length === 0) {
-        return null
+      // Сначала пытаемся получить активную запись напрямую
+      const activeEnrollment = await this.userCourseEnrollmentRepository.getActiveEnrollment(userId)
+      
+      // Если активная запись найдена, возвращаем её
+      if (activeEnrollment) {
+        logger.info({
+          msg: 'Successfully found active enrollment',
+          userId,
+          activeEnrollmentId: activeEnrollment.id,
+          courseId: activeEnrollment.courseId,
+        })
+        
+        return activeEnrollment
       }
-
-      // Приоритет: подписка > фиксированные курсы
-      // Подписка определяется по slug курса или другим критериям
-      // Пока используем простую логику: берем самый новый enrollment
-      // TODO: Добавить логику определения подписки по slug или другим критериям
-      const sortedEnrollments = enrollments.sort((a, b) => 
-        new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
-      )
-
-      const activeEnrollment = sortedEnrollments[0]
-
-      logger.info({
-        msg: 'Successfully determined active enrollment',
+      
+      logger.error({
+        msg: 'No active enrollment found for user',
         userId,
-        activeEnrollmentId: activeEnrollment.id,
-        courseId: activeEnrollment.courseId,
-        totalEnrollments: enrollments.length,
       })
-
-      return activeEnrollment
+      
+      throw new Error('No active course enrollment found for user')
     } catch (error) {
       logger.error({
         msg: 'Error getting active enrollment',
@@ -45,4 +41,4 @@ export class GetActiveEnrollmentService {
       throw new Error('Failed to get active enrollment')
     }
   }
-} 
+}
