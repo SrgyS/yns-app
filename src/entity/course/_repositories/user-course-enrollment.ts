@@ -19,6 +19,7 @@ export class UserCourseEnrollmentRepository {
       selectedWorkoutDays: prismaEnrollment.selectedWorkoutDays,
       startDate: prismaEnrollment.startDate,
       hasFeedback: prismaEnrollment.hasFeedback,
+      active: prismaEnrollment.active,
     }
   }
 
@@ -33,6 +34,7 @@ export class UserCourseEnrollmentRepository {
           startDate: params.startDate,
           selectedWorkoutDays: params.selectedWorkoutDays,
           hasFeedback: params.hasFeedback ?? false,
+          active: true,
         },
       })
 
@@ -111,22 +113,22 @@ export class UserCourseEnrollmentRepository {
   }
 
   async updateSelectedWorkoutDays(
-    enrollmentId: string,
+    userId: string,
     selectedWorkoutDays: DayOfWeek[]
-  ): Promise<UserCourseEnrollment> {
+  ): Promise<number> {
     try {
-      const enrollment = await dbClient.userCourseEnrollment.update({
-        where: { id: enrollmentId },
+      const result = await dbClient.userCourseEnrollment.updateMany({
+        where: { userId: userId },
         data: {
           selectedWorkoutDays,
         },
       })
 
-      return this.mapPrismaEnrollmentToDomain(enrollment)
+      return result.count
     } catch (error) {
       logger.error({
         msg: 'Error updating selected workout days',
-        enrollmentId,
+        userId,
         selectedWorkoutDays,
         error,
       })
@@ -137,5 +139,25 @@ export class UserCourseEnrollmentRepository {
   async getUserWorkoutDays(userId: string, courseId: string): Promise<DayOfWeek[]> {
     const enrollment = await this.getEnrollment(userId, courseId)
     return enrollment?.selectedWorkoutDays ?? []
+  }
+
+  async deactivateUserEnrollments(userId: string): Promise<number> {
+    try {
+      const result = await dbClient.userCourseEnrollment.updateMany({
+        where: { userId: userId },
+        data: {
+          active: false,
+        },
+      })
+
+      return result.count
+    } catch (error) {
+      logger.error({
+        msg: 'Error deactivating user enrollments',
+        userId,
+        error,
+      })
+      throw new Error('Failed to deactivate user enrollments')
+    }
   }
 }

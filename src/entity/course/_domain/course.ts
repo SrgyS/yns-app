@@ -31,6 +31,7 @@ export type CourseProduct =
       selectedWorkoutDays: DayOfWeek[]
       startDate: Date
       hasFeedback: boolean
+      active: boolean
     }
 
     export type UserCourseEnrollmentApi = {
@@ -40,6 +41,7 @@ export type CourseProduct =
       selectedWorkoutDays: DayOfWeek[]
       startDate: string
       hasFeedback: boolean
+      active: boolean
     }
 
     export type UserDailyPlan = {
@@ -74,4 +76,4 @@ export type CourseProduct =
     export type GetUserDailyPlanByEnrollmentParams = {
       enrollmentId: string
       date: Date
-    }    
+    }

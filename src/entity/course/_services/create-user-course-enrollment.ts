@@ -11,7 +11,7 @@ export class CreateUserCourseEnrollmentService {
     private userDailyPlanRepository: UserDailyPlanRepository
   ) {}
 
-  async execute(
+  async exec(
     params: CreateUserCourseEnrollmentParams
   ): Promise<UserCourseEnrollment> {
     try {
@@ -27,6 +27,9 @@ export class CreateUserCourseEnrollmentService {
         if (existingWorkoutDays.length > 0) {
           selectedWorkoutDays = existingWorkoutDays
         }
+        
+        // Деактивируем все предыдущие записи пользователя на курсы
+        await this.userCourseEnrollmentRepository.deactivateUserEnrollments(params.userId)
       }
 
       const enrollment =
