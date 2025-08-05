@@ -16,8 +16,9 @@ import { Badge } from '@/shared/ui/badge'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { UserCourseEnrollmentApi } from '@/entity/course/_domain/course'
+import React from 'react'
 import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
-import { useRouter } from 'next/navigation'
+import { SmallSpinner } from '@/shared/ui/small-spinner'
 
 interface UserCourseItemProps {
   course: Course
@@ -25,15 +26,13 @@ interface UserCourseItemProps {
 }
 
 export function UserCourseItem({ course, enrollment }: UserCourseItemProps) {
+  // Используем хук useCourseEnrollment, который уже настроен для автоматического обновления кэша
   const { activateEnrollment, isActivating } = useCourseEnrollment()
-  const router = useRouter()
 
-  const handleActivate = async () => {
-    await activateEnrollment(enrollment.id)
-    router.refresh() // Обновляем страницу, чтобы отобразить изменения
+  const handleActivate = () => {
+    // Вызываем функцию активации из хука, обработка ошибок и успеха уже настроена в хуке
+    activateEnrollment(enrollment.id)
   }
-
-
 
   const startDateFormatted = format(
     new Date(enrollment.startDate),
@@ -64,7 +63,6 @@ export function UserCourseItem({ course, enrollment }: UserCourseItemProps) {
         </div>
       </CardContent>
       <CardFooter className="flex justify-between">
-
         {enrollment.active ? (
           <Button asChild>
             <Link href={`/day/${course.slug}`}>Перейти к тренировкам</Link>
@@ -76,7 +74,7 @@ export function UserCourseItem({ course, enrollment }: UserCourseItemProps) {
             variant="secondary"
           >
             <CheckCircle className="mr-2 h-4 w-4" />
-            Выбрать курс
+            <SmallSpinner isLoading={isActivating} /> Выбрать курс
           </Button>
         )}
       </CardFooter>

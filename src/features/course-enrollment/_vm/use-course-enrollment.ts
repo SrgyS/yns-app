@@ -3,11 +3,13 @@ import { DayOfWeek } from '@prisma/client'
 
 import { toast } from 'sonner'
 import { courseEnrollmentApi } from '../_api'
-
+//TODO: проверить используются ли все методы
 export function useCourseEnrollment() {
   const createEnrollmentMutation =
     courseEnrollmentApi.course.createEnrollment.useMutation()
+
   const getEnrollmentQuery = courseEnrollmentApi.course.getEnrollment.useQuery
+
   const getUserWorkoutDaysQuery =
     courseEnrollmentApi.course.getUserWorkoutDays.useQuery
 
@@ -74,21 +76,20 @@ export function useCourseEnrollment() {
     [getUserWorkoutDaysQuery]
   )
 
-  const activateEnrollmentMutation = courseEnrollmentApi.course.activateEnrollment.useMutation()
+  const utils = courseEnrollmentApi.useUtils()
 
-  const activateEnrollment = useCallback(
-    async (enrollmentId: string) => {
-      try {
-        const result = await activateEnrollmentMutation.mutateAsync(enrollmentId)
+  const { mutateAsync: activateEnrollment, isPending: isActivating } = 
+    courseEnrollmentApi.course.activateEnrollment.useMutation({
+      async onSuccess() {
+        // Инвалидируем все запросы, связанные с записями пользователя на курсы
+        await utils.course.getUserEnrollments.invalidate()
+        await utils.course.getActiveEnrollment.invalidate()
         toast.success('Курс выбран!')
-        return result
-      } catch (error) {
+      },
+      onError() {
         toast.error('Ошибка при выборе курса')
-        throw error
       }
-    },
-    [activateEnrollmentMutation]
-  )
+    })
 
   return {
     createEnrollment,
@@ -99,6 +100,6 @@ export function useCourseEnrollment() {
     getUserWorkoutDays,
     activateEnrollment,
     isCreating: createEnrollmentMutation.isPending,
-    isActivating: activateEnrollmentMutation.isPending,
+    isActivating,
   }
 }
