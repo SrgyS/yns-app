@@ -74,6 +74,22 @@ export function useCourseEnrollment() {
     [getUserWorkoutDaysQuery]
   )
 
+  const activateEnrollmentMutation = courseEnrollmentApi.course.activateEnrollment.useMutation()
+
+  const activateEnrollment = useCallback(
+    async (enrollmentId: string) => {
+      try {
+        const result = await activateEnrollmentMutation.mutateAsync(enrollmentId)
+        toast.success('Курс выбран!')
+        return result
+      } catch (error) {
+        toast.error('Ошибка при выборе курса')
+        throw error
+      }
+    },
+    [activateEnrollmentMutation]
+  )
+
   return {
     createEnrollment,
     getEnrollment,
@@ -81,6 +97,8 @@ export function useCourseEnrollment() {
     getUserEnrollments,
     getActiveEnrollment,
     getUserWorkoutDays,
+    activateEnrollment,
     isCreating: createEnrollmentMutation.isPending,
+    isActivating: activateEnrollmentMutation.isPending,
   }
 }

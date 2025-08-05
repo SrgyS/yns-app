@@ -15,9 +15,6 @@ export function UserCoursesSection({ id, courses }: UserCoursesSectionProps) {
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-medium">Мои курсы</h3>
-        <p className="text-sm text-muted-foreground">
-          Здесь отображаются ваши купленные курсы
-        </p>
       </div>
       <Separator />
       <UserCoursesList id={id} courses={courses} />

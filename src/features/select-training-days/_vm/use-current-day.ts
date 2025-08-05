@@ -1,3 +1,5 @@
+'use client'
+
 import { DayOfWeek } from "@prisma/client";
 import { DAY_LABELS } from "../constants";
 

@@ -9,7 +9,7 @@ export class GetEnrollmentByIdService {
     private userCourseEnrollmentRepository: UserCourseEnrollmentRepository
   ) {}
 
-  async execute(enrollmentId: string): Promise<UserCourseEnrollment | null> {
+  async exec(enrollmentId: string): Promise<UserCourseEnrollment | null> {
     try {
       const enrollment = await this.userCourseEnrollmentRepository.getEnrollmentById(enrollmentId)
 
@@ -30,4 +30,4 @@ export class GetEnrollmentByIdService {
       throw new Error('Failed to get enrollment by id')
     }
   }
-} 
+}

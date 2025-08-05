@@ -20,7 +20,6 @@ import { useUpdateProfile } from '../_vm/use-update-profile'
 import { AvatarField } from './avatar-field'
 import { UserId } from '@/kernel/domain/user'
 import { SmallSpinner } from '@/shared/ui/small-spinner'
-import { EditWorkoutDaysButton } from './edit-workout-days-button'
 
 const profileFormSchema = z.object({
   name: z
@@ -127,10 +126,6 @@ export function ProfileForm({
           {submitText}
         </Button>
       </form>
-
-      <div className="pt-6">
-        <EditWorkoutDaysButton />
-      </div>
     </Form>
   )
 }

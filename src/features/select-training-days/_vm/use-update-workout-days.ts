@@ -1,3 +1,5 @@
+'use client'
+
 import { useCallback } from 'react'
 import { DayOfWeek } from '@prisma/client'
 import { courseEnrollmentApi } from '@/features/course-enrollment/_api'
@@ -7,7 +9,7 @@ export function useUpdateWorkoutDays() {
   const updateWorkoutDaysMutation = courseEnrollmentApi.course.updateWorkoutDays.useMutation()
 
   const updateWorkoutDays = useCallback(
-    async (params: { enrollmentId: string; selectedWorkoutDays: DayOfWeek[] }) => {
+    async (params: { userId: string; selectedWorkoutDays: DayOfWeek[] }) => {
       try {
         const result = await updateWorkoutDaysMutation.mutateAsync(params)
         toast.success('Дни тренировок успешно обновлены')
@@ -25,4 +27,4 @@ export function useUpdateWorkoutDays() {
     updateWorkoutDays,
     isUpdating: updateWorkoutDaysMutation.isPending,
   }
-} 
+}

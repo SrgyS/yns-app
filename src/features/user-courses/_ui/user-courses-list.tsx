@@ -38,14 +38,17 @@ export function UserCoursesList({ id, courses }: UserCoursesListProps) {
     return { enrollment, course }
   }).filter(item => item.course) // Фильтруем, если курс не найден
 
-  // Устанавливаем первый курс как активный, если активный не выбран
+  // Устанавливаем активный курс на основе свойства active в enrollment
   if (!activeTab && userCourses.length > 0) {
-    setActiveTab(userCourses[0].enrollment.id)
+    // Ищем курс с active: true
+    const activeCourse = userCourses.find(({ enrollment }) => enrollment.active)
+    
+    // Если есть активный курс, устанавливаем его, иначе берем первый
+    setActiveTab(activeCourse ? activeCourse.enrollment.id : userCourses[0].enrollment.id)
   }
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium">Мои курсы</h3>
       
       {userCourses.length > 0 ? (
         <Tabs 

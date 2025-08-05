@@ -5,7 +5,7 @@ import { DayOfWeek } from '@prisma/client'
 import { logger } from '@/shared/lib/logger'
 
 export interface UpdateWorkoutDaysParams {
-  enrollmentId: string
+  userId: string
   selectedWorkoutDays: DayOfWeek[]
 }
 
@@ -16,23 +16,17 @@ export class UpdateWorkoutDaysService {
     private userDailyPlanRepository: UserDailyPlanRepository
   ) {}
 
-  async execute(params: UpdateWorkoutDaysParams): Promise<void> {
+  async exec(params: UpdateWorkoutDaysParams): Promise<void> {
     try {
       // Обновляем выбранные дни в enrollment
       await this.userCourseEnrollmentRepository.updateSelectedWorkoutDays(
-        params.enrollmentId,
-        params.selectedWorkoutDays
-      )
-
-      // Обновляем будущие дни тренировок
-      await this.userDailyPlanRepository.updateFutureWorkoutDays(
-        params.enrollmentId,
+        params.userId,
         params.selectedWorkoutDays
       )
 
       logger.info({
         msg: 'Successfully updated workout days',
-        enrollmentId: params.enrollmentId,
+        enrollmentId: params.userId,
         selectedWorkoutDays: params.selectedWorkoutDays,
       })
     } catch (error) {

@@ -1,8 +1,10 @@
-import { Button } from "@/shared/ui/button"
+import { useState, useEffect } from "react"
 import Link from "next/link"
+import { Edit } from "lucide-react"
+import { Button } from "@/shared/ui/button"
 import { useCourseEnrollment } from "@/features/course-enrollment/_vm/use-course-enrollment"
 import { useAppSession } from "@/kernel/lib/next-auth/client"
-import { useState, useEffect } from "react"
+
 
 export const EditWorkoutDaysButton = () => {
   const { data: session } = useAppSession()
@@ -31,16 +33,16 @@ export const EditWorkoutDaysButton = () => {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        {enrollments.map((enrollment) => (
-          <Button key={enrollment.id} asChild variant="outline" className="w-full justify-start">
-            <Link href={`/edit-workout-days/${enrollment.id}`}>
-              Изменить дни тренировок
+
+      
+        
+          <Button asChild variant="outline" >
+            <Link href={`/edit-workout-days/${enrollments[0].id}`}>
+             <Edit className="mr-2 h-4 w-4" />
+              Изменить дни 
             </Link>
           </Button>
-        ))}
-      </div>
-    </div>
+      
+
   )
 }

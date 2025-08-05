@@ -122,6 +122,7 @@ model UserCourseEnrollment {
 
   userDailyPlans    UserDailyPlan[] // Связь с ежедневными планами пользователя
 
+  active            Boolean      @default(false) // Активен ли курс для пользователя
   userAccess          UserAccess?        @relation
 
   @@unique([userId, courseId]) // Пользователь может быть зачислен на курс только один раз

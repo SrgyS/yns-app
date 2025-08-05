@@ -13,6 +13,8 @@ import {
   GetUserEnrollmentsService,
   GetActiveEnrollmentService,
   GetUserWorkoutDaysService,
+  UpdateWorkoutDaysService,
+  ActivateEnrollmentService,
 } from '@/entity/course/module'
 
 @injectable()
@@ -23,7 +25,9 @@ export class CourseEnrollmentController extends Controller {
     private getUserDailyPlanService: GetUserDailyPlanService,
     private getUserEnrollmentsService: GetUserEnrollmentsService,
     private getActiveEnrollmentService: GetActiveEnrollmentService,
-    private getUserWorkoutDaysService: GetUserWorkoutDaysService
+    private getUserWorkoutDaysService: GetUserWorkoutDaysService,
+    private updateWorkoutDaysService: UpdateWorkoutDaysService,
+    private activateEnrollmentService: ActivateEnrollmentService
   ) {
     super()
   }
@@ -40,11 +44,10 @@ export class CourseEnrollmentController extends Controller {
           })
         )
         .mutation(async ({ input, ctx }) => {
-          const enrollment =
-            await this.CreateUserCourseEnrollmentService.execute({
-              userId: ctx.session.user.id,
-              ...input,
-            })
+          const enrollment = await this.CreateUserCourseEnrollmentService.exec({
+            userId: ctx.session.user.id,
+            ...input,
+          })
           return enrollment
         }),
 
@@ -56,7 +59,7 @@ export class CourseEnrollmentController extends Controller {
           })
         )
         .query(async ({ input }) => {
-          const enrollment = await this.getCourseEnrollmentService.execute(
+          const enrollment = await this.getCourseEnrollmentService.exec(
             input.userId,
             input.courseId
           )
@@ -72,7 +75,7 @@ export class CourseEnrollmentController extends Controller {
           })
         )
         .query(async ({ input }) => {
-          const dailyPlan = await this.getUserDailyPlanService.execute(input)
+          const dailyPlan = await this.getUserDailyPlanService.exec(input)
           return dailyPlan
         }),
 
@@ -83,7 +86,7 @@ export class CourseEnrollmentController extends Controller {
           })
         )
         .query(async ({ input }) => {
-          const enrollments = await this.getUserEnrollmentsService.execute(
+          const enrollments = await this.getUserEnrollmentsService.exec(
             input.userId
           )
           return enrollments
@@ -96,7 +99,7 @@ export class CourseEnrollmentController extends Controller {
           })
         )
         .query(async ({ input }) => {
-          const enrollment = await this.getActiveEnrollmentService.execute(
+          const enrollment = await this.getActiveEnrollmentService.exec(
             input.userId
           )
           return enrollment
@@ -104,9 +107,39 @@ export class CourseEnrollmentController extends Controller {
       getUserWorkoutDays: authorizedProcedure
         .input(z.string())
         .query(async ({ input }) => {
-          const workoutDays =
-            await this.getUserWorkoutDaysService.execute(input)
+          const workoutDays = await this.getUserWorkoutDaysService.exec(input)
           return workoutDays
+        }),
+
+      updateWorkoutDays: authorizedProcedure
+        .input(
+          z.object({
+            userId: z.string(),
+            selectedWorkoutDays: z.array(z.nativeEnum(DayOfWeek)),
+          })
+        )
+        .mutation(async ({ input }) => {
+          const { userId, selectedWorkoutDays } = input
+          const enrollments = await this.getUserEnrollmentsService.exec(userId)
+
+          if (!enrollments.length) {
+            throw new Error('Enrollment not found')
+          }
+
+          const updatedEnrollment = await this.updateWorkoutDaysService.exec({
+            userId,
+            selectedWorkoutDays,
+          })
+
+          return updatedEnrollment
+        }),
+
+      activateEnrollment: authorizedProcedure
+        .input(z.string())
+        .mutation(async ({ input }) => {
+          const enrollmentId = input
+          const activatedEnrollment = await this.activateEnrollmentService.exec(enrollmentId)
+          return activatedEnrollment
         }),
     }),
   })
