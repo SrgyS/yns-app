@@ -23,7 +23,7 @@ export function CalendarTabs() {
   const programStart = enrollment?.startDate
     ? new Date(enrollment.startDate)
     : null
-console.log({programStart})
+
   const { noProgram, availableWeeks, currentWeekIndex, gridColsClass } =
     useWorkoutCalendar(programStart)
 

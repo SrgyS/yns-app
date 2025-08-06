@@ -15,7 +15,7 @@ export default async function EditWorkoutDays({ params }: { params: { enrollment
   }
 
   const userId = session.user.id
-  const { enrollmentId } = params
+  const { enrollmentId } = await params
   
   // Получение данных
   const getEnrollmentByIdService = server.get(GetEnrollmentByIdService)

@@ -3,13 +3,14 @@ import { UserCourseEnrollmentRepository } from '../_repositories/user-course-enr
 import { UserCourseEnrollment } from '../../course'
 import { logger } from '@/shared/lib/logger'
 
+
 @injectable()
 export class GetCourseEnrollmentService {
   constructor(
     private userCourseEnrollmentRepository: UserCourseEnrollmentRepository
   ) {}
 
-  async execute(userId: string, courseId: string): Promise<UserCourseEnrollment | null> {
+  async exec(userId: string, courseId: string): Promise<UserCourseEnrollment | null> {
     try {
       const enrollment = await this.userCourseEnrollmentRepository.getEnrollment(userId, courseId)
 

@@ -9,7 +9,7 @@ export class GetUserDailyPlanService {
     private userDailyPlanRepository: UserDailyPlanRepository
   ) {}
 
-  async execute(params: GetUserDailyPlanParams): Promise<UserDailyPlan | null> {
+  async exec(params: GetUserDailyPlanParams): Promise<UserDailyPlan | null> {
     try {
       const userDailyPlan = await this.userDailyPlanRepository.getUserDailyPlan(params)
 

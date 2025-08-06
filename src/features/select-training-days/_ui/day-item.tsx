@@ -1,3 +1,5 @@
+'use client'
+
 import { Badge } from '@/shared/ui/badge'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { Label } from '@/shared/ui/label'

@@ -9,7 +9,7 @@ export class GetUserWorkoutDaysService {
     private userCourseEnrollmentRepository: UserCourseEnrollmentRepository
   ) {}
 
-  async execute(userId: string): Promise<DayOfWeek[]> {
+  async exec(userId: string): Promise<DayOfWeek[]> {
     try {
       const enrollments = await this.userCourseEnrollmentRepository.getUserEnrollments(userId)
 

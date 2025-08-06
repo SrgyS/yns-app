@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
 import { addDays, format, startOfWeek, isBefore, differenceInDays } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { DAY_KEYS } from '../constant'
+import { DAYS_ORDER } from '../constant'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
 import { WarmUp } from './warm-up'
 import { useDailyPlan } from '../_vm/use-daily-plan'
 import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { DayOfWeek } from '@prisma/client'
+import { DAY_LABELS } from '@/features/select-training-days/constants'
 
 export function DayTabs({
   weekNumber,
@@ -41,18 +42,9 @@ export function DayTabs({
   }, [enrollment?.selectedWorkoutDays]);
   
   // Преобразуем DayOfWeek в индексы дней недели (0-6, где 0 - понедельник)
-  const workoutDayIndices = useMemo(() => {
+ const workoutDayIndices = useMemo(() => {
     return selectedWorkoutDays.map(day => {
-      switch(day) {
-        case DayOfWeek.MONDAY: return 0;
-        case DayOfWeek.TUESDAY: return 1;
-        case DayOfWeek.WEDNESDAY: return 2;
-        case DayOfWeek.THURSDAY: return 3;
-        case DayOfWeek.FRIDAY: return 4;
-        case DayOfWeek.SATURDAY: return 5;
-        case DayOfWeek.SUNDAY: return 6;
-        default: return -1;
-      }
+      return DAYS_ORDER.indexOf(day);
     }).filter(index => index !== -1);
   }, [selectedWorkoutDays]);
 
@@ -63,7 +55,7 @@ export function DayTabs({
     // Определяем начало недели для отображения дней
     const weekStartForDays = startOfWeek(weekStart, { weekStartsOn: 1 })
     
-    return Array.from({ length: 7 }).map((_, i) => {
+    return DAYS_ORDER.map((dayOfWeek, i) => {
       const date = addDays(weekStartForDays, i)
       
       // Проверяем, находится ли день до даты покупки
@@ -92,8 +84,8 @@ export function DayTabs({
         : null
       
       return {
-        key: DAY_KEYS[i],
-        label: format(date, 'ЕEE', { locale: ru }).slice(1, 3),
+        key: dayOfWeek,
+        label: DAY_LABELS[dayOfWeek],
         dateStr: format(date, 'd', { locale: ru }),
         date,
         isToday: format(date, 'yyyy-MM-dd') === format(currentDate, 'yyyy-MM-dd'),
@@ -104,8 +96,8 @@ export function DayTabs({
     })
   }, [weekStart, currentDate, programStart, workoutDayIndices])
 
-  const defaultDayKey = days.find(d => d.isToday)?.key || 'mon'
-  const [selectedDay, setSelectedDay] = useState(defaultDayKey)
+  const defaultDayKey = days.find(d => d.isToday)?.key || DayOfWeek.MONDAY
+  const [selectedDay, setSelectedDay] = useState<string>(defaultDayKey)
 
   return (
     <Tabs

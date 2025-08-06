@@ -9,3 +9,4 @@ export const CourseDetailsModule = new ContainerModule(context => {
   bind(GetCourseDetailsService).toSelf()
   bind(Controller).to(CourseDetailsController)
 })
+

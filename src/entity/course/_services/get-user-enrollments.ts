@@ -9,7 +9,7 @@ export class GetUserEnrollmentsService {
     private userCourseEnrollmentRepository: UserCourseEnrollmentRepository
   ) {}
 
-  async execute(userId: string): Promise<UserCourseEnrollment[]> {
+  async exec(userId: string): Promise<UserCourseEnrollment[]> {
     try {
       const enrollments = await this.userCourseEnrollmentRepository.getUserEnrollments(userId)
 

@@ -2,6 +2,7 @@ import { dbClient } from '@/shared/lib/db'
 import { DayOfWeek, UserDailyPlan as PrismaUserDailyPlan } from '@prisma/client'
 import { GetUserDailyPlanByEnrollmentParams, GetUserDailyPlanParams, UserDailyPlan } from '../../course'
 import { logger } from '@/shared/lib/logger'
+import { UserId } from '@/kernel/domain/user'
 
 export class UserDailyPlanRepository {
   private mapPrismaUserDailyPlanToDomain(
@@ -184,12 +185,13 @@ export class UserDailyPlanRepository {
   }
 
   async updateFutureWorkoutDays(
-    enrollmentId: string,
+    userId: UserId,
+    courseId: string,
     selectedWorkoutDays: DayOfWeek[]
   ): Promise<void> {
     try {
       const enrollment = await dbClient.userCourseEnrollment.findUnique({
-        where: { id: enrollmentId },
+        where: { userId_courseId: { userId, courseId } },
         include: {
           course: {
             include: {
@@ -215,7 +217,7 @@ export class UserDailyPlanRepository {
       // Получаем все будущие планы для этого enrollment
       const futurePlans = await dbClient.userDailyPlan.findMany({
         where: {
-          enrollmentId,
+          userId,
           date: { gte: today },
         },
         orderBy: { date: 'asc' },
@@ -236,14 +238,14 @@ export class UserDailyPlanRepository {
 
       logger.info({
         msg: 'Updated future workout days for enrollment',
-        enrollmentId,
+        userId,
         selectedWorkoutDays,
         updatedPlansCount: futurePlans.length,
       })
     } catch (error) {
       logger.error({
         msg: 'Error updating future workout days',
-        enrollmentId,
+        userId,
         selectedWorkoutDays,
         error,
       })

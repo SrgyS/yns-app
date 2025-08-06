@@ -45,8 +45,7 @@ export function EditWorkoutDaysClient({
         toast.error('Не удалось обновить дни тренировок!')
       }
       
-      // Перенаправляем на страницу дневного плана
-      router.push('/day')
+      router.push(`/profile/${userId}`)
     } catch (error) {
       console.error('Error handling workout days:', error)
       toast.error('Произошла ошибка при сохранении дней тренировок')

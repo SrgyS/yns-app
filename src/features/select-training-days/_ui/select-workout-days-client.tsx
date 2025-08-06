@@ -6,16 +6,18 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { WorkoutDaySelector } from './workout-day-selector'
 import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
-import { CourseId } from '@/kernel/domain/course'
+import { CourseId, CourseSlug } from '@/kernel/domain/course'
 
 interface SelectWorkoutDaysClientProps {
   initialSelectedDays: DayOfWeek[]
   minDays?: number
   maxDays?: number
   courseId: CourseId
+  courseSlug: CourseSlug
 }
 
 export function SelectWorkoutDaysClient({
+  courseSlug,
   courseId,
   initialSelectedDays,
   minDays = 5,
@@ -36,7 +38,7 @@ export function SelectWorkoutDaysClient({
       })
       setIsSubmitting(false)
       toast.success('Вы успешно записались на курс!')
-      router.push('/day')
+      router.push(`/day/${courseSlug}`)
     } catch (error) {
       console.error('Error handling workout days:', error)
       toast.error('Не удалось создать запись на курс!')
