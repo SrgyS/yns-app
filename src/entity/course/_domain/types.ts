@@ -1,4 +1,10 @@
-import { CourseId, CourseSlug } from '@/kernel/domain/course'
+import {
+  ContentBlockId,
+  CourseId,
+  CourseSlug,
+  LessonId,
+  LessonSlug,
+} from '@/kernel/domain/course'
 import { ImageSrc } from '@/shared/api/content/_lib/image'
 export type Product =
   | {
@@ -9,16 +15,39 @@ export type Product =
       price: number
     }
 
-export type Course = {
+export type Course = CourseFullInfo & {
   id: CourseId
   slug: CourseSlug
+  product: Product
+}
+
+export type CourseBaseInfo = {
   title: string
-  description: string
   shortDescription?: string
   thumbnail: ImageSrc
-  image: ImageSrc
   dependencies?: CourseId[]
-  // lessons: LessonId[]
-  product: Product
-  //   reviewsCount: number
+}
+
+export type CourseFullInfo = CourseBaseInfo & {
+  description: string
+  image: ImageSrc
+  draft: boolean
+  durationWeeks: number
+}
+
+export interface Lesson {
+  id: LessonId
+  slug: LessonSlug
+  courseId: CourseId
+  title: string
+  shortDescription?: string
+  blocks: ContentBlock[]
+}
+
+export type ContentBlock = TextBlock
+
+export interface TextBlock {
+  id: ContentBlockId
+  type: 'text'
+  text: string
 }

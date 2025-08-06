@@ -1,7 +1,7 @@
 import { injectable } from 'inversify'
-import { Controller, publicProcedure, router } from '@/kernel/lib/trpc/server'
+import { Controller, publicProcedure, router } from '@/kernel/lib/trpc/module'
 
-import { CreateUserService } from '@/kernel/lib/next-auth/_create-user-service'
+import { CreateUserService } from '@/kernel/services/create-user'
 import {
   emailSignUpSchema,
   newPasswordSchemaWithToken,

@@ -3,12 +3,12 @@ import { CacheStrategy } from './_lib/cache-strategy'
 import { ContentParser } from './_lib/content-parser'
 import { FileFetcher } from './_lib/file-fetcher'
 import { Manifest } from './_schemas/manifest.schema'
-import { Course } from './_schemas/course.schema'
 import { Lesson } from './_schemas/lesson.schema'
 import manifestSchema from '@/shared/api/content/_schemas/manifest.schema.json'
 import courseSchema from '@/shared/api/content/_schemas/course.schema.json'
 import lessonSchema from '@/shared/api/content/_schemas/lesson.schema.json'
 import { compileMDX } from '@/shared/lib/mdx/server'
+import { Course } from './_schemas/course.schema'
 // import { loggedMethod } from '@/shared/lib/logger'
 // import { pick } from 'lodash-es'
 interface Deps {
@@ -52,17 +52,14 @@ export class ContentApi {
   // })
   private async fetchCourseQuery(slug: string) {
     const text = await this.d.fileFetcher.fetchText(this.getCourseUrl(slug))
-      const course = await this.d.contentParser.parse<Course>(
-        text,
-        courseSchema
-      )
-      return {
-        ...course,
-        description: (await compileMDX(course.description)).code,
-        shortDescription: course.shortDescription
-          ? (await compileMDX(course.shortDescription)).code
-          : undefined,
-      }
+    const course = await this.d.contentParser.parse<Course>(text, courseSchema)
+    return {
+      ...course,
+      description: (await compileMDX(course.description)).code,
+      shortDescription: course.shortDescription
+        ? (await compileMDX(course.shortDescription)).code
+        : undefined,
+    }
   }
 
   async fetchLesson(courseSlug: CourseSlug, lessonSlug: LessonSlug) {
@@ -85,7 +82,26 @@ export class ContentApi {
     const text = await this.d.fileFetcher.fetchText(
       this.getLessonUrl(courseSlug, lessonSlug)
     )
-    return await this.d.contentParser.parse<Lesson>(text, lessonSchema)
+    const lesson = await this.d.contentParser.parse<Lesson>(text, lessonSchema)
+
+    return {
+      ...lesson,
+      shortDescription: lesson.shortDescription
+        ? (await compileMDX(lesson.shortDescription)).code
+        : undefined,
+      blocks: await Promise.all(
+        lesson.blocks.map(async block => {
+          if (block.type === 'text') {
+            const { code } = await compileMDX(block.text)
+            return {
+              ...block,
+              text: code,
+            }
+          }
+          return block
+        })
+      ),
+    }
   }
 
   private getManifestUrl() {
@@ -97,7 +113,7 @@ export class ContentApi {
   private getLessonUrl(courseSlug: CourseSlug, lessonSlug: LessonSlug) {
     return join(
       this.baseUrl,
-      `/courses/${courseSlug}/lesson/${lessonSlug}/lesson.yaml`
+      `/courses/${courseSlug}/lessons/${lessonSlug}/lesson.yaml`
     )
   }
 }

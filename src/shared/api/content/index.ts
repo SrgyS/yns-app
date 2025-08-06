@@ -9,7 +9,7 @@ import { ContentApi } from './_content-api'
 
 const fileFetcher = new FileFetcher(privateConfig.CONTENT_TOKEN)
 
-const contentParser = new ContentParser()
+export const contentParser = new ContentParser()
 const reactQueryCacheStrategy = new ReactQueryCacheStrategy()
 const dummyCacheStrategy = new DummyCacheStrategy()
 

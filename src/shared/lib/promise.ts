@@ -1,7 +1,7 @@
 export const allSuccess = async <T>(
   promises: Promise<T>[],
   log?: (item: PromiseSettledResult<Awaited<T>>, index: number) => void
-) => {
+): Promise<T[]> => {
   return await Promise.allSettled(promises).then(r => {
     r.forEach((res, index) => log?.(res, index))
     return r

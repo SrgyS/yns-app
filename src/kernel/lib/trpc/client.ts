@@ -1,6 +1,6 @@
 import { createTRPCClient, httpBatchLink, TRPCClient } from '@trpc/client'
 import { CreateTRPCReact, createTRPCReact } from '@trpc/react-query'
-import { SharedRouter } from './server'
+import { SharedRouter } from './module'
 import { AnyRouter } from '@trpc/server'
 import { publicConfig } from '@/shared/config/public'
 

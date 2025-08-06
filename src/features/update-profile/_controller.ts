@@ -2,11 +2,11 @@ import {
   checkAbilityInputProcedure,
   Controller,
   router,
-} from '@/kernel/lib/trpc/server'
+} from '@/kernel/lib/trpc/module'
 import {
   GetProfileService,
   UpdateProfileService,
-} from '../../entity/user/server'
+} from '../../entity/user/module'
 import { injectable } from 'inversify'
 import { createProfileAbility } from './_domain/ability'
 import z from 'zod'

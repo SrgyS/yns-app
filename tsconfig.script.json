@@ -1,7 +1,15 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
     "module": "commonjs",
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "target": "ES2022",
+    "lib": ["ES2022"]
   },
   "include": ["./prisma/**/*.ts", "./tests/**/*.ts"]
 }

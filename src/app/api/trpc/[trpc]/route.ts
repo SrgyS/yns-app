@@ -4,7 +4,7 @@ import {
   Controller,
   sharedRouter,
   t,
-} from '@/kernel/lib/trpc/server'
+} from '@/kernel/lib/trpc/module'
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch'
 
 const routers = server.getAll(Controller).map(c => c.router)

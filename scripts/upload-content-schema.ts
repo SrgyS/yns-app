@@ -1,11 +1,25 @@
+import 'dotenv/config'
 import { compileFromFile } from 'json-schema-to-typescript'
 import { promises as fsPromises } from 'fs'
 import * as path from 'path'
 
 // Функция для скачивания и сохранения файла
 async function downloadFile(url: string, outputPath: string): Promise<void> {
-  const response = await fetch(url)
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `token ${process.env.CONTENT_TOKEN}`,
+      Accept: 'application/vnd.github.v3.raw',
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error(
+      `Ошибка при загрузке ${url}: ${response.status} ${response.statusText}`
+    )
+  }
+
   const data = await response.text()
+
   await fsPromises.writeFile(outputPath, data)
 }
 
@@ -26,7 +40,10 @@ async function downloadAndGenerateTypes(
   const schemaFiles = [
     'manifest.schema.json',
     'course.schema.json',
-    'lesson.schema.json',
+    'daily-plan.schema.json',
+    'workout.schema.json',
+    'meal-plan.schema.json',
+    'recipe.schema.json',
   ]
 
   for (const file of schemaFiles) {

@@ -1,0 +1,120 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Recipe",
+    "description": "Схема для описания рецепта",
+    "type": "object",
+    "properties": {
+        "slug": {
+            "type": "string",
+            "description": "Уникальный идентификатор тренировки",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "readOnly": true
+        },
+        "title": {
+            "type": "string",
+            "description": "Название рецепта"
+        },
+        "description": {
+            "type": "string",
+            "description": "Описание рецепта",
+            "nullable": true
+        },
+        "preparationTimeMinutes": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Время приготовления в минутах"
+        },
+        "calories": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Количество калорий на порцию",
+            "nullable": true
+        },
+        "servings": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Количество порций"
+        },
+        "difficulty": {
+            "type": "string",
+            "enum": [
+                "EASY",
+                "MEDIUM",
+                "HARD"
+            ],
+            "description": "Сложность приготовления"
+        },
+        "isGlutenFree": {
+            "type": "boolean",
+            "description": "Без глютена",
+            "default": false
+        },
+        "isSugarFree": {
+            "type": "boolean",
+            "description": "Без сахара",
+            "default": false
+        },
+        "mealCategories": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "enum": [
+                    "BREAKFAST",
+                    "LUNCH",
+                    "DINNER",
+                    "SNACK",
+                    "SALAD",
+                    "DESSERT",
+                    "SOUP"
+                ]
+            },
+            "minItems": 1,
+            "description": "Категории приема пищи"
+        },
+        "ingredients": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Название ингредиента"
+                    },
+                    "weightGrams": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "Вес в граммах",
+                        "nullable": true
+                    },
+                    "quantity": {
+                        "type": "number",
+                        "minimum": 0,
+                        "description": "Количество",
+                        "nullable": true
+                    },
+                    "unit": {
+                        "type": "string",
+                        "description": "Единица измерения (например, 'шт', 'мл', 'чашка')",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "name"
+                ],
+                "additionalProperties": false
+            },
+            "description": "Список ингредиентов"
+        }
+    },
+    "required": [
+        "title",
+        "preparationTimeMinutes",
+        "servings",
+        "difficulty",
+        "isGlutenFree",
+        "isSugarFree",
+        "mealCategories",
+        "ingredients"
+    ],
+    "additionalProperties": false
+}
