@@ -19,6 +19,7 @@ import { UserCourseEnrollmentApi } from '@/entity/course/_domain/course'
 import React from 'react'
 import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { SmallSpinner } from '@/shared/ui/small-spinner'
+import { EditWorkoutDaysField } from './edit-workout-days-field'
 
 interface UserCourseItemProps {
   course: Course
@@ -40,8 +41,6 @@ export function UserCourseItem({ course, enrollment }: UserCourseItemProps) {
     { locale: ru }
   )
 
-  console.log({enrollment})
-
   return (
     <Card className="w-full">
       <CardHeader>
@@ -61,6 +60,27 @@ export function UserCourseItem({ course, enrollment }: UserCourseItemProps) {
                 С обратной связью
               </Badge>
             )}
+            <EditWorkoutDaysField enrollment={enrollment}/>
+            {/* Добавляем информацию о днях тренировок */}
+            {/* {enrollment.selectedWorkoutDays && enrollment.selectedWorkoutDays.length > 0 && (
+              <div className="space-y-2 mt-4">
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium">Дни тренировок:</h3>
+                  <Separator />
+                </div>
+                <div className="text-sm">
+                  {formatWorkoutDays(enrollment.selectedWorkoutDays)}
+                </div>
+                {enrollment.active && (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/edit-workout-days/${enrollment.id}`}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Изменить дни
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            )} */}
           </div>
         </div>
       </CardContent>
