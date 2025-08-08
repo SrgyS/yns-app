@@ -34,14 +34,16 @@ export default async function SelectTrainingDays({
     return redirect('/')
   }
 
+  const minDays = course.minWorkoutDaysPerWeek || 5 
+
   return (
     <main className="flex flex-col justify-center space-y-6 py-14 container max-w-[800px]">
       <SelectWorkoutDaysClient
         courseSlug={course.slug}
         courseId={courseId}
         initialSelectedDays={currentWorkoutDays}
-        minDays={5}
-        maxDays={5}
+        minDays={minDays}
+        maxDays={minDays}
       />
     </main>
   )

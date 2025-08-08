@@ -11,6 +11,7 @@ export type Course = {
   image: string
   draft: boolean
   durationWeeks: number
+  minWorkoutDaysPerWeek: number
   //массив ID курсов, от которых зависит данный курс
   dependencies: CourseId[]
   product?: CourseProduct

@@ -75,6 +75,18 @@ export class CreateUserCourseEnrollmentService {
         const mainWorkoutDays = course.dailyPlans.filter(dp => dp.mainWorkoutId)
         const warmupOnlyDays = course.dailyPlans.filter(dp => !dp.mainWorkoutId)
 
+        // Вычисляем необходимое количество дней с тренировками на основе параметров курса
+        const requiredMainWorkoutDays = course.minWorkoutDaysPerWeek * course.durationWeeks
+        const requiredWarmupOnlyDays = (7 - course.minWorkoutDaysPerWeek) * course.durationWeeks
+
+        // Проверяем, что у нас достаточно дней для курса
+        if (mainWorkoutDays.length < requiredMainWorkoutDays) {
+          throw new Error(`Not enough main workout days for a ${course.durationWeeks}-week course with ${course.minWorkoutDaysPerWeek} workout days per week`)
+        }
+        if (warmupOnlyDays.length < requiredWarmupOnlyDays) {
+          throw new Error(`Not enough warmup-only days for a ${course.durationWeeks}-week course with ${course.minWorkoutDaysPerWeek} workout days per week`)
+        }
+
         // Проверяем, что у нас достаточно дней для 4-недельного курса
         if (mainWorkoutDays.length < 20) {
           // 5 дней * 4 недели = 20 дней с основной тренировкой

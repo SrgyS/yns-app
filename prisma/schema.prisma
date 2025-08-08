@@ -95,7 +95,8 @@ model Course {
   thumbnail          String
   image              String
   draft              Boolean
-  durationWeeks Int
+  durationWeeks      Int
+  minWorkoutDaysPerWeek Int @default(5)
   product    CourseProduct?
 
   dailyPlans DailyPlan[] // Дни (планы) в фиксированном курсе
