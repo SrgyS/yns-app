@@ -17,7 +17,7 @@ export class GetUserDailyPlanService {
         logger.info({
           msg: 'Successfully retrieved user daily plan',
           userId: params.userId,
-          date: params.date,
+          dayNumberInCourse: params.dayNumberInCourse,
           planId: userDailyPlan.id,
         })
       }

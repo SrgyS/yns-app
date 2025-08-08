@@ -159,12 +159,14 @@ model UserDailyPlan {
   enrollmentId       String
   enrollment         UserCourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
   date               DateTime         // Конкретная дата плана
-  dayNumberInCourse  Int              // Порядковый номер дня с startDate
+  dayNumberInCourse  Int              // Порядковый номер дня с startDate (от 1 до 28)
+  weekNumber         Int              // Номер недели (от 1 до 4)
+  dayOfWeek          DayOfWeek        // День недели
 
   isWorkoutDay       Boolean          // Тренировочный ли это день для пользователя
 
-  warmupId    String
-  warmup      Workout          @relation("UserDailyWarmup", fields: [warmupId], references: [id])
+  warmupId           String
+  warmup             Workout          @relation("UserDailyWarmup", fields: [warmupId], references: [id])
 
   mainWorkoutId      String?
   mainWorkout        Workout?         @relation("UserDailyMainWorkout", fields: [mainWorkoutId], references: [id])
@@ -176,7 +178,9 @@ model UserDailyPlan {
   mainWorkoutProgress CompletionStatus @default(NOT_STARTED)
   mealPlanProgress   CompletionStatus @default(NOT_STARTED)
 
-  @@unique([enrollmentId, date]) // Один план на день для каждого enrollment
+  originalDailyPlanId String          // ID исходного DailyPlan, на основе которого создан этот план
+
+  @@unique([enrollmentId, dayNumberInCourse]) // Один план на день для каждого enrollment
   @@index([enrollmentId])
   @@index([userId, date])
 }

@@ -1,4 +1,4 @@
-import { CourseId, CourseSlug } from "@/kernel/domain/course";
+import { CourseId, CourseSlug } from '@/kernel/domain/course'
 import { CompletionStatus, DayOfWeek } from '@prisma/client'
 
 export type Course = {
@@ -17,63 +17,64 @@ export type Course = {
 }
 export type CourseProduct =
   | {
-      access: "free";
+      access: 'free'
     }
   | {
-      access: "paid";
-      price: number;
-    };
-
-    export type UserCourseEnrollment = {
-      id: string
-      userId: string
-      courseId: string
-      selectedWorkoutDays: DayOfWeek[]
-      startDate: Date
-      hasFeedback: boolean
-      active: boolean
+      access: 'paid'
+      price: number
     }
 
-    export type UserCourseEnrollmentApi = {
-      id: string
-      userId: string
-      courseId: string
-      selectedWorkoutDays: DayOfWeek[]
-      startDate: string
-      hasFeedback: boolean
-      active: boolean
-    }
+export type UserCourseEnrollment = {
+  id: string
+  userId: string
+  courseId: string
+  selectedWorkoutDays: DayOfWeek[]
+  startDate: Date
+  hasFeedback: boolean
+  active: boolean
+}
 
-    export type UserDailyPlan = {
-      id: string
-      userId: string
-      enrollmentId: string
-      date: Date
-      dayNumberInCourse: number
-      isWorkoutDay: boolean
-      warmupId: string
-      mainWorkoutId: string | null
-      mealPlanId: string
-      warmupProgress: CompletionStatus
-      mainWorkoutProgress: CompletionStatus
-      mealPlanProgress: CompletionStatus
-    }
+export type UserCourseEnrollmentApi = {
+  id: string
+  userId: string
+  courseId: string
+  selectedWorkoutDays: DayOfWeek[]
+  startDate: string
+  hasFeedback: boolean
+  active: boolean
+}
 
-    export type CreateUserCourseEnrollmentParams = {
-      userId: string
-      courseId: string
-      startDate: Date
-      selectedWorkoutDays: DayOfWeek[]
-      hasFeedback?: boolean
-    }
+export type UserDailyPlan = {
+  id: string
+  userId: string
+  enrollmentId: string
+  date: Date
+  dayNumberInCourse: number
+  isWorkoutDay: boolean
+  warmupId: string
+  mainWorkoutId: string | null
+  mealPlanId: string
+  warmupProgress: CompletionStatus
+  mainWorkoutProgress: CompletionStatus
+  mealPlanProgress: CompletionStatus
+  weekNumber: number
+}
 
-    export type GetUserDailyPlanParams = {
-      userId: string
-      courseId: string
-      date: Date
-    }
+export type CreateUserCourseEnrollmentParams = {
+  userId: string
+  courseId: string
+  startDate: Date
+  selectedWorkoutDays: DayOfWeek[]
+  hasFeedback?: boolean
+}
 
-    export type GetUserDailyPlanByEnrollmentParams = {
-      enrollmentId: string
-      date: Date
-    }
+export type GetUserDailyPlanParams = {
+  userId: string
+  courseId: string
+  dayNumberInCourse: number
+}
+
+export type GetUserDailyPlanByEnrollmentParams = {
+  enrollmentId: string
+  dayNumberInCourse: number
+}

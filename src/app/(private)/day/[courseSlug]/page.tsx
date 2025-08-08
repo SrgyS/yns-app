@@ -1,10 +1,10 @@
 'use client'
 
-import { CalendarTabs } from '@/features/practice/_ui/calendar-tabs'
+import { CalendarTabs } from '@/features/daily-plan/_ui/calendar-tabs'
 import { Button } from '@/shared/ui/button'
 import { Suspense, use } from 'react'
 import { Skeleton } from '@/shared/ui/skeleton'
-import { CourseTitle } from '@/features/practice/_ui/course-title'
+import { CourseTitle } from '@/features/daily-plan/_ui/course-title'
 
 interface DayPageProps {
   params: Promise<{

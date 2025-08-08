@@ -71,7 +71,7 @@ export class CourseEnrollmentController extends Controller {
           z.object({
             userId: z.string(),
             courseId: z.string(),
-            date: z.date(),
+            dayNumberInCourse: z.number(),
           })
         )
         .query(async ({ input }) => {

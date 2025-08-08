@@ -1,12 +1,19 @@
 import { server } from '@/app/server'
-import { GetCourseService, GetUserWorkoutDaysService } from '@/entity/course/module'
+import {
+  GetCourseService,
+  GetUserWorkoutDaysService,
+} from '@/entity/course/module'
 import { redirect } from 'next/navigation'
 import { SessionService } from '@/kernel/lib/next-auth/server'
 // Импортируем из индексного файла
 import { SelectWorkoutDaysClient } from '@/features/select-training-days'
 import { toast } from 'sonner'
 
-export default async function SelectTrainingDays({ params }: { params: { id: string } }) {
+export default async function SelectTrainingDays({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
   const sessionService = server.get(SessionService)
   const getCourseService = server.get(GetCourseService)
   const session = await sessionService.get()
@@ -18,9 +25,10 @@ export default async function SelectTrainingDays({ params }: { params: { id: str
   const userId = session.user.id
   const userWorkoutDaysService = server.get(GetUserWorkoutDaysService)
   const currentWorkoutDays = await userWorkoutDaysService.exec(userId)
-  const courseId = params.id
-  const course = await getCourseService.exec({id:courseId})
-  
+  const { id } = await params
+  const courseId = id
+  const course = await getCourseService.exec({ id: courseId })
+
   if (!course) {
     toast.error('Курс не найден')
     return redirect('/')
@@ -28,8 +36,8 @@ export default async function SelectTrainingDays({ params }: { params: { id: str
 
   return (
     <main className="flex flex-col justify-center space-y-6 py-14 container max-w-[800px]">
-      <SelectWorkoutDaysClient 
-      courseSlug={course.slug}
+      <SelectWorkoutDaysClient
+        courseSlug={course.slug}
         courseId={courseId}
         initialSelectedDays={currentWorkoutDays}
         minDays={5}

@@ -45,7 +45,14 @@ export class UserCourseEnrollmentRepository {
         params,
         error,
       })
-      throw new Error('Failed to create enrollment')
+      
+      // Проверяем, является ли ошибка ошибкой уникальности Prisma
+      if (error instanceof Error && 'code' in (error as any) && (error as any).code === 'P2002') {
+        throw new Error('Запись на этот курс уже существует')
+      }
+      
+      // Для других типов ошибок возвращаем общее сообщение
+      throw new Error('Ошибка при создании записи на курс')
     }
   }
 

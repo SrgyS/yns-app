@@ -41,7 +41,9 @@ export function SelectWorkoutDaysClient({
       router.push(`/day/${courseSlug}`)
     } catch (error) {
       console.error('Error handling workout days:', error)
-      toast.error('Не удалось создать запись на курс!')
+      // Проверяем, есть ли сообщение об ошибке
+      const errorMessage = error instanceof Error ? error.message : 'Не удалось создать запись на курс!'
+      toast.error(errorMessage)
     } finally {
       setIsSubmitting(false)
     }

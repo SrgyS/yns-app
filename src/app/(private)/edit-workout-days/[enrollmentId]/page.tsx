@@ -5,7 +5,7 @@ import { SessionService } from '@/kernel/lib/next-auth/server'
 // Импортируем из индексного файла
 import { EditWorkoutDaysClient } from '@/features/select-training-days/_ui/edit-workout-days-client'
 
-export default async function EditWorkoutDays({ params }: { params: { enrollmentId: string } }) {
+export default async function EditWorkoutDays({ params }: { params: Promise<{ enrollmentId: string }> }) {
   // Проверка аутентификации
   const sessionService = server.get(SessionService)
   const session = await sessionService.get()

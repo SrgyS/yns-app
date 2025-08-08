@@ -73,6 +73,7 @@ async function downloadAndParseValidatedYaml<T>(
 // --- Основная функция загрузки и выгрузки контента (ИЗМЕНЕНИЯ ЗДЕСЬ) ---
 async function downloadAndUploadContent(): Promise<void> {
   console.log('🚀 Запуск удаленной загрузки и импорта контента...')
+ 
   try {
     // --- 0. Загрузка глобального манифеста ---
     const manifestRelativePath = 'manifest.yaml'
@@ -89,7 +90,6 @@ async function downloadAndUploadContent(): Promise<void> {
       )
       process.exit(1)
     }
-    console.log('  ✅ Глобальный манифест загружен.')
 
     // 1. Импорт всех Workouts
     console.log('\n🏋️ Импорт тренировок (Workouts)...')

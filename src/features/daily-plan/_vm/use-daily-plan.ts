@@ -7,11 +7,12 @@ export function useDailyPlan() {
   const { data: session } = useAppSession()
 
   const getDailyPlan = useCallback(
-    (courseId: string, date: Date) => {
+    (courseId: string, dayNumberInCourse: number) => {
       if (!session?.user?.id) {
         return null
       }
-      return getUserDailyPlan(session.user.id, courseId, date)
+
+      return getUserDailyPlan(session.user.id, courseId, dayNumberInCourse)
     },
     [getUserDailyPlan, session?.user?.id]
   )
@@ -19,4 +20,4 @@ export function useDailyPlan() {
   return {
     getDailyPlan,
   }
-} 
+}

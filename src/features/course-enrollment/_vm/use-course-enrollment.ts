@@ -22,10 +22,8 @@ export function useCourseEnrollment() {
     }) => {
       try {
         const result = await createEnrollmentMutation.mutateAsync(params)
-        toast.success('Вы успешно записались на курс!')
         return result
       } catch (error) {
-        toast.error('Ошибка при записи на курс')
         throw error
       }
     },
@@ -49,8 +47,8 @@ export function useCourseEnrollment() {
     courseEnrollmentApi.course.getActiveEnrollment.useQuery
 
   const getUserDailyPlan = useCallback(
-    (userId: string, courseId: string, date: Date) => {
-      return getUserDailyPlanQuery({ userId, courseId, date })
+    (userId: string, courseId: string, dayNumberInCourse: number) => {
+      return getUserDailyPlanQuery({ userId, courseId, dayNumberInCourse })
     },
     [getUserDailyPlanQuery]
   )
