@@ -48,6 +48,7 @@ export class CoursesRepository {
       product,
       draft: course.draft,
       durationWeeks: course.durationWeeks,
+      minWorkoutDaysPerWeek: course.minWorkoutDaysPerWeek,
     }
   }
   async coursesList(): Promise<Course[]> {

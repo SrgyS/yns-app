@@ -16,7 +16,7 @@ export function CourseItem({ course }: { course: Course }) {
       </CardHeader>
       <CardFooter>
         <Button>
-          <Link href={`/workout-days-select/${course.id}`}>Купить</Link>
+          <Link href={`/select-workout-days/${course.id}`}>Купить</Link>
         </Button>
       </CardFooter>
     </Card>

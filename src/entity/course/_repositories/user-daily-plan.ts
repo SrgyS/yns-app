@@ -1,14 +1,21 @@
+import {
+  DayOfWeek,
+  Prisma,
+  PrismaClient,
+  UserDailyPlan as PrismaUserDailyPlan,
+} from '@prisma/client'
 import { dbClient } from '@/shared/lib/db'
-import { DayOfWeek, UserDailyPlan as PrismaUserDailyPlan } from '@prisma/client'
 import {
   GetUserDailyPlanByEnrollmentParams,
   GetUserDailyPlanParams,
   UserDailyPlan,
 } from '../../course'
 import { logger } from '@/shared/lib/logger'
-import { UserId } from '@/kernel/domain/user'
+
+type DbClient = PrismaClient | Prisma.TransactionClient
 
 export class UserDailyPlanRepository {
+  constructor(private readonly defaultDb: DbClient = dbClient) {}
   private mapPrismaUserDailyPlanToDomain(
     prismaUserDailyPlan: PrismaUserDailyPlan
   ): UserDailyPlan {
@@ -29,11 +36,25 @@ export class UserDailyPlanRepository {
     }
   }
 
+  private getDayOfWeek(date: Date): DayOfWeek {
+    const days = [
+      'SUNDAY',
+      'MONDAY',
+      'TUESDAY',
+      'WEDNESDAY',
+      'THURSDAY',
+      'FRIDAY',
+      'SATURDAY',
+    ]
+    return days[date.getDay()] as DayOfWeek
+  }
+
   async generateUserDailyPlansForEnrollment(
-    enrollmentId: string
+    enrollmentId: string,
+    db: DbClient = this.defaultDb
   ): Promise<UserDailyPlan[]> {
     try {
-      const enrollment = await dbClient.userCourseEnrollment.findUnique({
+      const enrollment = await db.userCourseEnrollment.findUnique({
         where: { id: enrollmentId },
         include: {
           course: {
@@ -63,18 +84,25 @@ export class UserDailyPlanRepository {
       const mainWorkoutDays = course.dailyPlans.filter(dp => dp.mainWorkoutId)
       const warmupOnlyDays = course.dailyPlans.filter(dp => !dp.mainWorkoutId)
 
+      const requiredMainWorkoutDays =
+        course.minWorkoutDaysPerWeek * course.durationWeeks
+      const requiredWarmupOnlyDays =
+        (7 - course.minWorkoutDaysPerWeek) * course.durationWeeks
       // Проверяем, что у нас достаточно дней для 4-недельного курса
-      if (mainWorkoutDays.length < 20) {
-        console.log('mainWorkoutDays', course.title)
+      if (mainWorkoutDays.length < requiredMainWorkoutDays) {
         // 5 дней * 4 недели = 20 дней с основной тренировкой
-        throw new Error(`1 ${course.title} Not enough main workout days for a 4-week course`)
+        throw new Error(
+          `Not enough main workout days for a ${course.durationWeeks}-week course`
+        )
       }
-      if (warmupOnlyDays.length < 8) {
+      if (warmupOnlyDays.length < requiredWarmupOnlyDays) {
         // 2 дня * 4 недели = 8 дней только с зарядкой
-        throw new Error(`${course.title}Not enough warmup-only days for a 4-week course`)
+        throw new Error(
+          `Not enough warmup-only days for a ${course.durationWeeks}-week course`
+        )
       }
 
-      // Создаем календарь на 28 дней (4 недели)
+      // Создаем календарь на число дней в курсе
       const startDateObj = new Date(startDate)
       const calendar: Array<{
         date: Date
@@ -84,7 +112,7 @@ export class UserDailyPlanRepository {
         isWorkoutDay: boolean
       }> = []
 
-      for (let i = 0; i < 28; i++) {
+      for (let i = 0; i < course.durationWeeks * 7; i++) {
         const currentDate = new Date(startDateObj)
         currentDate.setDate(startDateObj.getDate() + i)
         const dayOfWeek = this.getDayOfWeek(currentDate)
@@ -120,7 +148,7 @@ export class UserDailyPlanRepository {
           dailyPlan = warmupOnlyDays[warmupOnlyIndex++]
         }
 
-        const userDailyPlan = await dbClient.userDailyPlan.create({
+        const userDailyPlan = await db.userDailyPlan.create({
           data: {
             userId: enrollment.userId,
             enrollmentId: enrollment.id,
@@ -151,32 +179,25 @@ export class UserDailyPlanRepository {
       logger.error({
         msg: 'Error generating user daily plans for enrollment',
         enrollmentId,
-        error: error instanceof Error ? { message: error.message, stack: error.stack } : error,
+        error:
+          error instanceof Error
+            ? { message: error.message, stack: error.stack }
+            : error,
       })
       // Пробрасываем оригинальную ошибку вместо создания новой
-      throw error instanceof Error ? error : new Error('Failed to generate user daily plans')
+      throw error instanceof Error
+        ? error
+        : new Error('Failed to generate user daily plans')
     }
   }
 
-  private getDayOfWeek(date: Date): DayOfWeek {
-    const days = [
-      'SUNDAY',
-      'MONDAY',
-      'TUESDAY',
-      'WEDNESDAY',
-      'THURSDAY',
-      'FRIDAY',
-      'SATURDAY',
-    ]
-    return days[date.getDay()] as DayOfWeek
-  }
-
   async getUserDailyPlan(
-    params: GetUserDailyPlanParams
+    params: GetUserDailyPlanParams,
+    db: DbClient = this.defaultDb
   ): Promise<UserDailyPlan | null> {
     try {
       // Теперь нужно найти enrollment для пользователя и курса
-      const enrollment = await dbClient.userCourseEnrollment.findFirst({
+      const enrollment = await db.userCourseEnrollment.findFirst({
         where: {
           userId: params.userId,
           courseId: params.courseId,
@@ -187,7 +208,7 @@ export class UserDailyPlanRepository {
         return null
       }
 
-      const userDailyPlan = await dbClient.userDailyPlan.findUnique({
+      const userDailyPlan = await db.userDailyPlan.findUnique({
         where: {
           enrollmentId_dayNumberInCourse: {
             enrollmentId: enrollment.id,
@@ -209,10 +230,11 @@ export class UserDailyPlanRepository {
   }
 
   async getUserDailyPlanByEnrollment(
-    params: GetUserDailyPlanByEnrollmentParams
+    params: GetUserDailyPlanByEnrollmentParams,
+    db: DbClient = this.defaultDb
   ): Promise<UserDailyPlan | null> {
     try {
-      const userDailyPlan = await dbClient.userDailyPlan.findFirst({
+      const userDailyPlan = await db.userDailyPlan.findFirst({
         where: {
           enrollmentId: params.enrollmentId,
           dayNumberInCourse: params.dayNumberInCourse,
@@ -233,10 +255,11 @@ export class UserDailyPlanRepository {
   }
 
   async getUserDailyPlansByEnrollment(
-    enrollmentId: string
+    enrollmentId: string,
+    db: DbClient = this.defaultDb
   ): Promise<UserDailyPlan[]> {
     try {
-      const userDailyPlans = await dbClient.userDailyPlan.findMany({
+      const userDailyPlans = await db.userDailyPlan.findMany({
         where: { enrollmentId },
         orderBy: { dayNumberInCourse: 'asc' },
       })
@@ -252,98 +275,14 @@ export class UserDailyPlanRepository {
     }
   }
 
-  async updateFutureWorkoutDays(
-    userId: UserId,
-    courseId: string,
-    selectedWorkoutDays: DayOfWeek[]
-  ): Promise<void> {
-    try {
-      const enrollment = await dbClient.userCourseEnrollment.findUnique({
-        where: { userId_courseId: { userId, courseId } },
-        include: {
-          course: {
-            include: {
-              dailyPlans: {
-                include: {
-                  warmup: true,
-                  mainWorkout: true,
-                  mealPlan: true,
-                },
-              },
-            },
-          },
-        },
-      })
-
-      if (!enrollment) {
-        throw new Error('Enrollment not found')
-      }
-
-      const today = new Date()
-      today.setHours(0, 0, 0, 0) // Устанавливаем начало дня
-
-      // Получаем все будущие планы для этого enrollment
-      const futurePlans = await dbClient.userDailyPlan.findMany({
-        where: {
-          userId,
-          date: { gte: today },
-        },
-        orderBy: { date: 'asc' },
-      })
-
-      // Обновляем каждый будущий план
-      for (const plan of futurePlans) {
-        const dayOfWeek = this.getDayOfWeek(plan.date)
-        const isWorkoutDay = selectedWorkoutDays.includes(dayOfWeek)
-
-        await dbClient.userDailyPlan.update({
-          where: { id: plan.id },
-          data: {
-            isWorkoutDay,
-          },
-        })
-      }
-
-      logger.info({
-        msg: 'Updated future workout days for enrollment',
-        userId,
-        selectedWorkoutDays,
-        updatedPlansCount: futurePlans.length,
-      })
-    } catch (error) {
-      logger.error({
-        msg: 'Error updating future workout days',
-        userId,
-        selectedWorkoutDays,
-        error,
-      })
-      throw new Error('Failed to update future workout days')
-    }
-  }
-  // deleteFuturePlans(enrollmentId: string) {
-  //   return dbClient.userDailyPlan.deleteMany({
-  //     where: {
-  //       enrollmentId,
-  //       date: { gte: new Date() },
-  //     },
-  //   })
-  // },
-
-  // createMany(data: Prisma.UserDailyPlanCreateManyInput[]) {
-  //   return dbClient.userDailyPlan.createMany({ data })
-  // },
-
-  async updateWorkoutDays(
+  async updateUserDailyPlans(
     enrollmentId: string,
-    selectedWorkoutDays: DayOfWeek[]
+    selectedWorkoutDays: DayOfWeek[],
+    db: DbClient = this.defaultDb
   ): Promise<UserDailyPlan[]> {
     try {
-      // Получаем текущую дату
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-
       // Получаем enrollment
-      const enrollment = await dbClient.userCourseEnrollment.findUnique({
+      const enrollment = await db.userCourseEnrollment.findUnique({
         where: { id: enrollmentId },
         include: {
           course: {
@@ -364,17 +303,10 @@ export class UserDailyPlanRepository {
         throw new Error('Enrollment not found')
       }
 
-      // Обновляем выбранные дни тренировок в enrollment
-      await dbClient.userCourseEnrollment.update({
-        where: { id: enrollmentId },
-        data: { selectedWorkoutDays },
-      })
-
-      // Получаем все будущие планы пользователя, начиная с сегодняшнего дня
-      const userDailyPlans = await dbClient.userDailyPlan.findMany({
+      // Получаем все планы пользователя (не только будущие)
+      const userDailyPlans = await db.userDailyPlan.findMany({
         where: {
           enrollmentId,
-          date: { gte: today },
         },
         orderBy: { dayNumberInCourse: 'asc' },
       })
@@ -410,7 +342,7 @@ export class UserDailyPlanRepository {
           dailyPlan = warmupOnlyDays[warmupOnlyIndex++]
         }
 
-        const updatedPlan = await dbClient.userDailyPlan.update({
+        const updatedPlan = await db.userDailyPlan.update({
           where: { id: plan.id },
           data: {
             isWorkoutDay,
@@ -432,51 +364,6 @@ export class UserDailyPlanRepository {
         error,
       })
       throw new Error('Failed to update workout days')
-    }
-  }
-
-  async createUserDailyPlanWithTransaction(
-    data: {
-      userId: string;
-      enrollmentId: string;
-      date: Date;
-      dayNumberInCourse: number;
-      weekNumber: number;
-      dayOfWeek: DayOfWeek;
-      isWorkoutDay: boolean;
-      warmupId: string | null;
-      mainWorkoutId: string | null;
-      mealPlanId: string | null;
-      originalDailyPlanId: string;
-    },
-    tx: any // Используйте правильный тип для транзакции Prisma
-  ): Promise<any> { // Возвращаем Prisma-объект
-    try {
-      return await tx.userDailyPlan.create({
-        data: {
-          userId: data.userId,
-          enrollmentId: data.enrollmentId,
-          date: data.date,
-          dayNumberInCourse: data.dayNumberInCourse,
-          weekNumber: data.weekNumber,
-          dayOfWeek: data.dayOfWeek,
-          isWorkoutDay: data.isWorkoutDay,
-          warmupId: data.warmupId,
-          mainWorkoutId: data.mainWorkoutId,
-          mealPlanId: data.mealPlanId,
-          warmupProgress: 'NOT_STARTED',
-          mainWorkoutProgress: 'NOT_STARTED',
-          mealPlanProgress: 'NOT_STARTED',
-          originalDailyPlanId: data.originalDailyPlanId,
-        },
-      })
-    } catch (error) {
-      logger.error({
-        msg: 'Error creating user daily plan in transaction',
-        data,
-        error,
-      })
-      throw error
     }
   }
 }

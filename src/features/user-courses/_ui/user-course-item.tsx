@@ -40,6 +40,8 @@ export function UserCourseItem({ course, enrollment }: UserCourseItemProps) {
     { locale: ru }
   )
 
+  console.log({enrollment})
+
   return (
     <Card className="w-full">
       <CardHeader>

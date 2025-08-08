@@ -38,10 +38,10 @@ export function EditWorkoutDaysClient({
           userId,
           selectedWorkoutDays: days,
         })
-        toast.success('Дни тренировок успешно обновлены')
+        // Тост уже вызывается внутри updateWorkoutDays, поэтому здесь его можно удалить
       } else {
         // Создаем новую запись на курс
-      console.error('ошибка при обновлении дней тренировок')
+        console.error('ошибка при обновлении дней тренировок')
         toast.error('Не удалось обновить дни тренировок!')
       }
       

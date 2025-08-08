@@ -6,10 +6,15 @@ import {
   UserCourseEnrollment as PrismaUserCourseEnrollment,
   DayOfWeek,
   Prisma,
+  PrismaClient,
 } from '@prisma/client'
+
+type DbClient = PrismaClient | Prisma.TransactionClient
 
 @injectable()
 export class UserCourseEnrollmentRepository {
+  constructor(private readonly defaultDb: DbClient = dbClient) {}
+
   private mapPrismaEnrollmentToDomain(
     prismaEnrollment: PrismaUserCourseEnrollment
   ): UserCourseEnrollment {
@@ -88,12 +93,13 @@ export class UserCourseEnrollmentRepository {
   }
 
   async updateSelectedWorkoutDays(
-    userId: string,
-    selectedWorkoutDays: DayOfWeek[]
+    enrollmentId: string,
+    selectedWorkoutDays: DayOfWeek[],
+    db: DbClient = this.defaultDb
   ): Promise<number> {
     try {
-      const result = await dbClient.userCourseEnrollment.updateMany({
-        where: { userId: userId },
+      const result = await db.userCourseEnrollment.updateMany({
+        where: { id: enrollmentId },
         data: {
           selectedWorkoutDays,
         },
@@ -103,7 +109,7 @@ export class UserCourseEnrollmentRepository {
     } catch (error) {
       logger.error({
         msg: 'Error updating selected workout days',
-        userId,
+        enrollmentId,
         selectedWorkoutDays,
         error,
       })
@@ -136,9 +142,9 @@ export class UserCourseEnrollmentRepository {
     }
   }
 
-  async deactivateUserEnrollments(userId: string): Promise<number> {
+  async deactivateUserEnrollments(userId: string, db: DbClient = this.defaultDb): Promise<number> {
     try {
-      const result = await dbClient.userCourseEnrollment.updateMany({
+      const result = await db.userCourseEnrollment.updateMany({
         where: { userId: userId },
         data: {
           active: false,
@@ -156,9 +162,9 @@ export class UserCourseEnrollmentRepository {
     }
   }
 
-  async activateEnrollment(enrollmentId: string): Promise<UserCourseEnrollment> {
+  async activateEnrollment(enrollmentId: string, db: DbClient = this.defaultDb): Promise<UserCourseEnrollment> {
     try {
-      const enrollment = await dbClient.userCourseEnrollment.update({
+      const enrollment = await db.userCourseEnrollment.update({
         where: { id: enrollmentId },
         data: { active: true },
       })
@@ -176,10 +182,11 @@ export class UserCourseEnrollmentRepository {
 
   // Существующий метод createEnrollment остается для обратной совместимости
   async createEnrollment(
-    params: CreateUserCourseEnrollmentParams
+    params: CreateUserCourseEnrollmentParams,
+    db: DbClient = this.defaultDb
   ): Promise<UserCourseEnrollment> {
     try {
-      const enrollment = await dbClient.userCourseEnrollment.create({
+      const enrollment = await db.userCourseEnrollment.create({
         data: {
           userId: params.userId,
           courseId: params.courseId,
@@ -208,36 +215,34 @@ export class UserCourseEnrollmentRepository {
     }
   }
 
-  // Новый метод для создания enrollment в рамках транзакции
-  async createEnrollmentWithTransaction(
-    params: CreateUserCourseEnrollmentParams,
-    tx: Prisma.TransactionClient // Используйте правильный тип для транзакции Prisma
-  ): Promise<UserCourseEnrollment> { // Возвращаем Prisma-объект
+  async getActiveEnrollmentWithCourseDetails(userId: string, tx: Prisma.TransactionClient) {
     try {
-      return await tx.userCourseEnrollment.create({
-        data: {
-          userId: params.userId,
-          courseId: params.courseId,
-          startDate: params.startDate,
-          selectedWorkoutDays: params.selectedWorkoutDays,
-          hasFeedback: params.hasFeedback ?? false,
-          active: true,
+      return await tx.userCourseEnrollment.findFirst({
+        where: { 
+          userId: userId,
+          active: true 
+        },
+        include: {
+          course: {
+            include: {
+              dailyPlans: {
+                include: {
+                  warmup: true,
+                  mainWorkout: true,
+                  mealPlan: true,
+                },
+              },
+            },
+          },
         },
       })
     } catch (error) {
       logger.error({
-        msg: 'Error creating user course enrollment in transaction',
-        params,
+        msg: 'Error getting active enrollment with course details',
+        userId,
         error,
       })
-      
-      // Проверяем, является ли ошибка ошибкой уникальности Prisma
-      if (error instanceof Error && 'code' in (error as any) && (error as any).code === 'P2002') {
-        throw new Error('Запись на этот курс уже существует')
-      }
-      
-      // Для других типов ошибок возвращаем общее сообщение
-      throw new Error('Ошибка при создании записи на курс')
+      throw new Error('Failed to get active enrollment with course details')
     }
   }
 }
