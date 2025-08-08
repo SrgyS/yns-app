@@ -185,22 +185,20 @@ export class CreateUserCourseEnrollmentService {
           active: enrollment.active,
         }
       })
-
-      // Логирование успешного создания перемещено внутрь блока try после транзакции
-      logger.info({
-        msg: 'Successfully created course enrollment with daily plans',
-        userId: params.userId,
-        courseId: params.courseId,
-      })
     } catch (error) {
       logger.error({
-        msg: 'Error creating course enrollment',
+        msg: 'Error creating user course enrollment',
         params,
         error,
       })
-      throw error instanceof Error
-        ? error
-        : new Error('Ошибка при создании записи на курс')
+      
+      // Проверяем, является ли ошибка ошибкой уникальности Prisma
+      if (error instanceof Error && 'code' in (error as any) && (error as any).code === 'P2002') {
+        throw new Error('Запись на этот курс уже существует')
+      }
+      
+      // Для других типов ошибок возвращаем общее сообщение
+      throw new Error('Ошибка при создании записи на курс')
     }
   }
 }

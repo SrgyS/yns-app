@@ -434,4 +434,49 @@ export class UserDailyPlanRepository {
       throw new Error('Failed to update workout days')
     }
   }
+
+  async createUserDailyPlanWithTransaction(
+    data: {
+      userId: string;
+      enrollmentId: string;
+      date: Date;
+      dayNumberInCourse: number;
+      weekNumber: number;
+      dayOfWeek: DayOfWeek;
+      isWorkoutDay: boolean;
+      warmupId: string | null;
+      mainWorkoutId: string | null;
+      mealPlanId: string | null;
+      originalDailyPlanId: string;
+    },
+    tx: any // Используйте правильный тип для транзакции Prisma
+  ): Promise<any> { // Возвращаем Prisma-объект
+    try {
+      return await tx.userDailyPlan.create({
+        data: {
+          userId: data.userId,
+          enrollmentId: data.enrollmentId,
+          date: data.date,
+          dayNumberInCourse: data.dayNumberInCourse,
+          weekNumber: data.weekNumber,
+          dayOfWeek: data.dayOfWeek,
+          isWorkoutDay: data.isWorkoutDay,
+          warmupId: data.warmupId,
+          mainWorkoutId: data.mainWorkoutId,
+          mealPlanId: data.mealPlanId,
+          warmupProgress: 'NOT_STARTED',
+          mainWorkoutProgress: 'NOT_STARTED',
+          mealPlanProgress: 'NOT_STARTED',
+          originalDailyPlanId: data.originalDailyPlanId,
+        },
+      })
+    } catch (error) {
+      logger.error({
+        msg: 'Error creating user daily plan in transaction',
+        data,
+        error,
+      })
+      throw error
+    }
+  }
 }

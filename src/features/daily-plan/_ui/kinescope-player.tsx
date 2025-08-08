@@ -1,13 +1,20 @@
 'use client'
 
-export function KinescopePlayer({ videoId }: { videoId: string }) {
+type Props = { videoId: string }
+
+export function KinescopePlayer({ videoId }: Props) {
   return (
-    <div className="relative pt-[56.25%] w-full">
-      <iframe
-        src={videoId}
-        allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;"
-        className="absolute top-0 left-0 w-full h-full rounded-lg border-0"
-      />
+    <div className="relative w-full overflow-hidden rounded-lg">
+      <div className="aspect-video">
+        <iframe
+          src={videoId}
+          title="Kinescope video player"
+          allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock"
+          loading="lazy"
+          referrerPolicy="strict-origin-when-cross-origin"
+          className="absolute inset-0 block h-full w-full border-0"
+        />
+      </div>
     </div>
   )
 }

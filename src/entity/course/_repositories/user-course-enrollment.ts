@@ -5,6 +5,7 @@ import { logger } from '@/shared/lib/logger'
 import {
   UserCourseEnrollment as PrismaUserCourseEnrollment,
   DayOfWeek,
+  Prisma,
 } from '@prisma/client'
 
 @injectable()
@@ -22,40 +23,7 @@ export class UserCourseEnrollmentRepository {
       active: prismaEnrollment.active,
     }
   }
-
-  async createEnrollment(
-    params: CreateUserCourseEnrollmentParams
-  ): Promise<UserCourseEnrollment> {
-    try {
-      const enrollment = await dbClient.userCourseEnrollment.create({
-        data: {
-          userId: params.userId,
-          courseId: params.courseId,
-          startDate: params.startDate,
-          selectedWorkoutDays: params.selectedWorkoutDays,
-          hasFeedback: params.hasFeedback ?? false,
-          active: true,
-        },
-      })
-
-      return this.mapPrismaEnrollmentToDomain(enrollment)
-    } catch (error) {
-      logger.error({
-        msg: 'Error creating user course enrollment',
-        params,
-        error,
-      })
-      
-      // Проверяем, является ли ошибка ошибкой уникальности Prisma
-      if (error instanceof Error && 'code' in (error as any) && (error as any).code === 'P2002') {
-        throw new Error('Запись на этот курс уже существует')
-      }
-      
-      // Для других типов ошибок возвращаем общее сообщение
-      throw new Error('Ошибка при создании записи на курс')
-    }
-  }
-
+  
   async getEnrollment(
     userId: string,
     courseId: string
@@ -203,6 +171,73 @@ export class UserCourseEnrollmentRepository {
         error,
       })
       throw new Error('Failed to activate enrollment')
+    }
+  }
+
+  // Существующий метод createEnrollment остается для обратной совместимости
+  async createEnrollment(
+    params: CreateUserCourseEnrollmentParams
+  ): Promise<UserCourseEnrollment> {
+    try {
+      const enrollment = await dbClient.userCourseEnrollment.create({
+        data: {
+          userId: params.userId,
+          courseId: params.courseId,
+          startDate: params.startDate,
+          selectedWorkoutDays: params.selectedWorkoutDays,
+          hasFeedback: params.hasFeedback ?? false,
+          active: true,
+        },
+      })
+
+      return this.mapPrismaEnrollmentToDomain(enrollment)
+    } catch (error) {
+      logger.error({
+        msg: 'Error creating user course enrollment',
+        params,
+        error,
+      })
+      
+      // Проверяем, является ли ошибка ошибкой уникальности Prisma
+      if (error instanceof Error && 'code' in (error as any) && (error as any).code === 'P2002') {
+        throw new Error('Запись на этот курс уже существует')
+      }
+      
+      // Для других типов ошибок возвращаем общее сообщение
+      throw new Error('Ошибка при создании записи на курс')
+    }
+  }
+
+  // Новый метод для создания enrollment в рамках транзакции
+  async createEnrollmentWithTransaction(
+    params: CreateUserCourseEnrollmentParams,
+    tx: Prisma.TransactionClient // Используйте правильный тип для транзакции Prisma
+  ): Promise<UserCourseEnrollment> { // Возвращаем Prisma-объект
+    try {
+      return await tx.userCourseEnrollment.create({
+        data: {
+          userId: params.userId,
+          courseId: params.courseId,
+          startDate: params.startDate,
+          selectedWorkoutDays: params.selectedWorkoutDays,
+          hasFeedback: params.hasFeedback ?? false,
+          active: true,
+        },
+      })
+    } catch (error) {
+      logger.error({
+        msg: 'Error creating user course enrollment in transaction',
+        params,
+        error,
+      })
+      
+      // Проверяем, является ли ошибка ошибкой уникальности Prisma
+      if (error instanceof Error && 'code' in (error as any) && (error as any).code === 'P2002') {
+        throw new Error('Запись на этот курс уже существует')
+      }
+      
+      // Для других типов ошибок возвращаем общее сообщение
+      throw new Error('Ошибка при создании записи на курс')
     }
   }
 }
