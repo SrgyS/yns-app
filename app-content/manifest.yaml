@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/SrgyS/content-shema/refs/heads/main/schemas/manifest.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/SrgyS/content-schema/refs/heads/main/schemas/manifest.schema.json
 courses:
   - reload
   - antikorka
