@@ -24,13 +24,7 @@ export class CreateUserCourseEnrollmentService {
           params.userId
         )
 
-      let selectedWorkoutDays = params.selectedWorkoutDays
-
       if (existingEnrollments.length > 0) {
-        const existingWorkoutDays = existingEnrollments[0].selectedWorkoutDays
-        if (existingWorkoutDays.length > 0) {
-          selectedWorkoutDays = existingWorkoutDays
-        }
 
         // Деактивируем все предыдущие записи пользователя на курсы
         await this.userCourseEnrollmentRepository.deactivateUserEnrollments(
@@ -44,7 +38,7 @@ export class CreateUserCourseEnrollmentService {
             userId: params.userId,
             courseId: params.courseId,
             startDate: params.startDate,
-            selectedWorkoutDays: selectedWorkoutDays,
+            selectedWorkoutDays: params.selectedWorkoutDays,
             hasFeedback: params.hasFeedback ?? false,
             active: true,
           },

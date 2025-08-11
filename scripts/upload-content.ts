@@ -9,7 +9,7 @@ import workoutSchema from '../src/shared/api/content/_schemas/workout.schema.jso
 import mealPlanSchema from '../src/shared/api/content/_schemas/meal-plan.schema.json'
 import recipeSchema from '../src/shared/api/content/_schemas/recipe.schema.json'
 import { ParsingError, ValidationError } from '../src/shared/lib/errors'
-
+import {Course} from '@/shared/api/content/_schemas/course.schema'
 
 // Функция для скачивания и парсинга YAML-файла
 async function downloadAndParseValidatedYaml<T>(
@@ -196,9 +196,8 @@ async function downloadAndUploadContent(): Promise<void> {
     )
     const courseSlugs: string[] = globalManifest.courses || []
     for (const courseSlug of courseSlugs) {
-      // ИСПОЛЬЗУЕМ courseSlug ЗДЕСЬ
       const courseRelativePath = `courses/${courseSlug}/course.yaml`
-      const courseData = await downloadAndParseValidatedYaml<any>(
+      const courseData = await downloadAndParseValidatedYaml<Course>(
         courseRelativePath,
         courseSchema,
         true,
@@ -222,6 +221,7 @@ async function downloadAndUploadContent(): Promise<void> {
           image: courseData.image,
           draft: courseData.draft,
           durationWeeks: courseData.durationWeeks,
+          minWorkoutDaysPerWeek: courseData.minWorkoutDaysPerWeek, // Добавляем это поле
         },
         create: {
           slug: courseSlug,
@@ -232,6 +232,7 @@ async function downloadAndUploadContent(): Promise<void> {
           image: courseData.image,
           draft: courseData.draft,
           durationWeeks: courseData.durationWeeks,
+          minWorkoutDaysPerWeek: courseData.minWorkoutDaysPerWeek, // Добавляем это поле
         },
       })
       console.log(

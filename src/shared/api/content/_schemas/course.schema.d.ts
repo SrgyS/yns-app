@@ -49,4 +49,8 @@ export interface Course {
    * Список слагов планов питания, входящих в курс
    */
   mealPlans?: string[];
+  /**
+   * Минимальное количество тренировок в неделю
+   */
+  minWorkoutDaysPerWeek: number;
 }

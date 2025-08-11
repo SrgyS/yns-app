@@ -1,7 +1,6 @@
 import { server } from '@/app/server'
 import {
   GetCourseService,
-  GetUserWorkoutDaysService,
 } from '@/entity/course/module'
 import { redirect } from 'next/navigation'
 import { SessionService } from '@/kernel/lib/next-auth/server'
@@ -22,11 +21,10 @@ export default async function SelectTrainingDays({
     return redirect('/auth/sign-in')
   }
 
-  const userId = session.user.id
-  const userWorkoutDaysService = server.get(GetUserWorkoutDaysService)
-  const currentWorkoutDays = await userWorkoutDaysService.exec(userId)
   const { id } = await params
   const courseId = id
+
+
   const course = await getCourseService.exec({ id: courseId })
 
   if (!course) {
@@ -41,7 +39,7 @@ export default async function SelectTrainingDays({
       <SelectWorkoutDaysClient
         courseSlug={course.slug}
         courseId={courseId}
-        initialSelectedDays={currentWorkoutDays}
+        initialSelectedDays={[]}
         minDays={minDays}
         maxDays={minDays}
       />
