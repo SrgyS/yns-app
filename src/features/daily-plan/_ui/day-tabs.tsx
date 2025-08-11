@@ -30,9 +30,9 @@ export function DayTabs({
 }) {
   const { getDailyPlan } = useDailyPlan()
   const { data: session } = useAppSession()
-  const { getActiveEnrollment } = useCourseEnrollment()
+  const { getEnrollment } = useCourseEnrollment()
 
-  const activeEnrollmentQuery = getActiveEnrollment(session?.user?.id || '')
+  const enrollmentQuery = getEnrollment(session?.user?.id || '', courseId)
 
   // Вычисляем начало недели
   // Вычисляем смещение от даты начала программы
@@ -41,7 +41,7 @@ export function DayTabs({
   }, [weekNumber, programStart])
 
   // Получаем выбранные дни тренировок из активной записи
-  const enrollment = activeEnrollmentQuery?.data
+  const enrollment = enrollmentQuery?.data
 
   // Оптимизируем получение selectedWorkoutDays с помощью useMemo
   const selectedWorkoutDays = useMemo(() => {

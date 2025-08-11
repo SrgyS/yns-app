@@ -33,6 +33,11 @@ export type UserCourseEnrollment = {
   startDate: Date
   hasFeedback: boolean
   active: boolean
+  course: {
+    id: string
+    slug: string
+    title: string
+  }
 }
 
 export type UserCourseEnrollmentApi = {
@@ -43,6 +48,11 @@ export type UserCourseEnrollmentApi = {
   startDate: string
   hasFeedback: boolean
   active: boolean
+  course?: {
+    id: string
+    slug: string
+    title: string
+  }
 }
 
 export type UserDailyPlan = {

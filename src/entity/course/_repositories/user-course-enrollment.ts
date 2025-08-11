@@ -1,6 +1,9 @@
 import { injectable } from 'inversify'
 import { dbClient } from '@/shared/lib/db'
-import { UserCourseEnrollment, CreateUserCourseEnrollmentParams } from '../../course'
+import {
+  UserCourseEnrollment,
+  CreateUserCourseEnrollmentParams,
+} from '../../course'
 import { logger } from '@/shared/lib/logger'
 import {
   UserCourseEnrollment as PrismaUserCourseEnrollment,
@@ -16,7 +19,13 @@ export class UserCourseEnrollmentRepository {
   constructor(private readonly defaultDb: DbClient = dbClient) {}
 
   private mapPrismaEnrollmentToDomain(
-    prismaEnrollment: PrismaUserCourseEnrollment
+    prismaEnrollment: PrismaUserCourseEnrollment & {
+      course: {
+        id: string
+        slug: string
+        title: string
+      }
+    }
   ): UserCourseEnrollment {
     return {
       id: prismaEnrollment.id,
@@ -26,9 +35,14 @@ export class UserCourseEnrollmentRepository {
       startDate: prismaEnrollment.startDate,
       hasFeedback: prismaEnrollment.hasFeedback,
       active: prismaEnrollment.active,
+      course: {
+        id: prismaEnrollment.course.id,
+        slug: prismaEnrollment.course.slug,
+        title: prismaEnrollment.course.title,
+      },
     }
   }
-  
+
   async getEnrollment(
     userId: string,
     courseId: string
@@ -40,6 +54,9 @@ export class UserCourseEnrollmentRepository {
             userId,
             courseId,
           },
+        },
+        include: {
+          course: { select: { id: true, slug: true, title: true } },
         },
       })
 
@@ -61,6 +78,9 @@ export class UserCourseEnrollmentRepository {
     try {
       const enrollment = await dbClient.userCourseEnrollment.findUnique({
         where: { id: enrollmentId },
+        include: {
+          course: { select: { id: true, slug: true, title: true } },
+        },
       })
 
       return enrollment ? this.mapPrismaEnrollmentToDomain(enrollment) : null
@@ -96,6 +116,9 @@ export class UserCourseEnrollmentRepository {
             courseId: course.id,
           },
         },
+        include: {
+          course: { select: { id: true, slug: true, title: true } },
+        },
       })
 
       return enrollment ? this.mapPrismaEnrollmentToDomain(enrollment) : null
@@ -115,9 +138,19 @@ export class UserCourseEnrollmentRepository {
       const enrollments = await dbClient.userCourseEnrollment.findMany({
         where: { userId },
         orderBy: { startDate: 'desc' },
+        include: {
+          course: true,
+        },
       })
 
-      return enrollments.map(this.mapPrismaEnrollmentToDomain.bind(this))
+      return enrollments.map(enrollment => ({
+        ...this.mapPrismaEnrollmentToDomain(enrollment),
+        course: {
+          id: enrollment.course.id,
+          slug: enrollment.course.slug,
+          title: enrollment.course.title,
+        },
+      }))
     } catch (error) {
       logger.error({
         msg: 'Error getting user enrollments',
@@ -153,17 +186,25 @@ export class UserCourseEnrollmentRepository {
     }
   }
 
-  async getUserWorkoutDays(userId: string, courseId: string): Promise<DayOfWeek[]> {
+  async getUserWorkoutDays(
+    userId: string,
+    courseId: string
+  ): Promise<DayOfWeek[]> {
     const enrollment = await this.getEnrollment(userId, courseId)
     return enrollment?.selectedWorkoutDays ?? []
   }
 
-  async getActiveEnrollment(userId: string): Promise<UserCourseEnrollment | null> {
+  async getActiveEnrollment(
+    userId: string
+  ): Promise<UserCourseEnrollment | null> {
     try {
       const enrollment = await dbClient.userCourseEnrollment.findFirst({
-        where: { 
+        where: {
           userId: userId,
-          active: true 
+          active: true,
+        },
+        include: {
+          course: { select: { id: true, slug: true, title: true } },
         },
       })
 
@@ -178,7 +219,10 @@ export class UserCourseEnrollmentRepository {
     }
   }
 
-  async deactivateUserEnrollments(userId: string, db: DbClient = this.defaultDb): Promise<number> {
+  async deactivateUserEnrollments(
+    userId: string,
+    db: DbClient = this.defaultDb
+  ): Promise<number> {
     try {
       const result = await db.userCourseEnrollment.updateMany({
         where: { userId: userId },
@@ -198,11 +242,17 @@ export class UserCourseEnrollmentRepository {
     }
   }
 
-  async activateEnrollment(enrollmentId: string, db: DbClient = this.defaultDb): Promise<UserCourseEnrollment> {
+  async activateEnrollment(
+    enrollmentId: string,
+    db: DbClient = this.defaultDb
+  ): Promise<UserCourseEnrollment> {
     try {
       const enrollment = await db.userCourseEnrollment.update({
         where: { id: enrollmentId },
         data: { active: true },
+        include: {
+          course: { select: { id: true, slug: true, title: true } },
+        },
       })
 
       return this.mapPrismaEnrollmentToDomain(enrollment)
@@ -231,6 +281,9 @@ export class UserCourseEnrollmentRepository {
           hasFeedback: params.hasFeedback ?? false,
           active: true,
         },
+        include: {
+          course: { select: { id: true, slug: true, title: true } },
+        },
       })
 
       return this.mapPrismaEnrollmentToDomain(enrollment)
@@ -240,45 +293,52 @@ export class UserCourseEnrollmentRepository {
         params,
         error,
       })
-      
+
       // Проверяем, является ли ошибка ошибкой уникальности Prisma
-      if (error instanceof Error && 'code' in (error as any) && (error as any).code === 'P2002') {
+      if (
+        error instanceof Error &&
+        'code' in (error as any) &&
+        (error as any).code === 'P2002'
+      ) {
         throw new Error('Запись на этот курс уже существует')
       }
-      
+
       // Для других типов ошибок возвращаем общее сообщение
       throw new Error('Ошибка при создании записи на курс')
     }
   }
 
-  async getActiveEnrollmentWithCourseDetails(userId: string, tx: Prisma.TransactionClient) {
-    try {
-      return await tx.userCourseEnrollment.findFirst({
-        where: { 
-          userId: userId,
-          active: true 
-        },
-        include: {
-          course: {
-            include: {
-              dailyPlans: {
-                include: {
-                  warmup: true,
-                  mainWorkout: true,
-                  mealPlan: true,
-                },
-              },
-            },
-          },
-        },
-      })
-    } catch (error) {
-      logger.error({
-        msg: 'Error getting active enrollment with course details',
-        userId,
-        error,
-      })
-      throw new Error('Failed to get active enrollment with course details')
-    }
-  }
+  // async getActiveEnrollmentWithCourseDetails(
+  //   userId: string,
+  //   tx: Prisma.TransactionClient
+  // ) {
+  //   try {
+  //     return await tx.userCourseEnrollment.findFirst({
+  //       where: {
+  //         userId: userId,
+  //         active: true,
+  //       },
+  //       include: {
+  //         course: {
+  //           include: {
+  //             dailyPlans: {
+  //               include: {
+  //                 warmup: true,
+  //                 mainWorkout: true,
+  //                 mealPlan: true,
+  //               },
+  //             },
+  //           },
+  //         },
+  //       },
+  //     })
+  //   } catch (error) {
+  //     logger.error({
+  //       msg: 'Error getting active enrollment with course details',
+  //       userId,
+  //       error,
+  //     })
+  //     throw new Error('Failed to get active enrollment with course details')
+  //   }
+  // }
 }
