@@ -7,27 +7,30 @@ import { toast } from 'sonner'
 import { WorkoutDaySelector } from './workout-day-selector'
 import { useUpdateWorkoutDays } from '../_vm/use-update-workout-days'
 import { useRouter } from 'next/navigation'
-import { UserId } from '@/kernel/domain/user'
-
+import { useAppSession } from '@/kernel/lib/next-auth/client'
 
 interface EditWorkoutDaysClientProps {
-  userId: UserId
+  enrollmentId: string
   initialSelectedDays: DayOfWeek[]
   minDays?: number
   maxDays?: number
 }
 
 export function EditWorkoutDaysClient({
-  userId,
+  enrollmentId,
   initialSelectedDays,
-  minDays = 5,
-  maxDays = 5,
+  minDays,
+  maxDays,
 }: EditWorkoutDaysClientProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
   const { updateWorkoutDays, isUpdating } = useUpdateWorkoutDays()
-  // const today = useCurrentDay()
+  const { data: session } = useAppSession()
 
+  const userId = session?.user?.id
+  if (!userId) {
+    return null
+  }
   const handleDaysSelection = async (days: DayOfWeek[]) => {
     setIsSubmitting(true)
     try {
@@ -35,7 +38,7 @@ export function EditWorkoutDaysClient({
       if (initialSelectedDays.length > 0) {
         // Получаем активную запись и обновляем дни тренировок
         await updateWorkoutDays({
-          userId,
+          enrollmentId,
           selectedWorkoutDays: days,
         })
         // Тост уже вызывается внутри updateWorkoutDays, поэтому здесь его можно удалить
@@ -44,7 +47,7 @@ export function EditWorkoutDaysClient({
         console.error('ошибка при обновлении дней тренировок')
         toast.error('Не удалось обновить дни тренировок!')
       }
-      
+
       router.push(`/profile/${userId}`)
     } catch (error) {
       console.error('Error handling workout days:', error)

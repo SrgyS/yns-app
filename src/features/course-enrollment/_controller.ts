@@ -15,6 +15,8 @@ import {
   GetUserWorkoutDaysService,
   UpdateWorkoutDaysService,
   ActivateEnrollmentService,
+  GetEnrollmentByCourseSlugService,
+  GetEnrollmentByIdService,
 } from '@/entity/course/module'
 
 @injectable()
@@ -27,7 +29,9 @@ export class CourseEnrollmentController extends Controller {
     private getActiveEnrollmentService: GetActiveEnrollmentService,
     private getUserWorkoutDaysService: GetUserWorkoutDaysService,
     private updateWorkoutDaysService: UpdateWorkoutDaysService,
-    private activateEnrollmentService: ActivateEnrollmentService
+    private activateEnrollmentService: ActivateEnrollmentService,
+    private getEnrollmentByCourseSlugService: GetEnrollmentByCourseSlugService,
+    private getEnrollmentByIdService: GetEnrollmentByIdService,
   ) {
     super()
   }
@@ -65,6 +69,21 @@ export class CourseEnrollmentController extends Controller {
           )
           return enrollment
         }),
+
+       getEnrollmentByCourseSlug: authorizedProcedure
+        .input(
+          z.object({
+            userId: z.string(),
+            courseSlug: z.string(),
+          })
+        )
+        .query(async ({ input }) => {
+          const enrollment = await this.getEnrollmentByCourseSlugService.exec(
+            input.userId,
+            input.courseSlug
+          )
+          return enrollment
+        }),  
 
       getUserDailyPlan: authorizedProcedure
         .input(
@@ -105,29 +124,32 @@ export class CourseEnrollmentController extends Controller {
           return enrollment
         }),
       getUserWorkoutDays: authorizedProcedure
-        .input(z.string())
+        .input( z.object({
+            userId: z.string(),
+            courseId: z.string(),
+          }))
         .query(async ({ input }) => {
-          const workoutDays = await this.getUserWorkoutDaysService.exec(input)
+          const workoutDays = await this.getUserWorkoutDaysService.exec(input.userId, input.courseId)
           return workoutDays
         }),
 
       updateWorkoutDays: authorizedProcedure
         .input(
           z.object({
-            userId: z.string(),
+            enrollmentId: z.string(),
             selectedWorkoutDays: z.array(z.nativeEnum(DayOfWeek)),
           })
         )
         .mutation(async ({ input }) => {
-          const { userId, selectedWorkoutDays } = input
-          const enrollments = await this.getUserEnrollmentsService.exec(userId)
+          const { enrollmentId, selectedWorkoutDays } = input
+          const enrollment = await this.getEnrollmentByIdService.exec(enrollmentId)
 
-          if (!enrollments.length) {
+          if (!enrollment) {
             throw new Error('Enrollment not found')
           }
 
           const updatedEnrollment = await this.updateWorkoutDaysService.exec({
-            userId,
+            enrollmentId,
             selectedWorkoutDays,
           })
 

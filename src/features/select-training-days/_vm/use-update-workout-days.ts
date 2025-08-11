@@ -9,7 +9,7 @@ export function useUpdateWorkoutDays() {
   const updateWorkoutDaysMutation = courseEnrollmentApi.course.updateWorkoutDays.useMutation()
 
   const updateWorkoutDays = useCallback(
-    async (params: { userId: string; selectedWorkoutDays: DayOfWeek[] }) => {
+    async (params: { enrollmentId: string; selectedWorkoutDays: DayOfWeek[] }) => {
       try {
         const result = await updateWorkoutDaysMutation.mutateAsync(params)
         toast.success('Дни тренировок успешно обновлены')

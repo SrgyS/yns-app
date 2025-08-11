@@ -20,7 +20,7 @@ export default function DayPage({ params }: DayPageProps) {
       <Suspense fallback={<Skeleton className="h-6 w-[300px]"/>}>
         <CourseTitle courseSlug={resolvedParams.courseSlug} />
       </Suspense>
-      <CalendarTabs />
+      <CalendarTabs courseSlug={resolvedParams.courseSlug} />
       <Button variant="outline">Варианты питания</Button>
     </main>
   )

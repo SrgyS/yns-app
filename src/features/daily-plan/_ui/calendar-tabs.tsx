@@ -7,15 +7,16 @@ import { DayTabs } from './day-tabs'
 import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { useWorkoutCalendar } from '../_vm/use-worckout-calendar'
+import { CourseSlug } from '@/kernel/domain/course'
 
-export function CalendarTabs() {
+export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
   const today = new Date()
   const { data: session } = useAppSession()
-  const { getActiveEnrollment } = useCourseEnrollment()
+  const { getEnrollmentByCourseSlug } = useCourseEnrollment()
 
-  const activeEnrollmentQuery = getActiveEnrollment(session?.user?.id || '')
+  const enrollmentQuery = getEnrollmentByCourseSlug(session?.user?.id || '', courseSlug)
 
-  const enrollment = activeEnrollmentQuery.data
+  const enrollment = enrollmentQuery.data
   const programStart = enrollment?.startDate
     ? new Date(enrollment.startDate)
     : null

@@ -74,6 +74,42 @@ export class UserCourseEnrollmentRepository {
     }
   }
 
+  async getEnrollmentByUserIdAndCourseSlug(
+    userId: string,
+    courseSlug: string
+  ): Promise<UserCourseEnrollment | null> {
+    try {
+      // Сначала получаем курс по slug
+      const course = await dbClient.course.findUnique({
+        where: { slug: courseSlug },
+      })
+
+      if (!course) {
+        return null
+      }
+
+      // Затем получаем enrollment по userId и courseId
+      const enrollment = await dbClient.userCourseEnrollment.findUnique({
+        where: {
+          userId_courseId: {
+            userId,
+            courseId: course.id,
+          },
+        },
+      })
+
+      return enrollment ? this.mapPrismaEnrollmentToDomain(enrollment) : null
+    } catch (error) {
+      logger.error({
+        msg: 'Error getting user course enrollment by slug',
+        userId,
+        courseSlug,
+        error,
+      })
+      throw new Error('Failed to get enrollment by slug')
+    }
+  }
+
   async getUserEnrollments(userId: string): Promise<UserCourseEnrollment[]> {
     try {
       const enrollments = await dbClient.userCourseEnrollment.findMany({

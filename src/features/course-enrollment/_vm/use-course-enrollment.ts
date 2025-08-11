@@ -68,8 +68,8 @@ export function useCourseEnrollment() {
   )
 
   const getUserWorkoutDays = useCallback(
-    (userId: string) => {
-      return getUserWorkoutDaysQuery(userId)
+    (userId: string, courseId: string) => {
+      return getUserWorkoutDaysQuery({userId, courseId})
     },
     [getUserWorkoutDaysQuery]
   )
@@ -89,6 +89,17 @@ export function useCourseEnrollment() {
       }
     })
 
+  const getEnrollmentByCourseSlugQuery = 
+    courseEnrollmentApi.course.getEnrollmentByCourseSlug.useQuery
+
+  const getEnrollmentByCourseSlug = useCallback(
+    (userId: string, courseSlug: string) => {
+      return getEnrollmentByCourseSlugQuery({ userId, courseSlug })
+    },
+    [getEnrollmentByCourseSlugQuery]
+  )
+
+  // Добавить в возвращаемый объект
   return {
     createEnrollment,
     getEnrollment,
@@ -97,6 +108,7 @@ export function useCourseEnrollment() {
     getActiveEnrollment,
     getUserWorkoutDays,
     activateEnrollment,
+    getEnrollmentByCourseSlug,
     isCreating: createEnrollmentMutation.isPending,
     isActivating,
   }

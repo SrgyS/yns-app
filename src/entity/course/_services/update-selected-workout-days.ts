@@ -6,7 +6,7 @@ import { logger } from '@/shared/lib/logger'
 import { dbClient } from '@/shared/lib/db'
 
 export interface UpdateWorkoutDaysParams {
-  userId: string
+  enrollmentId: string
   selectedWorkoutDays: DayOfWeek[]
 }
 
@@ -19,27 +19,26 @@ export class UpdateWorkoutDaysService {
 
   async exec(params: UpdateWorkoutDaysParams): Promise<void> {
     try {
-      // Получаем активную запись на курс
-      const activeEnrollment =
-        await this.userCourseEnrollmentRepository.getActiveEnrollment(
-          params.userId
-        )
+      // Получаем enrollment по id
+      const enrollment = await this.userCourseEnrollmentRepository.getEnrollmentById(
+        params.enrollmentId
+      )
 
-      if (!activeEnrollment) {
-        throw new Error('Active enrollment not found')
+      if (!enrollment) {
+        throw new Error('Enrollment not found')
       }
 
       // Используем транзакцию для атомарного обновления
       await dbClient.$transaction(async tx => {
         // Обновляем выбранные дни в enrollment
         await this.userCourseEnrollmentRepository.updateSelectedWorkoutDays(
-          activeEnrollment.id,
+          params.enrollmentId,
           params.selectedWorkoutDays,
           tx
         )
 
         await this.userDailyPlanRepository.updateUserDailyPlans(
-          activeEnrollment.id,
+          params.enrollmentId,
           params.selectedWorkoutDays,
           tx
         )
@@ -47,7 +46,7 @@ export class UpdateWorkoutDaysService {
 
       logger.info({
         msg: 'Successfully updated workout days and daily plans in transaction',
-        userId: params.userId,
+        enrollmentId: params.enrollmentId,
         selectedWorkoutDays: params.selectedWorkoutDays,
       })
     } catch (error) {

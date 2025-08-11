@@ -44,10 +44,10 @@ export default async function EditWorkoutDays({ params }: { params: Promise<{ en
   return (
     <main className="flex flex-col justify-center space-y-6 py-14 container max-w-[800px]">
       <EditWorkoutDaysClient
-        userId={userId}
+        enrollmentId={enrollmentId}
         initialSelectedDays={currentWorkoutDays}
         minDays={minDays}
-        maxDays={minDays} // Используем то же значение для maxDays, как было в хардкоде
+        maxDays={minDays}
       />
     </main>
   )

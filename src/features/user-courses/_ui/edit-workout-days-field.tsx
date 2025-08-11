@@ -31,7 +31,7 @@ export const EditWorkoutDaysField = ({enrollment}: {enrollment: UserCourseEnroll
       <div className="flex flex-wrap gap-2">
         {formatWorkoutDays(enrollment.selectedWorkoutDays || [])}
       </div>
-      <EditWorkoutDaysButton id={enrollment.id} />
+      <EditWorkoutDaysButton enrollmentId={enrollment.id} />
     </div>
   )
 }
