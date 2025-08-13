@@ -6,10 +6,15 @@ import { courseEnrollmentApi } from '@/features/course-enrollment/_api'
 import { toast } from 'sonner'
 
 export function useUpdateWorkoutDays() {
-  const updateWorkoutDaysMutation = courseEnrollmentApi.course.updateWorkoutDays.useMutation()
+  const updateWorkoutDaysMutation =
+    courseEnrollmentApi.course.updateWorkoutDays.useMutation()
 
   const updateWorkoutDays = useCallback(
-    async (params: { enrollmentId: string; selectedWorkoutDays: DayOfWeek[] }) => {
+    async (params: {
+      enrollmentId: string
+      selectedWorkoutDays: DayOfWeek[]
+      keepProgress: boolean
+    }) => {
       try {
         const result = await updateWorkoutDaysMutation.mutateAsync(params)
         toast.success('Дни тренировок успешно обновлены')

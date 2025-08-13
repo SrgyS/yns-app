@@ -21,7 +21,8 @@ export class CreateUserCourseEnrollmentService {
       return await dbClient.$transaction(async tx => {
           const existingEnrollments =
         await this.userCourseEnrollmentRepository.getUserEnrollments(
-          params.userId
+          params.userId,
+          tx
         )
 
       if (existingEnrollments.length > 0) {
@@ -41,6 +42,10 @@ export class CreateUserCourseEnrollmentService {
             selectedWorkoutDays: params.selectedWorkoutDays,
             hasFeedback: params.hasFeedback ?? false,
             active: true,
+            
+          },
+          include: {
+            course: { select: { id: true, slug: true, title: true } },
           },
         })
 
@@ -57,6 +62,11 @@ export class CreateUserCourseEnrollmentService {
           startDate: enrollment.startDate,
           hasFeedback: enrollment.hasFeedback,
           active: enrollment.active,
+          course: {
+            id: enrollment.course.id,
+            slug: enrollment.course.slug,
+            title: enrollment.course.title,
+          },
         }
       })
     } catch (error) {

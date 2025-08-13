@@ -17,6 +17,7 @@ import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { DayOfWeek } from '@prisma/client'
 import { DAY_LABELS } from '@/features/select-training-days/constants'
 
+
 export function DayTabs({
   weekNumber,
   programStart,
@@ -126,7 +127,7 @@ export function DayTabs({
   const dailyPlanQuery = selectedDayNumberInCourse
     ? getDailyPlan(courseId, selectedDayNumberInCourse)
     : null
-
+  
   return (
     <Tabs
       value={selectedDay}
@@ -163,7 +164,9 @@ export function DayTabs({
               {dailyPlanQuery.data.warmupId && (
                 <WarmUp
                   title="Зарядка"
-                  workoutId={dailyPlanQuery.data.warmupId}              
+                  workoutId={dailyPlanQuery.data.warmupId}
+                  enrollmentId={enrollment?.id || ''}
+                  userDailyPlanId={dailyPlanQuery.data.id}
                 />
               )}
               {dailyPlanQuery.data.isWorkoutDay &&
@@ -171,13 +174,13 @@ export function DayTabs({
                   <WarmUp
                     title="Тренировка"
                     workoutId={dailyPlanQuery.data.mainWorkoutId}
+                    enrollmentId={enrollment?.id || ''}
+                    userDailyPlanId={dailyPlanQuery.data.id}
                   />
                 )}
             </>
           ) : (
-            <>
-             Нет тренировки
-            </>
+            <>Нет тренировки</>
           )}
         </TabsContent>
       )}

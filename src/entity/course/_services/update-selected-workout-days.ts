@@ -4,17 +4,20 @@ import { UserDailyPlanRepository } from '../_repositories/user-daily-plan'
 import { DayOfWeek } from '@prisma/client'
 import { logger } from '@/shared/lib/logger'
 import { dbClient } from '@/shared/lib/db'
+import { UserWorkoutCompletionRepository } from '@/entity/workout/_repositories/user-workout-completion'
 
 export interface UpdateWorkoutDaysParams {
   enrollmentId: string
   selectedWorkoutDays: DayOfWeek[]
+  keepProgress?: boolean
 }
 
 @injectable()
 export class UpdateWorkoutDaysService {
   constructor(
     private userCourseEnrollmentRepository: UserCourseEnrollmentRepository,
-    private userDailyPlanRepository: UserDailyPlanRepository
+    private userDailyPlanRepository: UserDailyPlanRepository,
+    private userWorkoutCompletionRepository: UserWorkoutCompletionRepository,
   ) {}
 
   async exec(params: UpdateWorkoutDaysParams): Promise<void> {

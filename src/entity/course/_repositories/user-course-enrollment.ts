@@ -133,9 +133,9 @@ export class UserCourseEnrollmentRepository {
     }
   }
 
-  async getUserEnrollments(userId: string): Promise<UserCourseEnrollment[]> {
+  async getUserEnrollments(userId: string,  db: DbClient = this.defaultDb): Promise<UserCourseEnrollment[]> {
     try {
-      const enrollments = await dbClient.userCourseEnrollment.findMany({
+      const enrollments = await db.userCourseEnrollment.findMany({
         where: { userId },
         orderBy: { startDate: 'desc' },
         include: {

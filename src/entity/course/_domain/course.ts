@@ -1,5 +1,5 @@
 import { CourseId, CourseSlug } from '@/kernel/domain/course'
-import { CompletionStatus, DayOfWeek } from '@prisma/client'
+import { DayOfWeek } from '@prisma/client'
 
 export type Course = {
   id: CourseId
@@ -65,9 +65,6 @@ export type UserDailyPlan = {
   warmupId: string
   mainWorkoutId: string | null
   mealPlanId: string
-  warmupProgress: CompletionStatus
-  mainWorkoutProgress: CompletionStatus
-  mealPlanProgress: CompletionStatus
   weekNumber: number
 }
 

@@ -1,6 +1,5 @@
 'use client'
 
-
 import { Course } from '@/entity/course'
 import { CourseItem } from './course-item'
 import { coursesListApi } from '@/features/courses-list/_api'
@@ -12,12 +11,16 @@ export function CoursesListClient({ defaultList }: { defaultList: Course[] }) {
       initialData: defaultList,
     }
   )
-
+  console.log('coursesList', coursesList)
   return (
     <div className="flex flex-col gap-3">
-      {coursesList.map(course => (
-        <CourseItem key={course.id} course={course} />
-      ))}
+      {coursesList.length > 0 ? (
+        coursesList.map(course => (
+          <CourseItem key={course.id} course={course} />
+        ))
+      ) : (
+        <p>курсы не найдены</p>
+      )}
     </div>
   )
 }

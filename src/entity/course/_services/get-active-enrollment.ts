@@ -26,12 +26,12 @@ export class GetActiveEnrollmentService {
         return activeEnrollment
       }
       
-      logger.error({
+      logger.info({
         msg: 'No active enrollment found for user',
         userId,
       })
       
-      throw new Error('No active course enrollment found for user')
+      return null
     } catch (error) {
       logger.error({
         msg: 'Error getting active enrollment',

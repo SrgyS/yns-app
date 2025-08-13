@@ -29,9 +29,6 @@ export class UserDailyPlanRepository {
       warmupId: prismaUserDailyPlan.warmupId,
       mainWorkoutId: prismaUserDailyPlan.mainWorkoutId,
       mealPlanId: prismaUserDailyPlan.mealPlanId,
-      warmupProgress: prismaUserDailyPlan.warmupProgress,
-      mainWorkoutProgress: prismaUserDailyPlan.mainWorkoutProgress,
-      mealPlanProgress: prismaUserDailyPlan.mealPlanProgress,
       weekNumber: prismaUserDailyPlan.weekNumber,
     }
   }
@@ -160,9 +157,6 @@ export class UserDailyPlanRepository {
             warmupId: dailyPlan.warmupId,
             mainWorkoutId: day.isWorkoutDay ? dailyPlan.mainWorkoutId : null,
             mealPlanId: dailyPlan.mealPlanId,
-            warmupProgress: 'NOT_STARTED',
-            mainWorkoutProgress: 'NOT_STARTED',
-            mealPlanProgress: 'NOT_STARTED',
             originalDailyPlanId: dailyPlan.id,
           },
         })

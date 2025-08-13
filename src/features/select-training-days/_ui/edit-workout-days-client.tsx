@@ -3,11 +3,12 @@
 import { DayOfWeek } from '@prisma/client'
 import { useState } from 'react'
 import { toast } from 'sonner'
-// import { useCurrentDay } from '../_vm/use-current-day'
 import { WorkoutDaySelector } from './workout-day-selector'
 import { useUpdateWorkoutDays } from '../_vm/use-update-workout-days'
 import { useRouter } from 'next/navigation'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
+import { Checkbox } from '@/shared/ui/checkbox'
+import { Label } from '@/shared/ui/label'
 
 interface EditWorkoutDaysClientProps {
   enrollmentId: string
@@ -23,6 +24,7 @@ export function EditWorkoutDaysClient({
   maxDays,
 }: EditWorkoutDaysClientProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [keepProgress, setKeepProgress] = useState(false)
   const router = useRouter()
   const { updateWorkoutDays, isUpdating } = useUpdateWorkoutDays()
   const { data: session } = useAppSession()
@@ -31,19 +33,17 @@ export function EditWorkoutDaysClient({
   if (!userId) {
     return null
   }
+
   const handleDaysSelection = async (days: DayOfWeek[]) => {
     setIsSubmitting(true)
     try {
-      // Если у пользователя уже есть дни тренировок, значит он редактирует существующую запись
       if (initialSelectedDays.length > 0) {
-        // Получаем активную запись и обновляем дни тренировок
         await updateWorkoutDays({
           enrollmentId,
           selectedWorkoutDays: days,
+          keepProgress, // Передаем флаг
         })
-        // Тост уже вызывается внутри updateWorkoutDays, поэтому здесь его можно удалить
       } else {
-        // Создаем новую запись на курс
         console.error('ошибка при обновлении дней тренировок')
         toast.error('Не удалось обновить дни тренировок!')
       }
@@ -65,6 +65,21 @@ export function EditWorkoutDaysClient({
       <p className="text-sm text-muted-foreground text-center">
         Выберите {minDays} дней в неделю для ваших тренировок. Изменения
         применятся только к будущим дням.
+      </p>
+      
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="keepProgress"
+          checked={keepProgress}
+          onCheckedChange={(checked) => setKeepProgress(checked === true)}
+        />
+        <Label htmlFor="keepProgress" className="text-sm">
+          Сохранить прогресс выполненных тренировок
+        </Label>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Если отметить эту опцию, статусы выполненных тренировок будут перенесены 
+        в новое расписание. В противном случае все тренировки будут отмечены как невыполненные.
       </p>
 
       <WorkoutDaySelector

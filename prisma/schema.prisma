@@ -70,12 +70,6 @@ enum MuscleGroup {
   PELVIC_FLOOR
 }
 
-enum CompletionStatus {
-  NOT_STARTED
-  IN_PROGRESS
-  COMPLETED
-}
-
 enum DayOfWeek {
   MONDAY
   TUESDAY
@@ -122,7 +116,7 @@ model UserCourseEnrollment {
   hasFeedback       Boolean      @default(false) // Куплена ли версия с обратной связью
 
   userDailyPlans    UserDailyPlan[] // Связь с ежедневными планами пользователя
-
+  workoutCompletions UserWorkoutCompletion[]
   active            Boolean      @default(false) // Активен ли курс для пользователя
   userAccess          UserAccess?        @relation
 
@@ -175,9 +169,7 @@ model UserDailyPlan {
   mealPlanId         String
   mealPlan           MealPlan         @relation("UserDailyMealPlan", fields: [mealPlanId], references: [id])
 
-  warmupProgress     CompletionStatus @default(NOT_STARTED)
-  mainWorkoutProgress CompletionStatus @default(NOT_STARTED)
-  mealPlanProgress   CompletionStatus @default(NOT_STARTED)
+  workoutCompletions UserWorkoutCompletion[]
 
   originalDailyPlanId String          // ID исходного DailyPlan, на основе которого создан этот план
 
@@ -198,11 +190,33 @@ model Workout {
   videoUrl        String? // Ссылка на видео с тренировкой
   muscles    MuscleGroup[]
 
+  userCompletions UserWorkoutCompletion[]
+
   warmupDailyPlans     DailyPlan[]     @relation("WarmupDailyPlan")
   mainWorkoutDailyPlans DailyPlan[]    @relation("MainWorkoutDailyPlan")
   userDailyWarmups     UserDailyPlan[] @relation("UserDailyWarmup")
   userDailyMainWorkouts UserDailyPlan[] @relation("UserDailyMainWorkout")
   favoriteWorkouts     UserFavoriteWorkout[]
+}
+
+model UserWorkoutCompletion {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workoutId     String
+  workout       Workout   @relation(fields: [workoutId], references: [id])
+  enrollmentId  String
+  enrollment    UserCourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  completedAt   DateTime  @default(now())
+  workoutType   WorkoutType
+
+  userDailyPlanId String
+  userDailyPlan   UserDailyPlan @relation(fields: [userDailyPlanId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, workoutId, enrollmentId, workoutType, userDailyPlanId])
+  @@index([userId])
+  @@index([enrollmentId])
+  @@index([userDailyPlanId])
 }
 
 model MealPlan {
@@ -298,6 +312,8 @@ model User {
   role          ROLE      @default(USER)
   accounts      Account[]
   sessions      Session[]
+
+  workoutCompletions UserWorkoutCompletion[]
 
   enrollments         UserCourseEnrollment[]
   userDailyPlans      UserDailyPlan[]

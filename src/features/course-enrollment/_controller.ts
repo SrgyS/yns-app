@@ -31,7 +31,7 @@ export class CourseEnrollmentController extends Controller {
     private updateWorkoutDaysService: UpdateWorkoutDaysService,
     private activateEnrollmentService: ActivateEnrollmentService,
     private getEnrollmentByCourseSlugService: GetEnrollmentByCourseSlugService,
-    private getEnrollmentByIdService: GetEnrollmentByIdService,
+    private getEnrollmentByIdService: GetEnrollmentByIdService
   ) {
     super()
   }
@@ -70,7 +70,7 @@ export class CourseEnrollmentController extends Controller {
           return enrollment
         }),
 
-       getEnrollmentByCourseSlug: authorizedProcedure
+      getEnrollmentByCourseSlug: authorizedProcedure
         .input(
           z.object({
             userId: z.string(),
@@ -83,7 +83,7 @@ export class CourseEnrollmentController extends Controller {
             input.courseSlug
           )
           return enrollment
-        }),  
+        }),
 
       getUserDailyPlan: authorizedProcedure
         .input(
@@ -124,12 +124,17 @@ export class CourseEnrollmentController extends Controller {
           return enrollment
         }),
       getUserWorkoutDays: authorizedProcedure
-        .input( z.object({
+        .input(
+          z.object({
             userId: z.string(),
             courseId: z.string(),
-          }))
+          })
+        )
         .query(async ({ input }) => {
-          const workoutDays = await this.getUserWorkoutDaysService.exec(input.userId, input.courseId)
+          const workoutDays = await this.getUserWorkoutDaysService.exec(
+            input.userId,
+            input.courseId
+          )
           return workoutDays
         }),
 
@@ -138,11 +143,13 @@ export class CourseEnrollmentController extends Controller {
           z.object({
             enrollmentId: z.string(),
             selectedWorkoutDays: z.array(z.nativeEnum(DayOfWeek)),
+            keepProgress: z.boolean().optional().default(false),
           })
         )
         .mutation(async ({ input }) => {
-          const { enrollmentId, selectedWorkoutDays } = input
-          const enrollment = await this.getEnrollmentByIdService.exec(enrollmentId)
+          const { enrollmentId, selectedWorkoutDays, keepProgress } = input
+          const enrollment =
+            await this.getEnrollmentByIdService.exec(enrollmentId)
 
           if (!enrollment) {
             throw new Error('Enrollment not found')
@@ -151,6 +158,7 @@ export class CourseEnrollmentController extends Controller {
           const updatedEnrollment = await this.updateWorkoutDaysService.exec({
             enrollmentId,
             selectedWorkoutDays,
+            keepProgress,
           })
 
           return updatedEnrollment
@@ -160,7 +168,8 @@ export class CourseEnrollmentController extends Controller {
         .input(z.string())
         .mutation(async ({ input }) => {
           const enrollmentId = input
-          const activatedEnrollment = await this.activateEnrollmentService.exec(enrollmentId)
+          const activatedEnrollment =
+            await this.activateEnrollmentService.exec(enrollmentId)
           return activatedEnrollment
         }),
     }),
