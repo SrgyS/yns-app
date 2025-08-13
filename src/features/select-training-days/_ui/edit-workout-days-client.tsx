@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { Label } from '@/shared/ui/label'
+import { useWorkoutCompletionStore } from '@/shared/store/workout-completion-store'
 
 interface EditWorkoutDaysClientProps {
   enrollmentId: string
@@ -43,6 +44,12 @@ export function EditWorkoutDaysClient({
           selectedWorkoutDays: days,
           keepProgress, // Передаем флаг
         })
+        
+        // Если не сохраняем прогресс, очищаем стор
+        if (!keepProgress) {
+          // Очищаем стор с отметками о выполнении тренировок
+          useWorkoutCompletionStore.setState({ completions: {} })
+        }
       } else {
         console.error('ошибка при обновлении дней тренировок')
         toast.error('Не удалось обновить дни тренировок!')

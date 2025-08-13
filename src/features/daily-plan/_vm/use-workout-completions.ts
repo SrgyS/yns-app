@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
 import { WorkoutType } from '@prisma/client'
 import { workoutApi } from '../_api'
+import { useWorkoutCompletionStore, createCompletionKey } from '@/shared/store/workout-completion-store'
 
 export function useWorkoutCompletions() {
   // Получаем утилиты для инвалидации кэша
@@ -8,10 +9,19 @@ export function useWorkoutCompletions() {
   
   // Функция для получения статуса выполнения тренировки
   const getWorkoutCompletionStatus = useCallback(
-    (userId: string, workoutId: string, enrollmentId: string, workoutType: WorkoutType, userDailyPlanId: string): boolean => {
+    async (userId: string, workoutId: string, enrollmentId: string, workoutType: WorkoutType, userDailyPlanId: string): Promise<boolean> => {
       // Если какой-то из параметров отсутствует, возвращаем false
       if (!userId || !workoutId || !enrollmentId) {
         return false
+      }
+      
+      // Создаем ключ для хранения в сторе
+      const key = createCompletionKey(userId, workoutId, enrollmentId, workoutType, userDailyPlanId)
+      
+      // Проверяем, есть ли значение в сторе
+      const cachedValue = useWorkoutCompletionStore.getState().getCompletion(key)
+      if (cachedValue !== undefined) {
+        return cachedValue
       }
       
       try {
@@ -24,22 +34,16 @@ export function useWorkoutCompletions() {
           userDailyPlanId,
         }
         
-        // Получаем данные из кэша
-        const cachedData = utils.getWorkoutCompletionStatus.getData(queryKey)
-        
-        // Если данные есть в кэше, возвращаем их
-        if (cachedData !== undefined) {
-          return cachedData
-        }
-        
-        // Если данных нет в кэше, запускаем запрос в фоне с помощью prefetch
-        // и возвращаем false (тренировка не выполнена)
-        utils.getWorkoutCompletionStatus.prefetch(queryKey, {
+        // Запрашиваем данные с сервера
+        const result = await utils.getWorkoutCompletionStatus.fetch(queryKey, {
           staleTime: 5 * 60 * 1000, // 5 минут
           gcTime: 10 * 60 * 1000, // 10 минут
         })
         
-        return false
+        // Сохраняем результат в сторе
+        useWorkoutCompletionStore.getState().setCompletion(key, result)
+        
+        return result
       } catch (error) {
         console.error('Error getting workout completion status:', error)
         return false
@@ -50,11 +54,17 @@ export function useWorkoutCompletions() {
   
   // Мутация для обновления статуса выполнения тренировки
   const updateWorkoutCompletionMutation = workoutApi.updateWorkoutCompletion.useMutation({
-    // При успешном обновлении инвалидируем кэш
+    // При успешном обновлении инвалидируем кэш и обновляем стор
     onSuccess: (_, variables) => {
-      const { userId, workoutId, enrollmentId, workoutType, userDailyPlanId } = variables
+      const { userId, workoutId, enrollmentId, workoutType, userDailyPlanId, isCompleted } = variables
       
-      // Инвалидируем конкретный запрос
+      // Создаем ключ для хранения в сторе
+      const key = createCompletionKey(userId, workoutId, enrollmentId, workoutType, userDailyPlanId)
+      
+      // Обновляем значение в сторе
+      useWorkoutCompletionStore.getState().setCompletion(key, isCompleted)
+      
+      // Инвалидируем конкретный запрос в React Query
       utils.getWorkoutCompletionStatus.invalidate({
         userId,
         workoutId,

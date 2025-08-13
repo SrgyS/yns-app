@@ -1,4 +1,4 @@
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect } from 'react'
 import { Badge } from '@/shared/ui/badge'
 import { Card, CardContent } from '@/shared/ui/card'
 import { KinescopePlayer } from './kinescope-player'
@@ -11,13 +11,13 @@ interface WarmUpProps {
   title: string
   workoutId: string
   enrollmentId: string
-  initialCompleted?: boolean,
-  userDailyPlanId: string,
+  initialCompleted?: boolean
+  userDailyPlanId: string
 }
 
-export function WarmUp({ 
-  title, 
-  workoutId, 
+export function WarmUp({
+  title,
+  workoutId,
   enrollmentId,
   initialCompleted = false,
   userDailyPlanId,
@@ -25,38 +25,49 @@ export function WarmUp({
   const [isFavorite, setIsFavorite] = useState(false)
   const [isCompleted, setIsCompleted] = useState(initialCompleted)
   const { data: session } = useAppSession()
-  
+
   // Получаем данные тренировки
   const { data: workout } = workoutApi.getWorkout.useQuery({
     workoutId,
   })
-  
+
   // Получаем хук для работы со статусом выполнения тренировок
-  const { getWorkoutCompletionStatus, updateWorkoutCompletion } = useWorkoutCompletions()
-  
+  const { getWorkoutCompletionStatus, updateWorkoutCompletion } =
+    useWorkoutCompletions()
+
   // Получаем актуальный статус выполнения при загрузке данных тренировки
   useEffect(() => {
     if (workout?.type && session?.user?.id && enrollmentId) {
-      const completionStatus = getWorkoutCompletionStatus(
-        session.user.id,
-        workoutId,
-        enrollmentId,
-        workout.type,
-        userDailyPlanId,
-      )
-      setIsCompleted(completionStatus)
+      const fetchCompletionStatus = async () => {
+        const completionStatus = await getWorkoutCompletionStatus(
+          session.user.id,
+          workoutId,
+          enrollmentId,
+          workout.type,
+          userDailyPlanId
+        )
+        setIsCompleted(completionStatus)
+      }
+      fetchCompletionStatus()
     }
-  }, [workout, session, workoutId, enrollmentId, getWorkoutCompletionStatus, userDailyPlanId])
-  
+  }, [
+    workout,
+    session,
+    workoutId,
+    enrollmentId,
+    getWorkoutCompletionStatus,
+    userDailyPlanId,
+  ])
+
   const toggleFavorite = () => {
     setIsFavorite(!isFavorite)
   }
-  
+
   const toggleCompleted = async () => {
     if (!session?.user?.id || !workout?.type) return
-    
+
     const newCompletedState = !isCompleted
-    setIsCompleted(newCompletedState)
+    // Не обновляем состояние сразу, а только после успешного запроса
     
     try {
       await updateWorkoutCompletion({
@@ -67,9 +78,9 @@ export function WarmUp({
         isCompleted: newCompletedState,
         userDailyPlanId,
       })
+      // Обновляем состояние только после успешного запроса
+      setIsCompleted(newCompletedState)
     } catch (error) {
-      // Если произошла ошибка, возвращаем предыдущее состояние
-      setIsCompleted(isCompleted)
       console.error('Error updating workout completion status:', error)
     }
   }
@@ -79,7 +90,7 @@ export function WarmUp({
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-2">
-            <Checkbox 
+            <Checkbox
               id={`workout-completed-${workoutId}`}
               checked={isCompleted}
               onCheckedChange={toggleCompleted}
@@ -92,7 +103,9 @@ export function WarmUp({
         {workout?.videoUrl && <KinescopePlayer videoId={workout.videoUrl} />}
 
         <div className="flex gap-2 mt-3 flex-wrap">
-          <Badge variant="secondary">{workout?.durationMinutes || '...'} мин</Badge>
+          <Badge variant="secondary">
+            {workout?.durationMinutes || '...'} мин
+          </Badge>
           <Badge variant="outline">{workout?.type?.toLowerCase() || ''}</Badge>
           {isCompleted && <Badge>Выполнено</Badge>}
         </div>

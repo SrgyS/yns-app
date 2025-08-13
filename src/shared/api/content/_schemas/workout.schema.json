@@ -20,7 +20,8 @@
                 "WARMUP",
                 "POSTURE",
                 "STRENGTH",
-                "MOBILITY"
+                "MOBILITY",
+                "CARDIO"
             ],
             "description": "Тип тренировки"
         },
@@ -65,7 +66,8 @@
                     "GLUTES",
                     "UPPER_BODY",
                     "BACK",
-                    "PELVIC_FLOOR"
+                    "PELVIC_FLOOR",
+                    "CORE"
                 ]
             },
             "description": "Список задействованных групп мышц"

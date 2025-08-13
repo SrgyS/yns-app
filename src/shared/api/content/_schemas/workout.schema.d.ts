@@ -20,7 +20,7 @@ export interface Workout {
   /**
    * Тип тренировки
    */
-  type: "WARMUP" | "POSTURE" | "STRENGTH" | "MOBILITY";
+  type: "WARMUP" | "POSTURE" | "STRENGTH" | "MOBILITY" | "CARDIO";
   /**
    * Длительность тренировки в минутах
    */
@@ -44,5 +44,5 @@ export interface Workout {
   /**
    * Список задействованных групп мышц
    */
-  muscles: ("LEGS" | "GLUTES" | "UPPER_BODY" | "BACK" | "PELVIC_FLOOR")[];
+  muscles: ("LEGS" | "GLUTES" | "UPPER_BODY" | "BACK" | "PELVIC_FLOOR" | "CORE")[];
 }

@@ -128,6 +128,8 @@ export function DayTabs({
     ? getDailyPlan(courseId, selectedDayNumberInCourse)
     : null
   
+  console.log('dailyPlanQuery', dailyPlanQuery?.data?.id)
+
   return (
     <Tabs
       value={selectedDay}

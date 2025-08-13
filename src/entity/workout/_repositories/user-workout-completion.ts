@@ -2,6 +2,9 @@ import { injectable } from 'inversify'
 import { dbClient } from '@/shared/lib/db'
 import { logger } from '@/shared/lib/logger'
 import { WorkoutType } from '@prisma/client'
+import { Prisma, PrismaClient } from '@prisma/client'
+
+type DbClient = PrismaClient | Prisma.TransactionClient
 
 export interface UserWorkoutCompletion {
   id: string
@@ -15,17 +18,18 @@ export interface UserWorkoutCompletion {
 
 @injectable()
 export class UserWorkoutCompletionRepository {
-
+   constructor(private readonly defaultDb: DbClient = dbClient) {}
   async markWorkoutAsCompleted(
     userId: string,
     workoutId: string,
     enrollmentId: string,
     workoutType: WorkoutType,
-    userDailyPlanId: string
+    userDailyPlanId: string,
+     db: DbClient = this.defaultDb
   ): Promise<UserWorkoutCompletion> {
     try {
       // Используем upsert для создания или обновления записи
-      const completion = await dbClient.userWorkoutCompletion.upsert({
+      const completion = await db.userWorkoutCompletion.upsert({
         where: {
           userId_workoutId_enrollmentId_workoutType_userDailyPlanId: {
             userId,
@@ -75,11 +79,12 @@ export class UserWorkoutCompletionRepository {
     workoutId: string,
     enrollmentId: string,
     workoutType: WorkoutType,
-    userDailyPlanId: string
+    userDailyPlanId: string,
+     db: DbClient = this.defaultDb,
   ): Promise<void> {
     try {
       // Проверяем существование записи
-      const completion = await dbClient.userWorkoutCompletion.findUnique({
+      const completion = await db.userWorkoutCompletion.findUnique({
         where: {
           userId_workoutId_enrollmentId_workoutType_userDailyPlanId: {
             userId,
@@ -125,10 +130,11 @@ export class UserWorkoutCompletionRepository {
     workoutId: string,
     enrollmentId: string,
     workoutType: WorkoutType,
-    userDailyPlanId: string
+    userDailyPlanId: string,
+     db: DbClient = this.defaultDb
   ): Promise<boolean> {
     try {
-      const completion = await dbClient.userWorkoutCompletion.findUnique({
+      const completion = await db.userWorkoutCompletion.findUnique({
         where: {
           userId_workoutId_enrollmentId_workoutType_userDailyPlanId: {
             userId,
@@ -159,16 +165,17 @@ export class UserWorkoutCompletionRepository {
   async transferWorkoutCompletions(
     oldUserDailyPlanId: string,
     newUserDailyPlanId: string,
+     db: DbClient = this.defaultDb
   ): Promise<void> {
     try {
       // Получаем все записи о выполнении для старого дня плана
-      const completions = await dbClient.userWorkoutCompletion.findMany({
+      const completions = await db.userWorkoutCompletion.findMany({
         where: { userDailyPlanId: oldUserDailyPlanId },
       })
 
       // Создаем новые записи с тем же статусом, но для нового дня плана
       for (const completion of completions) {
-        await dbClient.userWorkoutCompletion.create({
+        await db.userWorkoutCompletion.create({
           data: {
             userId: completion.userId,
             workoutId: completion.workoutId,
@@ -199,9 +206,10 @@ export class UserWorkoutCompletionRepository {
   async getUserCompletedWorkouts(
     userId: string,
     enrollmentId: string,
+     db: DbClient = this.defaultDb
   ): Promise<UserWorkoutCompletion[]> {
     try {
-      const completions = await dbClient.userWorkoutCompletion.findMany({
+      const completions = await db.userWorkoutCompletion.findMany({
         where: {
           userId,
           enrollmentId,
