@@ -2,7 +2,7 @@
 
 import { Button } from '@/shared/ui/button'
 import { DayOfWeek } from '@prisma/client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { toast } from 'sonner'
 import { useCurrentDay } from '../_vm/use-current-day'
 import { DayItem } from './day-item'
@@ -30,6 +30,18 @@ export function WorkoutDaySelector({
   }, [initialSelectedDays])
 
   const today = useCurrentDay()
+
+  // Проверка, изменились ли выбранные дни
+  const daysChanged = useMemo(() => {
+    if (selectedDays.length !== initialSelectedDays.length) return true
+    
+    // Сортируем массивы для корректного сравнения
+    const sortedSelected = [...selectedDays].sort()
+    const sortedInitial = [...initialSelectedDays].sort()
+    
+    // Сравниваем каждый элемент
+    return sortedSelected.some((day, index) => day !== sortedInitial[index])
+  }, [selectedDays, initialSelectedDays])
 
   const handleDayToggle = (day: DayOfWeek, checked: boolean) => {
     setSelectedDays(prevDays => {
@@ -75,7 +87,8 @@ export function WorkoutDaySelector({
           disabled={
             selectedDays.length < minDays ||
             selectedDays.length > maxDays ||
-            isLoading
+            isLoading ||
+            !daysChanged // Добавляем проверку, изменились ли дни
           }
         >
           Продолжить

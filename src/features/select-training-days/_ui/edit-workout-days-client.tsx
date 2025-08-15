@@ -7,11 +7,10 @@ import { WorkoutDaySelector } from './workout-day-selector'
 import { useUpdateWorkoutDays } from '../_vm/use-update-workout-days'
 import { useRouter } from 'next/navigation'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
-import { Checkbox } from '@/shared/ui/checkbox'
-import { Label } from '@/shared/ui/label'
 import { useWorkoutCompletionStore } from '@/shared/store/workout-completion-store'
 import { workoutApi } from '@/features/daily-plan/_api'
 import { courseEnrollmentApi } from '@/features/course-enrollment/_api'
+import { WorkoutProgressDialog } from './workout-progress-dialog'
 
 interface EditWorkoutDaysClientProps {
   enrollmentId: string
@@ -27,7 +26,8 @@ export function EditWorkoutDaysClient({
   maxDays,
 }: EditWorkoutDaysClientProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [keepProgress, setKeepProgress] = useState(false)
+  const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([])
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
   const router = useRouter()
   const { updateWorkoutDays, isUpdating } = useUpdateWorkoutDays()
   const { data: session } = useAppSession()
@@ -40,13 +40,26 @@ export function EditWorkoutDaysClient({
   }
 
   const handleDaysSelection = async (days: DayOfWeek[]) => {
+    setSelectedDays(days)
+    setIsDialogOpen(true)
+  }
+
+  const handleSaveWithProgress = async () => {
+    await saveWorkoutDays(true)
+  }
+
+  const handleSaveWithoutProgress = async () => {
+    await saveWorkoutDays(false)
+  }
+
+  const saveWorkoutDays = async (keepProgress: boolean) => {
     setIsSubmitting(true)
     try {
       if (initialSelectedDays.length > 0) {
         await updateWorkoutDays({
           enrollmentId,
-          selectedWorkoutDays: days,
-          keepProgress, // Передаем флаг
+          selectedWorkoutDays: selectedDays,
+          keepProgress,
         })
         
         // Инвалидируем весь кеш статусов выполнения тренировок
@@ -78,6 +91,7 @@ export function EditWorkoutDaysClient({
       toast.error('Произошла ошибка при сохранении дней тренировок')
     } finally {
       setIsSubmitting(false)
+      setIsDialogOpen(false)
     }
   }
 
@@ -91,26 +105,19 @@ export function EditWorkoutDaysClient({
         применятся только к будущим дням.
       </p>
       
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          id="keepProgress"
-          checked={keepProgress}
-          onCheckedChange={(checked) => setKeepProgress(checked === true)}
-        />
-        <Label htmlFor="keepProgress" className="text-sm">
-          Сохранить прогресс выполненных тренировок
-        </Label>
-      </div>
-      <p className="text-xs text-muted-foreground">
-        Если отметить эту опцию, статусы выполненных тренировок будут перенесены 
-        в новое расписание. В противном случае все тренировки будут отмечены как невыполненные.
-      </p>
-
       <WorkoutDaySelector
         onSelectDays={handleDaysSelection}
         minDays={minDays}
         maxDays={maxDays}
         initialSelectedDays={initialSelectedDays}
+        isLoading={isSubmitting || isUpdating}
+      />
+
+      <WorkoutProgressDialog 
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onSaveWithProgress={handleSaveWithProgress}
+        onSaveWithoutProgress={handleSaveWithoutProgress}
         isLoading={isSubmitting || isUpdating}
       />
     </div>
