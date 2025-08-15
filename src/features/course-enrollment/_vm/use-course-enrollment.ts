@@ -32,7 +32,16 @@ export function useCourseEnrollment() {
 
   const getEnrollment = useCallback(
     (userId: string, courseId: string) => {
-      return getEnrollmentQuery({ userId, courseId })
+      return getEnrollmentQuery(
+        { userId, courseId },
+        {
+          staleTime: 1000 * 60, // 1 минута вместо Infinity
+          gcTime: 1000 * 60 * 5, // 5 минут
+          refetchOnWindowFocus: false,
+          refetchOnMount: 'always', // Всегда обновлять при монтировании компонента
+          refetchOnReconnect: false,
+        }
+      )
     },
     [getEnrollmentQuery]
   )
@@ -48,7 +57,19 @@ export function useCourseEnrollment() {
 
   const getUserDailyPlan = useCallback(
     (userId: string, courseId: string, dayNumberInCourse: number) => {
-      return getUserDailyPlanQuery({ userId, courseId, dayNumberInCourse })
+      return getUserDailyPlanQuery(
+        { userId, courseId, dayNumberInCourse },
+        {
+          // Данные устаревают через 1 минуту
+          staleTime: 1000 * 60, // 1 минута
+          // Кешировать данные даже если компонент размонтирован
+          gcTime: 1000 * 60 * 5, // 5 минут
+          // Не перезапрашивать данные при переключении между табами
+          refetchOnWindowFocus: false,
+          refetchOnMount: 'always', // Всегда обновлять при монтировании компонента
+          refetchOnReconnect: false,
+        }
+      )
     },
     [getUserDailyPlanQuery]
   )
@@ -94,12 +115,19 @@ export function useCourseEnrollment() {
 
   const getEnrollmentByCourseSlug = useCallback(
     (userId: string, courseSlug: string) => {
-      return getEnrollmentByCourseSlugQuery({ userId, courseSlug })
+      return getEnrollmentByCourseSlugQuery(
+        { userId, courseSlug },
+        {
+          staleTime: 1000 * 60, // 1 минута вместо Infinity
+          gcTime: 1000 * 60 * 5, // 5 минут
+          refetchOnWindowFocus: false,
+          refetchOnMount: 'always', // Всегда обновлять при монтировании компонента
+          refetchOnReconnect: false,
+        }
+      )
     },
     [getEnrollmentByCourseSlugQuery]
   )
-
-  // Добавить в возвращаемый объект
   return {
     createEnrollment,
     getEnrollment,

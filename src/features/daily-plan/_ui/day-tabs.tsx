@@ -43,7 +43,7 @@ export function DayTabs({
 
   // Получаем выбранные дни тренировок из активной записи
   const enrollment = enrollmentQuery?.data
-
+console.log({enrollment})
   // Оптимизируем получение selectedWorkoutDays с помощью useMemo
   const selectedWorkoutDays = useMemo(() => {
     return enrollment?.selectedWorkoutDays || []
@@ -127,8 +127,7 @@ export function DayTabs({
   const dailyPlanQuery = selectedDayNumberInCourse
     ? getDailyPlan(courseId, selectedDayNumberInCourse)
     : null
-  
-  console.log('dailyPlanQuery', dailyPlanQuery?.data?.id)
+
 
   return (
     <Tabs

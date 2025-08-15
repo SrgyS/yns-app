@@ -10,6 +10,8 @@ import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { Label } from '@/shared/ui/label'
 import { useWorkoutCompletionStore } from '@/shared/store/workout-completion-store'
+import { workoutApi } from '@/features/daily-plan/_api'
+import { courseEnrollmentApi } from '@/features/course-enrollment/_api'
 
 interface EditWorkoutDaysClientProps {
   enrollmentId: string
@@ -29,6 +31,8 @@ export function EditWorkoutDaysClient({
   const router = useRouter()
   const { updateWorkoutDays, isUpdating } = useUpdateWorkoutDays()
   const { data: session } = useAppSession()
+  const workoutUtils = workoutApi.useUtils()
+  const courseEnrollmentUtils = courseEnrollmentApi.useUtils()
 
   const userId = session?.user?.id
   if (!userId) {
@@ -45,9 +49,22 @@ export function EditWorkoutDaysClient({
           keepProgress, // Передаем флаг
         })
         
+        // Инвалидируем весь кеш статусов выполнения тренировок
+        await workoutUtils.getWorkoutCompletionStatus.invalidate()
+        
+        // Инвалидируем кеш для getUserDailyPlan и getEnrollment
+        await courseEnrollmentUtils.course.getUserDailyPlan.invalidate()
+        await courseEnrollmentUtils.course.getEnrollment.invalidate()
+        // Добавляем инвалидацию getEnrollmentByCourseSlug
+        await courseEnrollmentUtils.course.getEnrollmentByCourseSlug.invalidate()
+        
         // Если не сохраняем прогресс, очищаем стор
         if (!keepProgress) {
           // Очищаем стор с отметками о выполнении тренировок
+          useWorkoutCompletionStore.setState({ completions: {} })
+        } else {
+          // Если сохраняем прогресс, всё равно очищаем стор, 
+          // чтобы данные загрузились заново с новыми userDailyPlanId
           useWorkoutCompletionStore.setState({ completions: {} })
         }
       } else {

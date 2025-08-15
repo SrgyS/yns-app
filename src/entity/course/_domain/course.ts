@@ -66,6 +66,7 @@ export type UserDailyPlan = {
   mainWorkoutId: string | null
   mealPlanId: string
   weekNumber: number
+  originalDailyPlanId: string
 }
 
 export type CreateUserCourseEnrollmentParams = {

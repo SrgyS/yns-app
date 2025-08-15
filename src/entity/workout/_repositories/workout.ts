@@ -2,7 +2,7 @@ import { injectable } from 'inversify'
 import { dbClient } from '@/shared/lib/db'
 import { Workout } from '../_domain/types'
 import { logger } from '@/shared/lib/logger'
-import { Workout as PrismaWorkout } from '@prisma/client'
+import { Workout as PrismaWorkout, WorkoutType } from '@prisma/client'
 
 @injectable()
 export class WorkoutRepository {
@@ -52,6 +52,24 @@ export class WorkoutRepository {
         error,
       })
       throw new Error('Failed to get workout')
+    }
+  }
+
+  async getWorkoutTypeById(id: string): Promise<WorkoutType | undefined> {
+    try {
+      const workout = await dbClient.workout.findUnique({
+        where: { id },
+        select: { type: true }
+      })
+
+      return workout ? workout.type : undefined
+    } catch (error) {
+      logger.error({
+        msg: 'Error getting workout type by id',
+        id,
+        error,
+      })
+      return undefined
     }
   }
 }

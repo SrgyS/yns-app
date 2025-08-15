@@ -10,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/ui/card'
-import Link from 'next/link'
 import { CalendarDays, CheckCircle } from 'lucide-react'
 import { Badge } from '@/shared/ui/badge'
 import { format } from 'date-fns'
@@ -20,6 +19,8 @@ import React from 'react'
 import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { SmallSpinner } from '@/shared/ui/small-spinner'
 import { EditWorkoutDaysField } from './edit-workout-days-field'
+import { courseEnrollmentApi } from '@/features/course-enrollment/_api'
+import { useRouter } from 'next/navigation'
 
 interface UserCourseItemProps {
   course: Course
@@ -29,10 +30,25 @@ interface UserCourseItemProps {
 export function UserCourseItem({ course, enrollment }: UserCourseItemProps) {
   // Используем хук useCourseEnrollment, который уже настроен для автоматического обновления кэша
   const { activateEnrollment, isActivating } = useCourseEnrollment()
+  const courseEnrollmentUtils = courseEnrollmentApi.useUtils()
+  const router = useRouter()
 
   const handleActivate = () => {
     // Вызываем функцию активации из хука, обработка ошибок и успеха уже настроена в хуке
     activateEnrollment(enrollment.id)
+  }
+
+  // Обработчик для перехода к тренировкам с инвалидацией кеша
+  const handleGoToWorkouts = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // Инвалидируем конкретные запросы вместо всего кеша
+    await courseEnrollmentUtils.course.getEnrollmentByCourseSlug.invalidate();
+    await courseEnrollmentUtils.course.getUserDailyPlan.invalidate();
+    await courseEnrollmentUtils.course.getEnrollment.invalidate();
+    
+    // Переходим на страницу тренировок
+    router.push(`/day/${course.slug}`);
   }
 
   const startDateFormatted = format(
@@ -86,8 +102,8 @@ export function UserCourseItem({ course, enrollment }: UserCourseItemProps) {
       </CardContent>
       <CardFooter className="flex justify-between">
         {enrollment.active ? (
-          <Button asChild>
-            <Link href={`/day/${course.slug}`}>Перейти к тренировкам</Link>
+          <Button onClick={handleGoToWorkouts}>
+            Перейти к тренировкам
           </Button>
         ) : (
           <Button

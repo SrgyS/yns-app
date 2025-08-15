@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react'
 import { Badge } from '@/shared/ui/badge'
 import { Card, CardContent } from '@/shared/ui/card'
 import { KinescopePlayer } from './kinescope-player'
-import { workoutApi } from '../_api'
+// Удаляем импорт workoutApi
+// import { workoutApi } from '../_api'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { useWorkoutCompletions } from '../_vm/use-workout-completions'
+// Добавляем импорт useWorkout
+import { useWorkout } from '../_vm/use-workout'
 
 interface WarmUpProps {
   title: string
@@ -26,10 +29,9 @@ export function WarmUp({
   const [isCompleted, setIsCompleted] = useState(initialCompleted)
   const { data: session } = useAppSession()
 
-  // Получаем данные тренировки
-  const { data: workout } = workoutApi.getWorkout.useQuery({
-    workoutId,
-  })
+  // Используем useWorkout вместо прямого вызова API
+  const { getWorkout } = useWorkout()
+  const { data: workout } = getWorkout(workoutId)
 
   // Получаем хук для работы со статусом выполнения тренировок
   const { getWorkoutCompletionStatus, updateWorkoutCompletion } =

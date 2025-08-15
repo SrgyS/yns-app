@@ -30,6 +30,7 @@ export class UserDailyPlanRepository {
       mainWorkoutId: prismaUserDailyPlan.mainWorkoutId,
       mealPlanId: prismaUserDailyPlan.mealPlanId,
       weekNumber: prismaUserDailyPlan.weekNumber,
+      originalDailyPlanId: prismaUserDailyPlan.originalDailyPlanId,
     }
   }
 
@@ -287,6 +288,7 @@ export class UserDailyPlanRepository {
                   mainWorkout: true,
                   mealPlan: true,
                 },
+                orderBy: { dayNumber: 'asc' },
               },
             },
           },
@@ -332,6 +334,7 @@ export class UserDailyPlanRepository {
         } else if (warmupOnlyIndex < warmupOnlyDays.length) {
           dailyPlan = warmupOnlyDays[warmupOnlyIndex++]
         } else {
+          // Если закончились дни только с зарядкой, начинаем заново
           warmupOnlyIndex = 0
           dailyPlan = warmupOnlyDays[warmupOnlyIndex++]
         }

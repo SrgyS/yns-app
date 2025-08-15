@@ -34,8 +34,6 @@ export class UpdateWorkoutDaysService {
 
       // Используем транзакцию для атомарного обновления
       await dbClient.$transaction(async tx => {
-        let transferMapping: { oldPlanId: string; newPlanId: string }[] = []
-
         // Обновляем выбранные дни в enrollment
         await this.userCourseEnrollmentRepository.updateSelectedWorkoutDays(
           params.enrollmentId,
@@ -43,58 +41,39 @@ export class UpdateWorkoutDaysService {
           tx
         )
 
-        // Получаем текущие планы перед обновлением
-        const oldPlans = await tx.userDailyPlan.findMany({
-          where: { enrollmentId: params.enrollmentId },
-          select: { id: true, dayNumberInCourse: true, isWorkoutDay: true },
-        })
-
-        // Обновляем планы
-        await this.userDailyPlanRepository.updateUserDailyPlans(
+          // Обновляем планы
+        const updatedPlans = await this.userDailyPlanRepository.updateUserDailyPlans(
           params.enrollmentId,
           params.selectedWorkoutDays,
           tx
         )
 
         if (params.keepProgress) {
-          // Получаем новые планы после обновления
-          const newPlans = await tx.userDailyPlan.findMany({
+          // Вместо переноса статусов выполнения используем метод updateCompletionsAfterWorkoutDaysChange
+          // Подготавливаем данные для метода
+          const newUserDailyPlans = await tx.userDailyPlan.findMany({
             where: { enrollmentId: params.enrollmentId },
-            select: { id: true, dayNumberInCourse: true, isWorkoutDay: true },
+            select: { 
+              id: true, 
+              originalDailyPlanId: true, 
+              warmupId: true, 
+              mainWorkoutId: true, 
+            },
           })
-
-          // Создаем маппинг старых планов на новые по dayNumberInCourse
-          transferMapping = oldPlans
-            .map(oldPlan => {
-              const newPlan = newPlans.find(
-                p => p.dayNumberInCourse === oldPlan.dayNumberInCourse
-              )
-              return {
-                oldPlanId: oldPlan.id,
-                newPlanId: newPlan?.id || oldPlan.id, // fallback на старый ID
-              }
-            })
-            .filter(mapping => mapping.oldPlanId !== mapping.newPlanId)
-
-          // Переносим статусы выполнения для всех дней (и тренировочных, и с зарядками)
-          for (const mapping of transferMapping) {
-            const newPlan = newPlans.find(p => p.id === mapping.newPlanId)
-
-            // Переносим для всех дней, а не только тренировочных
-            if (newPlan) {
-              await this.userWorkoutCompletionRepository.transferWorkoutCompletions(
-                mapping.oldPlanId,
-                mapping.newPlanId,
-                tx
-              )
-            }
-          }
+          
+          // Обновляем записи о выполнении тренировок
+          await this.userWorkoutCompletionRepository.updateCompletionsAfterWorkoutDaysChange(
+            enrollment.userId,
+            params.enrollmentId,
+            newUserDailyPlans,
+            tx
+          )
         } else {
           // Удаляем все записи о выполнении тренировок для этого enrollment
           await tx.userWorkoutCompletion.deleteMany({
             where: {
               enrollmentId: params.enrollmentId,
-              userDailyPlanId: { in: oldPlans.map(plan => plan.id) },
+              userDailyPlanId: { in: updatedPlans.map(plan => plan.id) },
             },
           })
         }
