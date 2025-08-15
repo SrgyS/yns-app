@@ -3,6 +3,7 @@ import { DayOfWeek } from '@prisma/client'
 
 import { toast } from 'sonner'
 import { courseEnrollmentApi } from '../_api'
+import { CACHE_SETTINGS } from '@/shared/lib/cache/cache-constants'
 //TODO: проверить используются ли все методы
 export function useCourseEnrollment() {
   const createEnrollmentMutation =
@@ -34,13 +35,7 @@ export function useCourseEnrollment() {
     (userId: string, courseId: string) => {
       return getEnrollmentQuery(
         { userId, courseId },
-        {
-          staleTime: 1000 * 60, // 1 минута вместо Infinity
-          gcTime: 1000 * 60 * 5, // 5 минут
-          refetchOnWindowFocus: false,
-          refetchOnMount: 'always', // Всегда обновлять при монтировании компонента
-          refetchOnReconnect: false,
-        }
+         CACHE_SETTINGS.FREQUENT_UPDATE
       )
     },
     [getEnrollmentQuery]
@@ -59,16 +54,7 @@ export function useCourseEnrollment() {
     (userId: string, courseId: string, dayNumberInCourse: number) => {
       return getUserDailyPlanQuery(
         { userId, courseId, dayNumberInCourse },
-        {
-          // Данные устаревают через 1 минуту
-          staleTime: 1000 * 60, // 1 минута
-          // Кешировать данные даже если компонент размонтирован
-          gcTime: 1000 * 60 * 5, // 5 минут
-          // Не перезапрашивать данные при переключении между табами
-          refetchOnWindowFocus: false,
-          refetchOnMount: 'always', // Всегда обновлять при монтировании компонента
-          refetchOnReconnect: false,
-        }
+        CACHE_SETTINGS.FREQUENT_UPDATE
       )
     },
     [getUserDailyPlanQuery]
@@ -90,14 +76,14 @@ export function useCourseEnrollment() {
 
   const getUserWorkoutDays = useCallback(
     (userId: string, courseId: string) => {
-      return getUserWorkoutDaysQuery({userId, courseId})
+      return getUserWorkoutDaysQuery({ userId, courseId })
     },
     [getUserWorkoutDaysQuery]
   )
 
   const utils = courseEnrollmentApi.useUtils()
 
-  const { mutateAsync: activateEnrollment, isPending: isActivating } = 
+  const { mutateAsync: activateEnrollment, isPending: isActivating } =
     courseEnrollmentApi.course.activateEnrollment.useMutation({
       async onSuccess() {
         // Инвалидируем все запросы, связанные с записями пользователя на курсы
@@ -107,23 +93,17 @@ export function useCourseEnrollment() {
       },
       onError() {
         toast.error('Ошибка при выборе курса')
-      }
+      },
     })
 
-  const getEnrollmentByCourseSlugQuery = 
+  const getEnrollmentByCourseSlugQuery =
     courseEnrollmentApi.course.getEnrollmentByCourseSlug.useQuery
 
   const getEnrollmentByCourseSlug = useCallback(
     (userId: string, courseSlug: string) => {
       return getEnrollmentByCourseSlugQuery(
         { userId, courseSlug },
-        {
-          staleTime: 1000 * 60, // 1 минута вместо Infinity
-          gcTime: 1000 * 60 * 5, // 5 минут
-          refetchOnWindowFocus: false,
-          refetchOnMount: 'always', // Всегда обновлять при монтировании компонента
-          refetchOnReconnect: false,
-        }
+        CACHE_SETTINGS.FREQUENT_UPDATE
       )
     },
     [getEnrollmentByCourseSlugQuery]
