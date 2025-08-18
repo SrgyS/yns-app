@@ -61,6 +61,11 @@
                 "description": "Слаг плана питания"
             },
             "uniqueItems": true
+        },
+        "minWorkoutDaysPerWeek": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Минимальное количество тренировок в неделю"
         }
     },
     "required": [
@@ -69,7 +74,8 @@
         "thumbnail",
         "image",
         "draft",
-        "durationWeeks"
+        "durationWeeks",
+        "minWorkoutDaysPerWeek"
     ],
     "additionalProperties": false
 }

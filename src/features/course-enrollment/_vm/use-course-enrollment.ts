@@ -3,6 +3,7 @@ import { DayOfWeek } from '@prisma/client'
 
 import { toast } from 'sonner'
 import { courseEnrollmentApi } from '../_api'
+import { CACHE_SETTINGS } from '@/shared/lib/cache/cache-constants'
 //TODO: проверить используются ли все методы
 export function useCourseEnrollment() {
   const createEnrollmentMutation =
@@ -22,10 +23,8 @@ export function useCourseEnrollment() {
     }) => {
       try {
         const result = await createEnrollmentMutation.mutateAsync(params)
-        toast.success('Вы успешно записались на курс!')
         return result
       } catch (error) {
-        toast.error('Ошибка при записи на курс')
         throw error
       }
     },
@@ -34,7 +33,10 @@ export function useCourseEnrollment() {
 
   const getEnrollment = useCallback(
     (userId: string, courseId: string) => {
-      return getEnrollmentQuery({ userId, courseId })
+      return getEnrollmentQuery(
+        { userId, courseId },
+         CACHE_SETTINGS.FREQUENT_UPDATE
+      )
     },
     [getEnrollmentQuery]
   )
@@ -49,8 +51,11 @@ export function useCourseEnrollment() {
     courseEnrollmentApi.course.getActiveEnrollment.useQuery
 
   const getUserDailyPlan = useCallback(
-    (userId: string, courseId: string, date: Date) => {
-      return getUserDailyPlanQuery({ userId, courseId, date })
+    (userId: string, courseId: string, dayNumberInCourse: number) => {
+      return getUserDailyPlanQuery(
+        { userId, courseId, dayNumberInCourse },
+        CACHE_SETTINGS.FREQUENT_UPDATE
+      )
     },
     [getUserDailyPlanQuery]
   )
@@ -70,15 +75,15 @@ export function useCourseEnrollment() {
   )
 
   const getUserWorkoutDays = useCallback(
-    (userId: string) => {
-      return getUserWorkoutDaysQuery(userId)
+    (userId: string, courseId: string) => {
+      return getUserWorkoutDaysQuery({ userId, courseId })
     },
     [getUserWorkoutDaysQuery]
   )
 
   const utils = courseEnrollmentApi.useUtils()
 
-  const { mutateAsync: activateEnrollment, isPending: isActivating } = 
+  const { mutateAsync: activateEnrollment, isPending: isActivating } =
     courseEnrollmentApi.course.activateEnrollment.useMutation({
       async onSuccess() {
         // Инвалидируем все запросы, связанные с записями пользователя на курсы
@@ -88,9 +93,21 @@ export function useCourseEnrollment() {
       },
       onError() {
         toast.error('Ошибка при выборе курса')
-      }
+      },
     })
 
+  const getEnrollmentByCourseSlugQuery =
+    courseEnrollmentApi.course.getEnrollmentByCourseSlug.useQuery
+
+  const getEnrollmentByCourseSlug = useCallback(
+    (userId: string, courseSlug: string) => {
+      return getEnrollmentByCourseSlugQuery(
+        { userId, courseSlug },
+        CACHE_SETTINGS.FREQUENT_UPDATE
+      )
+    },
+    [getEnrollmentByCourseSlugQuery]
+  )
   return {
     createEnrollment,
     getEnrollment,
@@ -99,6 +116,7 @@ export function useCourseEnrollment() {
     getActiveEnrollment,
     getUserWorkoutDays,
     activateEnrollment,
+    getEnrollmentByCourseSlug,
     isCreating: createEnrollmentMutation.isPending,
     isActivating,
   }

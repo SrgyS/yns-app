@@ -3,6 +3,7 @@ import { UserCourseEnrollmentRepository } from '../_repositories/user-course-enr
 import { UserDailyPlanRepository } from '../_repositories/user-daily-plan'
 import { CreateUserCourseEnrollmentParams, UserCourseEnrollment } from '..'
 import { logger } from '@/shared/lib/logger'
+import { dbClient } from '@/shared/lib/db'
 
 @injectable()
 export class CreateUserCourseEnrollmentService {
@@ -15,48 +16,76 @@ export class CreateUserCourseEnrollmentService {
     params: CreateUserCourseEnrollmentParams
   ): Promise<UserCourseEnrollment> {
     try {
-      const existingEnrollments =
+
+      // Используем транзакцию для атомарного создания enrollment и userDailyPlan
+      return await dbClient.$transaction(async tx => {
+          const existingEnrollments =
         await this.userCourseEnrollmentRepository.getUserEnrollments(
-          params.userId
+          params.userId,
+          tx
         )
 
-      let selectedWorkoutDays = params.selectedWorkoutDays
-
       if (existingEnrollments.length > 0) {
-        const existingWorkoutDays = existingEnrollments[0].selectedWorkoutDays
-        if (existingWorkoutDays.length > 0) {
-          selectedWorkoutDays = existingWorkoutDays
-        }
-        
-        // Деактивируем все предыдущие записи пользователя на курсы
-        await this.userCourseEnrollmentRepository.deactivateUserEnrollments(params.userId)
-      }
 
-      const enrollment =
-        await this.userCourseEnrollmentRepository.createEnrollment({
-          ...params,
-          selectedWorkoutDays,
+        // Деактивируем все предыдущие записи пользователя на курсы
+        await this.userCourseEnrollmentRepository.deactivateUserEnrollments(
+          params.userId,
+          tx
+        )
+      }
+        // Создаем enrollment внутри транзакции
+        const enrollment = await tx.userCourseEnrollment.create({
+          data: {
+            userId: params.userId,
+            courseId: params.courseId,
+            startDate: params.startDate,
+            selectedWorkoutDays: params.selectedWorkoutDays,
+            hasFeedback: params.hasFeedback ?? false,
+            active: true,
+            
+          },
+          include: {
+            course: { select: { id: true, slug: true, title: true } },
+          },
         })
 
-      await this.userDailyPlanRepository.generateUserDailyPlansForEnrollment(
-        enrollment.id
-      )
+        await this.userDailyPlanRepository.generateUserDailyPlansForEnrollment(
+          enrollment.id,
+          tx
+        )
 
-      logger.info({
-        msg: 'Successfully created course enrollment with daily plans',
-        userId: params.userId,
-        courseId: params.courseId,
-        enrollmentId: enrollment.id,
+        return {
+          id: enrollment.id,
+          userId: enrollment.userId,
+          courseId: enrollment.courseId,
+          selectedWorkoutDays: enrollment.selectedWorkoutDays,
+          startDate: enrollment.startDate,
+          hasFeedback: enrollment.hasFeedback,
+          active: enrollment.active,
+          course: {
+            id: enrollment.course.id,
+            slug: enrollment.course.slug,
+            title: enrollment.course.title,
+          },
+        }
       })
-
-      return enrollment
     } catch (error) {
       logger.error({
-        msg: 'Error creating course enrollment',
+        msg: 'Error creating user course enrollment',
         params,
         error,
       })
-      throw new Error('Failed to create course enrollment')
+      // Проверяем, является ли ошибка ошибкой уникальности Prisma
+      if (
+        error instanceof Error &&
+        'code' in (error as any) &&
+        (error as any).code === 'P2002'
+      ) {
+        throw new Error('Запись на этот курс уже существует')
+      }
+
+      // Для других типов ошибок возвращаем общее сообщение
+      throw new Error('Ошибка при создании записи на курс')
     }
   }
 }

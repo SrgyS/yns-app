@@ -3,7 +3,6 @@ import { ProfileForm } from './_ui/profile-form'
 import { Spinner } from '@/shared/ui/spinner'
 import { useRouter } from 'next/navigation'
 import { updateProfileApi } from './_api'
-import { EditWorkoutDaysField } from './_ui/edit-workout-days-field'
 
 export function UpdateProfileForm({
   userId,
@@ -30,16 +29,11 @@ export function UpdateProfileForm({
   }
 
   return (
-    <>
-     <ProfileForm
+    <ProfileForm
       userId={userId}
       profile={profileQuery.data}
       onSuccess={handleSuccess}
       submitText={callbackUrl ? 'Продолжить' : 'Сохранить'}
     />
-    <EditWorkoutDaysField userId={userId} />
-    </>
-   
-
   )
 }

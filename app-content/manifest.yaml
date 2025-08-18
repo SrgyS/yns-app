@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/SrgyS/content-schema/refs/heads/main/schemas/manifest.schema.json
+courses:
+  - reload
+  - antikorka
+workouts:
+  - quick-warmup
+  - beginner-strength
+  - hip-mobility
+recipes:
+  - green-smoothie
+  - chicken-rice
+  - salmon-asparagus

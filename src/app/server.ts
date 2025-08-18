@@ -9,6 +9,8 @@ import { Container } from 'inversify'
 import { TrpcModule } from '@/kernel/lib/trpc/module'
 import { CourseDetailsModule } from '@/features/course-details/server'
 import { CourseEnrollmentControllerModule } from '@/features/course-enrollment/module'
+import { DailyPlanModule } from '@/features/daily-plan/module'
+import { WorkoutEntityModule } from '@/entity/workout/module'
 
 export function createServer() {
   const container = new Container()
@@ -22,6 +24,8 @@ export function createServer() {
     TrpcModule,
     CourseDetailsModule,
     CourseEnrollmentControllerModule,
+    DailyPlanModule,
+    WorkoutEntityModule,
   )
 
   return container

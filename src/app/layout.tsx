@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Montserrat } from 'next/font/google'
 import './globals.css'
 import { cn } from '@/shared/ui/utils'
 import { AppProvider } from './_providers/app-provider'
 
-const inter = Inter({
+const montserrat = Montserrat({
   subsets: ['latin', 'cyrillic'],
   variable: '--font-inter',
 })
@@ -24,8 +24,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          'min-h-screen bg-background inter antialiased',
-          inter.variable
+          'min-h-screen bg-background antialiased',
+          montserrat.variable,
+          montserrat.className
         )}
       >
         <AppProvider>{children}</AppProvider>
