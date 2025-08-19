@@ -43,7 +43,6 @@ export function DayTabs({
 
   // Получаем выбранные дни тренировок из активной записи
   const enrollment = enrollmentQuery?.data
-console.log({enrollment})
   // Оптимизируем получение selectedWorkoutDays с помощью useMemo
   const selectedWorkoutDays = useMemo(() => {
     return enrollment?.selectedWorkoutDays || []
@@ -117,20 +116,28 @@ console.log({enrollment})
     })
   }, [weekStart, currentDate, programStart, workoutDayIndices])
 
-  const defaultDayKey = days.find(d => d.isToday)?.key || DayOfWeek.MONDAY
+  // Находим первый активный день в неделе
+  const firstActiveDay = days.find(d => !d.isDisabled)?.key || DayOfWeek.MONDAY
+  // Находим сегодняшний день, если он есть в текущей неделе и не отключен
+  const todayActiveDay = days.find(d => d.isToday && !d.isDisabled)?.key
+  // Приоритет: сначала сегодняшний активный день, затем первый активный день недели
+  const defaultDayKey = todayActiveDay || firstActiveDay
   const [selectedDay, setSelectedDay] = useState<string>(defaultDayKey)
 
   const selectedDayNumberInCourse = useMemo(() => {
     return days.find(d => d.key === selectedDay)?.programDay
   }, [selectedDay, days])
 
-  const dailyPlanQuery = selectedDayNumberInCourse
-    ? getDailyPlan(courseId, selectedDayNumberInCourse)
-    : null
+  // Всегда вызываем getDailyPlan, но с разными параметрами
+  const dailyPlanQuery = getDailyPlan(
+    courseId,
+    selectedDayNumberInCourse || 1 // Используем 0 или другое значение по умолчанию
+  )
 
-
+  // В JSX проверяем не только наличие данных, но и selectedDayNumberInCourse
   return (
     <Tabs
+      key={`week-${weekNumber}`}
       value={selectedDay}
       onValueChange={setSelectedDay}
       className="space-y-2"
@@ -158,33 +165,31 @@ console.log({enrollment})
           </TabsTrigger>
         ))}
       </TabsList>
-      {selectedDayNumberInCourse && (
-        <TabsContent value={selectedDay} className="flex flex-col gap-4">
-          {dailyPlanQuery?.data ? (
-            <>
-              {dailyPlanQuery.data.warmupId && (
+      <TabsContent value={selectedDay} className="flex flex-col gap-4">
+        {dailyPlanQuery?.data ? (
+          <>
+            {dailyPlanQuery.data.warmupId && (
+              <WarmUp
+                title="Зарядка"
+                workoutId={dailyPlanQuery.data.warmupId}
+                enrollmentId={enrollment?.id || ''}
+                userDailyPlanId={dailyPlanQuery.data.id}
+              />
+            )}
+            {dailyPlanQuery.data.isWorkoutDay &&
+              dailyPlanQuery.data.mainWorkoutId && (
                 <WarmUp
-                  title="Зарядка"
-                  workoutId={dailyPlanQuery.data.warmupId}
+                  title="Тренировка"
+                  workoutId={dailyPlanQuery.data.mainWorkoutId}
                   enrollmentId={enrollment?.id || ''}
                   userDailyPlanId={dailyPlanQuery.data.id}
                 />
               )}
-              {dailyPlanQuery.data.isWorkoutDay &&
-                dailyPlanQuery.data.mainWorkoutId && (
-                  <WarmUp
-                    title="Тренировка"
-                    workoutId={dailyPlanQuery.data.mainWorkoutId}
-                    enrollmentId={enrollment?.id || ''}
-                    userDailyPlanId={dailyPlanQuery.data.id}
-                  />
-                )}
-            </>
-          ) : (
-            <>Нет тренировки</>
-          )}
-        </TabsContent>
-      )}
+          </>
+        ) : (
+          <>Нет тренировки</>
+        )}
+      </TabsContent>
     </Tabs>
   )
 }

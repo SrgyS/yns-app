@@ -22,11 +22,10 @@ export default function DayPage() {
 
   useEffect(() => {
     // Если данные загружены и есть активный курс, перенаправляем на его страницу
-    if (!enrollmentsQuery.isLoading && !activeEnrollmentQuery.isLoading && 
-        activeEnrollmentQuery.data?.course?.slug) {
+    if (activeEnrollmentQuery.data?.course?.slug) {
       router.push(`/day/${activeEnrollmentQuery.data.course.slug}`)
     }
-  }, [enrollmentsQuery.isLoading, activeEnrollmentQuery.isLoading, activeEnrollmentQuery.data, router])
+  }, [activeEnrollmentQuery.data, router])
 
   // Если данные загружаются, показываем скелетон
   if (enrollmentsQuery.isLoading || activeEnrollmentQuery.isLoading) {
