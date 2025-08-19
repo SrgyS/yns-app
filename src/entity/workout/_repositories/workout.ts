@@ -16,7 +16,7 @@ export class WorkoutRepository {
       difficulty: prismaWorkout.difficulty,
       equipment: prismaWorkout.equipment,
       description: prismaWorkout.description,
-      videoUrl: prismaWorkout.videoUrl,
+      videoId: prismaWorkout.videoId,
       muscles: prismaWorkout.muscles,
     }
   }

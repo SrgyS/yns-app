@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Badge } from '@/shared/ui/badge'
 import { Card, CardContent } from '@/shared/ui/card'
-import { KinescopePlayer } from './kinescope-player'
+import { Player } from './kinescope-player'
 // Удаляем импорт workoutApi
 // import { workoutApi } from '../_api'
 import { Checkbox } from '@/shared/ui/checkbox'
@@ -65,6 +65,12 @@ export function WarmUp({
     setIsFavorite(!isFavorite)
   }
 
+  const handleVideoCompleted = () => {
+    if (!isCompleted) {
+      toggleCompleted()
+    }
+  }
+
   const toggleCompleted = async () => {
     if (!session?.user?.id || !workout?.type) return
 
@@ -102,7 +108,12 @@ export function WarmUp({
           <button onClick={toggleFavorite}>{isFavorite ? '❤️' : '🤍'}</button>
         </div>
 
-        {workout?.videoUrl && <KinescopePlayer videoId={workout.videoUrl} />}
+        {workout?.videoId && (
+          <Player 
+            videoId={workout.videoId} 
+            onCompleted={handleVideoCompleted}
+          />
+        )}
 
         <div className="flex gap-2 mt-3 flex-wrap">
           <Badge variant="secondary">

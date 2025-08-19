@@ -9,6 +9,6 @@ export type Workout = {
   difficulty: WorkoutDifficulty
   equipment: string[]
   description: string | null
-  videoUrl: string | null
+  videoId: string | null
   muscles: MuscleGroup[]
 }

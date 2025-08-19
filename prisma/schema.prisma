@@ -206,7 +206,7 @@ model Workout {
   difficulty            WorkoutDifficulty
   equipment             String[]
   description           String?
-  videoUrl              String?
+  videoId              String?
   muscles               MuscleGroup[]
   slug                  String                  @unique
   mainWorkoutDailyPlans DailyPlan[]             @relation("MainWorkoutDailyPlan")

@@ -51,9 +51,8 @@
             "description": "Описание тренировки",
             "nullable": true
         },
-        "videoUrl": {
+        "videoId": {
             "type": "string",
-            "format": "uri",
             "description": "URL видео с тренировкой",
             "nullable": true
         },

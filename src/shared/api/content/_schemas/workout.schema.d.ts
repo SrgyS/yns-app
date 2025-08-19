@@ -40,7 +40,7 @@ export interface Workout {
   /**
    * URL видео с тренировкой
    */
-  videoUrl?: string;
+  videoId?: string;
   /**
    * Список задействованных групп мышц
    */

@@ -110,7 +110,7 @@ async function downloadAndUploadContent(): Promise<void> {
             difficulty: workoutData.difficulty,
             equipment: workoutData.equipment,
             description: workoutData.description,
-            videoUrl: workoutData.videoUrl,
+            videoId: workoutData.videoId,
             muscles: workoutData.muscles,
           },
           create: {
@@ -121,7 +121,7 @@ async function downloadAndUploadContent(): Promise<void> {
             difficulty: workoutData.difficulty,
             equipment: workoutData.equipment,
             description: workoutData.description,
-            videoUrl: workoutData.videoUrl,
+            videoId: workoutData.videoId,
             muscles: workoutData.muscles,
           },
         })
