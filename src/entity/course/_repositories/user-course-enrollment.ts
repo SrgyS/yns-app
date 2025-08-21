@@ -24,6 +24,7 @@ export class UserCourseEnrollmentRepository {
         id: string
         slug: string
         title: string
+        durationWeeks?: number
       }
     }
   ): UserCourseEnrollment {
@@ -39,6 +40,7 @@ export class UserCourseEnrollmentRepository {
         id: prismaEnrollment.course.id,
         slug: prismaEnrollment.course.slug,
         title: prismaEnrollment.course.title,
+        durationWeeks: prismaEnrollment.course.durationWeeks,
       },
     }
   }
@@ -56,7 +58,7 @@ export class UserCourseEnrollmentRepository {
           },
         },
         include: {
-          course: { select: { id: true, slug: true, title: true } },
+          course: { select: { id: true, slug: true, title: true, durationWeeks: true } },
         },
       })
 
@@ -79,7 +81,7 @@ export class UserCourseEnrollmentRepository {
       const enrollment = await dbClient.userCourseEnrollment.findUnique({
         where: { id: enrollmentId },
         include: {
-          course: { select: { id: true, slug: true, title: true } },
+          course: { select: { id: true, slug: true, title: true, durationWeeks: true } },
         },
       })
 
@@ -117,7 +119,7 @@ export class UserCourseEnrollmentRepository {
           },
         },
         include: {
-          course: { select: { id: true, slug: true, title: true } },
+          course: { select: { id: true, slug: true, title: true, durationWeeks: true } },
         },
       })
 
@@ -149,6 +151,7 @@ export class UserCourseEnrollmentRepository {
           id: enrollment.course.id,
           slug: enrollment.course.slug,
           title: enrollment.course.title,
+          durationWeeks: enrollment.course.durationWeeks,
         },
       }))
     } catch (error) {
@@ -204,7 +207,7 @@ export class UserCourseEnrollmentRepository {
           active: true,
         },
         include: {
-          course: { select: { id: true, slug: true, title: true } },
+          course: { select: { id: true, slug: true, title: true, durationWeeks: true } },
         },
       })
 
@@ -251,7 +254,7 @@ export class UserCourseEnrollmentRepository {
         where: { id: enrollmentId },
         data: { active: true },
         include: {
-          course: { select: { id: true, slug: true, title: true } },
+          course: { select: { id: true, slug: true, title: true, durationWeeks: true } },
         },
       })
 
@@ -266,7 +269,6 @@ export class UserCourseEnrollmentRepository {
     }
   }
 
-  // Существующий метод createEnrollment остается для обратной совместимости
   async createEnrollment(
     params: CreateUserCourseEnrollmentParams,
     db: DbClient = this.defaultDb
@@ -279,66 +281,20 @@ export class UserCourseEnrollmentRepository {
           startDate: params.startDate,
           selectedWorkoutDays: params.selectedWorkoutDays,
           hasFeedback: params.hasFeedback ?? false,
-          active: true,
         },
         include: {
-          course: { select: { id: true, slug: true, title: true } },
+          course: { select: { id: true, slug: true, title: true, durationWeeks: true } },
         },
       })
 
       return this.mapPrismaEnrollmentToDomain(enrollment)
     } catch (error) {
       logger.error({
-        msg: 'Error creating user course enrollment',
+        msg: 'Error creating enrollment',
         params,
         error,
       })
-
-      // Проверяем, является ли ошибка ошибкой уникальности Prisma
-      if (
-        error instanceof Error &&
-        'code' in (error as any) &&
-        (error as any).code === 'P2002'
-      ) {
-        throw new Error('Запись на этот курс уже существует')
-      }
-
-      // Для других типов ошибок возвращаем общее сообщение
-      throw new Error('Ошибка при создании записи на курс')
+      throw new Error('Failed to create enrollment')
     }
   }
-
-  // async getActiveEnrollmentWithCourseDetails(
-  //   userId: string,
-  //   tx: Prisma.TransactionClient
-  // ) {
-  //   try {
-  //     return await tx.userCourseEnrollment.findFirst({
-  //       where: {
-  //         userId: userId,
-  //         active: true,
-  //       },
-  //       include: {
-  //         course: {
-  //           include: {
-  //             dailyPlans: {
-  //               include: {
-  //                 warmup: true,
-  //                 mainWorkout: true,
-  //                 mealPlan: true,
-  //               },
-  //             },
-  //           },
-  //         },
-  //       },
-  //     })
-  //   } catch (error) {
-  //     logger.error({
-  //       msg: 'Error getting active enrollment with course details',
-  //       userId,
-  //       error,
-  //     })
-  //     throw new Error('Failed to get active enrollment with course details')
-  //   }
-  // }
 }

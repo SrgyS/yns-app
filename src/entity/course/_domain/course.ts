@@ -37,6 +37,7 @@ export type UserCourseEnrollment = {
     id: string
     slug: string
     title: string
+    durationWeeks?: number
   }
 }
 

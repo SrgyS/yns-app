@@ -40,7 +40,7 @@ export default function DayPage({ params }: DayPageProps) {
     return (
       <main className="flex flex-col space-y-6 py-4 container max-w-[600px]">
         <Skeleton className="h-6 w-[300px]" />
-        <Skeleton className="h-[400px] w-full" />
+        <Skeleton className="h-[200px] w-full" />
       </main>
     )
   }

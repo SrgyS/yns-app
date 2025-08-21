@@ -21,8 +21,10 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
     ? new Date(enrollment.startDate)
     : null
 
-  const { noProgram, availableWeeks, currentWeekIndex, gridColsClass } =
-    useWorkoutCalendar(programStart)
+  const durationWeeks = enrollment?.course?.durationWeeks
+
+  const { noProgram, availableWeeks, currentWeekIndex } =
+    useWorkoutCalendar(programStart, durationWeeks)
 
   if (noProgram || !enrollment || !currentWeekIndex) {
     return <div>Нет активного курса</div>
@@ -30,6 +32,7 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
 
   const courseId = enrollment.courseId
   const defaultWeek = `week-${currentWeekIndex}`
+  
   return (
     <div className="flex flex-col gap-4 font-bold w-full">
       <h3>{format(today, 'LLLL', { locale: ru })}</h3>
@@ -38,7 +41,7 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
         defaultValue={defaultWeek}
         className="space-y-4"
       >
-        <TabsList className={`rounded-lg bg-muted p-1 grid ${gridColsClass}`}>
+        <TabsList className={`rounded-lg bg-muted p-1 flex`}>
           {availableWeeks.map(w => {
             return (
               <TabsTrigger
