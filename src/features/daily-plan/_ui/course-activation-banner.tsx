@@ -1,6 +1,6 @@
 import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { courseDetailsApi } from '@/features/course-details/_api'
-import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/alert'
+import { Alert, AlertDescription } from '@/shared/ui/alert'
 import { Button } from '@/shared/ui/button'
 import { useRouter } from 'next/navigation'
 
@@ -39,12 +39,12 @@ export function CourseActivationBanner({
 
   return (
     <Alert className="mb-4">
-      <AlertTitle>Режим просмотра</AlertTitle>
       <AlertDescription className="flex flex-col gap-2">
-        <p>
-          Активный: <strong>{activeCourse?.title}</strong>. 
-          Вы на курсе <strong>{currentCourse?.title}</strong>.
-        </p>
+        <div>
+          Курс по умолчанию: <strong>{activeCourse?.title}</strong>
+        
+        </div>
+        <div>  Вы на курсе <strong>{currentCourse?.title}</strong></div>
         <div className="flex gap-2 mt-2">
           <Button 
             onClick={handleActivate} 
@@ -52,7 +52,7 @@ export function CourseActivationBanner({
             variant="default"
             size="sm"
           >
-            Сделать активным
+            Сделать курсом по умолчанию
           </Button>
           {/* <Button 
             variant="outline" 

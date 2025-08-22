@@ -110,6 +110,7 @@ export function WarmUp({
 
         {workout?.videoId && (
           <Player 
+            key={workout.videoId}
             videoId={workout.videoId} 
             onCompleted={handleVideoCompleted}
           />
@@ -117,7 +118,7 @@ export function WarmUp({
 
         <div className="flex gap-2 mt-3 flex-wrap">
           <Badge variant="secondary">
-            {workout?.durationMinutes || '...'} мин
+          мин
           </Badge>
           <Badge variant="outline">{workout?.type?.toLowerCase() || ''}</Badge>
           {isCompleted && <Badge>Выполнено</Badge>}

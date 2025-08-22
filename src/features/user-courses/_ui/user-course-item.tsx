@@ -112,7 +112,7 @@ export function UserCourseItem({ course, enrollment }: UserCourseItemProps) {
             variant="secondary"
           >
             <CheckCircle className="mr-2 h-4 w-4" />
-            <SmallSpinner isLoading={isActivating} /> Сделать активным
+            <SmallSpinner isLoading={isActivating} /> Сделать курсом по умолчанию
           </Button>
         )}
       </CardFooter>

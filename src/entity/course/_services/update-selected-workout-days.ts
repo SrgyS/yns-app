@@ -49,33 +49,47 @@ export class UpdateWorkoutDaysService {
         )
 
         if (params.keepProgress) {
-          // Вместо переноса статусов выполнения используем метод updateCompletionsAfterWorkoutDaysChange
-          // Подготавливаем данные для метода
-          const newUserDailyPlans = await tx.userDailyPlan.findMany({
-            where: { enrollmentId: params.enrollmentId },
-            select: { 
-              id: true, 
-              originalDailyPlanId: true, 
-              warmupId: true, 
-              mainWorkoutId: true, 
-            },
-          })
-          
-          // Обновляем записи о выполнении тренировок
-          await this.userWorkoutCompletionRepository.updateCompletionsAfterWorkoutDaysChange(
-            enrollment.userId,
-            params.enrollmentId,
-            newUserDailyPlans,
-            tx
-          )
-        } else {
-          // Удаляем все записи о выполнении тренировок для этого enrollment
-          await tx.userWorkoutCompletion.deleteMany({
-            where: {
+          try {
+            const newUserDailyPlans = await tx.userDailyPlan.findMany({
+              where: { enrollmentId: params.enrollmentId },
+              select: {
+                id: true,
+                originalDailyPlanId: true,
+                warmupId: true,
+                mainWorkoutId: true,
+              },
+            });
+
+            await this.userWorkoutCompletionRepository.updateCompletionsAfterWorkoutDaysChange(
+              enrollment.userId,
+              params.enrollmentId,
+              newUserDailyPlans,
+              tx
+            );
+          } catch (error) {
+            logger.error({
+              msg: 'Error updating workout completions after workout days change',
               enrollmentId: params.enrollmentId,
-              userDailyPlanId: { in: updatedPlans.map(plan => plan.id) },
-            },
-          })
+              error,
+            });
+            throw new Error('Failed to update workout completions after workout days change');
+          }
+        } else {
+          try {
+            await tx.userWorkoutCompletion.deleteMany({
+              where: {
+                enrollmentId: params.enrollmentId,
+                userDailyPlanId: { in: updatedPlans.map(plan => plan.id) },
+              },
+            });
+          } catch (error) {
+            logger.error({
+              msg: 'Error deleting workout completions for enrollment',
+              enrollmentId: params.enrollmentId,
+              error,
+            });
+            throw new Error('Failed to delete workout completions for enrollment');
+          }
         }
       })
 

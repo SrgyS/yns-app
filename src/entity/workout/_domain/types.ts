@@ -5,10 +5,13 @@ export type Workout = {
   slug: string
   title: string
   type: WorkoutType
-  durationMinutes: number
+  durationSec: number
   difficulty: WorkoutDifficulty
   equipment: string[]
   description: string | null
   videoId: string | null
   muscles: MuscleGroup[]
+  poster: Record<string, string> | null
+  posterUrl: string | null
+  progress: number | null
 }

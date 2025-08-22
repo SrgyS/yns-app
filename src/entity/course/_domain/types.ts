@@ -2,8 +2,6 @@ import {
   ContentBlockId,
   CourseId,
   CourseSlug,
-  LessonId,
-  LessonSlug,
 } from '@/kernel/domain/course'
 import { ImageSrc } from '@/shared/api/content/_lib/image'
 export type Product =
@@ -36,8 +34,6 @@ export type CourseFullInfo = CourseBaseInfo & {
 }
 
 export interface Lesson {
-  id: LessonId
-  slug: LessonSlug
   courseId: CourseId
   title: string
   shortDescription?: string

@@ -54,7 +54,7 @@ export function CourseTitle({ courseSlug }: { courseSlug: string }) {
             ))}
           </SelectContent>
         </Select>
-        {isActive && <Badge variant="outline">Активный</Badge>}
+        {isActive && <Badge variant="outline">по умолчанию</Badge>}
       </div>
     </div>
   )

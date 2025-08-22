@@ -43,6 +43,7 @@ export function DayTabs({
 
   // Получаем выбранные дни тренировок из активной записи
   const enrollment = enrollmentQuery?.data
+
   // Оптимизируем получение selectedWorkoutDays с помощью useMemo
   const selectedWorkoutDays = useMemo(() => {
     return enrollment?.selectedWorkoutDays || []
@@ -57,8 +58,11 @@ export function DayTabs({
       .filter(index => index !== -1)
   }, [selectedWorkoutDays])
 
-  // Вычисляем общее количество дней программы (28 дней)
-  const totalProgramDays = 28
+  // Вычисляем общее количество дней программы
+  const totalProgramDays = useMemo(() => {
+    const durationWeeks = enrollment?.course?.durationWeeks ?? 4;
+    return  durationWeeks * 7;
+  }, [enrollment?.course?.durationWeeks]);
 
   const days = useMemo(() => {
     // Определяем начало недели для отображения дней

@@ -9,17 +9,81 @@ import workoutSchema from '../src/shared/api/content/_schemas/workout.schema.jso
 import mealPlanSchema from '../src/shared/api/content/_schemas/meal-plan.schema.json'
 import recipeSchema from '../src/shared/api/content/_schemas/recipe.schema.json'
 import { ParsingError, ValidationError } from '../src/shared/lib/errors'
-import {Course} from '@/shared/api/content/_schemas/course.schema'
+import { Course } from '@/shared/api/content/_schemas/course.schema'
+
+export type KinescopePoster = {
+  id: string
+  status?: 'done' | 'processing' | 'error'
+  active?: boolean
+  original: string
+  md?: string
+  sm?: string
+  xs?: string
+  [k: string]: unknown
+}
+
+type KinescopeVideo = {
+  duration?: number | null
+  progress?: number | null
+  poster?: KinescopePoster | null
+}
+
+type Envelope<T> = { data: T }
+
+function unwrap<T>(payload: Envelope<T> | T): T {
+  return (payload as Envelope<T>)?.data ?? (payload as T)
+}
+
+// Утилита для получения метаданных видео из Kinescope
+async function fetchKinescopeVideoMetadata(
+  videoId: string
+): Promise<KinescopeVideo | null> {
+  const apiKey = process.env.KINESCOPE_API_KEY
+  if (!apiKey) throw new Error('KINESCOPE_API_KEY is not set')
+  try {
+    const resp = await fetch(`https://api.kinescope.io/v1/videos/${videoId}`, {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+      cache: 'no-store',
+    })
+    if (!resp.ok) {
+      console.warn(
+        `  🟡 Не удалось получить метаданные Kinescope для videoId=${videoId}: ${resp.status} ${resp.statusText}`
+      )
+      return null
+    }
+
+    const payload = (await resp.json()) as
+      | Envelope<KinescopeVideo>
+      | KinescopeVideo
+    const v = unwrap(payload)
+
+    const duration =
+      typeof v.duration === 'number' ? Math.round(v.duration) : undefined
+    const progress =
+      typeof v.progress === 'number' ? Math.round(v.progress) : undefined
+    const poster = v.poster ?? undefined
+
+    return { duration, poster, progress }
+  } catch (e) {
+    console.warn(
+      `  🟡 Ошибка запроса метаданных Kinescope для videoId=${videoId}:`,
+      e
+    )
+    return null
+  }
+}
 
 // Функция для скачивания и парсинга YAML-файла
 async function downloadAndParseValidatedYaml<T>(
   relativePath: string,
   schema: object,
   addSlug: boolean = true,
-   explicitSlug?: string
+  explicitSlug?: string
 ): Promise<T | null> {
   const fetchUrl = `${process.env.CONTENT_URL}/${relativePath}`
-  const slug =  explicitSlug || path.basename(relativePath, '.yaml')
+  const slug = explicitSlug || path.basename(relativePath, '.yaml')
 
   try {
     const response = await fetch(fetchUrl, {
@@ -49,10 +113,9 @@ async function downloadAndParseValidatedYaml<T>(
             slug,
           }
         : undefined
-    );
+    )
 
     if (addSlug) (parsedData as any).slug = slug
-
 
     return parsedData
   } catch (error) {
@@ -73,7 +136,7 @@ async function downloadAndParseValidatedYaml<T>(
 // --- Основная функция загрузки и выгрузки контента (ИЗМЕНЕНИЯ ЗДЕСЬ) ---
 async function downloadAndUploadContent(): Promise<void> {
   console.log('🚀 Запуск удаленной загрузки и импорта контента...')
- 
+
   try {
     // --- 0. Загрузка глобального манифеста ---
     const manifestRelativePath = 'manifest.yaml'
@@ -101,29 +164,44 @@ async function downloadAndUploadContent(): Promise<void> {
         workoutSchema
       )
       if (workoutData) {
+        // Получаем метаданные Kinescope до сохранения
+         let kinescopeMeta = null as Awaited<ReturnType<typeof fetchKinescopeVideoMetadata>> | null
+        if (workoutData.videoId && process.env.KINESCOPE_API_KEY) {
+          kinescopeMeta = await fetchKinescopeVideoMetadata(workoutData.videoId)
+        }
+
         await dbClient.workout.upsert({
           where: { slug: workoutData.slug },
+          // Приводим тип к any, чтобы избежать конфликтов типов до применения миграции/генерации Prisma
           update: {
             title: workoutData.title,
             type: workoutData.type,
-            durationMinutes: workoutData.durationMinutes,
             difficulty: workoutData.difficulty,
             equipment: workoutData.equipment,
             description: workoutData.description,
             videoId: workoutData.videoId,
             muscles: workoutData.muscles,
-          },
+            // Kinescope metadata
+            durationSec: kinescopeMeta?.duration,
+            progress: kinescopeMeta?.progress,
+            poster: kinescopeMeta?.poster,
+            posterUrl: kinescopeMeta?.poster?.original,
+          } as any,
           create: {
             slug: workoutData.slug,
             title: workoutData.title,
             type: workoutData.type,
-            durationMinutes: workoutData.durationMinutes,
             difficulty: workoutData.difficulty,
             equipment: workoutData.equipment,
             description: workoutData.description,
             videoId: workoutData.videoId,
             muscles: workoutData.muscles,
-          },
+            // Kinescope metadata
+            durationSec: kinescopeMeta?.duration,
+            progress: kinescopeMeta?.progress,
+            poster: kinescopeMeta?.poster,
+            posterUrl: kinescopeMeta?.poster?.original,
+          } as any,
         })
         console.log(
           `  ✅ Тренировка импортирована/обновлена: ${workoutData.slug}`
@@ -201,7 +279,7 @@ async function downloadAndUploadContent(): Promise<void> {
         courseRelativePath,
         courseSchema,
         true,
-        courseSlug 
+        courseSlug
       )
 
       if (!courseData) {

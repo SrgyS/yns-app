@@ -202,7 +202,6 @@ model Workout {
   id                    String                  @id @default(cuid())
   title                 String
   type                  WorkoutType
-  durationMinutes       Int
   difficulty            WorkoutDifficulty
   equipment             String[]
   description           String?
@@ -211,10 +210,17 @@ model Workout {
   slug                  String                  @unique
   mainWorkoutDailyPlans DailyPlan[]             @relation("MainWorkoutDailyPlan")
   warmupDailyPlans      DailyPlan[]             @relation("WarmupDailyPlan")
+
   userDailyMainWorkouts UserDailyPlan[]         @relation("UserDailyMainWorkout")
   userDailyWarmups      UserDailyPlan[]         @relation("UserDailyWarmup")
   favoriteWorkouts      UserFavoriteWorkout[]
   userCompletions       UserWorkoutCompletion[]
+
+  // Kinescope metadata
+  durationSec           Int   @default(0)
+  poster                Json?
+  posterUrl             String?  
+  progress              Int?
 }
 
 model UserWorkoutCompletion {

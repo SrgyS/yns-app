@@ -55,7 +55,7 @@ export function EditWorkoutDaysClient({
   const saveWorkoutDays = async (keepProgress: boolean) => {
     setIsSubmitting(true)
     try {
-      if (initialSelectedDays.length > 0) {
+      if (selectedDays.length > 0) {
         await updateWorkoutDays({
           enrollmentId,
           selectedWorkoutDays: selectedDays,
