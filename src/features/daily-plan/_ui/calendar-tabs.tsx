@@ -39,7 +39,7 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
       <Tabs
         key={defaultWeek}
         defaultValue={defaultWeek}
-        className="space-y-4"
+        className="space-y-1"
       >
         <TabsList className={`rounded-lg bg-muted p-1 flex`}>
           {availableWeeks.map(w => {

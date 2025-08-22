@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Badge } from '@/shared/ui/badge'
-import { Card, CardContent } from '@/shared/ui/card'
+import { Card, CardContent, CardFooter } from '@/shared/ui/card'
 import { Player } from './kinescope-player'
-// Удаляем импорт workoutApi
-// import { workoutApi } from '../_api'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { useWorkoutCompletions } from '../_vm/use-workout-completions'
-// Добавляем импорт useWorkout
 import { useWorkout } from '../_vm/use-workout'
+import { FavoriteButton } from '@/shared/ui/favorite-button'
 
 interface WarmUpProps {
   title: string
@@ -25,7 +23,6 @@ export function WarmUp({
   initialCompleted = false,
   userDailyPlanId,
 }: WarmUpProps) {
-  const [isFavorite, setIsFavorite] = useState(false)
   const [isCompleted, setIsCompleted] = useState(initialCompleted)
   const { data: session } = useAppSession()
 
@@ -61,10 +58,6 @@ export function WarmUp({
     userDailyPlanId,
   ])
 
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite)
-  }
-
   const handleVideoCompleted = () => {
     if (!isCompleted) {
       toggleCompleted()
@@ -76,7 +69,7 @@ export function WarmUp({
 
     const newCompletedState = !isCompleted
     // Не обновляем состояние сразу, а только после успешного запроса
-    
+
     try {
       await updateWorkoutCompletion({
         userId: session.user.id,
@@ -95,35 +88,33 @@ export function WarmUp({
 
   return (
     <Card>
-      <CardContent className="p-4">
-        <div className="flex justify-between items-start mb-3">
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id={`workout-completed-${workoutId}`}
-              checked={isCompleted}
-              onCheckedChange={toggleCompleted}
-            />
-            <h3 className="text-xl font-medium">{title}</h3>
-          </div>
-          <button onClick={toggleFavorite}>{isFavorite ? '❤️' : '🤍'}</button>
-        </div>
-
+      <CardContent>
+        <h3 className="text-lg font-medium mb-2">{title}</h3>
         {workout?.videoId && (
-          <Player 
+          <Player
             key={workout.videoId}
-            videoId={workout.videoId} 
+            videoId={workout.videoId}
             onCompleted={handleVideoCompleted}
           />
         )}
-
-        <div className="flex gap-2 mt-3 flex-wrap">
-          <Badge variant="secondary">
-          мин
-          </Badge>
+      </CardContent>
+      <CardFooter className="flex gap-2 flex-wrap justify-between">
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary">мин</Badge>
           <Badge variant="outline">{workout?.type?.toLowerCase() || ''}</Badge>
           {isCompleted && <Badge>Выполнено</Badge>}
         </div>
-      </CardContent>
+
+        <div className="flex items-center gap-2">
+          <FavoriteButton />
+          <Checkbox
+            id={`workout-completed-${workoutId}`}
+            checked={isCompleted}
+            onCheckedChange={toggleCompleted}
+            className='cursor-pointer'
+          />
+        </div>
+      </CardFooter>
     </Card>
   )
 }
