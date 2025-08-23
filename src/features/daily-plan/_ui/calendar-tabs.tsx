@@ -34,12 +34,12 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
   const defaultWeek = `week-${currentWeekIndex}`
   
   return (
-    <div className="flex flex-col gap-4 font-bold w-full">
+    <div className="flex flex-col font-medium w-full">
       <h3>{format(today, 'LLLL', { locale: ru })}</h3>
       <Tabs
         key={defaultWeek}
         defaultValue={defaultWeek}
-        className="space-y-1"
+        className="space-y-0"
       >
         <TabsList className={`rounded-lg bg-muted p-1 flex`}>
           {availableWeeks.map(w => {

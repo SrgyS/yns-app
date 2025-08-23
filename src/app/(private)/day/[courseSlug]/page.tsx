@@ -4,7 +4,7 @@ import { CalendarTabs } from '@/features/daily-plan/_ui/calendar-tabs'
 import { Button } from '@/shared/ui/button'
 import { Suspense, use } from 'react'
 import { Skeleton } from '@/shared/ui/skeleton'
-import { CourseTitle } from '@/features/daily-plan/_ui/course-title'
+import { CourseBanner } from '@/features/daily-plan/_ui/course-banner'
 import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { CourseActivationBanner } from '@/features/daily-plan/_ui/course-activation-banner'
@@ -69,7 +69,7 @@ export default function DayPage({ params }: DayPageProps) {
   return (
     <main className="flex flex-col space-y-6 py-4 container max-w-[600px]">
       <Suspense fallback={<Skeleton className="h-6 w-[300px]" />}>
-        <CourseTitle courseSlug={resolvedParams.courseSlug} />
+        <CourseBanner courseSlug={resolvedParams.courseSlug} />
       </Suspense>
 
       {/* Показываем баннер, если курс не активен */}
