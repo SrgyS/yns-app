@@ -8,6 +8,7 @@ import {
   startOfDay,
 } from 'date-fns'
 import { ru } from 'date-fns/locale'
+import { Dumbbell } from 'lucide-react'
 import { DAYS_ORDER } from '../constant'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
 import { WarmUp } from './warm-up'
@@ -16,7 +17,6 @@ import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { DayOfWeek } from '@prisma/client'
 import { DAY_LABELS } from '@/features/select-training-days/constants'
-
 
 export function DayTabs({
   weekNumber,
@@ -60,9 +60,9 @@ export function DayTabs({
 
   // Вычисляем общее количество дней программы
   const totalProgramDays = useMemo(() => {
-    const durationWeeks = enrollment?.course?.durationWeeks ?? 4;
-    return  durationWeeks * 7;
-  }, [enrollment?.course?.durationWeeks]);
+    const durationWeeks = enrollment?.course?.durationWeeks ?? 4
+    return durationWeeks * 7
+  }, [enrollment?.course?.durationWeeks])
 
   const days = useMemo(() => {
     // Определяем начало недели для отображения дней
@@ -152,17 +152,25 @@ export function DayTabs({
             key={d.key}
             value={d.key}
             disabled={d.isDisabled}
-            className={`rounded-md h-auto border border-muted px-2 py-3 text-xs flex flex-col items-center flex-1 transition-colors 
+            className={`relative rounded-md border border-muted px-2 py-3 text-xs  transition-colors cursor-pointer basis-0 w-full  gap-y-0 grid h-20
               data-[state=active]:bg-primary 
               data-[state=active]:text-primary-foreground 
               data-[state=active]:border-primary 
-              ${d.isWorkoutDay ? 'bg-green-50 border-green-200' : ''} 
+              ${d.isWorkoutDay && !d.isDisabled ? 'bg-green-50 border-green-200' : ''} 
               ${d.isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            <span className="text-lg">{d.label}</span>
-            <span className="text-sm">{d.dateStr}</span>
+            {d.isWorkoutDay && !d.isDisabled && (
+              <Dumbbell
+                aria-hidden
+                className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-cyan-900/60"
+              />
+            )}
+            <div className="flex items-baseline gap-1 leading-tight">
+              <span className="text-lg whitespace-nowrap">{d.label}</span>
+              <span className="text-sm whitespace-nowrap">{d.dateStr}</span>
+            </div>
             {d.programDay && (
-              <span className="text-xs mt-1 text-muted-foreground">
+              <span className="text-xs text-muted-foreground leading-none">
                 День {d.programDay}
               </span>
             )}
