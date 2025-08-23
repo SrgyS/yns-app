@@ -49,7 +49,7 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
                 value={`week-${w}`}
                 className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md"
               >
-                Неделя {w}
+               {w} неделя 
               </TabsTrigger>
             )
           })}

@@ -1,12 +1,17 @@
 import type { Metadata } from 'next'
-import { Montserrat } from 'next/font/google'
+import { Montserrat, Nunito_Sans } from 'next/font/google'
 import './globals.css'
 import { cn } from '@/shared/ui/utils'
 import { AppProvider } from './_providers/app-provider'
 
 const montserrat = Montserrat({
   subsets: ['latin', 'cyrillic'],
-  variable: '--font-inter',
+  variable: '--font-montserrat',
+})
+
+const nunitoSans = Nunito_Sans({
+  subsets: ['latin', 'cyrillic'],
+  variable: '--font-nunito-sans',
 })
 
 export const metadata: Metadata = {
@@ -24,9 +29,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          'min-h-screen bg-background antialiased',
+          'min-h-screen bg-background antialiased font-sans',
           montserrat.variable,
-          montserrat.className
+          nunitoSans.variable
         )}
       >
         <AppProvider>{children}</AppProvider>

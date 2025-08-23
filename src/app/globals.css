@@ -10,11 +10,20 @@
   padding-inline: 2rem;
 }
 
+/* Font utilities: default is Nunito via --font-sans; override locally when needed */
+@utility font-montserrat {
+  font-family: var(--font-montserrat);
+}
+
+@utility font-nunito {
+  font-family: var(--font-nunito-sans);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
-  --font-mono: var(--font-inter);
+  --font-sans: var(--font-nunito-sans);
+  --font-mono: var(--font-nunito-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);

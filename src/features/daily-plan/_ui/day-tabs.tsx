@@ -8,7 +8,7 @@ import {
   startOfDay,
 } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { Dumbbell } from 'lucide-react'
+import { Activity } from 'lucide-react'
 import { DAYS_ORDER } from '../constant'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
 import { WarmUp } from './warm-up'
@@ -152,17 +152,19 @@ export function DayTabs({
             key={d.key}
             value={d.key}
             disabled={d.isDisabled}
-            className={`relative rounded-md border border-muted px-2 py-3 text-xs  transition-colors cursor-pointer basis-0 w-full  gap-y-0 grid h-20
+            className={`relative rounded-md border border-muted px-2 py-3 text-xs  transition-colors cursor-pointer basis-0 w-full  gap-y-0 grid justify-items-center content-center min-w-0h-20
               data-[state=active]:bg-primary 
               data-[state=active]:text-primary-foreground 
               data-[state=active]:border-primary 
-              ${d.isWorkoutDay && !d.isDisabled ? 'bg-green-50 border-green-200' : ''} 
-              ${d.isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            dark:data-[state=active]:border-cyan-800
+              data-[state=active]:font-semibold
+              ${d.isWorkoutDay && !d.isDisabled ? 'bg-accent' : ''} 
+              ${d.isDisabled ? 'opacity-50 cursor-not-allowed' : ''} group`}
           >
             {d.isWorkoutDay && !d.isDisabled && (
-              <Dumbbell
+              <Activity
                 aria-hidden
-                className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-cyan-900/60"
+                className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-data-[state=active]:text-primary-foreground transition-colors"
               />
             )}
             <div className="flex items-baseline gap-1 leading-tight">
