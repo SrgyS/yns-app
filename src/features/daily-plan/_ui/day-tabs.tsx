@@ -8,7 +8,7 @@ import {
   startOfDay,
 } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { Activity } from 'lucide-react'
+import { Dumbbell } from 'lucide-react'
 import { DAYS_ORDER } from '../constant'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
 import { WarmUp } from './warm-up'
@@ -162,17 +162,17 @@ export function DayTabs({
               ${d.isDisabled ? 'opacity-50 cursor-not-allowed' : ''} group`}
           >
             {d.isWorkoutDay && !d.isDisabled && (
-              <Activity
-              className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-green-500/80 group-data-[state=active]:text-green-500" />
+              <Dumbbell
+                style={{ transform: 'rotate(45deg)' }}
+                className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-green-500/80 group-data-[state=active]:text-green-500"
+              />
             )}
             <div className="flex items-baseline gap-1 leading-tight">
               <span className="text-lg whitespace-nowrap">{d.label}</span>
               <span className="text-sm whitespace-nowrap">{d.dateStr}</span>
             </div>
             {d.programDay && (
-              <span className="text-xs  leading-none">
-                День {d.programDay}
-              </span>
+              <span className="text-xs  leading-none">День {d.programDay}</span>
             )}
           </TabsTrigger>
         ))}
