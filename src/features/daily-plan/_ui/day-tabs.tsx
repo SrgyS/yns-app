@@ -152,7 +152,7 @@ export function DayTabs({
             key={d.key}
             value={d.key}
             disabled={d.isDisabled}
-            className={`relative rounded-md border border-muted px-2 py-3 text-xs  transition-colors cursor-pointer basis-0 w-full  gap-y-0 grid justify-items-center content-center min-w-0h-20
+            className={`relative rounded-md border border-muted px-2 pt-4 pb-1 text-xs  transition-colors cursor-pointer basis-0 w-full  gap-y-0 grid justify-items-center content-center min-w-0h-20 text-muted-foreground
               data-[state=active]:bg-primary 
               data-[state=active]:text-primary-foreground 
               data-[state=active]:border-primary 
@@ -163,16 +163,14 @@ export function DayTabs({
           >
             {d.isWorkoutDay && !d.isDisabled && (
               <Activity
-                aria-hidden
-                className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-data-[state=active]:text-primary-foreground transition-colors"
-              />
+              className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-green-500/80 group-data-[state=active]:text-green-500" />
             )}
             <div className="flex items-baseline gap-1 leading-tight">
               <span className="text-lg whitespace-nowrap">{d.label}</span>
               <span className="text-sm whitespace-nowrap">{d.dateStr}</span>
             </div>
             {d.programDay && (
-              <span className="text-xs text-muted-foreground leading-none">
+              <span className="text-xs  leading-none">
                 День {d.programDay}
               </span>
             )}
