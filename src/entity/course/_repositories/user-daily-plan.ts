@@ -157,7 +157,7 @@ export class UserDailyPlanRepository {
             isWorkoutDay: day.isWorkoutDay,
             warmupId: dailyPlan.warmupId,
             mainWorkoutId: day.isWorkoutDay ? dailyPlan.mainWorkoutId : null,
-            mealPlanId: dailyPlan.mealPlanId,
+            mealPlanId: dailyPlan.mealPlanId ?? null,
             originalDailyPlanId: dailyPlan.id,
           },
         })
@@ -288,7 +288,9 @@ export class UserDailyPlanRepository {
                   mainWorkout: true,
                   mealPlan: true,
                 },
-                orderBy: { dayNumber: 'asc' },
+                orderBy: {
+                  dayNumber: 'asc',
+                },
               },
             },
           },

@@ -65,7 +65,7 @@ export type UserDailyPlan = {
   isWorkoutDay: boolean
   warmupId: string
   mainWorkoutId: string | null
-  mealPlanId: string
+  mealPlanId: string | null
   weekNumber: number
   originalDailyPlanId: string
 }

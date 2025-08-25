@@ -53,4 +53,8 @@ export interface Course {
    * Минимальное количество тренировок в неделю
    */
   minWorkoutDaysPerWeek: number;
+  /**
+   * Тип контента курса
+   */
+  contentType: "FIXED_COURSE" | "SUBSCRIPTION_COURSE_MONTHLY";
 }

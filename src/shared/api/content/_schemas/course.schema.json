@@ -66,6 +66,14 @@
             "type": "integer",
             "minimum": 1,
             "description": "Минимальное количество тренировок в неделю"
+        },
+        "contentType": {
+            "type": "string",
+            "description": "Тип контента курса",
+            "enum": [
+                "FIXED_COURSE",
+                "SUBSCRIPTION_COURSE_MONTHLY"
+            ]
         }
     },
     "required": [
@@ -75,7 +83,8 @@
         "image",
         "draft",
         "durationWeeks",
-        "minWorkoutDaysPerWeek"
+        "minWorkoutDaysPerWeek",
+        "contentType"
     ],
     "additionalProperties": false
 }

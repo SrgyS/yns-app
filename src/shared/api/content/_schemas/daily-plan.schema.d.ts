@@ -40,7 +40,7 @@ export interface DailyPlan {
   /**
    * ID плана питания (slug MealPlan)
    */
-  mealPlanId: string;
+  mealPlanId?: string;
   /**
    * Дополнительные блоки контента для этого дня
    */

@@ -32,7 +32,6 @@ export class GetCourseDetailsService {
       slug: course.slug,
       title: course.title,
       description: course.description,
-      lessons: [],
       image: course.image || '',
     }
   }

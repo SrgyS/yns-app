@@ -1,9 +1,8 @@
-import { Course, Lesson } from "@/entity/course";
+import { Course } from "@/entity/course";
 import { CourseDetails } from "./types";
 
 export const createCourseDetails = (
   course: Course,
-  lessons: Lesson[],
 ): CourseDetails => {
   return {
     id: course.id,
@@ -11,11 +10,5 @@ export const createCourseDetails = (
     title: course.title,
     description: course.description,
     image: course.image,
-    lessons: lessons.map(({ id, slug, title, shortDescription }) => ({
-      id,
-      slug,
-      title,
-      shortDescription,
-    })),
   };
 };

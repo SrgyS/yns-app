@@ -114,6 +114,7 @@ model Course {
   draft                 Boolean
   durationWeeks         Int
   minWorkoutDaysPerWeek Int            @default(5)
+  contentType           CourseContentType @default(FIXED_COURSE)
   product               CourseProduct?
 
   dailyPlans DailyPlan[] // Дни (планы) в фиксированном курсе
@@ -164,8 +165,8 @@ model DailyPlan {
   mainWorkoutId String?
   mainWorkout   Workout? @relation("MainWorkoutDailyPlan", fields: [mainWorkoutId], references: [id])
 
-  mealPlanId String
-  mealPlan   MealPlan @relation(fields: [mealPlanId], references: [id])
+  mealPlanId String?
+  mealPlan   MealPlan? @relation(fields: [mealPlanId], references: [id], onDelete: SetNull)
 
   userDailyPlans UserDailyPlan[] @relation("OriginalDailyPlan")
 
@@ -181,12 +182,12 @@ model UserDailyPlan {
   isWorkoutDay        Boolean
   warmupId            String
   mainWorkoutId       String?
-  mealPlanId          String
+  mealPlanId          String?
   dayOfWeek           DayOfWeek
   weekNumber          Int
   enrollment          UserCourseEnrollment    @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
   mainWorkout         Workout?                @relation("UserDailyMainWorkout", fields: [mainWorkoutId], references: [id])
-  mealPlan            MealPlan                @relation("UserDailyMealPlan", fields: [mealPlanId], references: [id])
+  mealPlan            MealPlan?               @relation("UserDailyMealPlan", fields: [mealPlanId], references: [id], onDelete: SetNull)
   user                User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   warmup              Workout                 @relation("UserDailyWarmup", fields: [warmupId], references: [id])
   workoutCompletions  UserWorkoutCompletion[]
