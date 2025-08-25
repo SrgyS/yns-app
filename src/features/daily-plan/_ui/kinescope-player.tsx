@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { Skeleton } from '@/shared/ui/skeleton'
 
 type Props = { videoId: string; onCompleted?: () => void }
 
@@ -13,6 +14,7 @@ export const Player = ({ videoId, onCompleted }: Props) => {
   const attemptRef = useRef(0)
   const inflightRef = useRef<number | null>(null)
   const lastTU = useRef(0)
+  const [isPlayerReady, setPlayerReady] = useState(false)
 
   useEffect(() => {
     onCompletedRef.current = onCompleted
@@ -59,6 +61,7 @@ export const Player = ({ videoId, onCompleted }: Props) => {
         if (!mounted || inflightRef.current !== myAttempt) { try { player?.destroy?.() } catch {} ; return }
 
         playerRef.current = player
+        setPlayerReady(true)
 
         const onEnded = () => completeOnce()
         const onTimeUpdate = (evt: any) => {
@@ -128,6 +131,7 @@ export const Player = ({ videoId, onCompleted }: Props) => {
 
     return () => {
       mounted = false
+      setPlayerReady(false)
       if (initTimerRef.current) { clearTimeout(initTimerRef.current); initTimerRef.current = null }
       try { offFns.forEach(fn => fn()) } catch {}
       resizeObserver?.disconnect()
@@ -141,6 +145,9 @@ export const Player = ({ videoId, onCompleted }: Props) => {
   return (
     <div className="relative w-full overflow-hidden rounded-lg">
       <div className="aspect-video relative [&>iframe]:w-full [&>iframe]:h-full">
+        {!isPlayerReady && (
+          <Skeleton className="absolute inset-0 w-full h-full" />
+        )}
         <div ref={containerRef} className="absolute inset-0" />
       </div>
     </div>

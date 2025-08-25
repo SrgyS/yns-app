@@ -37,6 +37,21 @@ export default function DayPage() {
     )
   }
 
+  // Если произошла ошибка при загрузке
+  if (enrollmentsQuery.isError || activeEnrollmentQuery.isError) {
+    return (
+      <main className="flex flex-col space-y-6 py-4 container max-w-[600px]">
+        <Alert variant="destructive">
+          <AlertTitle>Ошибка</AlertTitle>
+          <AlertDescription>
+            Не удалось загрузить данные о ваших курсах. Пожалуйста, попробуйте
+            обновить страницу.
+          </AlertDescription>
+        </Alert>
+      </main>
+    )
+  }
+
   // Если у пользователя есть курсы, но нет активного
   if (enrollmentsQuery.data && enrollmentsQuery.data.length > 0) {
     return (
