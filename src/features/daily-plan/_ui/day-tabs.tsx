@@ -118,7 +118,13 @@ export function DayTabs({
         programDay,
       }
     })
-  }, [weekStart, currentDate, programStart, workoutDayIndices])
+  }, [
+    weekStart,
+    currentDate,
+    programStart,
+    workoutDayIndices,
+    totalProgramDays,
+  ])
 
   // Находим первый активный день в неделе
   const firstActiveDay = days.find(d => !d.isDisabled)?.key || DayOfWeek.MONDAY
@@ -152,11 +158,11 @@ export function DayTabs({
             key={d.key}
             value={d.key}
             disabled={d.isDisabled}
-            className={`relative rounded-md border border-muted px-2 pt-4 pb-1 text-xs  transition-colors cursor-pointer basis-0 w-full  gap-y-0 grid justify-items-center content-center min-w-0h-20 text-muted-foreground
+            className={`relative rounded-md border border-muted px-2 pt-4 pb-1 text-xs  transition-colors cursor-pointer basis-0 w-full gap-y-0 grid justify-items-center content-center min-w-[65px] h-20 text-muted-foreground
               data-[state=active]:bg-primary 
               data-[state=active]:text-primary-foreground 
               data-[state=active]:border-primary 
-            dark:data-[state=active]:border-cyan-800
+              dark:data-[state=active]:border-accent-icon
               data-[state=active]:font-semibold
               ${d.isWorkoutDay && !d.isDisabled ? 'bg-accent' : ''} 
               ${d.isDisabled ? 'opacity-50 cursor-not-allowed' : ''} group`}
@@ -164,7 +170,7 @@ export function DayTabs({
             {d.isWorkoutDay && !d.isDisabled && (
               <Dumbbell
                 style={{ transform: 'rotate(45deg)' }}
-                className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-green-500/80 group-data-[state=active]:text-green-500"
+                className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-accent-icon/80 group-data-[state=active]:text-accent-icon"
               />
             )}
             <div className="flex items-baseline gap-1 leading-tight">

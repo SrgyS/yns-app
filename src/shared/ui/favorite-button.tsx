@@ -16,9 +16,9 @@ export function FavoriteButton() {
       aria-label={isFavorite ? "Удалить из избранного" : "Добавить в избранное"}
     >
       {isFavorite ? (
-        <Heart className="h-5 w-5 text-red-500 fill-red-500" />
+        <Heart className="size-5 text-red-500 fill-red-500" />
       ) : (
-        <Heart className="h-5 w-5 text-gray-300" />
+        <Heart className="size-5 text-gray-300/50" />
       )}
     </Button>
   )
