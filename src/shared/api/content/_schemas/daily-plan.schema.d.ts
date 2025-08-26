@@ -14,9 +14,9 @@ export interface DailyPlan {
    */
   slug?: string;
   /**
-   * Порядковый номер дня в курсе
+   * Порядковый номер дня в неделе (1-7)
    */
-  dayNumber: number;
+  dayNumberInWeek: number;
   /**
    * Порядковый номер недели в курсе
    */

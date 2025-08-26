@@ -1,11 +1,10 @@
 import { injectable, inject } from 'inversify'
 import { dbClient } from '@/shared/lib/db'
+import type { DbClient } from '@/shared/lib/db'
 import { logger } from '@/shared/lib/logger'
 import { WorkoutType } from '@prisma/client'
-import { Prisma, PrismaClient } from '@prisma/client'
 import { WorkoutRepository } from './workout'
 
-type DbClient = PrismaClient | Prisma.TransactionClient
 
 export interface UserWorkoutCompletion {
   id: string

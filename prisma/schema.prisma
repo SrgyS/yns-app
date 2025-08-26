@@ -149,12 +149,12 @@ model UserCourseEnrollment {
 }
 
 model DailyPlan {
-  id            String         @id @default(cuid())
-  slug          String // Например, "day-1", "day-2"
-  dayNumber     Int
-  weekNumber    Int
-  description   String?
-  contentBlocks ContentBlock[] // Если нужны дополнительные текстовые блоки в дне
+  id              String         @id @default(cuid())
+  slug            String // Например, "week-1-day-1"
+  dayNumberInWeek Int // 1-7
+  weekNumber      Int
+  description     String?
+  contentBlocks   ContentBlock[] // Если нужны дополнительные текстовые блоки в дне
 
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -170,7 +170,8 @@ model DailyPlan {
 
   userDailyPlans UserDailyPlan[] @relation("OriginalDailyPlan")
 
-  @@unique([courseId, slug]) // Гарантирует уникальность slug для каждого курса
+  @@unique([courseId, slug])
+  @@unique([courseId, weekNumber, dayNumberInWeek])
 }
 
 model UserDailyPlan {

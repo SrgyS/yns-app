@@ -1,5 +1,6 @@
 import { injectable } from 'inversify'
 import { dbClient } from '@/shared/lib/db'
+import type { DbClient } from '@/shared/lib/db'
 import {
   UserCourseEnrollment,
   CreateUserCourseEnrollmentParams,
@@ -8,11 +9,7 @@ import { logger } from '@/shared/lib/logger'
 import {
   UserCourseEnrollment as PrismaUserCourseEnrollment,
   DayOfWeek,
-  Prisma,
-  PrismaClient,
 } from '@prisma/client'
-
-type DbClient = PrismaClient | Prisma.TransactionClient
 
 @injectable()
 export class UserCourseEnrollmentRepository {
@@ -58,7 +55,9 @@ export class UserCourseEnrollmentRepository {
           },
         },
         include: {
-          course: { select: { id: true, slug: true, title: true, durationWeeks: true } },
+          course: {
+            select: { id: true, slug: true, title: true, durationWeeks: true },
+          },
         },
       })
 
@@ -81,7 +80,9 @@ export class UserCourseEnrollmentRepository {
       const enrollment = await dbClient.userCourseEnrollment.findUnique({
         where: { id: enrollmentId },
         include: {
-          course: { select: { id: true, slug: true, title: true, durationWeeks: true } },
+          course: {
+            select: { id: true, slug: true, title: true, durationWeeks: true },
+          },
         },
       })
 
@@ -119,7 +120,9 @@ export class UserCourseEnrollmentRepository {
           },
         },
         include: {
-          course: { select: { id: true, slug: true, title: true, durationWeeks: true } },
+          course: {
+            select: { id: true, slug: true, title: true, durationWeeks: true },
+          },
         },
       })
 
@@ -135,7 +138,10 @@ export class UserCourseEnrollmentRepository {
     }
   }
 
-  async getUserEnrollments(userId: string,  db: DbClient = this.defaultDb): Promise<UserCourseEnrollment[]> {
+  async getUserEnrollments(
+    userId: string,
+    db: DbClient = this.defaultDb
+  ): Promise<UserCourseEnrollment[]> {
     try {
       const enrollments = await db.userCourseEnrollment.findMany({
         where: { userId },
@@ -207,7 +213,9 @@ export class UserCourseEnrollmentRepository {
           active: true,
         },
         include: {
-          course: { select: { id: true, slug: true, title: true, durationWeeks: true } },
+          course: {
+            select: { id: true, slug: true, title: true, durationWeeks: true },
+          },
         },
       })
 
@@ -254,7 +262,9 @@ export class UserCourseEnrollmentRepository {
         where: { id: enrollmentId },
         data: { active: true },
         include: {
-          course: { select: { id: true, slug: true, title: true, durationWeeks: true } },
+          course: {
+            select: { id: true, slug: true, title: true, durationWeeks: true },
+          },
         },
       })
 
@@ -283,7 +293,9 @@ export class UserCourseEnrollmentRepository {
           hasFeedback: params.hasFeedback ?? false,
         },
         include: {
-          course: { select: { id: true, slug: true, title: true, durationWeeks: true } },
+          course: {
+            select: { id: true, slug: true, title: true, durationWeeks: true },
+          },
         },
       })
 

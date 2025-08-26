@@ -1,10 +1,13 @@
 import {
   DayOfWeek,
   Prisma,
-  PrismaClient,
   UserDailyPlan as PrismaUserDailyPlan,
+  DailyPlan as PrismaDailyPlan,
+  Course as PrismaCourse,
+  UserCourseEnrollment as PrismaUserCourseEnrollment,
 } from '@prisma/client'
-import { dbClient } from '@/shared/lib/db'
+import { dbClient, isPrismaClient } from '@/shared/lib/db'
+import type { DbClient } from '@/shared/lib/db'
 import {
   GetUserDailyPlanByEnrollmentParams,
   GetUserDailyPlanParams,
@@ -12,13 +15,13 @@ import {
 } from '../../course'
 import { logger } from '@/shared/lib/logger'
 
-type DbClient = PrismaClient | Prisma.TransactionClient
+type EnrollmentWithCourse = PrismaUserCourseEnrollment & {
+  course: PrismaCourse & { dailyPlans: PrismaDailyPlan[] }
+}
 
 export class UserDailyPlanRepository {
   constructor(private readonly defaultDb: DbClient = dbClient) {}
-  private mapPrismaUserDailyPlanToDomain(
-    prismaUserDailyPlan: PrismaUserDailyPlan
-  ): UserDailyPlan {
+  private toDomain(prismaUserDailyPlan: PrismaUserDailyPlan): UserDailyPlan {
     return {
       id: prismaUserDailyPlan.id,
       userId: prismaUserDailyPlan.userId,
@@ -47,129 +50,135 @@ export class UserDailyPlanRepository {
     return days[date.getDay()] as DayOfWeek
   }
 
-  async generateUserDailyPlansForEnrollment(
+  private async generatePlansCore(
     enrollmentId: string,
+    options: { scope: 'full' } | { scope: 'week'; weekNumber: number },
     db: DbClient = this.defaultDb
   ): Promise<UserDailyPlan[]> {
-    try {
-      const enrollment = await db.userCourseEnrollment.findUnique({
+    const exec = async (
+      tx: Prisma.TransactionClient
+    ): Promise<UserDailyPlan[]> => {
+      const enrollment = (await tx.userCourseEnrollment.findUnique({
         where: { id: enrollmentId },
         include: {
           course: {
             include: {
               dailyPlans: {
-                include: {
-                  warmup: true,
-                  mainWorkout: true,
-                  mealPlan: true,
-                },
-                orderBy: {
-                  dayNumber: 'asc',
-                },
+                orderBy: [{ weekNumber: 'asc' }, { dayNumberInWeek: 'asc' }],
               },
             },
           },
         },
-      })
+      })) as EnrollmentWithCourse | null
+
       if (!enrollment) {
         throw new Error('Enrollment not found')
       }
 
       const { course, selectedWorkoutDays, startDate } = enrollment
-      const userDailyPlans: UserDailyPlan[] = []
 
-      // Получаем все дни с основной тренировкой и дни только с зарядкой
-      const mainWorkoutDays = course.dailyPlans.filter(dp => dp.mainWorkoutId)
-      const warmupOnlyDays = course.dailyPlans.filter(dp => !dp.mainWorkoutId)
+      const mainWorkoutDays = course.dailyPlans.filter(
+        (dp: PrismaDailyPlan) => dp.mainWorkoutId !== null
+      )
+      const warmupOnlyDays = course.dailyPlans.filter(
+        (dp: PrismaDailyPlan) => dp.mainWorkoutId === null
+      )
 
       const requiredMainWorkoutDays =
         course.minWorkoutDaysPerWeek * course.durationWeeks
       const requiredWarmupOnlyDays =
-        (7 - course.minWorkoutDaysPerWeek) * course.durationWeeks
-      // Проверяем, что у нас достаточно дней для 4-недельного курса
+        course.durationWeeks * 7 - requiredMainWorkoutDays
+
       if (mainWorkoutDays.length < requiredMainWorkoutDays) {
-        // 5 дней * 4 недели = 20 дней с основной тренировкой
         throw new Error(
           `Not enough main workout days for a ${course.durationWeeks}-week course`
         )
       }
       if (warmupOnlyDays.length < requiredWarmupOnlyDays) {
-        // 2 дня * 4 недели = 8 дней только с зарядкой
         throw new Error(
           `Not enough warmup-only days for a ${course.durationWeeks}-week course`
         )
       }
 
-      // Создаем календарь на число дней в курсе
-      const startDateObj = new Date(startDate)
-      const calendar: Array<{
-        date: Date
-        dayOfWeek: DayOfWeek
-        dayNumberInCourse: number
-        weekNumber: number
-        isWorkoutDay: boolean
-      }> = []
+      if (options.scope === 'week') {
+        await tx.userDailyPlan.deleteMany({
+          where: { enrollmentId, weekNumber: options.weekNumber },
+        })
+      }
 
-      for (let i = 0; i < course.durationWeeks * 7; i++) {
+      const startDateObj = new Date(startDate)
+      const totalDays = course.durationWeeks * 7
+      const rangeStart =
+        options.scope === 'week' ? (options.weekNumber - 1) * 7 : 0
+      const rangeEnd = options.scope === 'week' ? rangeStart + 7 : totalDays
+
+      let mainWorkoutIndex = 0
+      let warmupOnlyIndex = 0
+
+      const created: UserDailyPlan[] = []
+
+      for (let i = rangeStart; i < rangeEnd; i++) {
         const currentDate = new Date(startDateObj)
         currentDate.setDate(startDateObj.getDate() + i)
         const dayOfWeek = this.getDayOfWeek(currentDate)
         const isWorkoutDay = selectedWorkoutDays.includes(dayOfWeek)
         const weekNumber = Math.floor(i / 7) + 1
 
-        calendar.push({
-          date: currentDate,
-          dayOfWeek,
-          dayNumberInCourse: i + 1,
-          weekNumber,
-          isWorkoutDay,
-        })
-      }
+        let dailyPlan: PrismaDailyPlan
 
-      // Распределяем дни с основной тренировкой по тренировочным дням
-      let mainWorkoutIndex = 0
-      let warmupOnlyIndex = 0
-
-      for (const day of calendar) {
-        let dailyPlan
-
-        if (day.isWorkoutDay && mainWorkoutIndex < mainWorkoutDays.length) {
-          // Если это тренировочный день, берем день с основной тренировкой
+        if (isWorkoutDay && mainWorkoutIndex < mainWorkoutDays.length) {
           dailyPlan = mainWorkoutDays[mainWorkoutIndex++]
         } else if (warmupOnlyIndex < warmupOnlyDays.length) {
-          // Если это не тренировочный день, берем день только с зарядкой
           dailyPlan = warmupOnlyDays[warmupOnlyIndex++]
         } else {
-          // Если закончились дни только с зарядкой, используем первый день только с зарядкой
-          // (цикличность для дней только с зарядкой)
           warmupOnlyIndex = 0
           dailyPlan = warmupOnlyDays[warmupOnlyIndex++]
         }
 
-        const userDailyPlan = await db.userDailyPlan.create({
+        const createdPlan = await tx.userDailyPlan.create({
           data: {
             userId: enrollment.userId,
             enrollmentId: enrollment.id,
-            date: day.date,
-            dayNumberInCourse: day.dayNumberInCourse,
-            weekNumber: day.weekNumber,
-            dayOfWeek: day.dayOfWeek,
-            isWorkoutDay: day.isWorkoutDay,
+            date: currentDate,
+            dayNumberInCourse: i + 1,
+            weekNumber,
+            dayOfWeek,
+            isWorkoutDay,
             warmupId: dailyPlan.warmupId,
-            mainWorkoutId: day.isWorkoutDay ? dailyPlan.mainWorkoutId : null,
+            mainWorkoutId: isWorkoutDay ? dailyPlan.mainWorkoutId : null,
             mealPlanId: dailyPlan.mealPlanId ?? null,
             originalDailyPlanId: dailyPlan.id,
           },
         })
-        userDailyPlans.push(this.mapPrismaUserDailyPlanToDomain(userDailyPlan))
+        created.push(this.toDomain(createdPlan))
       }
 
+      return created
+    }
+
+    if (isPrismaClient(db)) {
+      return db.$transaction(async tx => exec(tx))
+    }
+    // уже внутри внешней транзакции
+    return exec(db as Prisma.TransactionClient)
+  }
+
+  async generateUserDailyPlansForEnrollment(
+    enrollmentId: string,
+    db: DbClient = this.defaultDb
+  ): Promise<UserDailyPlan[]> {
+    try {
+      const plans = await this.generatePlansCore(
+        enrollmentId,
+        { scope: 'full' },
+        db
+      )
       logger.info({
         msg: 'Generated user daily plans for enrollment',
         enrollmentId,
-        plansCount: userDailyPlans.length,
+        plansCount: plans.length,
       })
-      return userDailyPlans
+      return plans
     } catch (error) {
       logger.error({
         msg: 'Error generating user daily plans for enrollment',
@@ -179,10 +188,38 @@ export class UserDailyPlanRepository {
             ? { message: error.message, stack: error.stack }
             : error,
       })
-      // Пробрасываем оригинальную ошибку вместо создания новой
       throw error instanceof Error
         ? error
         : new Error('Failed to generate user daily plans')
+    }
+  }
+
+  async generateUserDailyPlansForWeek(
+    enrollmentId: string,
+    weekNumber: number,
+    db: DbClient = this.defaultDb
+  ): Promise<UserDailyPlan[]> {
+    try {
+      const plans = await this.generatePlansCore(
+        enrollmentId,
+        { scope: 'week', weekNumber },
+        db
+      )
+      logger.info({
+        msg: 'Generated user daily plans for week',
+        enrollmentId,
+        weekNumber,
+        plansCount: plans.length,
+      })
+      return plans
+    } catch (error) {
+      logger.error({
+        msg: 'Error generating user daily plans for week',
+        enrollmentId,
+        weekNumber,
+        error,
+      })
+      throw new Error('Failed to generate user daily plans for week')
     }
   }
 
@@ -211,9 +248,7 @@ export class UserDailyPlanRepository {
           },
         },
       })
-      return userDailyPlan
-        ? this.mapPrismaUserDailyPlanToDomain(userDailyPlan)
-        : null
+      return userDailyPlan ? this.toDomain(userDailyPlan) : null
     } catch (error) {
       logger.error({
         msg: 'Error getting user daily plan',
@@ -236,9 +271,7 @@ export class UserDailyPlanRepository {
         },
       })
 
-      return userDailyPlan
-        ? this.mapPrismaUserDailyPlanToDomain(userDailyPlan)
-        : null
+      return userDailyPlan ? this.toDomain(userDailyPlan) : null
     } catch (error) {
       logger.error({
         msg: 'Error getting user daily plan by enrollment',
@@ -259,7 +292,7 @@ export class UserDailyPlanRepository {
         orderBy: { dayNumberInCourse: 'asc' },
       })
 
-      return userDailyPlans.map(this.mapPrismaUserDailyPlanToDomain.bind(this))
+      return userDailyPlans.map(this.toDomain.bind(this))
     } catch (error) {
       logger.error({
         msg: 'Error getting user daily plans by enrollment',
@@ -275,94 +308,135 @@ export class UserDailyPlanRepository {
     selectedWorkoutDays: DayOfWeek[],
     db: DbClient = this.defaultDb
   ): Promise<UserDailyPlan[]> {
-    try {
-      // Получаем enrollment
-      const enrollment = await db.userCourseEnrollment.findUnique({
+    const exec = async (
+      tx: Prisma.TransactionClient
+    ): Promise<UserDailyPlan[]> => {
+      // Получаем enrollment с курсом и планами
+      const enrollment = (await tx.userCourseEnrollment.findUnique({
         where: { id: enrollmentId },
         include: {
           course: {
             include: {
               dailyPlans: {
-                include: {
-                  warmup: true,
-                  mainWorkout: true,
-                  mealPlan: true,
-                },
-                orderBy: {
-                  dayNumber: 'asc',
-                },
+                orderBy: [{ weekNumber: 'asc' }, { dayNumberInWeek: 'asc' }],
               },
             },
           },
         },
-      })
+      })) as EnrollmentWithCourse | null
 
       if (!enrollment) {
         throw new Error('Enrollment not found')
       }
 
-      // Получаем все планы пользователя (не только будущие)
-      const userDailyPlans = await db.userDailyPlan.findMany({
-        where: {
-          enrollmentId,
-        },
-        orderBy: { dayNumberInCourse: 'asc' },
-      })
+      const { course } = enrollment
 
-      // Получаем все дни с основной тренировкой и дни только с зарядкой
-      const mainWorkoutDays = enrollment.course.dailyPlans.filter(
-        dp => dp.mainWorkoutId
+      const mainWorkoutDays = course.dailyPlans.filter(
+        (dp: PrismaDailyPlan) => dp.mainWorkoutId !== null
       )
-      const warmupOnlyDays = enrollment.course.dailyPlans.filter(
-        dp => !dp.mainWorkoutId
+      const warmupOnlyDays = course.dailyPlans.filter(
+        (dp: PrismaDailyPlan) => dp.mainWorkoutId === null
       )
 
-      // Индексы для отслеживания использованных дней
+      const requiredMainWorkoutDays =
+        course.minWorkoutDaysPerWeek * course.durationWeeks
+      const requiredWarmupOnlyDays =
+        course.durationWeeks * 7 - requiredMainWorkoutDays
+
+      if (mainWorkoutDays.length < requiredMainWorkoutDays) {
+        throw new Error(
+          `Not enough main workout days for a ${course.durationWeeks}-week course`
+        )
+      }
+      if (warmupOnlyDays.length < requiredWarmupOnlyDays) {
+        throw new Error(
+          `Not enough warmup-only days for a ${course.durationWeeks}-week course`
+        )
+      }
+
+      const updated: UserDailyPlan[] = []
       let mainWorkoutIndex = 0
       let warmupOnlyIndex = 0
 
-      // Обновляем каждый план
-      const updatedPlans: UserDailyPlan[] = []
+      const startDateObj = new Date(enrollment.startDate)
+      const totalDays = course.durationWeeks * 7
 
-      for (const plan of userDailyPlans) {
-        const planDate = new Date(plan.date)
-        const dayOfWeek = this.getDayOfWeek(planDate)
+      for (let i = 0; i < totalDays; i++) {
+        const dayNumberInCourse = i + 1
+        const currentDate = new Date(startDateObj)
+        currentDate.setDate(startDateObj.getDate() + i)
+        const dayOfWeek = this.getDayOfWeek(currentDate)
         const isWorkoutDay = selectedWorkoutDays.includes(dayOfWeek)
+        const weekNumber = Math.floor(i / 7) + 1
 
-        let dailyPlan
+        let dailyPlan: PrismaDailyPlan
 
         if (isWorkoutDay && mainWorkoutIndex < mainWorkoutDays.length) {
           dailyPlan = mainWorkoutDays[mainWorkoutIndex++]
         } else if (warmupOnlyIndex < warmupOnlyDays.length) {
           dailyPlan = warmupOnlyDays[warmupOnlyIndex++]
         } else {
-          // Если закончились дни только с зарядкой, начинаем заново
           warmupOnlyIndex = 0
           dailyPlan = warmupOnlyDays[warmupOnlyIndex++]
         }
 
-        const updatedPlan = await db.userDailyPlan.update({
-          where: { id: plan.id },
-          data: {
+        const record = await tx.userDailyPlan.upsert({
+          where: {
+            enrollmentId_dayNumberInCourse: {
+              enrollmentId,
+              dayNumberInCourse,
+            },
+          },
+          update: {
+            // Обновляем поля на месте, чтобы сохранить id и внешние связи (прогресс)
+            isWorkoutDay,
+            dayOfWeek,
+            weekNumber,
+            warmupId: dailyPlan.warmupId,
+            mainWorkoutId: isWorkoutDay ? dailyPlan.mainWorkoutId : null,
+            mealPlanId: dailyPlan.mealPlanId ?? null,
+            originalDailyPlanId: dailyPlan.id,
+          },
+          create: {
+            userId: enrollment.userId,
+            enrollmentId: enrollment.id,
+            date: currentDate,
+            dayNumberInCourse,
+            weekNumber,
+            dayOfWeek,
             isWorkoutDay,
             warmupId: dailyPlan.warmupId,
             mainWorkoutId: isWorkoutDay ? dailyPlan.mainWorkoutId : null,
-            mealPlanId: dailyPlan.mealPlanId,
+            mealPlanId: dailyPlan.mealPlanId ?? null,
             originalDailyPlanId: dailyPlan.id,
           },
         })
 
-        updatedPlans.push(this.mapPrismaUserDailyPlanToDomain(updatedPlan))
+        updated.push(this.toDomain(record))
       }
 
-      return updatedPlans
+      return updated
+    }
+
+    try {
+      const plans = isPrismaClient(db)
+        ? await db.$transaction(tx => exec(tx))
+        : await exec(db as Prisma.TransactionClient)
+
+      logger.info({
+        msg: 'Updated user daily plans (in-place, preserve progress)',
+        enrollmentId,
+        plansCount: plans.length,
+      })
+
+      return plans
     } catch (error) {
       logger.error({
-        msg: 'Error updating workout days',
+        msg: 'Error updating user daily plans',
         enrollmentId,
         error,
       })
-      throw new Error('Failed to update workout days')
+      throw new Error('Failed to update user daily plans')
     }
   }
 }

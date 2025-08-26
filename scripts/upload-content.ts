@@ -407,7 +407,7 @@ async function downloadAndUploadContent() {
           }
 
           const dailyPlanUpdateData = {
-            dayNumber: dailyPlanData.dayNumber,
+            dayNumberInWeek: dailyPlanData.dayNumberInWeek,
             weekNumber: dailyPlanData.weekNumber,
             description: dailyPlanData.description,
             warmup: { connect: { id: warmupWorkout.id } },
@@ -421,7 +421,7 @@ async function downloadAndUploadContent() {
 
           const dailyPlanCreateData = {
             slug: dailyPlanData.slug,
-            dayNumber: dailyPlanData.dayNumber,
+            dayNumberInWeek: dailyPlanData.dayNumberInWeek,
             weekNumber: dailyPlanData.weekNumber,
             description: dailyPlanData.description,
             course: { connect: { id: course.id } },
