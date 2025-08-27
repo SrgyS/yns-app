@@ -1,5 +1,5 @@
 import { CourseId, CourseSlug } from '@/kernel/domain/course'
-import { DayOfWeek } from '@prisma/client'
+import { CourseContentType, DayOfWeek } from '@prisma/client'
 
 export type Course = {
   id: CourseId
@@ -38,6 +38,7 @@ export type UserCourseEnrollment = {
     slug: string
     title: string
     durationWeeks?: number
+    contentType?: CourseContentType
   }
 }
 

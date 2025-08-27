@@ -9,6 +9,7 @@ import { logger } from '@/shared/lib/logger'
 import {
   UserCourseEnrollment as PrismaUserCourseEnrollment,
   DayOfWeek,
+  CourseContentType,
 } from '@prisma/client'
 
 @injectable()
@@ -22,6 +23,7 @@ export class UserCourseEnrollmentRepository {
         slug: string
         title: string
         durationWeeks?: number
+        contentType?: CourseContentType
       }
     }
   ): UserCourseEnrollment {
@@ -38,6 +40,7 @@ export class UserCourseEnrollmentRepository {
         slug: prismaEnrollment.course.slug,
         title: prismaEnrollment.course.title,
         durationWeeks: prismaEnrollment.course.durationWeeks,
+        contentType: prismaEnrollment.course.contentType,
       },
     }
   }
@@ -56,7 +59,7 @@ export class UserCourseEnrollmentRepository {
         },
         include: {
           course: {
-            select: { id: true, slug: true, title: true, durationWeeks: true },
+            select: { id: true, slug: true, title: true, durationWeeks: true, contentType: true },
           },
         },
       })
@@ -81,7 +84,7 @@ export class UserCourseEnrollmentRepository {
         where: { id: enrollmentId },
         include: {
           course: {
-            select: { id: true, slug: true, title: true, durationWeeks: true },
+            select: { id: true, slug: true, title: true, durationWeeks: true, contentType: true },
           },
         },
       })
@@ -121,7 +124,7 @@ export class UserCourseEnrollmentRepository {
         },
         include: {
           course: {
-            select: { id: true, slug: true, title: true, durationWeeks: true },
+            select: { id: true, slug: true, title: true, durationWeeks: true, contentType: true },
           },
         },
       })
@@ -158,6 +161,7 @@ export class UserCourseEnrollmentRepository {
           slug: enrollment.course.slug,
           title: enrollment.course.title,
           durationWeeks: enrollment.course.durationWeeks,
+          contentType: enrollment.course.contentType,
         },
       }))
     } catch (error) {
@@ -214,7 +218,7 @@ export class UserCourseEnrollmentRepository {
         },
         include: {
           course: {
-            select: { id: true, slug: true, title: true, durationWeeks: true },
+            select: { id: true, slug: true, title: true, durationWeeks: true, contentType: true },
           },
         },
       })
@@ -263,7 +267,7 @@ export class UserCourseEnrollmentRepository {
         data: { active: true },
         include: {
           course: {
-            select: { id: true, slug: true, title: true, durationWeeks: true },
+            select: { id: true, slug: true, title: true, durationWeeks: true, contentType: true },
           },
         },
       })
@@ -294,7 +298,7 @@ export class UserCourseEnrollmentRepository {
         },
         include: {
           course: {
-            select: { id: true, slug: true, title: true, durationWeeks: true },
+            select: { id: true, slug: true, title: true, durationWeeks: true, contentType: true },
           },
         },
       })

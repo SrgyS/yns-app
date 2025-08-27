@@ -17,6 +17,7 @@ import {
   ActivateEnrollmentService,
   GetEnrollmentByCourseSlugService,
   GetEnrollmentByIdService,
+  GetAvailableWeeksService,
 } from '@/entity/course/module'
 
 @injectable()
@@ -31,7 +32,8 @@ export class CourseEnrollmentController extends Controller {
     private updateWorkoutDaysService: UpdateWorkoutDaysService,
     private activateEnrollmentService: ActivateEnrollmentService,
     private getEnrollmentByCourseSlugService: GetEnrollmentByCourseSlugService,
-    private getEnrollmentByIdService: GetEnrollmentByIdService
+    private getEnrollmentByIdService: GetEnrollmentByIdService,
+    private getAvailableWeeksService: GetAvailableWeeksService
   ) {
     super()
   }
@@ -162,6 +164,41 @@ export class CourseEnrollmentController extends Controller {
           })
 
           return updatedEnrollment
+        }),
+
+      getAvailableWeeks: authorizedProcedure
+        .input(
+          z.object({
+            userId: z.string(),
+            courseSlug: z.string(),
+          })
+        )
+        .query(async ({ input }) => {
+          // Получаем enrollment по courseSlug
+          const enrollment = await this.getEnrollmentByCourseSlugService.exec(
+            input.userId,
+            input.courseSlug
+          )
+
+          if (!enrollment) {
+            throw new Error('Enrollment not found')
+          }
+
+          // Получаем курс для определения типа контента
+          const course = enrollment.course
+          if (!course) {
+            throw new Error('Course not found')
+          }
+
+          // Получаем доступные недели
+          const availableWeeks = await this.getAvailableWeeksService.exec({
+            courseId: course.id,
+            enrollmentStartDate: enrollment.startDate,
+            courseContentType: course.contentType || 'FIXED_COURSE',
+            courseDurationWeeks: course.durationWeeks || 4,
+          })
+
+          return availableWeeks
         }),
 
       activateEnrollment: authorizedProcedure

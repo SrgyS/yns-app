@@ -108,6 +108,19 @@ export function useCourseEnrollment() {
     },
     [getEnrollmentByCourseSlugQuery]
   )
+
+  const getAvailableWeeksQuery =
+    courseEnrollmentApi.course.getAvailableWeeks.useQuery
+
+  const getAvailableWeeks = useCallback(
+    (userId: string, courseSlug: string) => {
+      return getAvailableWeeksQuery(
+        { userId, courseSlug },
+        CACHE_SETTINGS.FREQUENT_UPDATE
+      )
+    },
+    [getAvailableWeeksQuery]
+  )
   return {
     createEnrollment,
     getEnrollment,
@@ -117,6 +130,7 @@ export function useCourseEnrollment() {
     getUserWorkoutDays,
     activateEnrollment,
     getEnrollmentByCourseSlug,
+    getAvailableWeeks,
     isCreating: createEnrollmentMutation.isPending,
     isActivating,
   }

@@ -23,8 +23,10 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
 
   const durationWeeks = enrollment?.course?.durationWeeks
 
+  const isSubscription = enrollment?.course?.contentType === 'SUBSCRIPTION_COURSE_MONTHLY'
+
   const { noProgram, availableWeeks, currentWeekIndex } =
-    useWorkoutCalendar(programStart, durationWeeks)
+    useWorkoutCalendar(programStart, durationWeeks, courseSlug, isSubscription)
 
   if (noProgram || !enrollment || !currentWeekIndex) {
     return <div>Нет активного курса</div>
