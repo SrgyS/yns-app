@@ -8,8 +8,10 @@ import dailyPlanSchema from '../src/shared/api/content/_schemas/daily-plan.schem
 import workoutSchema from '../src/shared/api/content/_schemas/workout.schema.json';
 import mealPlanSchema from '../src/shared/api/content/_schemas/meal-plan.schema.json';
 import recipeSchema from '../src/shared/api/content/_schemas/recipe.schema.json';
+import weeksSchema from '../src/shared/api/content/_schemas/weeks.schema.json';
 import { ParsingError, ValidationError } from '../src/shared/lib/errors';
 import { Course } from '@/shared/api/content/_schemas/course.schema';
+import { WeeksConfiguration } from '@/shared/api/content/_schemas/weeks.schema';
 
 export type KinescopePoster = {
   id: string;
@@ -337,6 +339,33 @@ async function downloadAndUploadContent() {
         }
       }
 
+      // Импорт недель для подписочных курсов
+      if (course.contentType === 'SUBSCRIPTION_COURSE_MONTHLY') {
+        console.log(`  📅 Импорт недель для подписочного курса "${courseSlug}"...`);
+        const weeksRelativePath = `courses/${courseSlug}/weeks.yaml`;
+        const weeksData = await downloadAndParseValidatedYaml<WeeksConfiguration>(
+          weeksRelativePath,
+          weeksSchema
+        );
+        
+        if (weeksData && weeksData.weeks) {
+          for (const weekData of weeksData.weeks) {
+            await dbClient.week.upsert({
+              where: { courseId_weekNumber: { courseId: course.id, weekNumber: weekData.weekNumber } },
+              update: {
+                releaseAt: new Date(weekData.releaseAt),
+              },
+              create: {
+                weekNumber: weekData.weekNumber,
+                releaseAt: new Date(weekData.releaseAt),
+                courseId: course.id,
+              },
+            });
+            console.log(`    ✅ Неделя импортирована/обновлена: неделя ${weekData.weekNumber}`);
+          }
+        }
+      }
+
       console.log(`  🗓️ Импорт ежедневных планов для курса "${courseSlug}"...`);
       let dailyPlanSlugsToProcess: string[] = courseData.dailyPlans || [];
       
@@ -361,6 +390,22 @@ async function downloadAndUploadContent() {
           console.log(`    - Найдена последняя неделя: ${latestWeek}`);
           console.log(`    - Установка окна контента: недели с ${firstValidWeek} по ${latestWeek}`);
 
+          // Сначала удаляем связанные UserDailyPlan записи
+          const { count: userPlansCount } = await dbClient.userDailyPlan.deleteMany({
+            where: {
+              originalDailyPlan: {
+                courseId: course.id,
+                weekNumber: {
+                  lt: firstValidWeek,
+                },
+              },
+            },
+          });
+          if (userPlansCount > 0) {
+            console.log(`    - Удалено ${userPlansCount} связанных пользовательских планов.`);
+          }
+
+          // Затем удаляем сами DailyPlan записи
           const { count } = await dbClient.dailyPlan.deleteMany({
             where: {
               courseId: course.id,

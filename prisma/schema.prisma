@@ -118,6 +118,7 @@ model Course {
   product               CourseProduct?
 
   dailyPlans DailyPlan[] // Дни (планы) в фиксированном курсе
+  weeks      Week[]      // Недели для подписочных курсов
 
   enrollments UserCourseEnrollment[]
   mealPlans   MealPlan[]
@@ -148,6 +149,20 @@ model UserCourseEnrollment {
   @@index([userId, startDate])
 }
 
+model Week {
+  id         String @id @default(cuid())
+  weekNumber Int
+  releaseAt  DateTime
+  courseId   String
+  course     Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  dailyPlans DailyPlan[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([courseId, weekNumber])
+  @@map("weeks")
+}
+
 model DailyPlan {
   id              String         @id @default(cuid())
   slug            String // Например, "week-1-day-1"
@@ -158,6 +173,10 @@ model DailyPlan {
 
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  // Для подписочных курсов - связь с неделей
+  weekId String?
+  week   Week? @relation(fields: [weekId], references: [id], onDelete: Cascade)
 
   warmupId String
   warmup   Workout @relation("WarmupDailyPlan", fields: [warmupId], references: [id])
