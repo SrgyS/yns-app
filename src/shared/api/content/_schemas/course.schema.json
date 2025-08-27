@@ -72,7 +72,7 @@
             "description": "Тип контента курса",
             "enum": [
                 "FIXED_COURSE",
-                "SUBSCRIPTION_COURSE_MONTHLY"
+                "SUBSCRIPTION"
             ]
         }
     },

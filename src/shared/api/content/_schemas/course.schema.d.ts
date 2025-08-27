@@ -56,5 +56,5 @@ export interface Course {
   /**
    * Тип контента курса
    */
-  contentType: "FIXED_COURSE" | "SUBSCRIPTION_COURSE_MONTHLY";
+  contentType: "FIXED_COURSE" | "SUBSCRIPTION";
 }
