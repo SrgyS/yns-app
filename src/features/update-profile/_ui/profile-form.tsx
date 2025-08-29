@@ -2,8 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
-import * as z from 'zod'
-
+import { Pencil } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
 import {
   Form,
@@ -14,31 +13,22 @@ import {
   FormMessage,
 } from '@/shared/ui/form'
 import { Input } from '@/shared/ui/input'
-import { Profile } from '@/entity/user/client'
-
+import { Profile, profileSchema } from '@/entity/user/client'
 import { useUpdateProfile } from '../_vm/use-update-profile'
 import { AvatarField } from './avatar-field'
 import { UserId } from '@/kernel/domain/user'
 import { SmallSpinner } from '@/shared/ui/small-spinner'
 
-const profileFormSchema = z.object({
-  name: z
-    .string()
-    .max(30, {
-      message: 'Длина имени пользователя не должна превышать 30 символов',
-    })
-    .transform(name => name.trim())
-    .optional(),
-  email: z.string().email().optional(),
-  image: z.string().optional(),
-})
+const profileFormSchema = profileSchema.partial()
 
-type ProfileFormValues = z.infer<typeof profileFormSchema>
+// Явно задаём тип значений формы, чтобы избежать вывода unknown в name
+type ProfileFormValues = Partial<Profile>
 
 const getDefaultValues = (profile: Profile) => ({
   email: profile.email,
   image: profile.image ?? undefined,
-  name: profile.name ?? '',
+  // Нормализуем значение так же, как серверная схема (trim)
+  name: (profile.name ?? '').trim(),
 })
 
 export function ProfileForm({
@@ -77,6 +67,29 @@ export function ProfileForm({
       <form onSubmit={handleSubmit} className="space-y-8">
         <FormField
           control={form.control}
+          name="image"
+          render={({ field }) => (
+            <FormItem className='justify-items-center items-center'>
+              <FormLabel>Изображение профиля</FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <AvatarField
+                    value={field.value ?? undefined}
+                    onChange={field.onChange}
+                    name={name ?? undefined}
+                    email={email ?? ''}
+                  />
+                  <div className="absolute bottom-1 right-1 translate-x-1/4 translate-y-1/4 rounded-full border bg-background p-1 shadow">
+                    <Pencil className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
           name="email"
           disabled
           render={({ field }) => (
@@ -96,32 +109,25 @@ export function ProfileForm({
             <FormItem>
               <FormLabel>Имя пользователя</FormLabel>
               <FormControl>
-                <Input placeholder="" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="image"
-          //   disabled
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Аватарка</FormLabel>
-              <FormControl>
-                <AvatarField
-                  value={field.value}
-                  onChange={field.onChange}
-                  name={name}
-                  email={email ?? ''}
+                <Input
+                  placeholder=""
+                  {...field}
+                  value={field.value ?? ''}
+                  onBlur={(e) => {
+                    // Устраняем ложное dirty: триммим значение на блюре
+                    const trimmed = e.target.value.trim()
+                    if (trimmed !== field.value) {
+                      field.onChange(trimmed)
+                    }
+                    field.onBlur()
+                  }}
                 />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit">
+        <Button type="submit" className="w-full" disabled={!form.formState.isDirty || updateProfile.isPending}>
           <SmallSpinner isLoading={updateProfile.isPending} />
           {submitText}
         </Button>
