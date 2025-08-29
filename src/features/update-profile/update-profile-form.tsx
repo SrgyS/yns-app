@@ -1,8 +1,9 @@
 'use client'
 import { ProfileForm } from './_ui/profile-form'
-import { Spinner } from '@/shared/ui/spinner'
 import { useRouter } from 'next/navigation'
 import { updateProfileApi } from './_api'
+import { CACHE_SETTINGS } from '@/shared/lib/cache/cache-constants'
+import { ProfileFormSkeleton } from '@/shared/ui/skeleton/profile-form-skeleton'
 
 export function UpdateProfileForm({
   userId,
@@ -11,7 +12,13 @@ export function UpdateProfileForm({
   userId: string
   callbackUrl?: string
 }) {
-  const profileQuery = updateProfileApi.updateProfile.get.useQuery({ userId })
+  const profileQuery = updateProfileApi.updateProfile.get.useQuery(
+    { userId },
+    {
+      ...CACHE_SETTINGS.FREQUENT_UPDATE,
+      placeholderData: prev => prev,
+    }
+  )
 
   const router = useRouter()
   const handleSuccess = () => {
@@ -20,8 +27,8 @@ export function UpdateProfileForm({
     }
   }
 
-  if (profileQuery.isPending) {
-    return <Spinner aria-label="Загрузка профиля" />
+  if (profileQuery.isPending && !profileQuery.data) {
+    return <ProfileFormSkeleton isLoading={profileQuery.isPending} />
   }
 
   if (!profileQuery.data) {

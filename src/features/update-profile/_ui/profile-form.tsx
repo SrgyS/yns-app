@@ -50,17 +50,17 @@ export function ProfileForm({
   const updateProfile = useUpdateProfile()
 
   const handleSubmit = form.handleSubmit(async data => {
-    const newProfile = await updateProfile.update({
+    await updateProfile.update({
       userId,
       data,
     })
-
-    form.reset(getDefaultValues(newProfile))
     onSuccess?.()
   })
 
   const email = form.watch('email')
   const name = form.watch('name')
+
+  const isSubmitting = updateProfile.isPending
 
   return (
     <Form {...form}>
@@ -69,7 +69,7 @@ export function ProfileForm({
           control={form.control}
           name="image"
           render={({ field }) => (
-            <FormItem className='justify-items-center items-center'>
+            <FormItem className="justify-items-center items-center">
               <FormLabel>Изображение профиля</FormLabel>
               <FormControl>
                 <div className="relative">
@@ -78,6 +78,7 @@ export function ProfileForm({
                     onChange={field.onChange}
                     name={name ?? undefined}
                     email={email ?? ''}
+                    disabled={isSubmitting}
                   />
                   <div className="absolute bottom-1 right-1 translate-x-1/4 translate-y-1/4 rounded-full border bg-background p-1 shadow">
                     <Pencil className="w-4 h-4 text-muted-foreground" />
@@ -113,7 +114,7 @@ export function ProfileForm({
                   placeholder=""
                   {...field}
                   value={field.value ?? ''}
-                  onBlur={(e) => {
+                  onBlur={e => {
                     // Устраняем ложное dirty: триммим значение на блюре
                     const trimmed = e.target.value.trim()
                     if (trimmed !== field.value) {
@@ -121,14 +122,20 @@ export function ProfileForm({
                     }
                     field.onBlur()
                   }}
+                  disabled={isSubmitting}
                 />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={!form.formState.isDirty || updateProfile.isPending}>
-          <SmallSpinner isLoading={updateProfile.isPending} />
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={!form.formState.isDirty || isSubmitting}
+        >
+          <SmallSpinner isLoading={isSubmitting} />
+          {isSubmitting && <span className="mr-2">Сохраняем…</span>}
           {submitText}
         </Button>
       </form>

@@ -10,22 +10,28 @@ export function AvatarField({
   onChange,
   name,
   email,
+  disabled,
 }: {
   value?: string
   onChange: (value?: string) => void
   name?: string
   email: string
+  disabled?: boolean
 }) {
   const { handleFileSelect, isPending } = useUploadAvatar({
     onSuccess: onChange,
   })
+
+  const isDisabled = Boolean(disabled || isPending)
 
   return (
     <Button
       variant="ghost"
       className="w-[84px] h-[84px] p-0.5 rounded-full relative block"
       type="button"
-      onClick={handleFileSelect}
+      onClick={isDisabled ? undefined : handleFileSelect}
+      disabled={isDisabled}
+      aria-disabled={isDisabled}
     >
       {isPending && (
         <div className="inset-0 absolute flex items-center justify-center z-10">

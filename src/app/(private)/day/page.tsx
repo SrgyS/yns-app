@@ -6,7 +6,7 @@ import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course
 import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/alert'
 import { Button } from '@/shared/ui/button'
 import Link from 'next/link'
-import { Skeleton } from '@/shared/ui/skeleton'
+import { Skeleton } from '@/shared/ui/skeleton/skeleton'
 import { useEffect } from 'react'
 
 export default function DayPage() {

@@ -3,7 +3,7 @@
 import { CalendarTabs } from '@/features/daily-plan/_ui/calendar-tabs'
 import { Button } from '@/shared/ui/button'
 import { Suspense, use } from 'react'
-import { Skeleton } from '@/shared/ui/skeleton'
+import { Skeleton } from '@/shared/ui/skeleton/skeleton'
 import { CourseBanner } from '@/features/daily-plan/_ui/course-banner'
 import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { useAppSession } from '@/kernel/lib/next-auth/client'

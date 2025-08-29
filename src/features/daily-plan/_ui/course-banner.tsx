@@ -1,5 +1,5 @@
 import { courseDetailsApi } from '@/features/course-details/_api'
-import { Skeleton } from '@/shared/ui/skeleton'
+import { Skeleton } from '@/shared/ui/skeleton/skeleton'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { ChevronRight } from 'lucide-react'
 

@@ -1,7 +1,6 @@
 'use client'
 
 import { UserCoursesList } from './user-courses-list'
-import { Separator } from '@/shared/ui/separator'
 import { Course } from '@/entity/course'
 import { UserId } from '@/kernel/domain/user'
 
@@ -12,11 +11,8 @@ interface UserCoursesSectionProps {
 
 export function UserCoursesSection({ id, courses }: UserCoursesSectionProps) {
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium">Мои курсы</h3>
-      </div>
-      <Separator />
+    <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Мои курсы</h3>
       <UserCoursesList id={id} courses={courses} />
     </div>
   )
