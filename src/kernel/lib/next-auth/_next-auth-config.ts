@@ -61,10 +61,16 @@ export class NextAuthConfig {
           token.id = user.id
           token.role = user.role
           token.picture = user.image
+          token.name = user.name
         }
 
-        if (trigger === 'update' && session?.user?.image !== undefined) {
-          token.picture = session.user.image
+        if (trigger === 'update' && session?.user) {
+          if (session.user.image !== undefined) {
+            token.picture = session.user.image
+          }
+          if (session.user.name !== undefined) {
+            token.name = session.user.name
+          }
         }
 
         return token
@@ -77,6 +83,7 @@ export class NextAuthConfig {
             id: token.id,
             role: token.role,
             image: token.picture,
+            name: token.name,
           },
         }
       },
