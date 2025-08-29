@@ -89,7 +89,8 @@ enum PaymentState {
 }
 
 enum UserAccessType {
-  course
+  fixed
+  subscription
 }
 
 enum UserAccessReason {

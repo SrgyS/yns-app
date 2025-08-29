@@ -23,7 +23,7 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
 
   const durationWeeks = enrollment?.course?.durationWeeks
 
-  const isSubscription = enrollment?.course?.contentType === 'SUBSCRIPTION_COURSE_MONTHLY'
+  const isSubscription = enrollment?.course?.contentType === 'SUBSCRIPTION'
 
   const { noProgram, availableWeeks, currentWeekIndex } =
     useWorkoutCalendar(programStart, durationWeeks, courseSlug, isSubscription)

@@ -12,6 +12,7 @@ import { CourseEnrollmentControllerModule } from '@/features/course-enrollment/m
 import { DailyPlanModule } from '@/features/daily-plan/module'
 import { WorkoutEntityModule } from '@/entity/workout/module'
 import { PaymentEntityModule } from '@/entity/payment/module'
+import { CoursePurchaseModule } from '@/features/course-purchase/module'
 
 export function createServer() {
   const container = new Container()
@@ -28,6 +29,7 @@ export function createServer() {
     DailyPlanModule,
     WorkoutEntityModule,
     PaymentEntityModule,
+    CoursePurchaseModule,
   )
 
   return container

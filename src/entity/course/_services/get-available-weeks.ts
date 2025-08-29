@@ -27,7 +27,7 @@ export class GetAvailableWeeksService {
     try {
       if (courseContentType === CourseContentType.FIXED_COURSE) {
         return this.getFixedCourseWeeks(enrollmentStartDate, courseDurationWeeks)
-      } else if (courseContentType === CourseContentType.SUBSCRIPTION_COURSE_MONTHLY) {
+      } else if (courseContentType === CourseContentType.SUBSCRIPTION) {
         return await this.getSubscriptionCourseWeeks(courseId, enrollmentStartDate, courseDurationWeeks)
       }
 

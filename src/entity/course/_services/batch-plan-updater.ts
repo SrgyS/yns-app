@@ -54,7 +54,7 @@ export class BatchPlanUpdaterService {
         throw new Error(`Course ${courseId} not found`)
       }
 
-      if (course.contentType !== CourseContentType.SUBSCRIPTION_COURSE_MONTHLY) {
+      if (course.contentType !== CourseContentType.SUBSCRIPTION) {
         throw new Error(`Course ${courseId} is not a subscription course`)
       }
 

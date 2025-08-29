@@ -340,7 +340,7 @@ async function downloadAndUploadContent() {
       }
 
       // Импорт недель для подписочных курсов
-      if (course.contentType === 'SUBSCRIPTION_COURSE_MONTHLY') {
+      if (course.contentType === 'SUBSCRIPTION') {
         console.log(`  📅 Импорт недель для подписочного курса "${courseSlug}"...`);
         const weeksRelativePath = `courses/${courseSlug}/weeks.yaml`;
         const weeksData = await downloadAndParseValidatedYaml<WeeksConfiguration>(
@@ -369,7 +369,7 @@ async function downloadAndUploadContent() {
       console.log(`  🗓️ Импорт ежедневных планов для курса "${courseSlug}"...`);
       let dailyPlanSlugsToProcess: string[] = courseData.dailyPlans || [];
       
-      if (course.contentType === 'SUBSCRIPTION_COURSE_MONTHLY') {
+      if (course.contentType === 'SUBSCRIPTION') {
         console.log('  - Логика для курсов-подписок активирована');
         const allDailyPlansData = await Promise.all(
           dailyPlanSlugsToProcess.map(slug =>
