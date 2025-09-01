@@ -8,6 +8,7 @@ export type CourseUserAccess = {
   courseId: string
   reason: CourseAccessReason
   adminId?: string
+  enrollmentId?: string | null
 }
 
 export type UserAccess = CourseUserAccess

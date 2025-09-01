@@ -16,23 +16,22 @@ export class CreateUserCourseEnrollmentService {
     params: CreateUserCourseEnrollmentParams
   ): Promise<UserCourseEnrollment> {
     try {
-
       // Используем транзакцию для атомарного создания enrollment и userDailyPlan
       return await dbClient.$transaction(async tx => {
-          const existingEnrollments =
-        await this.userCourseEnrollmentRepository.getUserEnrollments(
-          params.userId,
-          tx
-        )
+        const existingEnrollments =
+          await this.userCourseEnrollmentRepository.getUserEnrollments(
+            params.userId,
+            tx
+          )
 
-      if (existingEnrollments.length > 0) {
+        if (existingEnrollments.length > 0) {
+          // Деактивируем все предыдущие записи пользователя на курсы
+          await this.userCourseEnrollmentRepository.deactivateUserEnrollments(
+            params.userId,
+            tx
+          )
+        }
 
-        // Деактивируем все предыдущие записи пользователя на курсы
-        await this.userCourseEnrollmentRepository.deactivateUserEnrollments(
-          params.userId,
-          tx
-        )
-      }
         // Создаем enrollment внутри транзакции
         const enrollment = await tx.userCourseEnrollment.create({
           data: {
@@ -42,10 +41,21 @@ export class CreateUserCourseEnrollmentService {
             selectedWorkoutDays: params.selectedWorkoutDays,
             hasFeedback: params.hasFeedback ?? false,
             active: true,
-            
           },
           include: {
             course: { select: { id: true, slug: true, title: true } },
+          },
+        })
+
+        // Обновляем UserAccess, связывая его с созданным enrollment
+        await tx.userAccess.updateMany({
+          where: {
+            userId: params.userId,
+            courseId: params.courseId,
+            enrollmentId: null, // Только те, что еще не связаны
+          },
+          data: {
+            enrollmentId: enrollment.id,
           },
         })
 

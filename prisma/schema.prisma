@@ -435,17 +435,20 @@ model Payment {
 }
 
 model UserAccess {
-  id           String               @id @default(cuid())
+  id           String                @id @default(cuid())
   userId       String
   adminId      String?
   courseId     String
   type         UserAccessType
   reason       UserAccessReason
   expiresAt    DateTime?
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-  enrollmentId String               @unique
-  enrollment   UserCourseEnrollment @relation(fields: [enrollmentId], references: [id])
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  enrollmentId String?               @unique
+  enrollment   UserCourseEnrollment? @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, courseId, type])
+  @@index([userId, courseId])
 }
 
 model Product {
