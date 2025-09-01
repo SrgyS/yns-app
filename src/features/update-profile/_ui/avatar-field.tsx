@@ -29,7 +29,7 @@ export function AvatarField({
       variant="ghost"
       className="w-[84px] h-[84px] p-0.5 rounded-full relative block"
       type="button"
-      onClick={isDisabled ? undefined : handleFileSelect}
+      onClick={handleFileSelect}
       disabled={isDisabled}
       aria-disabled={isDisabled}
     >
