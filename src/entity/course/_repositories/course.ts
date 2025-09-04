@@ -1,7 +1,7 @@
 import { injectable } from 'inversify'
 import { Course as PrismaCourse } from '@prisma/client'
-import { Course, CourseProduct } from '@/entity/course'
-import { CourseId, CourseSlug } from '@/kernel/domain/course'
+import { Course } from '@/entity/course'
+import { CourseId, CourseProduct, CourseSlug } from '@/kernel/domain/course'
 import { dbClient } from '@/shared/lib/db'
 import { compileMDX } from '@/shared/lib/mdx/server'
 import { logger } from '@/shared/lib/logger'
@@ -49,6 +49,7 @@ export class CoursesRepository {
       draft: course.draft,
       durationWeeks: course.durationWeeks,
       minWorkoutDaysPerWeek: course.minWorkoutDaysPerWeek,
+      contentType: course.contentType,
     }
   }
   async coursesList(): Promise<Course[]> {

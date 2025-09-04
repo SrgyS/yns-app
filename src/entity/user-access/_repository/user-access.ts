@@ -1,56 +1,53 @@
 import { injectable } from 'inversify'
-import { dbClient } from '@/shared/lib/db'
-import { CourseId } from '@/kernel/domain/course'
+import { dbClient, type DbClient } from '@/shared/lib/db'
+import { ContentType, CourseId } from '@/kernel/domain/course'
 import { UserId } from '@/kernel/domain/user'
-import { CourseUserAccess, UserAccess, UserAccessType } from '../_domain/type'
-
-
+import { CourseUserAccess, UserAccess } from '../_domain/type'
 
 @injectable()
 export class UserAccessRepository {
   async findUserCourseAccess(
     userId: UserId,
     courseId: CourseId,
-    type: UserAccessType
+    contentType: ContentType,
+    db: DbClient = dbClient
   ): Promise<CourseUserAccess | undefined> {
     const userAccessDb = await this.queryCourseUserAccess(
       userId,
       courseId,
-      type
+      contentType,
+      db
     )
     if (!userAccessDb) {
       return undefined
     }
     const userAccess = this.dbUserAccessToUserAccess(userAccessDb)
-
-    if (userAccess.type) {
-      return userAccess
-    }
+    return userAccess
   }
 
-  async save(userAccess: UserAccess): Promise<UserAccess> {
+  async save(userAccess: UserAccess, db: DbClient = dbClient): Promise<UserAccess> {
     return this.dbUserAccessToUserAccess(
-      await dbClient.userAccess.upsert({
+      await db.userAccess.upsert({
         where: {
-          userId_courseId_type: {
+          userId_courseId_contentType: {
             userId: userAccess.userId,
             courseId: userAccess.courseId,
-            type: userAccess.type
-          }
+            contentType: userAccess.contentType,
+          },
         },
         create: {
           id: userAccess.id,
           userId: userAccess.userId,
-          type: userAccess.type,
-          reason: userAccess.reason,
           courseId: userAccess.courseId,
+          contentType: userAccess.contentType,
+          reason: userAccess.reason,
           adminId: userAccess.adminId,
-          enrollmentId: userAccess.enrollmentId
+          enrollmentId: userAccess.enrollmentId,
         },
         update: {
           reason: userAccess.reason,
           adminId: userAccess.adminId,
-          enrollmentId: userAccess.enrollmentId
+          enrollmentId: userAccess.enrollmentId,
         },
       })
     )
@@ -64,7 +61,7 @@ export class UserAccessRepository {
     return {
       courseId: userAccess.courseId,
       userId: userAccess.userId,
-      type: userAccess.type,
+      contentType: userAccess.contentType,
       reason: userAccess.reason,
       adminId: userAccess.adminId ?? undefined,
       id: userAccess.id,
@@ -75,13 +72,14 @@ export class UserAccessRepository {
   private queryCourseUserAccess(
     userId: UserId,
     courseId: CourseId,
-    type: UserAccessType
+    contentType: ContentType,
+    db: DbClient = dbClient
   ) {
-    return dbClient.userAccess.findFirst({
+    return db.userAccess.findFirst({
       where: {
         userId,
         courseId,
-        type,
+        contentType,
       },
     })
   }

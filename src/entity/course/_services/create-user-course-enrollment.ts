@@ -4,18 +4,45 @@ import { UserDailyPlanRepository } from '../_repositories/user-daily-plan'
 import { CreateUserCourseEnrollmentParams, UserCourseEnrollment } from '..'
 import { logger } from '@/shared/lib/logger'
 import { dbClient } from '@/shared/lib/db'
+import { GetCourseService } from './get-course'
+import { CheckCourseAccessService } from '@/entity/user-access/module'
 
 @injectable()
 export class CreateUserCourseEnrollmentService {
   constructor(
     private userCourseEnrollmentRepository: UserCourseEnrollmentRepository,
-    private userDailyPlanRepository: UserDailyPlanRepository
+    private userDailyPlanRepository: UserDailyPlanRepository,
+    private getCourseService: GetCourseService,
+    private checkCourseAccess: CheckCourseAccessService
   ) {}
 
   async exec(
     params: CreateUserCourseEnrollmentParams
   ): Promise<UserCourseEnrollment> {
     try {
+      // Проверяем доступ пользователя к курсу перед созданием enrollment
+      const course = await this.getCourseService.exec({ id: params.courseId })
+      if (!course) {
+        throw new Error('Курс не найден')
+      }
+
+      if (!course.product) {
+        throw new Error('Некорректные данные курса: отсутствует продукт')
+      }
+
+      const hasAccess = await this.checkCourseAccess.exec({
+        userId: params.userId,
+        course: {
+          id: course.id,
+          product: course.product,
+          contentType: course.contentType,
+        },
+      })
+
+      if (!hasAccess) {
+        throw new Error('Нет доступа к курсу')
+      }
+
       // Используем транзакцию для атомарного создания enrollment и userDailyPlan
       return await dbClient.$transaction(async tx => {
         const existingEnrollments =
@@ -31,7 +58,6 @@ export class CreateUserCourseEnrollmentService {
             tx
           )
         }
-
         // Создаем enrollment внутри транзакции
         const enrollment = await tx.userCourseEnrollment.create({
           data: {
@@ -46,7 +72,6 @@ export class CreateUserCourseEnrollmentService {
             course: { select: { id: true, slug: true, title: true } },
           },
         })
-
         // Обновляем UserAccess, связывая его с созданным enrollment
         await tx.userAccess.updateMany({
           where: {

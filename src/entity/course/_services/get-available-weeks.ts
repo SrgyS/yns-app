@@ -2,7 +2,7 @@ import { injectable } from 'inversify'
 import { CourseContentType } from '@prisma/client'
 import { dbClient } from '@/shared/lib/db'
 import { logger } from '@/shared/lib/logger'
-import { differenceInCalendarWeeks } from 'date-fns'
+import { differenceInCalendarWeeks, startOfWeek, addDays } from 'date-fns'
 
 export interface GetAvailableWeeksParams {
   courseId: string
@@ -15,6 +15,7 @@ export interface AvailableWeeksResult {
   availableWeeks: number[]
   totalWeeks: number
   currentWeekIndex: number
+  weeksMeta?: Array<{ weekNumber: number; releaseAt: string }>
 }
 
 @injectable()
@@ -54,9 +55,9 @@ export class GetAvailableWeeksService {
     const today = new Date()
     const startDay = enrollmentStartDate.getDay()
     const totalWeeks = startDay === 1 ? courseDurationWeeks : courseDurationWeeks + 1
-    
+
     const availableWeeks = Array.from({ length: totalWeeks }, (_, i) => i + 1)
-    
+
     const currentWeekIndex = Math.min(
       Math.max(
         differenceInCalendarWeeks(today, enrollmentStartDate, {
@@ -75,7 +76,9 @@ export class GetAvailableWeeksService {
   }
 
   /**
-   * Для подписочных курсов возвращаем скользящее окно из 4 недель
+   * Подписка: окно максимум из 4 недель, начиная с ТЕКУЩЕЙ календарной недели (пн-вс) и вперёд,
+   * но не раньше недели покупки. Показываем только те недели, для которых релиз уже состоялся (releaseAt <= today).
+   * Если в окне нет релизов — возвращаем пусто ("Нет доступных тренировок").
    */
   private async getSubscriptionCourseWeeks(
     courseId: string,
@@ -83,13 +86,12 @@ export class GetAvailableWeeksService {
     courseDurationWeeks: number
   ): Promise<AvailableWeeksResult> {
     const today = new Date()
-    
-    // Получаем все доступные недели курса из базы данных
-    const availableWeeksInDb = await dbClient.week.findMany({
+
+    const releasedWeeks = await dbClient.week.findMany({
       where: {
         courseId,
         releaseAt: {
-          lte: today, // Только те недели, которые уже выпущены
+          lte: today,
         },
       },
       select: {
@@ -101,69 +103,76 @@ export class GetAvailableWeeksService {
       },
     })
 
-    if (availableWeeksInDb.length === 0) {
-      // Если нет доступных недель в базе, возвращаем пустой результат
+    if (releasedWeeks.length === 0) {
       return {
         availableWeeks: [],
         totalWeeks: courseDurationWeeks,
-        currentWeekIndex: 1,
+        currentWeekIndex: 0,
+        weeksMeta: [],
       }
     }
 
-    // Определяем неделю, на которой пользователь начал курс
-    const enrollmentWeekNumber = this.getEnrollmentWeekNumber(
-      enrollmentStartDate,
-      availableWeeksInDb
-    )
+    const purchaseWeekStart = startOfWeek(enrollmentStartDate, { weekStartsOn: 1 })
+    const currentWeekStart = startOfWeek(today, { weekStartsOn: 1 })
 
-    // Определяем текущую неделю относительно начала курса
-    const currentWeekIndex = Math.min(
-      Math.max(
-        differenceInCalendarWeeks(today, enrollmentStartDate, {
-          weekStartsOn: 1,
-        }) + 1,
-        1
-      ),
-      courseDurationWeeks
-    )
+    // Окно видимости: текущая неделя и следующие (в пределах 4 недель)
+    const windowStart = currentWeekStart
+    const windowEnd = addDays(currentWeekStart, 7 * (this.SUBSCRIPTION_WINDOW_SIZE - 1))
 
-    // Вычисляем скользящее окно
-    const windowStart = Math.max(enrollmentWeekNumber, currentWeekIndex - this.SUBSCRIPTION_WINDOW_SIZE + 1)
-    const windowEnd = Math.min(
-      windowStart + this.SUBSCRIPTION_WINDOW_SIZE - 1,
-      Math.max(...availableWeeksInDb.map(w => w.weekNumber))
-    )
+    // В окне оставляем только недели, не раньше недели покупки и не раньше текущей недели
+    const windowWeeks = releasedWeeks.filter(w => {
+      const wStart = startOfWeek(w.releaseAt, { weekStartsOn: 1 })
+      return (
+        wStart.getTime() >= purchaseWeekStart.getTime() &&
+        wStart.getTime() >= windowStart.getTime() &&
+        wStart.getTime() <= windowEnd.getTime()
+      )
+    })
 
-    // Фильтруем доступные недели в пределах окна
-    const availableWeeks = availableWeeksInDb
-      .filter(week => week.weekNumber >= windowStart && week.weekNumber <= windowEnd)
-      .map(week => week.weekNumber)
+    if (windowWeeks.length === 0) {
+      return {
+        availableWeeks: [],
+        totalWeeks: courseDurationWeeks,
+        currentWeekIndex: 0,
+        weeksMeta: [],
+      }
+    }
+
+    const availableWeeks = windowWeeks.map(w => w.weekNumber)
+
+    // Активная неделя — текущая, если она присутствует (иначе безопасно берём первую из окна)
+    const currentInWindow = windowWeeks.find(w => {
+      return startOfWeek(w.releaseAt, { weekStartsOn: 1 }).getTime() === currentWeekStart.getTime()
+    })
+
+    const active = currentInWindow ?? windowWeeks[0]
 
     return {
       availableWeeks,
       totalWeeks: courseDurationWeeks,
-      currentWeekIndex,
+      currentWeekIndex: active.weekNumber,
+      weeksMeta: windowWeeks.map(w => ({ weekNumber: w.weekNumber, releaseAt: w.releaseAt.toISOString() })),
     }
   }
 
   /**
    * Определяет номер недели, на которой пользователь начал курс
    */
-  private getEnrollmentWeekNumber(
-    enrollmentStartDate: Date,
-    availableWeeks: Array<{ weekNumber: number; releaseAt: Date }>
-  ): number {
-    // Находим первую неделю, которая была доступна на момент записи пользователя
-    const availableAtEnrollment = availableWeeks.filter(
-      week => week.releaseAt <= enrollmentStartDate
-    )
+  // private getEnrollmentWeekNumber(
+  //   enrollmentStartDate: Date,
+  //   availableWeeks: Array<{ weekNumber: number; releaseAt: Date }>
+  // ): number {
+  //   // Находим первую неделю, которая была доступна на момент записи пользователя
+  //   const availableAtEnrollment = availableWeeks.filter(
+  //     week => week.releaseAt <= enrollmentStartDate
+  //   )
 
-    if (availableAtEnrollment.length === 0) {
-      // Если на момент записи не было доступных недель, начинаем с первой доступной
-      return Math.min(...availableWeeks.map(w => w.weekNumber))
-    }
+  //   if (availableAtEnrollment.length === 0) {
+  //     // Если на момент записи не было доступных недель, начинаем с первой доступной
+  //     return Math.min(...availableWeeks.map(w => w.weekNumber))
+  //   }
 
-    // Возвращаем последнюю доступную неделю на момент записи
-    return Math.max(...availableAtEnrollment.map(w => w.weekNumber))
-  }
+  //   // Возвращаем последнюю доступную неделю на момент записи
+  //   return Math.max(...availableAtEnrollment.map(w => w.weekNumber))
+  // }
 }

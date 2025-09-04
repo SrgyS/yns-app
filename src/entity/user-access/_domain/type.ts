@@ -1,9 +1,10 @@
+import { ContentType } from "@/kernel/domain/course"
+
 export type CourseAccessReason = 'paid' | 'free' | 'manual'
-export type UserAccessType = 'fixed' | 'subscription'
 
 export type CourseUserAccess = {
   id: string
-  type: UserAccessType
+  contentType: ContentType
   userId: string
   courseId: string
   reason: CourseAccessReason

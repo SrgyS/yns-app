@@ -7,12 +7,10 @@ export function useDailyPlan() {
   const { data: session } = useAppSession()
 
   const getDailyPlan = useCallback(
-    (courseId: string, dayNumberInCourse: number) => {
-      if (!session?.user?.id) {
-        return null
-      }
-
-      return getUserDailyPlan(session.user.id, courseId, dayNumberInCourse)
+    (courseId: string, dayNumberInCourse: number, enabled: boolean) => {
+      const userId = session?.user?.id || ''
+      const isEnabled = enabled && Boolean(session?.user?.id)
+      return getUserDailyPlan(userId, courseId, dayNumberInCourse, isEnabled)
     },
     [getUserDailyPlan, session?.user?.id]
   )

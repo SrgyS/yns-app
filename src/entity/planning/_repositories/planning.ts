@@ -16,6 +16,7 @@ import {
   GenerationContext,
   UserDailyPlanCreateData,
 } from '../_services/plan-generation'
+import { startOfWeek } from 'date-fns'
 
 type EnrollmentWithCourse = PrismaUserCourseEnrollment & {
   course: PrismaCourse & { dailyPlans: PrismaDailyPlan[] }
@@ -107,6 +108,12 @@ export class PlanningRepository {
       const enrollment = await this.getEnrollmentWithCourse(enrollmentId, tx)
       const { course, selectedWorkoutDays, startDate } = enrollment
 
+      // Для подписки нормализуем старт на понедельник календарной недели покупки
+      const effectiveStartDate =
+        course.contentType === 'SUBSCRIPTION'
+          ? startOfWeek(startDate, { weekStartsOn: 1 })
+          : startDate
+
       // Валидация планов курса
       const validation = this.validationService.validateCoursePlans(
         course,
@@ -122,7 +129,7 @@ export class PlanningRepository {
         {
           id: enrollment.id,
           userId: enrollment.userId,
-          startDate,
+          startDate: effectiveStartDate,
           selectedWorkoutDays,
         },
         {
@@ -196,6 +203,12 @@ export class PlanningRepository {
       const { course, startDate } = enrollment
       const { selectedWorkoutDays } = options
 
+      // Для подписки нормализуем старт на понедельник
+      const effectiveStartDate =
+        course.contentType === 'SUBSCRIPTION'
+          ? startOfWeek(startDate, { weekStartsOn: 1 })
+          : startDate
+
       // Валидация планов курса
       const validation = this.validationService.validateCoursePlans(
         course,
@@ -211,7 +224,7 @@ export class PlanningRepository {
         {
           id: enrollment.id,
           userId: enrollment.userId,
-          startDate,
+          startDate: effectiveStartDate,
           selectedWorkoutDays,
         },
         {
@@ -243,11 +256,11 @@ export class PlanningRepository {
         const createData: UserDailyPlanCreateData = {
           userId: enrollment.userId,
           enrollmentId: enrollment.id,
-          date: this.dateService.calculateDateForDay(startDate, i),
+          date: this.dateService.calculateDateForDay(effectiveStartDate, i),
           dayNumberInCourse,
           weekNumber: this.dateService.calculateWeekNumber(i),
           dayOfWeek: this.dateService.getDayOfWeek(
-            this.dateService.calculateDateForDay(startDate, i)
+            this.dateService.calculateDateForDay(effectiveStartDate, i)
           ),
           isWorkoutDay: updateData.isWorkoutDay,
           warmupId: updateData.warmupId,

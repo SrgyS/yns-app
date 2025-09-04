@@ -67,12 +67,54 @@
             "minimum": 1,
             "description": "Минимальное количество тренировок в неделю"
         },
+        "product": {
+            "$ref": "#/definitions/product"
+        },
         "contentType": {
             "type": "string",
             "description": "Тип контента курса",
             "enum": [
                 "FIXED_COURSE",
                 "SUBSCRIPTION"
+            ]
+        }
+    },
+    "definitions": {
+        "cuid": {
+            "type": "string",
+            "title": "cuid"
+        },
+        "product": {
+            "oneOf": [
+                {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                        "access"
+                    ],
+                    "properties": {
+                        "access": {
+                            "const": "free"
+                        }
+                    }
+                },
+                {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                        "access",
+                        "price"
+                    ],
+                    "properties": {
+                        "access": {
+                            "const": "paid"
+                        },
+                        "price": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                }
             ]
         }
     },
@@ -84,7 +126,8 @@
         "draft",
         "durationWeeks",
         "minWorkoutDaysPerWeek",
-        "contentType"
+        "contentType",
+        "product"
     ],
     "additionalProperties": false
 }

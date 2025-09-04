@@ -20,14 +20,18 @@ import { DAY_LABELS } from '@/features/select-training-days/constants'
 
 export function DayTabs({
   weekNumber,
-  programStart,
+  displayWeekStart,
+  enrollmentStart,
   currentDate,
   courseId,
+  isSubscription,
 }: {
   weekNumber: number
-  programStart: Date
+  displayWeekStart: Date
+  enrollmentStart: Date
   currentDate: Date
   courseId: string
+  isSubscription?: boolean
 }) {
   const { getDailyPlan } = useDailyPlan()
   const { data: session } = useAppSession()
@@ -35,11 +39,10 @@ export function DayTabs({
 
   const enrollmentQuery = getEnrollment(session?.user?.id || '', courseId)
 
-  // Вычисляем начало недели
-  // Вычисляем смещение от даты начала программы
+  // Начало недели для отображения (визуальная неделя)
   const weekStart = useMemo(() => {
-    return addDays(programStart, (weekNumber - 1) * 7)
-  }, [weekNumber, programStart])
+    return displayWeekStart
+  }, [displayWeekStart])
 
   // Получаем выбранные дни тренировок из активной записи
   const enrollment = enrollmentQuery?.data
@@ -64,6 +67,13 @@ export function DayTabs({
     return durationWeeks * 7
   }, [enrollment?.course?.durationWeeks])
 
+  // Для подписки базой для расчёта является понедельник недели покупки
+  const effectiveEnrollmentStart = useMemo(() => {
+    return isSubscription
+      ? startOfWeek(enrollmentStart, { weekStartsOn: 1 })
+      : enrollmentStart
+  }, [isSubscription, enrollmentStart])
+
   const days = useMemo(() => {
     // Определяем начало недели для отображения дней
     const weekStartForDays = startOfWeek(weekStart, { weekStartsOn: 1 })
@@ -71,21 +81,21 @@ export function DayTabs({
     return DAYS_ORDER.map((dayOfWeek, i) => {
       const date = addDays(weekStartForDays, i)
 
-      // Проверяем, находится ли день до даты покупки
+      // Проверяем, находится ли день до даты покупки/эффективного старта
       // Используем строгое сравнение, чтобы день начала программы был активен
       const isBeforePurchase =
-        isBefore(date, programStart) &&
-        format(date, 'yyyy-MM-dd') !== format(programStart, 'yyyy-MM-dd')
+        isBefore(date, effectiveEnrollmentStart) &&
+        format(date, 'yyyy-MM-dd') !== format(effectiveEnrollmentStart, 'yyyy-MM-dd')
 
       // Нормализуем даты, чтобы избежать проблем с часовыми поясами
       const normalizedDate = startOfDay(date)
-      const normalizedProgramStart = startOfDay(programStart)
+      const normalizedProgramStart = startOfDay(effectiveEnrollmentStart)
 
-      // Вычисляем день программы (от 1 до 28)
+      // Вычисляем день программы (от 1 до N) относительно эффективного старта
       const daysSinceProgramStart =
         differenceInDays(normalizedDate, normalizedProgramStart) + 1
 
-      // Проверяем, находится ли день после 28-го дня программы
+      // Проверяем, находится ли день после окончания программы
       const isAfterProgram = daysSinceProgramStart > totalProgramDays
 
       // Проверяем, является ли день тренировочным
@@ -97,8 +107,10 @@ export function DayTabs({
         index => index === dayOfWeekIndex
       )
 
-      // Отключаем дни до даты начала программы и после окончания программы
-      const isDisabled = isBeforePurchase || isAfterProgram
+      // Отключаем дни:
+      // - для подписки: только после окончания сгенерированного плана (вся неделя доступна, даже если купил в середине недели)
+      // - для фиксированного курса: до покупки и после окончания программы
+      const isDisabled = isSubscription ? isAfterProgram : isBeforePurchase || isAfterProgram
 
       // Вычисляем номер дня программы (только для дней в рамках программы)
       const programDay =
@@ -121,9 +133,10 @@ export function DayTabs({
   }, [
     weekStart,
     currentDate,
-    programStart,
+    effectiveEnrollmentStart,
     workoutDayIndices,
     totalProgramDays,
+    isSubscription,
   ])
 
   // Находим первый активный день в неделе
@@ -135,13 +148,19 @@ export function DayTabs({
   const [selectedDay, setSelectedDay] = useState<string>(defaultDayKey)
 
   const selectedDayNumberInCourse = useMemo(() => {
-    return days.find(d => d.key === selectedDay)?.programDay
+    return days.find(d => d.key === selectedDay)?.programDay ?? null
   }, [selectedDay, days])
 
-  // Всегда вызываем getDailyPlan, но с разными параметрами
+  const enabled =
+    !!selectedDayNumberInCourse &&
+    selectedDayNumberInCourse > 0 &&
+    selectedDayNumberInCourse <= totalProgramDays
+
+  // Вызываем хук всегда, но управляем выполнением через enabled
   const dailyPlanQuery = getDailyPlan(
     courseId,
-    selectedDayNumberInCourse || 1 // Используем 0 или другое значение по умолчанию
+    selectedDayNumberInCourse || 1,
+    enabled
   )
 
   // В JSX проверяем не только наличие данных, но и selectedDayNumberInCourse
@@ -177,14 +196,14 @@ export function DayTabs({
               <span className="text-lg whitespace-nowrap">{d.label}</span>
               <span className="text-sm whitespace-nowrap">{d.dateStr}</span>
             </div>
-            {d.programDay && (
+            {!isSubscription && d.programDay && (
               <span className="text-xs  leading-none">День {d.programDay}</span>
             )}
           </TabsTrigger>
         ))}
       </TabsList>
       <TabsContent value={selectedDay} className="flex flex-col gap-4">
-        {dailyPlanQuery?.data ? (
+        {enabled && dailyPlanQuery?.data ? (
           <>
             {dailyPlanQuery.data.warmupId && (
               <WarmUp

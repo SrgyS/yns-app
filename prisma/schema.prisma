@@ -88,11 +88,6 @@ enum PaymentState {
   failed
 }
 
-enum UserAccessType {
-  fixed
-  subscription
-}
-
 enum UserAccessReason {
   paid
   free
@@ -439,7 +434,7 @@ model UserAccess {
   userId       String
   adminId      String?
   courseId     String
-  type         UserAccessType
+  contentType           CourseContentType
   reason       UserAccessReason
   expiresAt    DateTime?
   createdAt    DateTime              @default(now())
@@ -447,7 +442,7 @@ model UserAccess {
   enrollmentId String?               @unique
   enrollment   UserCourseEnrollment? @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
 
-  @@unique([userId, courseId, type])
+  @@unique([userId, courseId, contentType])
   @@index([userId, courseId])
 }
 

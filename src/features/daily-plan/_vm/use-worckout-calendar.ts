@@ -27,18 +27,27 @@ export function useWorkoutCalendar(
   }, [programStart, durationWeeks])
 
   const availableWeeks = useMemo(() => {
-    // Для курсов-подписок используем данные из API
-    if (isSubscription && availableWeeksQuery.data) {
-      return availableWeeksQuery.data.availableWeeks
+    // Для курсов-подписок используем данные из API. Пока данные грузятся — возвращаем пустой список,
+    // чтобы не падать обратно на логику фиксированных курсов и не показывать неверные недели.
+    if (isSubscription) {
+      return availableWeeksQuery.data?.availableWeeks ?? []
     }
     // Для обычных курсов возвращаем все недели
     return Array.from({ length: totalWeeks }, (_, i) => i + 1)
   }, [isSubscription, availableWeeksQuery.data, totalWeeks])
 
+  const weeksMeta = useMemo(() => {
+    if (isSubscription) {
+      return availableWeeksQuery.data?.weeksMeta ?? []
+    }
+    return [] as Array<{ weekNumber: number; releaseAt: string }>
+  }, [isSubscription, availableWeeksQuery.data])
+
   const currentWeekIndex = useMemo(() => {
-    // Для курсов-подписок используем данные из API
-    if (isSubscription && availableWeeksQuery.data) {
-      return availableWeeksQuery.data.currentWeekIndex
+    // Для курсов-подписок используем данные из API. Пока данных нет — возвращаем 0,
+    // чтобы родитель мог отобразить плейсхолдер/сообщение и не активировать табы.
+    if (isSubscription) {
+      return availableWeeksQuery.data?.currentWeekIndex ?? 0
     }
     // Для обычных курсов вычисляем как раньше
     if (!programStart) return 1
@@ -54,6 +63,7 @@ export function useWorkoutCalendar(
     availableWeeks,
     totalWeeks,
     currentWeekIndex,
-    isLoading: isSubscription ? availableWeeksQuery.isLoading : false,
+    weeksMeta,
+    isLoading: Boolean(isSubscription) ? availableWeeksQuery.isLoading : false,
   }
 }

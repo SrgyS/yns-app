@@ -5,6 +5,15 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
+export type Product =
+  | {
+      access: "free";
+    }
+  | {
+      access: "paid";
+      price: number;
+    };
+
 /**
  * Схема для описания курса
  */
@@ -53,6 +62,7 @@ export interface Course {
    * Минимальное количество тренировок в неделю
    */
   minWorkoutDaysPerWeek: number;
+  product: Product;
   /**
    * Тип контента курса
    */
