@@ -102,6 +102,8 @@ export const Player = ({ videoId, onCompleted }: Props) => {
         if (!mounted || inflightRef.current !== myAttempt) return
         if (/IFrame already removed|Timeout .* Unable to connect to iframe/i.test(msg)) {
           console.warn('Kinescope init warn:', msg)
+          // При таймауте все равно скрываем скелетон, чтобы показать iframe
+          setPlayerReady(true)
           return
         }
         console.error('Kinescope init error', e)
