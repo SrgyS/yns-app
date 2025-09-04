@@ -20,10 +20,18 @@ export class CheckCourseAccessService {
       return true;
     }
 
-    return !!(await this.userAccessRepository.findUserCourseAccess(
+    const access = await this.userAccessRepository.findUserCourseAccess(
       query.userId,
       query.course.id,
       query.course.contentType,
-    ));
+    );
+
+    if (!access) return false;
+
+    if (access.expiresAt && access.expiresAt.getTime() < Date.now()) {
+      return false;
+    }
+
+    return true;
   }
 }

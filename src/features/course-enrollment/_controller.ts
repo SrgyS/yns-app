@@ -192,6 +192,7 @@ export class CourseEnrollmentController extends Controller {
 
           // Получаем доступные недели
           const availableWeeks = await this.getAvailableWeeksService.exec({
+            userId: input.userId,
             courseId: course.id,
             enrollmentStartDate: enrollment.startDate,
             courseContentType: course.contentType || 'FIXED_COURSE',

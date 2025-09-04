@@ -12,6 +12,7 @@ type Command = {
   reason: CourseAccessReason;
   adminId?: UserId;
   contentType: ContentType;
+  expiresAt?: Date | null;
 };
 
 @injectable()
@@ -38,6 +39,7 @@ export class GrandCourseAccessService {
       reason: command.reason,
       adminId: command.adminId,
       id: generateId(),
+      expiresAt: command.expiresAt ?? null,
     };
 
     return this.userAccessRepository.save(newCourseAccess);

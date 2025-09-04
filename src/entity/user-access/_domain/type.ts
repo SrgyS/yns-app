@@ -10,6 +10,7 @@ export type CourseUserAccess = {
   reason: CourseAccessReason
   adminId?: string
   enrollmentId?: string | null
+  expiresAt?: Date | null
 }
 
 export type UserAccess = CourseUserAccess

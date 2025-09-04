@@ -43,11 +43,13 @@ export class UserAccessRepository {
           reason: userAccess.reason,
           adminId: userAccess.adminId,
           enrollmentId: userAccess.enrollmentId,
+          expiresAt: userAccess.expiresAt ?? null,
         },
         update: {
           reason: userAccess.reason,
           adminId: userAccess.adminId,
           enrollmentId: userAccess.enrollmentId,
+          expiresAt: userAccess.expiresAt ?? null,
         },
       })
     )
@@ -66,6 +68,7 @@ export class UserAccessRepository {
       adminId: userAccess.adminId ?? undefined,
       id: userAccess.id,
       enrollmentId: userAccess.enrollmentId ?? null,
+      expiresAt: userAccess.expiresAt ?? null,
     }
   }
 
