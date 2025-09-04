@@ -36,11 +36,14 @@ export function ProfileForm({
   submitText = 'Сохранить',
   profile,
   userId,
+  allowSubmitPristine = false,
 }: {
   userId: UserId
   profile: Profile
   onSuccess?: () => void
   submitText?: string
+  // Если true — разрешаем отправку без изменений (сценарий онбординга "Продолжить")
+  allowSubmitPristine?: boolean
 }) {
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -50,6 +53,12 @@ export function ProfileForm({
   const updateProfile = useUpdateProfile()
 
   const handleSubmit = form.handleSubmit(async data => {
+    // Если изменений нет и это онбординг — не шлём запрос, просто продолжаем
+    if (!form.formState.isDirty && allowSubmitPristine) {
+      onSuccess?.()
+      return
+    }
+
     await updateProfile.update({
       userId,
       data,
@@ -61,6 +70,8 @@ export function ProfileForm({
   const name = form.watch('name')
 
   const isSubmitting = updateProfile.isPending
+
+  const isDisabled = (isSubmitting || (!form.formState.isDirty && !allowSubmitPristine))
 
   return (
     <Form {...form}>
@@ -132,10 +143,9 @@ export function ProfileForm({
         <Button
           type="submit"
           className="w-full"
-          disabled={!form.formState.isDirty || isSubmitting}
+          disabled={isDisabled}
         >
           <SmallSpinner isLoading={isSubmitting} />
-          {isSubmitting && <span className="mr-2">Сохраняем…</span>}
           {submitText}
         </Button>
       </form>
