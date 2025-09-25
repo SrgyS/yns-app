@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Skeleton } from '@/shared/ui/skeleton/skeleton'
+import { Button } from '@/shared/ui/button'
+import { RefreshCw, AlertCircle } from 'lucide-react'
 
 type Props = { videoId: string; onCompleted?: () => void }
 
@@ -14,7 +16,10 @@ export const Player = ({ videoId, onCompleted }: Props) => {
   const attemptRef = useRef(0)
   const inflightRef = useRef<number | null>(null)
   const lastTU = useRef(0)
+  const retryCountRef = useRef(0)
   const [isPlayerReady, setPlayerReady] = useState(false)
+  const [hasError, setHasError] = useState(false)
+  const [isRetrying, setIsRetrying] = useState(false)
 
   useEffect(() => {
     onCompletedRef.current = onCompleted
@@ -26,12 +31,36 @@ export const Player = ({ videoId, onCompleted }: Props) => {
     try { onCompletedRef.current?.() } catch (e) { console.error(e) }
   }
 
+  const resetState = () => {
+    setHasError(false)
+    setIsRetrying(false)
+    setPlayerReady(false)
+    retryCountRef.current = 0
+  }
+
+  const handleRetry = () => {
+    if (isRetrying) return
+    setIsRetrying(true)
+    setHasError(false)
+    retryCountRef.current = 0
+    
+    // Очищаем предыдущий плеер
+    if (playerRef.current) {
+      try { playerRef.current.destroy?.() } catch {}
+      playerRef.current = null
+    }
+    
+    // Принудительно перезапускаем useEffect через изменение ключа
+    attemptRef.current = 0
+  }
+
   useEffect(() => {
     let mounted = true
     const offFns: Array<() => void> = []
     let resizeObserver: ResizeObserver | null = null
 
     completedRef.current = false
+    resetState()
 
     const nextFrame = () => new Promise<void>(r => requestAnimationFrame(() => r()))
 
@@ -45,6 +74,7 @@ export const Player = ({ videoId, onCompleted }: Props) => {
       if (playerRef.current) return
 
       try {
+        setIsRetrying(false)
         const loader = await import('@kinescope/player-iframe-api-loader')
         const factory = await loader.load()
         if (!mounted || inflightRef.current !== myAttempt) return
@@ -62,6 +92,7 @@ export const Player = ({ videoId, onCompleted }: Props) => {
 
         playerRef.current = player
         setPlayerReady(true)
+        setHasError(false)
 
         const onEnded = () => completeOnce()
         const onTimeUpdate = (evt: any) => {
@@ -100,15 +131,45 @@ export const Player = ({ videoId, onCompleted }: Props) => {
       } catch (e: any) {
         const msg = e?.message ?? String(e)
         if (!mounted || inflightRef.current !== myAttempt) return
+        
+        retryCountRef.current++
+        
         if (/IFrame already removed|Timeout .* Unable to connect to iframe/i.test(msg)) {
           console.warn('Kinescope init warn:', msg)
-          // При таймауте все равно скрываем скелетон, чтобы показать iframe
-          setPlayerReady(true)
+          // При таймауте показываем ошибку если это не первая попытка
+          if (retryCountRef.current > 1) {
+            setHasError(true)
+            setIsRetrying(false)
+          } else {
+            // Автоматический retry для первого таймаута
+            setTimeout(() => { 
+              if (mounted && !playerRef.current) {
+                setIsRetrying(true)
+                void initPlayer()
+              }
+            }, 2000)
+          }
           return
         }
+        
         console.error('Kinescope init error', e)
-        if (/attached to the DOM|not attached/i.test(msg) && !playerRef.current) {
-          setTimeout(() => { if (mounted && !playerRef.current) void initPlayer() }, 120)
+        
+        // Показываем ошибку после нескольких попыток
+        if (retryCountRef.current >= 3) {
+          setHasError(true)
+          setIsRetrying(false)
+        } else if (/attached to the DOM|not attached|Failed to fetch|ERR_TIMED_OUT/i.test(msg) && !playerRef.current) {
+          // Автоматический retry с увеличивающейся задержкой
+          const delay = Math.min(1000 * Math.pow(2, retryCountRef.current), 5000)
+          setTimeout(() => { 
+            if (mounted && !playerRef.current) {
+              setIsRetrying(true)
+              void initPlayer()
+            }
+          }, delay)
+        } else {
+          setHasError(true)
+          setIsRetrying(false)
         }
       }
     }
@@ -134,6 +195,8 @@ export const Player = ({ videoId, onCompleted }: Props) => {
     return () => {
       mounted = false
       setPlayerReady(false)
+      setHasError(false)
+      setIsRetrying(false)
       if (initTimerRef.current) { clearTimeout(initTimerRef.current); initTimerRef.current = null }
       try { offFns.forEach(fn => fn()) } catch {}
       resizeObserver?.disconnect()
@@ -142,13 +205,48 @@ export const Player = ({ videoId, onCompleted }: Props) => {
       playerRef.current = null
       try { p?.destroy?.() } catch {}
     }
-  }, [videoId])
+  }, [videoId, hasError]) // Добавляем hasError в зависимости для перезапуска при retry
 
   return (
     <div className="relative w-full overflow-hidden rounded-lg">
       <div className="aspect-video relative [&>iframe]:w-full [&>iframe]:h-full">
-        {!isPlayerReady && (
+        {!isPlayerReady && !hasError && (
           <Skeleton className="absolute inset-0 w-full h-full" />
+        )}
+        {hasError && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800 text-center p-4">
+            <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Ошибка загрузки видео</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Не удалось загрузить видеоплеер. Проверьте подключение к интернету.
+            </p>
+            <Button 
+              onClick={handleRetry} 
+              disabled={isRetrying}
+              variant="outline"
+              size="sm"
+            >
+              {isRetrying ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Повторная попытка...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Попробовать снова
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+        {isRetrying && !hasError && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 text-center p-4">
+            <RefreshCw className="w-8 h-8 text-blue-500 animate-spin mb-4" />
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Загрузка видеоплеера...
+            </p>
+          </div>
         )}
         <div ref={containerRef} className="absolute inset-0" />
       </div>
