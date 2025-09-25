@@ -75,8 +75,39 @@ export const Player = ({ videoId, onCompleted }: Props) => {
 
       try {
         setIsRetrying(false)
-        const loader = await import('@kinescope/player-iframe-api-loader')
-        const factory = await loader.load()
+        
+        // Попробуем загрузить с fallback механизмом
+        let loader
+        try {
+          loader = await import('@kinescope/player-iframe-api-loader')
+        } catch (importError) {
+          console.warn('Failed to import Kinescope loader:', importError)
+          throw importError
+        }
+        
+        let factory
+         try {
+           factory = await loader.load()
+         } catch (loadError) {
+           console.warn('Failed to load Kinescope factory with default URL, trying fallback...', loadError)
+           
+           // Fallback: попробуем загрузить с конкретной версией v2
+           try {
+             factory = await loader.load('v2.1.0' as any)
+           } catch (fallbackError) {
+             console.warn('Fallback version also failed:', fallbackError)
+             
+             // Последний fallback: попробуем с прямым URL
+             try {
+               const fallbackUrl = new URL('https://player.kinescope.io/v2.1.0/iframe.player.js')
+               factory = await loader.load(fallbackUrl)
+             } catch (urlError) {
+               console.warn('URL fallback also failed:', urlError)
+               throw loadError // Бросаем оригинальную ошибку
+             }
+           }
+         }
+        
         if (!mounted || inflightRef.current !== myAttempt) return
 
         await nextFrame(); await nextFrame() // стабилизация layout
@@ -133,9 +164,31 @@ export const Player = ({ videoId, onCompleted }: Props) => {
         if (!mounted || inflightRef.current !== myAttempt) return
         
         retryCountRef.current++
+        console.warn(`Kinescope init attempt ${retryCountRef.current} failed:`, msg)
+        
+        // Специальная обработка ошибок загрузки скрипта
+        if (/Unable to load script by url.*iframe\.player\.js/i.test(msg)) {
+          console.warn('Kinescope script loading failed:', msg)
+          
+          if (retryCountRef.current >= 3) {
+            setHasError(true)
+            setIsRetrying(false)
+            return
+          }
+          
+          // Retry с увеличивающейся задержкой для script loading errors
+          const delay = Math.min(2000 * Math.pow(1.5, retryCountRef.current), 8000)
+          setTimeout(() => { 
+            if (mounted && !playerRef.current) {
+              setIsRetrying(true)
+              void initPlayer()
+            }
+          }, delay)
+          return
+        }
         
         if (/IFrame already removed|Timeout .* Unable to connect to iframe/i.test(msg)) {
-          console.warn('Kinescope init warn:', msg)
+          console.warn('Kinescope iframe connection issue:', msg)
           // При таймауте показываем ошибку если это не первая попытка
           if (retryCountRef.current > 1) {
             setHasError(true)

@@ -283,6 +283,43 @@ export class UserCourseEnrollmentRepository {
     }
   }
 
+  async reactivateEnrollment(
+    enrollmentId: string,
+    params: {
+      startDate: Date
+      selectedWorkoutDays: DayOfWeek[]
+      hasFeedback?: boolean
+    },
+    db: DbClient = this.defaultDb
+  ): Promise<UserCourseEnrollment> {
+    try {
+      const enrollment = await db.userCourseEnrollment.update({
+        where: { id: enrollmentId },
+        data: {
+          active: true,
+          startDate: params.startDate,
+          selectedWorkoutDays: params.selectedWorkoutDays,
+          hasFeedback: params.hasFeedback ?? false,
+        },
+        include: {
+          course: {
+            select: { id: true, slug: true, title: true, durationWeeks: true, contentType: true },
+          },
+        },
+      })
+
+      return this.mapPrismaEnrollmentToDomain(enrollment)
+    } catch (error) {
+      logger.error({
+        msg: 'Error reactivating enrollment',
+        enrollmentId,
+        params,
+        error,
+      })
+      throw new Error('Failed to reactivate enrollment')
+    }
+  }
+
   async createEnrollment(
     params: CreateUserCourseEnrollmentParams,
     db: DbClient = this.defaultDb

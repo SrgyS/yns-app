@@ -58,21 +58,60 @@ export class CreateUserCourseEnrollmentService {
             tx
           )
         }
-        // Создаем enrollment внутри транзакции
-        const enrollment = await tx.userCourseEnrollment.create({
-          data: {
-            userId: params.userId,
-            courseId: params.courseId,
-            startDate: params.startDate,
-            selectedWorkoutDays: params.selectedWorkoutDays,
-            hasFeedback: params.hasFeedback ?? false,
-            active: true,
-          },
-          include: {
-            course: { select: { id: true, slug: true, title: true } },
-          },
-        })
-        // Обновляем UserAccess, связывая его с созданным enrollment
+
+        // Проверяем, есть ли уже запись для этого пользователя и курса
+        const existingEnrollment = await this.userCourseEnrollmentRepository.getEnrollment(
+          params.userId,
+          params.courseId
+        )
+
+        let enrollment: UserCourseEnrollment
+
+        if (existingEnrollment) {
+          console.log('exist')
+          // Реактивируем существующую запись с новыми параметрами
+          enrollment = await this.userCourseEnrollmentRepository.reactivateEnrollment(
+            existingEnrollment.id,
+            {
+              startDate: params.startDate,
+              selectedWorkoutDays: params.selectedWorkoutDays,
+              hasFeedback: params.hasFeedback,
+            },
+            tx
+          )
+        } else {
+          // Создаем новую запись только если её нет
+          const newEnrollment = await tx.userCourseEnrollment.create({
+            data: {
+              userId: params.userId,
+              courseId: params.courseId,
+              startDate: params.startDate,
+              selectedWorkoutDays: params.selectedWorkoutDays,
+              hasFeedback: params.hasFeedback ?? false,
+              active: true,
+            },
+            include: {
+              course: { select: { id: true, slug: true, title: true } },
+            },
+          })
+
+          enrollment = {
+            id: newEnrollment.id,
+            userId: newEnrollment.userId,
+            courseId: newEnrollment.courseId,
+            selectedWorkoutDays: newEnrollment.selectedWorkoutDays,
+            startDate: newEnrollment.startDate,
+            hasFeedback: newEnrollment.hasFeedback,
+            active: newEnrollment.active,
+            course: {
+              id: newEnrollment.course.id,
+              slug: newEnrollment.course.slug,
+              title: newEnrollment.course.title,
+            },
+          }
+        }
+
+        // Обновляем UserAccess, связывая его с enrollment
         await tx.userAccess.updateMany({
           where: {
             userId: params.userId,
@@ -89,20 +128,7 @@ export class CreateUserCourseEnrollmentService {
           tx
         )
 
-        return {
-          id: enrollment.id,
-          userId: enrollment.userId,
-          courseId: enrollment.courseId,
-          selectedWorkoutDays: enrollment.selectedWorkoutDays,
-          startDate: enrollment.startDate,
-          hasFeedback: enrollment.hasFeedback,
-          active: enrollment.active,
-          course: {
-            id: enrollment.course.id,
-            slug: enrollment.course.slug,
-            title: enrollment.course.title,
-          },
-        }
+        return enrollment
       })
     } catch (error) {
       logger.error({
