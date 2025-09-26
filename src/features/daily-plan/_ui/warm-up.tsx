@@ -1,12 +1,19 @@
-import { useState, useEffect } from 'react'
+'use client'
+
+import { useState, useEffect, useRef } from 'react'
+import {
+  KinescopePlayer,
+  type PlayerHandle,
+} from './kinescope-player'
 import { Badge } from '@/shared/ui/badge'
 import { Card, CardContent, CardFooter } from '@/shared/ui/card'
-import { Player } from './kinescope-player'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { useWorkoutCompletions } from '../_vm/use-workout-completions'
 import { useWorkout } from '../_vm/use-workout'
 import { FavoriteButton } from '@/shared/ui/favorite-button'
+
+
 
 interface WarmUpProps {
   title: string
@@ -26,15 +33,15 @@ export function WarmUp({
   const [isCompleted, setIsCompleted] = useState(initialCompleted)
   const { data: session } = useAppSession()
 
-  // Используем useWorkout вместо прямого вызова API
+   const playerRef = useRef<PlayerHandle | null>(null)
+
   const { getWorkout } = useWorkout()
   const { data: workout } = getWorkout(workoutId)
 
-  // Получаем хук для работы со статусом выполнения тренировок
+  console.log(workout?.videoId)
   const { getWorkoutCompletionStatus, updateWorkoutCompletion } =
     useWorkoutCompletions()
 
-  // Получаем актуальный статус выполнения при загрузке данных тренировки
   useEffect(() => {
     if (workout?.type && session?.user?.id && enrollmentId) {
       const fetchCompletionStatus = async () => {
@@ -57,7 +64,7 @@ export function WarmUp({
     getWorkoutCompletionStatus,
     userDailyPlanId,
   ])
-
+console.log('warm up playerRef', playerRef.current)
   const handleVideoCompleted = () => {
     if (!isCompleted) {
       toggleCompleted()
@@ -91,10 +98,11 @@ export function WarmUp({
       <CardContent>
         <h3 className="text-lg font-medium mb-2">{title}</h3>
         {workout?.videoId && (
-          <Player
-            key={workout.videoId}
+          <KinescopePlayer
+            ref={playerRef}
+            height={300}
             videoId={workout.videoId}
-            onCompleted={handleVideoCompleted}
+            onEnded={handleVideoCompleted}
           />
         )}
       </CardContent>
