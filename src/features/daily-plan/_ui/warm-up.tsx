@@ -38,7 +38,6 @@ export function WarmUp({
   const { getWorkout } = useWorkout()
   const { data: workout } = getWorkout(workoutId)
 
-  console.log(workout?.videoId)
   const { getWorkoutCompletionStatus, updateWorkoutCompletion } =
     useWorkoutCompletions()
 
@@ -64,7 +63,6 @@ export function WarmUp({
     getWorkoutCompletionStatus,
     userDailyPlanId,
   ])
-console.log('warm up playerRef', playerRef.current)
   const handleVideoCompleted = () => {
     if (!isCompleted) {
       toggleCompleted()
@@ -99,9 +97,12 @@ console.log('warm up playerRef', playerRef.current)
         <h3 className="text-lg font-medium mb-2">{title}</h3>
         {workout?.videoId && (
           <KinescopePlayer
+            key={`${userDailyPlanId}-${workout.videoId}`}
             ref={playerRef}
-            height={300}
             videoId={workout.videoId}
+            options={{
+              size: { height: 300 },
+            }}
             onEnded={handleVideoCompleted}
           />
         )}
