@@ -15,7 +15,7 @@ export function useCourseAction(courseId: CourseId, courseSlug: CourseSlug) {
   }
 
   if (action.type === "buy") {
-    return { ...action, href: `/select-workout-days/${courseId}` };
+    return { ...action, href: `/payment/${courseId}` };
   }
 
   if (action.type === "enter") {
