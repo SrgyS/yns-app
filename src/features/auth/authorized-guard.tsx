@@ -3,7 +3,6 @@
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { FullPageSpinner } from '@/shared/ui/full-page-spinner'
 import { signIn } from 'next-auth/react'
-import { usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 
 export default function AuthorizedGuard({
@@ -14,7 +13,6 @@ export default function AuthorizedGuard({
   const session = useAppSession()
 
   const isUnauthenticated = session.status === 'unauthenticated'
-  const pathname = usePathname()
 
   // Запоминаем, что пользователь уже был аутентифицирован в текущей сессии рендера.
   const hadAuthenticatedRef = useRef(false)
@@ -26,9 +24,9 @@ export default function AuthorizedGuard({
 
   useEffect(() => {
     if (isUnauthenticated) {
-      signIn(undefined, { callbackUrl: pathname })
+      signIn()
     }
-  }, [isUnauthenticated, pathname])
+  }, [isUnauthenticated])
 
   // Показываем полноэкранный спиннер только:
   // - пока статус ещё не определён на первом монтировании (loading и не было authenticated)
