@@ -103,15 +103,18 @@
                     "additionalProperties": false,
                     "required": [
                         "access",
-                        "price"
+                        "price",
+                        "accessDurationDays"
                     ],
                     "properties": {
                         "access": {
                             "const": "paid"
                         },
                         "price": {
-                            "type": "integer",
-                            "minimum": 1
+                            "type": "number"
+                        },
+                        "accessDurationDays": {
+                            "type": "number"
                         }
                     }
                 }

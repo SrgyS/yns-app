@@ -415,6 +415,7 @@ model CourseProduct {
   id       String     @id @default(cuid())
   access   AccessType
   price    Int?
+  accessDurationDays  Int?
   courseId String     @unique
   course   Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }

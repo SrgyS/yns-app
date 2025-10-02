@@ -12,6 +12,7 @@ export type Product =
   | {
       access: "paid";
       price: number;
+      accessDurationDays: number;
     };
 
 /**

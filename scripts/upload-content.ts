@@ -142,7 +142,9 @@ async function downloadAndUploadContent() {
     console.log('🚀 Начало удаленной загрузки и импорта контента...')
 
     if (!process.env.CONTENT_URL || !process.env.CONTENT_TOKEN) {
-      throw new Error('CONTENT_URL и/или CONTENT_TOKEN не заданы в переменных окружения')
+      throw new Error(
+        'CONTENT_URL и/или CONTENT_TOKEN не заданы в переменных окружения'
+      )
     }
 
     const allEntities = await listAllEntityFiles()
@@ -228,7 +230,10 @@ async function downloadAndUploadContent() {
         }
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { slug: _slug, ...restData } = workoutData as Record<string, unknown>
+        const { slug: _slug, ...restData } = workoutData as Record<
+          string,
+          unknown
+        >
 
         const dataForUpsert = {
           ...restData,
@@ -244,7 +249,9 @@ async function downloadAndUploadContent() {
           create: { slug: workoutSlug, ...(dataForUpsert as any) },
         })
 
-        console.log(`  ✅ Тренировка импортирована/обновлена: ${workoutData.title}`)
+        console.log(
+          `  ✅ Тренировка импортирована/обновлена: ${workoutData.title}`
+        )
       }
     }
 
@@ -258,11 +265,21 @@ async function downloadAndUploadContent() {
       if (!courseData) continue
 
       // Доп. проверка продукта перед записью в БД
-      if (courseData.product.access === 'paid') {
+      const isPaidCourse = courseData.product.access === 'paid'
+
+      if (isPaidCourse) {
         const price = (courseData.product as any).price
         if (!Number.isInteger(price) || price < 1) {
           console.error(
             `  ❌ Ошибка: Для платного курса '${courseSlug}' требуется целочисленная цена >= 1. Получено: ${price}`
+          )
+          continue
+        }
+
+        const accessDurationDays = (courseData.product as any).accessDurationDays
+        if (!Number.isInteger(accessDurationDays) || accessDurationDays < 1) {
+          console.error(
+            `  ❌ Ошибка: Для платного курса '${courseSlug}' требуется положительное целочисленное поле accessDurationDays (количество дней доступа). Получено: ${accessDurationDays}`
           )
           continue
         }
@@ -290,15 +307,23 @@ async function downloadAndUploadContent() {
                 update: {
                   access: courseData.product.access,
                   price:
-                    courseData.product.access === 'paid'
+                    isPaidCourse
                       ? (courseData.product as any).price
+                      : null,
+                  accessDurationDays:
+                    isPaidCourse
+                      ? (courseData.product as any).accessDurationDays
                       : null,
                 },
                 create: {
                   access: courseData.product.access,
                   price:
-                    courseData.product.access === 'paid'
+                    isPaidCourse
                       ? (courseData.product as any).price
+                      : null,
+                  accessDurationDays:
+                    isPaidCourse
+                      ? (courseData.product as any).accessDurationDays
                       : null,
                 },
               },
@@ -319,8 +344,12 @@ async function downloadAndUploadContent() {
               create: {
                 access: courseData.product.access,
                 price:
-                  courseData.product.access === 'paid'
+                  isPaidCourse
                     ? (courseData.product as any).price
+                    : null,
+                accessDurationDays:
+                  isPaidCourse
+                    ? (courseData.product as any).accessDurationDays
                     : null,
               },
             },
@@ -387,15 +416,21 @@ async function downloadAndUploadContent() {
 
         // Импорт недель для подписочных курсов
         if (course.contentType === 'SUBSCRIPTION') {
-          console.log(`  📅 Импорт недель для подписочного курса "${courseSlug}"...`)
-          const weeksRelativePath = `courses/${courseSlug}/weeks.yaml`
-          const weeksData = await downloadAndParseValidatedYaml<WeeksConfiguration>(
-            weeksRelativePath,
-            weeksSchema
+          console.log(
+            `  📅 Импорт недель для подписочного курса "${courseSlug}"...`
           )
+          const weeksRelativePath = `courses/${courseSlug}/weeks.yaml`
+          const weeksData =
+            await downloadAndParseValidatedYaml<WeeksConfiguration>(
+              weeksRelativePath,
+              weeksSchema
+            )
 
           if (weeksData && (weeksData as any).weeks) {
-            for (const weekData of (weeksData as any).weeks as Array<{ weekNumber: number; releaseAt: string }>) {
+            for (const weekData of (weeksData as any).weeks as Array<{
+              weekNumber: number
+              releaseAt: string
+            }>) {
               await tx.week.upsert({
                 where: {
                   courseId_weekNumber: {
@@ -448,16 +483,18 @@ async function downloadAndUploadContent() {
             )
 
             // Сначала удаляем связанные UserDailyPlan записи
-            const { count: userPlansCount } = await tx.userDailyPlan.deleteMany({
-              where: {
-                originalDailyPlan: {
-                  courseId: course.id,
-                  weekNumber: {
-                    lt: firstValidWeek,
+            const { count: userPlansCount } = await tx.userDailyPlan.deleteMany(
+              {
+                where: {
+                  originalDailyPlan: {
+                    courseId: course.id,
+                    weekNumber: {
+                      lt: firstValidWeek,
+                    },
                   },
                 },
-              },
-            })
+              }
+            )
             if (userPlansCount > 0) {
               console.log(
                 `    - Удалено ${userPlansCount} связанных пользовательских планов.`
@@ -474,7 +511,9 @@ async function downloadAndUploadContent() {
               },
             })
             if (count > 0) {
-              console.log(`    - Удалено ${count} устаревших ежедневных планов.`)
+              console.log(
+                `    - Удалено ${count} устаревших ежедневных планов.`
+              )
             }
 
             dailyPlanSlugsToProcess = validPlans
@@ -514,7 +553,10 @@ async function downloadAndUploadContent() {
                 })
               : null
 
-            if (!warmupWorkout || (dailyPlanData.mainWorkoutId && !mainWorkout)) {
+            if (
+              !warmupWorkout ||
+              (dailyPlanData.mainWorkoutId && !mainWorkout)
+            ) {
               console.error(
                 `    ❌ Ошибка: Не найдены зависимости для ${dailyPlanSlug}. Пропускаем.`
               )
@@ -554,12 +596,17 @@ async function downloadAndUploadContent() {
               ...(dailyPlanData.mainWorkoutId && mainWorkout
                 ? { mainWorkout: { connect: { id: mainWorkout.id } } }
                 : {}),
-              ...(mealPlan ? { mealPlan: { connect: { id: mealPlan.id } } } : {}),
+              ...(mealPlan
+                ? { mealPlan: { connect: { id: mealPlan.id } } }
+                : {}),
             }
 
             const upsertedPlan = await tx.dailyPlan.upsert({
               where: {
-                courseId_slug: { courseId: course.id, slug: dailyPlanData.slug },
+                courseId_slug: {
+                  courseId: course.id,
+                  slug: dailyPlanData.slug,
+                },
               },
               update: dailyPlanUpdateData as any,
               create: dailyPlanCreateData as any,
@@ -583,24 +630,28 @@ async function downloadAndUploadContent() {
             console.log(
               `    ✅ Ежедневный план импортирован/обновлен: ${dailyPlanData.slug}`
             )
-          }           
+          }
         }
-          // После импорта ежедневных планов — предупреждение о несоответствии требуемым количествам
+        // После импорта ежедневных планов — предупреждение о несоответствии требуемым количествам
         try {
           const durationWeeks = course.durationWeeks ?? 0
           const minDays = course.minWorkoutDaysPerWeek ?? 0
           const totalDays = durationWeeks * 7
           const requiredMainWorkoutDays = minDays * durationWeeks
-          const requiredWarmupOnlyDays = Math.max(0, totalDays - requiredMainWorkoutDays)
+          const requiredWarmupOnlyDays = Math.max(
+            0,
+            totalDays - requiredMainWorkoutDays
+          )
 
-          const [actualMainWorkoutDays, actualWarmupOnlyDays] = await Promise.all([
-            tx.dailyPlan.count({
-              where: { courseId: course.id, NOT: { mainWorkoutId: null } },
-            }),
-            tx.dailyPlan.count({
-              where: { courseId: course.id, mainWorkoutId: null },
-            }),
-          ])
+          const [actualMainWorkoutDays, actualWarmupOnlyDays] =
+            await Promise.all([
+              tx.dailyPlan.count({
+                where: { courseId: course.id, NOT: { mainWorkoutId: null } },
+              }),
+              tx.dailyPlan.count({
+                where: { courseId: course.id, mainWorkoutId: null },
+              }),
+            ])
 
           if (
             actualMainWorkoutDays < requiredMainWorkoutDays ||
@@ -619,7 +670,6 @@ async function downloadAndUploadContent() {
       })
     }
 
- 
     console.log('✅ Импорт курсов завершён!')
   } catch (error) {
     console.error('❌ Произошла ошибка при загрузке контента:', error)
@@ -627,8 +677,6 @@ async function downloadAndUploadContent() {
     await dbClient.$disconnect()
   }
 }
-
-
 
 // Запуск основного процесса
 
