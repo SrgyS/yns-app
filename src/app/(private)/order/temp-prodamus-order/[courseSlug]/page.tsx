@@ -1,6 +1,8 @@
 import { server } from '@/app/server'
 import { GetCourseService } from '@/entity/course/module'
 import { SessionService } from '@/kernel/lib/next-auth/server'
+import { CourseSlug } from '@/kernel/domain/course'
+import { getCourseOrderSucccessPath } from '@/kernel/lib/router'
 import { Button } from '@/shared/ui/button'
 import {
   Card,
@@ -9,6 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/ui/card'
+import Link from 'next/link'
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 const CURRENCY_FORMATTER = new Intl.NumberFormat('ru-RU', {
@@ -17,29 +21,66 @@ const CURRENCY_FORMATTER = new Intl.NumberFormat('ru-RU', {
   maximumFractionDigits: 0,
 })
 
-type PageParams = Promise<{
-  courseId: string
-}>
+// TODO(prod-integr): delete temporary UI when Prodamus payment page is connected
+
+type SearchParams = {
+  orderId?: string | string[]
+  urlReturn?: string | string[]
+}
 
 export default async function PaymentPage({
   params,
+  searchParams,
 }: {
-  params: PageParams
+  params: { courseSlug: CourseSlug }
+  searchParams: SearchParams | Promise<SearchParams>
 }) {
-  const [{ courseId }, sessionService, courseService] = await Promise.all([
-    params,
+  const [sessionService, courseService] = await Promise.all([
     Promise.resolve(server.get(SessionService)),
     Promise.resolve(server.get(GetCourseService)),
   ])
 
+  const courseSlug = params.courseSlug
+  const resolvedSearchParams = await Promise.resolve(searchParams)
+
+  const orderIdRaw = Array.isArray(resolvedSearchParams.orderId)
+    ? resolvedSearchParams.orderId[0]
+    : resolvedSearchParams.orderId
+  const urlReturnRaw = Array.isArray(resolvedSearchParams.urlReturn)
+    ? resolvedSearchParams.urlReturn[0]
+    : resolvedSearchParams.urlReturn
+
+  const orderId = orderIdRaw ? decodeURIComponent(orderIdRaw) : null
+
+  if (!orderId) {
+    redirect(`/order?courseSlug=${courseSlug}`)
+  }
+
+  const urlReturn = (() => {
+    if (!urlReturnRaw) {
+      return undefined
+    }
+    try {
+      return decodeURIComponent(urlReturnRaw)
+    } catch (error) {
+      console.error('Error decoding urlReturn', error)
+      return urlReturnRaw
+    }
+  })()
+
   const session = await sessionService.get()
 
   if (!session) {
-    const callbackUrl = encodeURIComponent(`/payment/${courseId}`)
-    redirect(`/auth/sign-in?callbackUrl=${callbackUrl}`)
+    const headersList = await headers()
+    const proto = headersList.get('x-forwarded-proto') ?? 'https'
+    const host = headersList.get('x-forwarded-host') ?? headersList.get('host')
+    const pathname = headersList.get('x-pathname') ?? '/order'
+    const currentUrl = host ? new URL(`${proto}://${host}${pathname}`) : null
+
+    redirect(`/auth/sign-in?callbackUrl=${currentUrl}`)
   }
 
-  const course = await courseService.exec({ id: courseId })
+  const course = await courseService.exec({ slug: courseSlug })
 
   if (!course) {
     redirect('/')
@@ -47,7 +88,6 @@ export default async function PaymentPage({
 
   const userName = session.user?.name ?? 'Без имени'
   const userEmail = session.user?.email ?? '—'
-  const courseSlug = course.slug
   const coursePrice =
     course.product.access === 'paid'
       ? CURRENCY_FORMATTER.format(course.product.price)
@@ -56,6 +96,10 @@ export default async function PaymentPage({
   if (course.product.access !== 'paid') {
     redirect(`/day/${courseSlug}`)
   }
+
+  const successHref = `${getCourseOrderSucccessPath()}?_payform_order_id=${encodeURIComponent(
+    orderId
+  )}`
 
   return (
     <main className="container max-w-3xl space-y-8 py-12">
@@ -101,9 +145,21 @@ export default async function PaymentPage({
               можно использовать кнопку ниже для отладки пользовательского
               сценария.
             </p>
-            <Button className="w-full" size="lg" type="button">
-              Оплатить
-            </Button>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button className="w-full sm:w-auto" size="lg" asChild>
+                <Link href={successHref}>Оплатить</Link>
+              </Button>
+              {urlReturn ? (
+                <Button
+                  className="w-full sm:w-auto"
+                  variant="outline"
+                  size="lg"
+                  asChild
+                >
+                  <Link href={urlReturn}>Отменить и вернуться</Link>
+                </Button>
+              ) : null}
+            </div>
           </section>
         </CardContent>
       </Card>

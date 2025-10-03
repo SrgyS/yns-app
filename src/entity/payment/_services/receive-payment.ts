@@ -3,7 +3,7 @@ import { PaymentRepository } from "../_repository/payment";
 import { UserId } from "@/kernel/domain/user";
 import { PaymentId } from "@/kernel/domain/payment";
 import { TRPCError } from "@trpc/server";
-import { Payment } from "../_domain/type";
+import { Payment } from '../_domain/types'
 
 
 type Command = {

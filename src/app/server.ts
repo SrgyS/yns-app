@@ -12,7 +12,7 @@ import { CourseEnrollmentControllerModule } from '@/features/course-enrollment/m
 import { DailyPlanModule } from '@/features/daily-plan/module'
 import { WorkoutEntityModule } from '@/entity/workout/module'
 import { PaymentEntityModule } from '@/entity/payment/module'
-import { CoursePurchaseModule } from '@/features/course-purchase/module'
+import { CourseOrderModule } from '@/features/course-order/module'
 import { UserAccessModule } from '@/entity/user-access/module'
 
 export function createServer() {
@@ -30,8 +30,8 @@ export function createServer() {
     DailyPlanModule,
     WorkoutEntityModule,
     PaymentEntityModule,
-    CoursePurchaseModule,
-    UserAccessModule,
+    CourseOrderModule,
+    UserAccessModule
   )
 
   return container

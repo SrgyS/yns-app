@@ -1,7 +1,7 @@
 import { injectable } from "inversify";
 
 @injectable()
-export class ReceivePurchaseService {
+export class ReceiveOrderService {
     constructor() {}
     async exec() {
         

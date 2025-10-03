@@ -9,6 +9,7 @@ export type CourseProduct =
   | {
       access: 'paid'
       price: number
+      accessDurationDays: number
     }
 
 export type ContentType = 'FIXED_COURSE' | 'SUBSCRIPTION'

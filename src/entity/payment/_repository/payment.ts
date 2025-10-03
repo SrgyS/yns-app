@@ -3,7 +3,7 @@ import { dbClient } from "@/shared/lib/db";
 import { CourseId } from "@/kernel/domain/course";
 import { UserId } from "@/kernel/domain/user";
 import { PaymentId } from "@/kernel/domain/payment";
-import { Payment } from "../_domain/type";
+import { Payment } from '../_domain/types'
 import { CourseContentType } from "@prisma/client";
 
 @injectable()

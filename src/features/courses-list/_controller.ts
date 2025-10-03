@@ -1,13 +1,14 @@
+import { injectable } from 'inversify'
 import { z } from 'zod'
 import { Controller, publicProcedure, router } from '@/kernel/lib/trpc/module'
 import { GetCoursesListService } from '@/entity/course/module'
-import { injectable } from 'inversify'
 import { GetCourseActionService } from './_services/get-course-action'
 
 @injectable()
 export class CoursesListController extends Controller {
-  constructor(private getCoursesListService: GetCoursesListService,
-    private getCourseActionService: GetCourseActionService,
+  constructor(
+    private getCoursesListService: GetCoursesListService,
+    private getCourseActionService: GetCourseActionService
   ) {
     super()
   }

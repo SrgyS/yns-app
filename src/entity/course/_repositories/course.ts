@@ -22,7 +22,7 @@ export class CoursesRepository {
   }
   private async mapPrismaToDomain(
     course: PrismaCourse & {
-      product: { access: string; price: number | null } | null
+      product: { access: string; price: number | null; accessDurationDays: number | null } | null
       dependencies: { id: string }[]
     }
   ): Promise<Course> {
@@ -33,7 +33,11 @@ export class CoursesRepository {
 
     const product: CourseProduct =
       course.product?.access === 'paid'
-        ? { access: 'paid', price: course.product.price ?? 0 }
+        ? {
+            access: 'paid',
+            price: course.product.price ?? 0,
+            accessDurationDays: course.product.accessDurationDays ?? 0,
+          }
         : { access: 'free' }
 
     return {
