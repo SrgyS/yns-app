@@ -4,7 +4,7 @@ import type { DbClient } from '@/shared/lib/db'
 import {
   UserCourseEnrollment,
   CreateUserCourseEnrollmentParams,
-} from '../../course'
+} from '..'
 import { logger } from '@/shared/lib/logger'
 import {
   UserCourseEnrollment as PrismaUserCourseEnrollment,

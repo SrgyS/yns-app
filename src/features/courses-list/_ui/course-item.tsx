@@ -1,6 +1,6 @@
 'use client'
 
-import { Course } from '@/entity/course'
+import { Course } from '@/entities/course'
 import { MdxCode } from '@/shared/lib/mdx'
 import { Card, CardFooter, CardHeader, CardTitle } from '@/shared/ui/card'
 import { CourseAction } from './course-action'

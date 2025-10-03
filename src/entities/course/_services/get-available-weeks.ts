@@ -3,7 +3,7 @@ import { CourseContentType } from '@prisma/client'
 import { dbClient } from '@/shared/lib/db'
 import { logger } from '@/shared/lib/logger'
 import { differenceInCalendarWeeks, startOfWeek, addDays } from 'date-fns'
-import { UserAccessRepository } from '@/entity/user-access/_repository/user-access'
+import { UserAccessRepository } from '@/entities/user-access/_repository/user-access'
 import { ContentType } from '@/kernel/domain/course'
 
 export interface GetAvailableWeeksParams {

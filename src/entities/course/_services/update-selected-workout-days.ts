@@ -4,7 +4,7 @@ import { UserDailyPlanRepository } from '../_repositories/user-daily-plan'
 import { DayOfWeek } from '@prisma/client'
 import { logger } from '@/shared/lib/logger'
 import { dbClient } from '@/shared/lib/db'
-import { UserWorkoutCompletionRepository } from '@/entity/workout/_repositories/user-workout-completion'
+import { UserWorkoutCompletionRepository } from '@/entities/workout/_repositories/user-workout-completion'
 
 export interface UpdateWorkoutDaysParams {
   enrollmentId: string

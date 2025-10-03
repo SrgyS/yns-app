@@ -5,7 +5,7 @@ import { injectable } from "inversify";
 
 import { PaymentId } from "@/kernel/domain/payment";
 import { UserId } from "@/kernel/domain/user";
-import { Product } from "@/entity/payment/_domain/types";
+import { Product } from '@/entities/payment/_domain/types'
 
 const baseUrl = privateConfig.PRODAMUS_URL ?? ``;
 

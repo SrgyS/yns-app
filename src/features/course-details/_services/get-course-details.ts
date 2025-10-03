@@ -4,9 +4,7 @@ import { CourseDetails } from "../_domain/types";
 import { CourseSlug } from "@/kernel/domain/course";
 import { TRPCError } from "@trpc/server";
 // import { createCourseDetails } from "../_domain/factory";
-import {
-  GetCourseService,
-} from '@/entity/course/module'
+import { GetCourseService } from '@/entities/course/module'
 
 type Query = {
   courseSlug: CourseSlug;

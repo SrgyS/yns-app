@@ -1,6 +1,6 @@
 import { injectable } from 'inversify'
 import { UserCourseEnrollmentRepository } from '../_repositories/user-course-enrollment'
-import { UserCourseEnrollment } from '../../course'
+import { UserCourseEnrollment } from '..'
 import { logger } from '@/shared/lib/logger'
 
 

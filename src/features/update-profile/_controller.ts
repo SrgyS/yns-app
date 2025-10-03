@@ -6,11 +6,11 @@ import {
 import {
   GetProfileService,
   UpdateProfileService,
-} from '../../entity/user/module'
+} from '../../entities/user/module'
 import { injectable } from 'inversify'
 import { createProfileAbility } from './_domain/ability'
 import z from 'zod'
-import { profileSchema } from '../../entity/user/client'
+import { profileSchema } from '../../entities/user/client'
 
 const withUseridSchema = z.object({
   userId: z.string(),

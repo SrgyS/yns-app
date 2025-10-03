@@ -1,9 +1,9 @@
 import { injectable } from 'inversify'
 import { UserDailyPlanRepository } from '../_repositories/user-daily-plan'
-import { UserDailyPlan, GetUserDailyPlanParams } from '../../course'
+import { UserDailyPlan, GetUserDailyPlanParams } from '..'
 import { logger } from '@/shared/lib/logger'
 import { GetCourseService } from './get-course'
-import { CheckCourseAccessService } from '@/entity/user-access/module'
+import { CheckCourseAccessService } from '@/entities/user-access/module'
 
 @injectable()
 export class GetUserDailyPlanService {

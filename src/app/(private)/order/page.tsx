@@ -1,5 +1,5 @@
 // import { server } from '@/app/server'
-// import { GetCourseService } from '@/entity/course/module'
+// import { GetCourseService } from '@/entities/course/module'
 // import { SessionService } from '@/kernel/lib/next-auth/server'
 // import { Button } from '@/shared/ui/button'
 // import {

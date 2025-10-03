@@ -5,7 +5,7 @@ import { CreateUserCourseEnrollmentParams, UserCourseEnrollment } from '..'
 import { logger } from '@/shared/lib/logger'
 import { dbClient } from '@/shared/lib/db'
 import { GetCourseService } from './get-course'
-import { CheckCourseAccessService } from '@/entity/user-access/module'
+import { CheckCourseAccessService } from '@/entities/user-access/module'
 
 @injectable()
 export class CreateUserCourseEnrollmentService {

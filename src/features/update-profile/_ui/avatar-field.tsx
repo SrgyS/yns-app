@@ -3,7 +3,7 @@ import { Button } from '@/shared/ui/button'
 import { Spinner } from '@/shared/ui/spinner'
 
 import { useUploadAvatar } from '../_vm/use-upload-avatar'
-import { ProfileAvatar } from '@/entity/user/client'
+import { ProfileAvatar } from '@/entities/user/client'
 
 export function AvatarField({
   value,

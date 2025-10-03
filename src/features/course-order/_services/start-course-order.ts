@@ -1,6 +1,6 @@
-import { GetCourseService } from '@/entity/course/module'
-import { CreatePaymentService } from '@/entity/payment/module'
-import { CheckCourseAccessService } from '@/entity/user-access/module'
+import { GetCourseService } from '@/entities/course/module'
+import { CreatePaymentService } from '@/entities/payment/module'
+import { CheckCourseAccessService } from '@/entities/user-access/module'
 import { CourseSlug } from '@/kernel/domain/course'
 import { UserId } from '@/kernel/domain/user'
 import {
@@ -84,7 +84,7 @@ export class StartCourseOrderService {
     const notificationPath = getCourseOrdereWebhookPath(publicConfig.PUBLIC_URL)
 
     const isProdamusConfigured = Boolean(
-      privateConfig.PRODAMUS_URL && privateConfig.PRODAMUS_KEY,
+      privateConfig.PRODAMUS_URL && privateConfig.PRODAMUS_KEY
     )
 
     const orderId = `${payment.paymentId}-${payment.products

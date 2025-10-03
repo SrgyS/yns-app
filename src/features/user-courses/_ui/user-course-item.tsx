@@ -1,6 +1,6 @@
 'use client'
 
-import { Course } from '@/entity/course'
+import { Course } from '@/entities/course'
 import { MdxCode } from '@/shared/lib/mdx'
 import { Button } from '@/shared/ui/button'
 import {
@@ -14,7 +14,7 @@ import { CalendarDays, CheckCircle } from 'lucide-react'
 import { Badge } from '@/shared/ui/badge'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { UserCourseEnrollmentApi } from '@/entity/course'
+import { UserCourseEnrollmentApi } from '@/entities/course'
 import React from 'react'
 import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { SmallSpinner } from '@/shared/ui/small-spinner'

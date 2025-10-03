@@ -1,7 +1,10 @@
 import Link from 'next/link'
 import { server } from '@/app/server'
 import { SessionService } from '@/kernel/lib/next-auth/server'
-import { GetActiveEnrollmentService, GetUserEnrollmentsService } from '@/entity/course/module'
+import {
+  GetActiveEnrollmentService,
+  GetUserEnrollmentsService,
+} from '@/entities/course/module'
 import { cn } from '@/shared/ui/utils'
 
 export async function MainNav() {

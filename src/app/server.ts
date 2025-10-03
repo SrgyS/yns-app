@@ -1,19 +1,19 @@
 import 'reflect-metadata'
 
-import { CourseEntityModule } from '@/entity/course/module'
+import { CourseEntityModule } from '@/entities/course/module'
 import { CoursesListModule } from '@/features/courses-list/module'
 import { UpdateProfileModule } from '@/features/update-profile/server'
-import { UserEntityModule } from '@/entity/user/module'
+import { UserEntityModule } from '@/entities/user/module'
 import { NextAuthModule } from '@/kernel/lib/next-auth/server'
 import { Container } from 'inversify'
 import { TrpcModule } from '@/kernel/lib/trpc/module'
 import { CourseDetailsModule } from '@/features/course-details/module'
 import { CourseEnrollmentControllerModule } from '@/features/course-enrollment/module'
 import { DailyPlanModule } from '@/features/daily-plan/module'
-import { WorkoutEntityModule } from '@/entity/workout/module'
-import { PaymentEntityModule } from '@/entity/payment/module'
+import { WorkoutEntityModule } from '@/entities/workout/module'
+import { PaymentEntityModule } from '@/entities/payment/module'
 import { CourseOrderModule } from '@/features/course-order/module'
-import { UserAccessModule } from '@/entity/user-access/module'
+import { UserAccessModule } from '@/entities/user-access/module'
 
 export function createServer() {
   const container = new Container()

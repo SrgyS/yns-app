@@ -1,7 +1,7 @@
 'use client'
 
 import { UserCoursesList } from './user-courses-list'
-import { Course } from '@/entity/course'
+import { Course } from '@/entities/course'
 import { UserId } from '@/kernel/domain/user'
 
 interface UserCoursesSectionProps {

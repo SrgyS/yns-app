@@ -11,8 +11,8 @@ import { privateConfig } from '@/shared/config/private'
 import { AdapterUser } from 'next-auth/adapters'
 import { injectable } from 'inversify'
 import { CreateUserService } from '../../services/create-user'
-import { AuthCredentialsService } from '@/entity/user/_services/auth-credentials'
-import { UserRepository } from '@/entity/user/_repositories/user'
+import { AuthCredentialsService } from '@/entities/user/_services/auth-credentials'
+import { UserRepository } from '@/entities/user/_repositories/user'
 
 const prismaAdapter = PrismaAdapter(dbClient)
 

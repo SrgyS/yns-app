@@ -1,6 +1,6 @@
 import { injectable } from 'inversify'
 import { Course as PrismaCourse } from '@prisma/client'
-import { Course } from '@/entity/course'
+import { Course } from '@/entities/course'
 import { CourseId, CourseProduct, CourseSlug } from '@/kernel/domain/course'
 import { dbClient } from '@/shared/lib/db'
 import { compileMDX } from '@/shared/lib/mdx/server'

@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from '@/shared/ui/form'
 import { Input } from '@/shared/ui/input'
-import { Profile, profileSchema } from '@/entity/user/client'
+import { Profile, profileSchema } from '@/entities/user/client'
 import { useUpdateProfile } from '../_vm/use-update-profile'
 import { AvatarField } from './avatar-field'
 import { UserId } from '@/kernel/domain/user'

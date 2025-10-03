@@ -18,7 +18,7 @@ import {
   GetEnrollmentByCourseSlugService,
   GetEnrollmentByIdService,
   GetAvailableWeeksService,
-} from '@/entity/course/module'
+} from '@/entities/course/module'
 
 @injectable()
 export class CourseEnrollmentController extends Controller {

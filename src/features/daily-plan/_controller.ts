@@ -5,10 +5,10 @@ import {
 } from '@/kernel/lib/trpc/module'
 import { injectable } from 'inversify'
 import { z } from 'zod'
-import { GetWorkoutService } from '@/entity/workout/module'
-import { UpdateWorkoutCompletionService } from '@/entity/workout/_services/update-workout-completion'
+import { GetWorkoutService } from '@/entities/workout/module'
+import { UpdateWorkoutCompletionService } from '@/entities/workout/_services/update-workout-completion'
 import { WorkoutType } from '@prisma/client'
-import { GetWorkoutCompletionStatusService } from '@/entity/workout/_services/get-workout-completion-status'
+import { GetWorkoutCompletionStatusService } from '@/entities/workout/_services/get-workout-completion-status'
 
 @injectable()
 export class WorkoutController extends Controller {

@@ -1,12 +1,10 @@
-import {
-  GetCourseService,
-} from "@/entity/course/module";
+import { GetCourseService } from '@/entities/course/module'
 import { injectable } from "inversify";
 import { CourseAction } from "../_domain/types";
 import { CourseId } from "@/kernel/domain/course";
 import { TRPCError } from "@trpc/server";
 import { UserId } from "@/kernel/domain/user";
-import { CheckCourseAccessService } from "@/entity/user-access/module";
+import { CheckCourseAccessService } from '@/entities/user-access/module'
 import { getCourseAction } from "../_domain/methods";
 
 type Query = {

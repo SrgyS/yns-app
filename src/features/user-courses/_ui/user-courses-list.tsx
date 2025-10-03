@@ -1,6 +1,6 @@
 'use client'
 
-import { Course } from '@/entity/course'
+import { Course } from '@/entities/course'
 import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { UserId } from '@/kernel/domain/user'
 import { UserCourseItem } from './user-course-item'

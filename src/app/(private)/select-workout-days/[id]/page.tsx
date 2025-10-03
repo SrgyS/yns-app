@@ -1,7 +1,5 @@
 import { server } from '@/app/server'
-import {
-  GetCourseService,
-} from '@/entity/course/module'
+import { GetCourseService } from '@/entities/course/module'
 import { redirect } from 'next/navigation'
 import { SessionService } from '@/kernel/lib/next-auth/server'
 // Импортируем из индексного файла

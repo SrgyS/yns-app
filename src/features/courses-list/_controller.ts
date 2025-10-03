@@ -1,7 +1,7 @@
 import { injectable } from 'inversify'
 import { z } from 'zod'
 import { Controller, publicProcedure, router } from '@/kernel/lib/trpc/module'
-import { GetCoursesListService } from '@/entity/course/module'
+import { GetCoursesListService } from '@/entities/course/module'
 import { GetCourseActionService } from './_services/get-course-action'
 
 @injectable()

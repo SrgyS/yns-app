@@ -8,7 +8,7 @@ import {
   GetUserDailyPlanByEnrollmentParams,
   GetUserDailyPlanParams,
   UserDailyPlan,
-} from '../../course'
+} from '..'
 import { logger } from '@/shared/lib/logger'
 import { PlanningRepository } from '../../planning'
 

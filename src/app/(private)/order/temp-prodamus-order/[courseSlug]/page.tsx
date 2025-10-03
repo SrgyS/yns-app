@@ -1,5 +1,5 @@
 import { server } from '@/app/server'
-import { GetCourseService } from '@/entity/course/module'
+import { GetCourseService } from '@/entities/course/module'
 import { SessionService } from '@/kernel/lib/next-auth/server'
 import { CourseSlug } from '@/kernel/domain/course'
 import { getCourseOrderSucccessPath } from '@/kernel/lib/router'
