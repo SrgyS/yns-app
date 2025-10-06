@@ -128,6 +128,8 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
       []
     )
 
+    const { createOptions, widthStyle, heightStyle } = normalized
+
     useEffect(() => {
       const requestId = ++requestIdRef.current
       let isMounted = true
@@ -137,7 +139,7 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
           return
         }
 
-        if (!normalized.createOptions) {
+        if (!createOptions) {
           return
         }
 
@@ -157,18 +159,15 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
           const container = containerRef.current
           if (!container) return
 
-        container.innerHTML = ''
+          container.innerHTML = ''
 
-        const innerContainer = document.createElement('div')
-        innerContainer.id = containerId
-        innerContainer.style.width = '100%'
-        innerContainer.style.height = '100%'
-        container.appendChild(innerContainer)
+          const innerContainer = document.createElement('div')
+          innerContainer.id = containerId
+          innerContainer.style.width = '100%'
+          innerContainer.style.height = '100%'
+          container.appendChild(innerContainer)
 
-          const player = await api.create(
-            innerContainer,
-            normalized.createOptions
-          )
+          const player = await api.create(innerContainer, createOptions)
 
           const isStale = !isMounted || requestId !== requestIdRef.current
 
@@ -212,18 +211,15 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
         playerInstanceRef.current = null
         endedHandlerRef.current = null
       }
-    }, [
-      normalized,
-      containerId,
-    ])
+    }, [createOptions, containerId])
 
     return (
       <div
         ref={containerRef}
         className={className}
         style={{
-          width: normalized.widthStyle,
-          height: normalized.heightStyle,
+          width: widthStyle,
+          height: heightStyle,
           ...style,
         }}
       />

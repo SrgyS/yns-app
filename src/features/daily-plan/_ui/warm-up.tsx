@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import {
   KinescopePlayer,
   type PlayerHandle,
@@ -40,6 +40,13 @@ export function WarmUp({
 
   const { getWorkoutCompletionStatus, updateWorkoutCompletion } =
     useWorkoutCompletions()
+
+  const playerOptions = useMemo(
+    () => ({
+      size: { height: 300 },
+    }),
+    []
+  )
 
   useEffect(() => {
     if (workout?.type && session?.user?.id && enrollmentId) {
@@ -100,9 +107,7 @@ export function WarmUp({
             key={`${userDailyPlanId}-${workout.videoId}`}
             ref={playerRef}
             videoId={workout.videoId}
-            options={{
-              size: { height: 300 },
-            }}
+            options={playerOptions}
             onEnded={handleVideoCompleted}
           />
         )}
