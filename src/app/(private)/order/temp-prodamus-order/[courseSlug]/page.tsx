@@ -2,7 +2,6 @@ import { server } from '@/app/server'
 import { GetCourseService } from '@/entities/course/module'
 import { SessionService } from '@/kernel/lib/next-auth/server'
 import { CourseSlug } from '@/kernel/domain/course'
-import { getCourseOrderSucccessPath } from '@/kernel/lib/router'
 import { Button } from '@/shared/ui/button'
 import {
   Card,
@@ -14,6 +13,7 @@ import {
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { MockPaymentButton } from './mock-payment-button'
 
 const CURRENCY_FORMATTER = new Intl.NumberFormat('ru-RU', {
   style: 'currency',
@@ -32,16 +32,18 @@ export default async function PaymentPage({
   params,
   searchParams,
 }: {
-  params: { courseSlug: CourseSlug }
-  searchParams: SearchParams | Promise<SearchParams>
+  params: Promise<{ courseSlug: CourseSlug }>
+  searchParams: Promise<SearchParams>
 }) {
-  const [sessionService, courseService] = await Promise.all([
-    Promise.resolve(server.get(SessionService)),
-    Promise.resolve(server.get(GetCourseService)),
-  ])
+  const [resolvedParams, resolvedSearchParams, sessionService, courseService] =
+    await Promise.all([
+      params,
+      searchParams,
+      Promise.resolve(server.get(SessionService)),
+      Promise.resolve(server.get(GetCourseService)),
+    ])
 
-  const courseSlug = params.courseSlug
-  const resolvedSearchParams = await Promise.resolve(searchParams)
+  const courseSlug = resolvedParams.courseSlug
 
   const orderIdRaw = Array.isArray(resolvedSearchParams.orderId)
     ? resolvedSearchParams.orderId[0]
@@ -97,10 +99,6 @@ export default async function PaymentPage({
     redirect(`/day/${courseSlug}`)
   }
 
-  const successHref = `${getCourseOrderSucccessPath()}?_payform_order_id=${encodeURIComponent(
-    orderId
-  )}`
-
   return (
     <main className="container max-w-3xl space-y-8 py-12">
       <Card className="space-y-6">
@@ -146,9 +144,15 @@ export default async function PaymentPage({
               сценария.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button className="w-full sm:w-auto" size="lg" asChild>
+              {/* TODO(prod-integr): заменить на реальную платёжную кнопку после интеграции с Prodamus 
+                     <Button className="w-full sm:w-auto" size="lg" asChild>
                 <Link href={successHref}>Оплатить</Link>
-              </Button>
+              </Button>*/}
+              <MockPaymentButton
+                courseId={course.id}
+                courseSlug={courseSlug}
+                orderId={orderId}
+              />
               {urlReturn ? (
                 <Button
                   className="w-full sm:w-auto"
