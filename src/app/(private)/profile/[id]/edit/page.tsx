@@ -1,5 +1,5 @@
 import { UpdateProfileForm } from '@/features/update-profile/update-profile-form'
-import { SessionService } from '@/kernel/lib/next-auth/server'
+import { SessionService } from '@/kernel/lib/next-auth/module'
 import { server } from '@/app/server'
 import { redirect } from 'next/navigation'
 import { Button } from '@/shared/ui/button'

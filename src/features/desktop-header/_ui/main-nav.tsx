@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { server } from '@/app/server'
-import { SessionService } from '@/kernel/lib/next-auth/server'
+import { SessionService } from '@/kernel/lib/next-auth/module'
 import {
   GetActiveEnrollmentService,
   GetUserEnrollmentsService,

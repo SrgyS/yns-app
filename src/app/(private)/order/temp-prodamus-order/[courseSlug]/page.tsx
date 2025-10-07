@@ -1,6 +1,6 @@
 import { server } from '@/app/server'
 import { GetCourseService } from '@/entities/course/module'
-import { SessionService } from '@/kernel/lib/next-auth/server'
+import { SessionService } from '@/kernel/lib/next-auth/module'
 import { CourseSlug } from '@/kernel/domain/course'
 import { Button } from '@/shared/ui/button'
 import {
