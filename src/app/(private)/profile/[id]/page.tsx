@@ -1,7 +1,6 @@
 import { UserCoursesSection } from '@/features/user-courses/_ui/user-courses-section'
 import Link from 'next/link'
 import { Edit, Dumbbell, BookOpen, ChevronRight } from 'lucide-react'
-import { CoursesRepository } from '@/entities/course/_repositories/course'
 import { server } from '@/app/server'
 import { ProfileAvatar } from '@/entities/user/client'
 import { SessionService } from '@/kernel/lib/next-auth/module'
@@ -9,6 +8,7 @@ import { redirect } from 'next/navigation'
 import { Card, CardContent } from '@/shared/ui/card'
 import { Button } from '@/shared/ui/button'
 import { LogoutButton } from '@/features/auth/_ui/logout-button'
+import { GetUserCoursesListService } from '@/features/user-courses/module'
 
 export default async function ProfilePage({
   params,
@@ -26,8 +26,8 @@ export default async function ProfilePage({
 
   const user = session.user
 
-  const coursesRepository = server.get(CoursesRepository)
-  const courses = await coursesRepository.coursesList()
+  const getUserCoursesListService = server.get(GetUserCoursesListService)
+  const courses = await getUserCoursesListService.exec(id)
 
   return (
     <main className="space-y-8 py-14 container max-w-[800px]">
@@ -71,7 +71,7 @@ export default async function ProfilePage({
         </CardContent>
       </Card>
 
-      <UserCoursesSection id={id} courses={courses} />
+      <UserCoursesSection courses={courses} />
 
       <Card>
         <CardContent>
