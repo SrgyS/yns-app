@@ -4,45 +4,18 @@ import { UserDailyPlanRepository } from '../_repositories/user-daily-plan'
 import { CreateUserCourseEnrollmentParams, UserCourseEnrollment } from '..'
 import { logger } from '@/shared/lib/logger'
 import { dbClient } from '@/shared/lib/db'
-import { GetCourseService } from './get-course'
-import { CheckCourseAccessService } from '@/entities/user-access/module'
 
 @injectable()
 export class CreateUserCourseEnrollmentService {
   constructor(
     private userCourseEnrollmentRepository: UserCourseEnrollmentRepository,
-    private userDailyPlanRepository: UserDailyPlanRepository,
-    private getCourseService: GetCourseService,
-    private checkCourseAccess: CheckCourseAccessService
+    private userDailyPlanRepository: UserDailyPlanRepository
   ) {}
 
   async exec(
     params: CreateUserCourseEnrollmentParams
   ): Promise<UserCourseEnrollment> {
     try {
-      // Проверяем доступ пользователя к курсу перед созданием enrollment
-      const course = await this.getCourseService.exec({ id: params.courseId })
-      if (!course) {
-        throw new Error('Курс не найден')
-      }
-
-      if (!course.product) {
-        throw new Error('Некорректные данные курса: отсутствует продукт')
-      }
-
-      const hasAccess = await this.checkCourseAccess.exec({
-        userId: params.userId,
-        course: {
-          id: course.id,
-          product: course.product,
-          contentType: course.contentType,
-        },
-      })
-
-      if (!hasAccess) {
-        throw new Error('Нет доступа к курсу')
-      }
-
       // Используем транзакцию для атомарного создания enrollment и userDailyPlan
       return await dbClient.$transaction(async tx => {
         const existingEnrollments =

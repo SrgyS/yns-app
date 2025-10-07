@@ -12,13 +12,10 @@ export function StartOrder() {
   const createPaymentLink = courseOrderApi.courseOrder.start.useMutation()
 
   useEffect(() => {
-
-    debugger
-    console.log('searchParams', searchParams.toString())
     const res = createCourseOrderSchema.safeParse(
       Object.fromEntries(searchParams.entries())
     )
-console.log('res', res)
+
     if (res.success) {
       console.log('createPaymentLink', res.data)
       createPaymentLink.mutate(res.data, {

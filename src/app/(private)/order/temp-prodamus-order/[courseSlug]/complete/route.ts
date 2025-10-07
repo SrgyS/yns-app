@@ -9,9 +9,10 @@ import { privateConfig } from '@/shared/config/private'
 // TODO(prod-integr): удалить mock-роут после подключения реальной интеграции с Prodamus
 export const POST = async (
   req: Request,
-  { params }: { params: { courseSlug: string } }
+  context: { params: Promise<{ courseSlug: string }> }
 ) => {
   try {
+    const { courseSlug } = await context.params
     const { orderId } = (await req.json()) as { orderId?: string }
 
     if (!orderId) {
@@ -65,7 +66,7 @@ export const POST = async (
       message: 'success',
       nextUrl: targetCourseId
         ? `/select-workout-days/${targetCourseId}`
-        : `/select-workout-days/${params.courseSlug}`,
+        : `/select-workout-days/${courseSlug}`,
     })
   } catch (error) {
     console.error('Failed to complete mock payment', error)

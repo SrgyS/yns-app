@@ -7,7 +7,6 @@ import { injectable } from 'inversify'
 import { z } from 'zod'
 import { DayOfWeek } from '@prisma/client'
 import {
-  CreateUserCourseEnrollmentService,
   GetCourseEnrollmentService,
   GetUserDailyPlanService,
   GetUserEnrollmentsService,
@@ -19,11 +18,12 @@ import {
   GetEnrollmentByIdService,
   GetAvailableWeeksService,
 } from '@/entities/course/module'
+import { CreateUserCourseEnrollmentWithCourseAccessService } from './_services/create-user-course-enrollment-with-access'
 
 @injectable()
 export class CourseEnrollmentController extends Controller {
   constructor(
-    private CreateUserCourseEnrollmentService: CreateUserCourseEnrollmentService,
+    private CreateUserCourseEnrollmentWithCourseAccessService: CreateUserCourseEnrollmentWithCourseAccessService,
     private getCourseEnrollmentService: GetCourseEnrollmentService,
     private getUserDailyPlanService: GetUserDailyPlanService,
     private getUserEnrollmentsService: GetUserEnrollmentsService,
@@ -50,10 +50,11 @@ export class CourseEnrollmentController extends Controller {
           })
         )
         .mutation(async ({ input, ctx }) => {
-          const enrollment = await this.CreateUserCourseEnrollmentService.exec({
-            userId: ctx.session.user.id,
-            ...input,
-          })
+          const enrollment =
+            await this.CreateUserCourseEnrollmentWithCourseAccessService.exec({
+              userId: ctx.session.user.id,
+              ...input,
+            })
           return enrollment
         }),
 
