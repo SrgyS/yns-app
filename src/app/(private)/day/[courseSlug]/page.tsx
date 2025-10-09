@@ -84,7 +84,7 @@ export default function DayPage({ params }: DayPageProps) {
       )}
 
       <CalendarTabs courseSlug={resolvedParams.courseSlug} />
-      <Button variant="outline">Варианты питания</Button>
+      {/* <Button variant="outline">Варианты питания</Button> */}
     </main>
   )
 }
