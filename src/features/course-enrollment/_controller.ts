@@ -7,6 +7,7 @@ import { injectable } from 'inversify'
 import { z } from 'zod'
 import { CourseContentType, DayOfWeek } from '@prisma/client'
 import {
+  GetCourseService,
   GetCourseEnrollmentService,
   GetUserDailyPlanService,
   GetUserEnrollmentsService,
@@ -19,11 +20,13 @@ import {
   GetAvailableWeeksService,
 } from '@/entities/course/module'
 import { CreateUserCourseEnrollmentWithCourseAccessService } from './_services/create-user-course-enrollment-with-access'
+import { CheckCourseAccessService } from '@/entities/user-access/module'
 
 @injectable()
 export class CourseEnrollmentController extends Controller {
   constructor(
     private CreateUserCourseEnrollmentWithCourseAccessService: CreateUserCourseEnrollmentWithCourseAccessService,
+    private getCourseService: GetCourseService,
     private getCourseEnrollmentService: GetCourseEnrollmentService,
     private getUserDailyPlanService: GetUserDailyPlanService,
     private getUserEnrollmentsService: GetUserEnrollmentsService,
@@ -33,7 +36,8 @@ export class CourseEnrollmentController extends Controller {
     private activateEnrollmentService: ActivateEnrollmentService,
     private getEnrollmentByCourseSlugService: GetEnrollmentByCourseSlugService,
     private getEnrollmentByIdService: GetEnrollmentByIdService,
-    private getAvailableWeeksService: GetAvailableWeeksService
+    private getAvailableWeeksService: GetAvailableWeeksService,
+    private checkCourseAccessService: CheckCourseAccessService
   ) {
     super()
   }
@@ -87,6 +91,58 @@ export class CourseEnrollmentController extends Controller {
             input.courseSlug
           )
           return enrollment
+        }),
+      checkAccessByCourseSlug: authorizedProcedure
+        .input(
+          z.object({
+            userId: z.string(),
+            courseSlug: z.string(),
+          })
+        )
+        .query(async ({ input }) => {
+          const course = await this.getCourseService.exec({
+            slug: input.courseSlug,
+          })
+
+          if (!course || !course.product) {
+            return {
+              hasAccess: false,
+              enrollment: null,
+              activeEnrollment: null,
+              isActive: false,
+            }
+          }
+
+          const hasAccess = await this.checkCourseAccessService.exec({
+            userId: input.userId,
+            course: {
+              id: course.id,
+              product: course.product,
+              contentType: course.contentType,
+            },
+          })
+
+          const enrollment = await this.getEnrollmentByCourseSlugService.exec(
+            input.userId,
+            input.courseSlug
+          )
+
+          const activeEnrollment = await this.getActiveEnrollmentService.exec(
+            input.userId
+          )
+
+          const isActive = Boolean(
+            activeEnrollment &&
+              enrollment &&
+              activeEnrollment.courseId === enrollment.courseId
+          )
+
+          return {
+            hasAccess,
+            enrollment,
+            activeEnrollment,
+            isActive,
+          }
         }),
 
       getUserDailyPlan: authorizedProcedure

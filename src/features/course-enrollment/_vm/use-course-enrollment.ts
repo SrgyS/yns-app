@@ -7,8 +7,19 @@ import { courseEnrollmentApi } from '../_api'
 import { CACHE_SETTINGS } from '@/shared/lib/cache/cache-constants'
 //TODO: проверить используются ли все методы
 export function useCourseEnrollment() {
+  const utils = courseEnrollmentApi.useUtils()
+
   const createEnrollmentMutation =
-    courseEnrollmentApi.course.createEnrollment.useMutation()
+    courseEnrollmentApi.course.createEnrollment.useMutation({
+      async onSuccess() {
+        await Promise.all([
+          utils.course.getUserEnrollments.invalidate(),
+          utils.course.getActiveEnrollment.invalidate(),
+          utils.course.getEnrollmentByCourseSlug.invalidate(),
+          utils.course.checkAccessByCourseSlug.invalidate(),
+        ])
+      },
+    })
 
   const getEnrollmentQuery = courseEnrollmentApi.course.getEnrollment.useQuery
 
@@ -83,8 +94,6 @@ export function useCourseEnrollment() {
     [getUserWorkoutDaysQuery]
   )
 
-  const utils = courseEnrollmentApi.useUtils()
-
   const { mutateAsync: activateEnrollment, isPending: isActivating } =
     courseEnrollmentApi.course.activateEnrollment.useMutation({
       async onSuccess() {
@@ -100,6 +109,8 @@ export function useCourseEnrollment() {
 
   const getEnrollmentByCourseSlugQuery =
     courseEnrollmentApi.course.getEnrollmentByCourseSlug.useQuery
+  const checkAccessByCourseSlugQuery =
+    courseEnrollmentApi.course.checkAccessByCourseSlug.useQuery
 
   const getEnrollmentByCourseSlug = useCallback(
     (userId: string, courseSlug: string) => {
@@ -109,6 +120,16 @@ export function useCourseEnrollment() {
       )
     },
     [getEnrollmentByCourseSlugQuery]
+  )
+
+  const checkAccessByCourseSlug = useCallback(
+    (userId: string, courseSlug: string) => {
+      return checkAccessByCourseSlugQuery(
+        { userId, courseSlug },
+        CACHE_SETTINGS.FREQUENT_UPDATE
+      )
+    },
+    [checkAccessByCourseSlugQuery]
   )
 
   const getAvailableWeeksQuery =
@@ -132,6 +153,7 @@ export function useCourseEnrollment() {
     getUserWorkoutDays,
     activateEnrollment,
     getEnrollmentByCourseSlug,
+    checkAccessByCourseSlug,
     getAvailableWeeks,
     isCreating: createEnrollmentMutation.isPending,
     isActivating,

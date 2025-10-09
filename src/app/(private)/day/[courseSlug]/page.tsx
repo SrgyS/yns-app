@@ -20,23 +20,15 @@ interface DayPageProps {
 export default function DayPage({ params }: DayPageProps) {
   const resolvedParams = use(params)
   const { data: session } = useAppSession()
-  const { getEnrollmentByCourseSlug, getActiveEnrollment } =
-    useCourseEnrollment()
+  const { checkAccessByCourseSlug } = useCourseEnrollment()
 
-  // Получаем запись на курс по slug
-  const enrollmentQuery = getEnrollmentByCourseSlug(
+  const accessQuery = checkAccessByCourseSlug(
     session?.user?.id || '',
     resolvedParams.courseSlug
   )
 
-  // Получаем активную запись на курс
-  const activeEnrollmentQuery = getActiveEnrollment(session?.user?.id || '')
-
-  const enrollment = enrollmentQuery.data
-  const activeEnrollment = activeEnrollmentQuery.data
-
   // Проверяем доступ к курсу
-  if (enrollmentQuery.isLoading) {
+  if (accessQuery.isLoading) {
     return (
       <main className="flex flex-col space-y-6 py-4 container max-w-[600px]">
         <Skeleton className="h-6 w-[300px]" />
@@ -45,8 +37,15 @@ export default function DayPage({ params }: DayPageProps) {
     )
   }
 
-  // Если у пользователя нет доступа к курсу
-  if (!enrollment) {
+  const { hasAccess, enrollment, activeEnrollment, isActive } =
+    accessQuery.data ?? {
+      hasAccess: false,
+      enrollment: null,
+      activeEnrollment: null,
+      isActive: false,
+    }
+
+  if (!hasAccess || !enrollment) {
     return (
       <main className="flex flex-col space-y-6 py-4 container max-w-[600px]">
         <Alert variant="destructive">
@@ -62,9 +61,6 @@ export default function DayPage({ params }: DayPageProps) {
       </main>
     )
   }
-
-  // Проверяем, является ли текущий курс активным
-  const isActive = activeEnrollment?.courseId === enrollment.courseId
 
   return (
     <main className="flex flex-col space-y-6 py-4 container max-w-[600px]">
