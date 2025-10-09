@@ -37,12 +37,19 @@ export default function DayPage({ params }: DayPageProps) {
     )
   }
 
-  const { hasAccess, enrollment, activeEnrollment, isActive } =
+  const {
+    hasAccess,
+    enrollment,
+    activeEnrollment,
+    isActive,
+    accessExpiresAt,
+  } =
     accessQuery.data ?? {
       hasAccess: false,
       enrollment: null,
       activeEnrollment: null,
       isActive: false,
+      accessExpiresAt: null,
     }
 
   if (!hasAccess || !enrollment) {
@@ -65,7 +72,10 @@ export default function DayPage({ params }: DayPageProps) {
   return (
     <main className="flex flex-col space-y-6 py-4 container max-w-[600px]">
       <Suspense fallback={<Skeleton className="h-6 w-[300px]" />}>
-        <CourseBanner courseSlug={resolvedParams.courseSlug} />
+        <CourseBanner
+          courseSlug={resolvedParams.courseSlug}
+          accessExpiresAt={accessExpiresAt}
+        />
       </Suspense>
 
       {/* Показываем баннер, если курс не активен */}

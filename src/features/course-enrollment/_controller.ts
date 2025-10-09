@@ -20,6 +20,7 @@ import {
 } from '@/entities/course/module'
 import { CreateUserCourseEnrollmentWithCourseAccessService } from './_services/create-user-course-enrollment-with-access'
 import { CheckCourseAccessService } from '@/entities/user-access/module'
+import { UserAccessRepository } from '@/entities/user-access/_repository/user-access'
 
 @injectable()
 export class CourseEnrollmentController extends Controller {
@@ -35,7 +36,8 @@ export class CourseEnrollmentController extends Controller {
     private getEnrollmentByCourseSlugService: GetEnrollmentByCourseSlugService,
     private getEnrollmentByIdService: GetEnrollmentByIdService,
     private getAvailableWeeksService: GetAvailableWeeksService,
-    private checkCourseAccessService: CheckCourseAccessService
+    private checkCourseAccessService: CheckCourseAccessService,
+    private userAccessRepository: UserAccessRepository
   ) {
     super()
   }
@@ -108,6 +110,7 @@ export class CourseEnrollmentController extends Controller {
               enrollment: null,
               activeEnrollment: null,
               isActive: false,
+              accessExpiresAt: null,
             }
           }
 
@@ -135,11 +138,18 @@ export class CourseEnrollmentController extends Controller {
               activeEnrollment.courseId === enrollment.courseId
           )
 
+          const userAccess = await this.userAccessRepository.findUserCourseAccess(
+            input.userId,
+            course.id,
+            course.contentType
+          )
+
           return {
             hasAccess,
             enrollment,
             activeEnrollment,
             isActive,
+            accessExpiresAt: userAccess?.expiresAt ?? null,
           }
         }),
 
