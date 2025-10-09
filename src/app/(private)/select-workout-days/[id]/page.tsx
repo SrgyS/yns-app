@@ -37,6 +37,7 @@ export default async function SelectTrainingDays({
       <SelectWorkoutDaysClient
         courseSlug={course.slug}
         courseId={courseId}
+        courseContentType={course.contentType}
         initialSelectedDays={[]}
         minDays={minDays}
         maxDays={minDays}

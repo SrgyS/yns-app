@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { DayOfWeek } from '@prisma/client'
+import { ContentType } from '@/kernel/domain/course'
 
 import { toast } from 'sonner'
 import { courseEnrollmentApi } from '../_api'
@@ -17,6 +18,7 @@ export function useCourseEnrollment() {
   const createEnrollment = useCallback(
     async (params: {
       courseId: string
+      courseContentType: ContentType
       startDate: Date
       selectedWorkoutDays: DayOfWeek[]
       hasFeedback?: boolean

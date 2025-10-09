@@ -21,6 +21,10 @@ export function useCourseAction(courseId: CourseId, courseSlug: CourseSlug) {
     return { ...action, href: getCourseOrderPath(courseSlug, pathname) }
   }
 
+  if (action.type === 'setup') {
+    return { ...action, href: `/select-workout-days/${courseId}` }
+  }
+
   if (action.type === 'enter') {
     return { ...action, href: `/day/${courseSlug}` }
   }

@@ -98,6 +98,7 @@ export type UserDailyPlan = {
 export type CreateUserCourseEnrollmentParams = {
   userId: string
   courseId: string
+  courseContentType: ContentType
   startDate: Date
   selectedWorkoutDays: DayOfWeek[]
   hasFeedback?: boolean

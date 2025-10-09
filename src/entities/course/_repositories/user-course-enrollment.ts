@@ -47,10 +47,11 @@ export class UserCourseEnrollmentRepository {
 
   async getEnrollment(
     userId: string,
-    courseId: string
+    courseId: string,
+    db: DbClient = this.defaultDb
   ): Promise<UserCourseEnrollment | null> {
     try {
-      const enrollment = await dbClient.userCourseEnrollment.findUnique({
+      const enrollment = await db.userCourseEnrollment.findUnique({
         where: {
           userId_courseId: {
             userId,
@@ -59,7 +60,13 @@ export class UserCourseEnrollmentRepository {
         },
         include: {
           course: {
-            select: { id: true, slug: true, title: true, durationWeeks: true, contentType: true },
+            select: {
+              id: true,
+              slug: true,
+              title: true,
+              durationWeeks: true,
+              contentType: true,
+            },
           },
         },
       })
@@ -84,7 +91,13 @@ export class UserCourseEnrollmentRepository {
         where: { id: enrollmentId },
         include: {
           course: {
-            select: { id: true, slug: true, title: true, durationWeeks: true, contentType: true },
+            select: {
+              id: true,
+              slug: true,
+              title: true,
+              durationWeeks: true,
+              contentType: true,
+            },
           },
         },
       })
@@ -124,7 +137,13 @@ export class UserCourseEnrollmentRepository {
         },
         include: {
           course: {
-            select: { id: true, slug: true, title: true, durationWeeks: true, contentType: true },
+            select: {
+              id: true,
+              slug: true,
+              title: true,
+              durationWeeks: true,
+              contentType: true,
+            },
           },
         },
       })
@@ -218,7 +237,13 @@ export class UserCourseEnrollmentRepository {
         },
         include: {
           course: {
-            select: { id: true, slug: true, title: true, durationWeeks: true, contentType: true },
+            select: {
+              id: true,
+              slug: true,
+              title: true,
+              durationWeeks: true,
+              contentType: true,
+            },
           },
         },
       })
@@ -267,7 +292,13 @@ export class UserCourseEnrollmentRepository {
         data: { active: true },
         include: {
           course: {
-            select: { id: true, slug: true, title: true, durationWeeks: true, contentType: true },
+            select: {
+              id: true,
+              slug: true,
+              title: true,
+              durationWeeks: true,
+              contentType: true,
+            },
           },
         },
       })
@@ -303,7 +334,13 @@ export class UserCourseEnrollmentRepository {
         },
         include: {
           course: {
-            select: { id: true, slug: true, title: true, durationWeeks: true, contentType: true },
+            select: {
+              id: true,
+              slug: true,
+              title: true,
+              durationWeeks: true,
+              contentType: true,
+            },
           },
         },
       })
@@ -335,7 +372,13 @@ export class UserCourseEnrollmentRepository {
         },
         include: {
           course: {
-            select: { id: true, slug: true, title: true, durationWeeks: true, contentType: true },
+            select: {
+              id: true,
+              slug: true,
+              title: true,
+              durationWeeks: true,
+              contentType: true,
+            },
           },
         },
       })

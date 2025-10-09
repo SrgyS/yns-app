@@ -11,6 +11,7 @@ export type CourseUserAccess = {
   adminId?: string
   enrollmentId?: string | null
   expiresAt?: Date | null
+  setupCompleted: boolean
 }
 
 export type UserAccess = CourseUserAccess

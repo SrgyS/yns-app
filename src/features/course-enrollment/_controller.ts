@@ -5,7 +5,7 @@ import {
 } from '@/kernel/lib/trpc/module'
 import { injectable } from 'inversify'
 import { z } from 'zod'
-import { DayOfWeek } from '@prisma/client'
+import { CourseContentType, DayOfWeek } from '@prisma/client'
 import {
   GetCourseEnrollmentService,
   GetUserDailyPlanService,
@@ -46,6 +46,7 @@ export class CourseEnrollmentController extends Controller {
             courseId: z.string(),
             startDate: z.coerce.date(),
             selectedWorkoutDays: z.array(z.nativeEnum(DayOfWeek)),
+            courseContentType: z.nativeEnum(CourseContentType),
             hasFeedback: z.boolean().optional(),
           })
         )

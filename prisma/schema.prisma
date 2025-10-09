@@ -437,6 +437,7 @@ model UserAccess {
   courseId     String
   contentType           CourseContentType
   reason       UserAccessReason
+  setupCompleted Boolean              @default(false)
   expiresAt    DateTime?
   createdAt    DateTime              @default(now())
   updatedAt    DateTime              @updatedAt

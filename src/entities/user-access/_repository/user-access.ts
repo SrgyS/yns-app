@@ -42,13 +42,15 @@ export class UserAccessRepository {
           contentType: userAccess.contentType,
           reason: userAccess.reason,
           adminId: userAccess.adminId,
-          enrollmentId: userAccess.enrollmentId,
+          enrollmentId: userAccess.enrollmentId ?? null,
+          setupCompleted: userAccess.setupCompleted,
           expiresAt: userAccess.expiresAt ?? null,
         },
         update: {
           reason: userAccess.reason,
           adminId: userAccess.adminId,
-          enrollmentId: userAccess.enrollmentId,
+          enrollmentId: userAccess.enrollmentId ?? null,
+          setupCompleted: userAccess.setupCompleted,
           expiresAt: userAccess.expiresAt ?? null,
         },
       })
@@ -69,6 +71,7 @@ export class UserAccessRepository {
       id: userAccess.id,
       enrollmentId: userAccess.enrollmentId ?? null,
       expiresAt: userAccess.expiresAt ?? null,
+      setupCompleted: userAccess.setupCompleted,
     }
   }
 

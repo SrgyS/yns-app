@@ -5,6 +5,11 @@ import { CreateUserCourseEnrollmentParams, UserCourseEnrollment } from '..'
 import { logger } from '@/shared/lib/logger'
 import { dbClient } from '@/shared/lib/db'
 
+type CreateEnrollmentOptions = {
+  reuseExistingEnrollment?: boolean
+  existingEnrollment?: UserCourseEnrollment | null
+}
+
 @injectable()
 export class CreateUserCourseEnrollmentService {
   constructor(
@@ -13,11 +18,26 @@ export class CreateUserCourseEnrollmentService {
   ) {}
 
   async exec(
-    params: CreateUserCourseEnrollmentParams
+    params: CreateUserCourseEnrollmentParams,
+    options: CreateEnrollmentOptions = {}
   ): Promise<UserCourseEnrollment> {
     try {
       // Используем транзакцию для атомарного создания enrollment и userDailyPlan
       return await dbClient.$transaction(async tx => {
+        const existingEnrollment =
+          options.existingEnrollment ??
+          (await this.userCourseEnrollmentRepository.getEnrollment(
+            params.userId,
+            params.courseId,
+            tx
+          ))
+
+        const reuseExisting =
+          Boolean(options.reuseExistingEnrollment) && Boolean(existingEnrollment)
+
+        const preserveExistingPlans =
+          reuseExisting && params.courseContentType === 'SUBSCRIPTION'
+
         const existingEnrollments =
           await this.userCourseEnrollmentRepository.getUserEnrollments(
             params.userId,
@@ -32,26 +52,28 @@ export class CreateUserCourseEnrollmentService {
           )
         }
 
-        // Проверяем, есть ли уже запись для этого пользователя и курса
-        const existingEnrollment = await this.userCourseEnrollmentRepository.getEnrollment(
-          params.userId,
-          params.courseId
-        )
+        if (existingEnrollment && !preserveExistingPlans) {
+          await tx.userDailyPlan.deleteMany({
+            where: { enrollmentId: existingEnrollment.id },
+          })
+        }
 
         let enrollment: UserCourseEnrollment
 
         if (existingEnrollment) {
-          console.log('exist')
           // Реактивируем существующую запись с новыми параметрами
-          enrollment = await this.userCourseEnrollmentRepository.reactivateEnrollment(
-            existingEnrollment.id,
-            {
-              startDate: params.startDate,
-              selectedWorkoutDays: params.selectedWorkoutDays,
-              hasFeedback: params.hasFeedback,
-            },
-            tx
-          )
+          enrollment =
+            await this.userCourseEnrollmentRepository.reactivateEnrollment(
+              existingEnrollment.id,
+              {
+                startDate: params.startDate,
+                selectedWorkoutDays: params.selectedWorkoutDays.length
+                  ? params.selectedWorkoutDays
+                  : existingEnrollment.selectedWorkoutDays,
+                hasFeedback: params.hasFeedback,
+              },
+              tx
+            )
         } else {
           // Создаем новую запись только если её нет
           const newEnrollment = await tx.userCourseEnrollment.create({
@@ -84,22 +106,12 @@ export class CreateUserCourseEnrollmentService {
           }
         }
 
-        // Обновляем UserAccess, связывая его с enrollment
-        await tx.userAccess.updateMany({
-          where: {
-            userId: params.userId,
-            courseId: params.courseId,
-            enrollmentId: null, // Только те, что еще не связаны
-          },
-          data: {
-            enrollmentId: enrollment.id,
-          },
-        })
-
-        await this.userDailyPlanRepository.generateUserDailyPlansForEnrollment(
-          enrollment.id,
-          tx
-        )
+        if (!preserveExistingPlans) {
+          await this.userDailyPlanRepository.generateUserDailyPlansForEnrollment(
+            enrollment.id,
+            tx
+          )
+        }
 
         return enrollment
       })

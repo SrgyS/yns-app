@@ -45,5 +45,13 @@ export function CourseAction({
     )
   }
 
+  if (action.type === 'setup') {
+    return (
+      <Button size={'lg'} variant={'outline'}>
+        <Link href={action.href}>Настроить план</Link>
+      </Button>
+    )
+  }
+
   return null
 }

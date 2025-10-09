@@ -6,6 +6,8 @@ import { TRPCError } from "@trpc/server";
 import { UserId } from "@/kernel/domain/user";
 import { CheckCourseAccessService } from '@/entities/user-access/module'
 import { getCourseAction } from "../_domain/methods";
+import { UserCourseEnrollmentRepository } from '@/entities/course/_repositories/user-course-enrollment'
+import { UserAccessRepository } from '@/entities/user-access/_repository/user-access'
 
 type Query = {
   courseId: CourseId;
@@ -17,6 +19,8 @@ export class GetCourseActionService {
   constructor(
     private getCourseService: GetCourseService,
     private getCourseAccess: CheckCourseAccessService,
+    private userCourseEnrollmentRepository: UserCourseEnrollmentRepository,
+    private userAccessRepository: UserAccessRepository,
   ) {}
   async exec(query: Query): Promise<CourseAction> {
     const course = await this.getCourseService.exec({ id: query.courseId });
@@ -39,9 +43,37 @@ export class GetCourseActionService {
         })
       : false;
 
+    let needsSetup = false
+
+    if (courseAccess && query.userId) {
+      const userAccess = await this.userAccessRepository.findUserCourseAccess(
+        query.userId,
+        course.id,
+        course.contentType,
+      )
+
+      if (course.contentType !== 'SUBSCRIPTION') {
+        const setupCompleted = userAccess?.setupCompleted ?? false
+
+        if (!setupCompleted) {
+          needsSetup = true
+        } else {
+          const enrollment = await this.userCourseEnrollmentRepository.getEnrollment(
+            query.userId,
+            course.id,
+          )
+
+          if (!enrollment || enrollment.selectedWorkoutDays.length === 0) {
+            needsSetup = true
+          }
+        }
+      }
+    }
+
     return getCourseAction({
       course,
       hasAccess: courseAccess,
+      needsSetup,
     });
   }
 }

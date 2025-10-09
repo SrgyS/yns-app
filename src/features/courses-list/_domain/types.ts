@@ -7,6 +7,7 @@ import {
 export type CourseAction =
   | { type: "comming-soon" }
   | { type: "buy"; price: number }
+  | { type: "setup" }
   | {
       type: "enter";
     }

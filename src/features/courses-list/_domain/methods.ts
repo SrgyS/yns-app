@@ -4,10 +4,18 @@ import { CourseAction } from './types'
 export async function getCourseAction({
   course,
   hasAccess,
+  needsSetup,
 }: {
   course: Course
   hasAccess?: boolean
+  needsSetup?: boolean
 }): Promise<CourseAction> {
+  if (hasAccess && needsSetup) {
+    return {
+      type: 'setup',
+    }
+  }
+
   if (!hasAccess && course.product && course.product.access === 'paid') {
     return {
       type: 'buy',
