@@ -1,28 +1,34 @@
 import { injectable } from 'inversify'
-import { UserDailyPlanRepository } from '../_repositories/user-daily-plan'
-import { UserDailyPlan, GetUserDailyPlanParams } from '..'
-import { logger } from '@/shared/lib/logger'
-import { GetCourseService } from './get-course'
+import { UserDailyPlanRepository } from '@/entities/course/_repositories/user-daily-plan'
+import { GetCourseService } from '@/entities/course/_services/get-course'
 import { CheckCourseAccessService } from '@/entities/user-access/module'
+import { UserDailyPlan, GetUserDailyPlanParams } from '@/entities/course'
+import { logger } from '@/shared/lib/logger'
 
 @injectable()
 export class GetUserDailyPlanService {
   constructor(
-    private userDailyPlanRepository: UserDailyPlanRepository,
-    private getCourseService: GetCourseService,
-    private checkCourseAccess: CheckCourseAccessService
+    private readonly userDailyPlanRepository: UserDailyPlanRepository,
+    private readonly getCourseService: GetCourseService,
+    private readonly checkCourseAccess: CheckCourseAccessService
   ) {}
 
   async exec(params: GetUserDailyPlanParams): Promise<UserDailyPlan | null> {
     try {
-      // Получаем курс и проверяем доступ пользователя
       const course = await this.getCourseService.exec({ id: params.courseId })
       if (!course) {
-        logger.warn({ msg: 'Курс не найден при получении дневного плана', params })
+        logger.warn({
+          msg: 'Course not found while fetching daily plan',
+          params,
+        })
         return null
       }
+
       if (!course.product) {
-        logger.error({ msg: 'У курса отсутствует product', courseId: course.id })
+        logger.error({
+          msg: 'Course product missing while fetching daily plan',
+          courseId: course.id,
+        })
         return null
       }
 
@@ -36,11 +42,16 @@ export class GetUserDailyPlanService {
       })
 
       if (!hasAccess) {
-        logger.info({ msg: 'Нет доступа к курсу при получении дневного плана', params })
+        logger.info({
+          msg: 'Access denied while fetching daily plan',
+          params,
+        })
         return null
       }
 
-      const userDailyPlan = await this.userDailyPlanRepository.getUserDailyPlan(params)
+      const userDailyPlan = await this.userDailyPlanRepository.getUserDailyPlan(
+        params
+      )
 
       if (userDailyPlan) {
         logger.info({
@@ -54,7 +65,7 @@ export class GetUserDailyPlanService {
       return userDailyPlan
     } catch (error) {
       logger.error({
-        msg: 'Error getting user daily plan',
+        msg: 'Error fetching user daily plan (feature)',
         params,
         error,
       })

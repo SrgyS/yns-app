@@ -66,7 +66,7 @@ export function EditWorkoutDaysClient({
         await workoutUtils.getWorkoutCompletionStatus.invalidate()
         
         // Инвалидируем кеш для getUserDailyPlan и getEnrollment
-        await courseEnrollmentUtils.course.getUserDailyPlan.invalidate()
+        await workoutUtils.getUserDailyPlan.invalidate()
         await courseEnrollmentUtils.course.getEnrollment.invalidate()
         // Добавляем инвалидацию getEnrollmentByCourseSlug
         await courseEnrollmentUtils.course.getEnrollmentByCourseSlug.invalidate()

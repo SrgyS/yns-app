@@ -9,7 +9,6 @@ import { CourseContentType, DayOfWeek } from '@prisma/client'
 import {
   GetCourseService,
   GetCourseEnrollmentService,
-  GetUserDailyPlanService,
   GetUserEnrollmentsService,
   GetActiveEnrollmentService,
   GetUserWorkoutDaysService,
@@ -28,7 +27,6 @@ export class CourseEnrollmentController extends Controller {
     private CreateUserCourseEnrollmentWithCourseAccessService: CreateUserCourseEnrollmentWithCourseAccessService,
     private getCourseService: GetCourseService,
     private getCourseEnrollmentService: GetCourseEnrollmentService,
-    private getUserDailyPlanService: GetUserDailyPlanService,
     private getUserEnrollmentsService: GetUserEnrollmentsService,
     private getActiveEnrollmentService: GetActiveEnrollmentService,
     private getUserWorkoutDaysService: GetUserWorkoutDaysService,
@@ -143,19 +141,6 @@ export class CourseEnrollmentController extends Controller {
             activeEnrollment,
             isActive,
           }
-        }),
-
-      getUserDailyPlan: authorizedProcedure
-        .input(
-          z.object({
-            userId: z.string(),
-            courseId: z.string(),
-            dayNumberInCourse: z.number(),
-          })
-        )
-        .query(async ({ input }) => {
-          const dailyPlan = await this.getUserDailyPlanService.exec(input)
-          return dailyPlan
         }),
 
       getUserEnrollments: authorizedProcedure

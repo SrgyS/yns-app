@@ -54,24 +54,11 @@ export function useCourseEnrollment() {
     [getEnrollmentQuery]
   )
 
-  const getUserDailyPlanQuery =
-    courseEnrollmentApi.course.getUserDailyPlan.useQuery
-
   const getUserEnrollmentsQuery =
     courseEnrollmentApi.course.getUserEnrollments.useQuery
 
   const getActiveEnrollmentQuery =
     courseEnrollmentApi.course.getActiveEnrollment.useQuery
-
-  const getUserDailyPlan = useCallback(
-    (userId: string, courseId: string, dayNumberInCourse: number, enabled: boolean = true) => {
-      return getUserDailyPlanQuery(
-        { userId, courseId, dayNumberInCourse },
-        { ...CACHE_SETTINGS.FREQUENT_UPDATE, enabled }
-      )
-    },
-    [getUserDailyPlanQuery]
-  )
 
   const getUserEnrollments = useCallback(
     (userId: string) => {
@@ -147,7 +134,6 @@ export function useCourseEnrollment() {
   return {
     createEnrollment,
     getEnrollment,
-    getUserDailyPlan,
     getUserEnrollments,
     getActiveEnrollment,
     getUserWorkoutDays,
