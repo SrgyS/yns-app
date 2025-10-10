@@ -1,16 +1,8 @@
 import {
   CourseId,
   CourseSlug,
-  LessonId,
-  LessonSlug,
 } from "@/kernel/domain/course";
 
-export type LessonPartial = {
-  id: LessonId;
-  slug: LessonSlug;
-  title: string;
-  shortDescription?: string;
-};
 
 export type CourseAction =
   | { type: "comming-soon" }
@@ -18,7 +10,6 @@ export type CourseAction =
   | {
       type: "enter";
     }
-  | { type: "continue" };
 
 export type CourseDetails = {
   id: CourseId;
@@ -26,5 +17,4 @@ export type CourseDetails = {
   title: string;
   description: string;
   image: string;
-  lessons: LessonPartial[];
 };

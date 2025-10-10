@@ -3,10 +3,8 @@ import { CacheStrategy } from './_lib/cache-strategy'
 import { ContentParser } from './_lib/content-parser'
 import { FileFetcher } from './_lib/file-fetcher'
 import { Manifest } from './_schemas/manifest.schema'
-import { Lesson } from './_schemas/lesson.schema'
 import manifestSchema from '@/shared/api/content/_schemas/manifest.schema.json'
 import courseSchema from '@/shared/api/content/_schemas/course.schema.json'
-import lessonSchema from '@/shared/api/content/_schemas/lesson.schema.json'
 import { compileMDX } from '@/shared/lib/mdx/server'
 import { Course } from './_schemas/course.schema'
 // import { loggedMethod } from '@/shared/lib/logger'
@@ -62,11 +60,11 @@ export class ContentApi {
     }
   }
 
-  async fetchLesson(courseSlug: CourseSlug, lessonSlug: LessonSlug) {
-    return this.d.cacheStrategy.fetch(['lesson', courseSlug, lessonSlug], () =>
-      this.fetchLessonQuery(courseSlug, lessonSlug)
-    )
-  }
+  // async fetchLesson(courseSlug: CourseSlug, lessonSlug: LessonSlug) {
+  //   return this.d.cacheStrategy.fetch(['lesson', courseSlug, lessonSlug], () =>
+  //     this.fetchLessonQuery(courseSlug, lessonSlug)
+  //   )
+  // }
 
   // @loggedMethod({
   //   logArgs: (courseSlug: CourseSlug, lessonSlug: LessonSlug) => ({
@@ -75,34 +73,34 @@ export class ContentApi {
   //   }),
   //   logRes: (res: Lesson) => pick(res, ['id', 'title', 'slug']),
   // })
-  private async fetchLessonQuery(
-    courseSlug: CourseSlug,
-    lessonSlug: LessonSlug
-  ) {
-    const text = await this.d.fileFetcher.fetchText(
-      this.getLessonUrl(courseSlug, lessonSlug)
-    )
-    const lesson = await this.d.contentParser.parse<Lesson>(text, lessonSchema)
+  // private async fetchLessonQuery(
+  //   courseSlug: CourseSlug,
+  //   lessonSlug: LessonSlug
+  // ) {
+  //   const text = await this.d.fileFetcher.fetchText(
+  //     this.getLessonUrl(courseSlug, lessonSlug)
+  //   )
+  //   const lesson = await this.d.contentParser.parse<Lesson>(text, lessonSchema)
 
-    return {
-      ...lesson,
-      shortDescription: lesson.shortDescription
-        ? (await compileMDX(lesson.shortDescription)).code
-        : undefined,
-      blocks: await Promise.all(
-        lesson.blocks.map(async block => {
-          if (block.type === 'text') {
-            const { code } = await compileMDX(block.text)
-            return {
-              ...block,
-              text: code,
-            }
-          }
-          return block
-        })
-      ),
-    }
-  }
+  //   return {
+  //     ...lesson,
+  //     shortDescription: lesson.shortDescription
+  //       ? (await compileMDX(lesson.shortDescription)).code
+  //       : undefined,
+  //     blocks: await Promise.all(
+  //       lesson.blocks.map(async block => {
+  //         if (block.type === 'text') {
+  //           const { code } = await compileMDX(block.text)
+  //           return {
+  //             ...block,
+  //             text: code,
+  //           }
+  //         }
+  //         return block
+  //       })
+  //     ),
+  //   }
+  // }
 
   private getManifestUrl() {
     return join(this.baseUrl, 'manifest.yaml')

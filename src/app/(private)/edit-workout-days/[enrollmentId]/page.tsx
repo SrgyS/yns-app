@@ -1,7 +1,10 @@
 import { redirect, notFound } from 'next/navigation'
 import { server } from '@/app/server'
-import { GetEnrollmentByIdService, GetCourseService } from '@/entity/course/module'
-import { SessionService } from '@/kernel/lib/next-auth/server'
+import {
+  GetEnrollmentByIdService,
+  GetCourseService,
+} from '@/entities/course/module'
+import { SessionService } from '@/kernel/lib/next-auth/module'
 // Импортируем из индексного файла
 import { EditWorkoutDaysClient } from '@/features/select-training-days/_ui/edit-workout-days-client'
 

@@ -44,6 +44,7 @@ async function downloadAndGenerateTypes(
     'workout.schema.json',
     'meal-plan.schema.json',
     'recipe.schema.json',
+    'weeks.schema.json',
   ]
 
   for (const file of schemaFiles) {

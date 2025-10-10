@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { AuthFormSkeleton } from '@/shared/ui/auth-form-skeleton'
+import { AuthFormSkeleton } from '@/shared/ui/skeleton/auth-form-skeleton'
 import { CardWrapper } from '@/features/auth/_ui/card-wrapper'
 import { SignInForm } from '@/features/auth/sign-in-form.server'
 

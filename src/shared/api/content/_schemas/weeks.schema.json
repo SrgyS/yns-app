@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Weeks Configuration",
+  "description": "Schema for weeks.yaml file that defines weekly metadata for subscription courses",
+  "type": "object",
+  "properties": {
+    "weeks": {
+      "type": "array",
+      "description": "Array of week configurations for the subscription course",
+      "items": {
+        "type": "object",
+        "properties": {
+          "weekNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Sequential week number in the course"
+          },
+          "releaseAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 datetime when this week becomes available to users"
+          }
+        },
+        "required": ["weekNumber", "releaseAt"],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "required": ["weeks"],
+  "additionalProperties": false
+}

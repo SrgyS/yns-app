@@ -6,7 +6,7 @@ import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course
 import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/alert'
 import { Button } from '@/shared/ui/button'
 import Link from 'next/link'
-import { Skeleton } from '@/shared/ui/skeleton'
+import { Skeleton } from '@/shared/ui/skeleton/skeleton'
 import { useEffect } from 'react'
 
 export default function DayPage() {
@@ -22,18 +22,32 @@ export default function DayPage() {
 
   useEffect(() => {
     // Если данные загружены и есть активный курс, перенаправляем на его страницу
-    if (!enrollmentsQuery.isLoading && !activeEnrollmentQuery.isLoading && 
-        activeEnrollmentQuery.data?.course?.slug) {
+    if (activeEnrollmentQuery.data?.course?.slug) {
       router.push(`/day/${activeEnrollmentQuery.data.course.slug}`)
     }
-  }, [enrollmentsQuery.isLoading, activeEnrollmentQuery.isLoading, activeEnrollmentQuery.data, router])
+  }, [activeEnrollmentQuery.data, router])
 
   // Если данные загружаются, показываем скелетон
   if (enrollmentsQuery.isLoading || activeEnrollmentQuery.isLoading) {
     return (
-      <main className="flex flex-col space-y-6 py-4 container max-w-[600px]">
+      <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
         <Skeleton className="h-6 w-[300px]" />
         <Skeleton className="h-[400px] w-full" />
+      </main>
+    )
+  }
+
+  // Если произошла ошибка при загрузке
+  if (enrollmentsQuery.isError || activeEnrollmentQuery.isError) {
+    return (
+      <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
+        <Alert variant="destructive">
+          <AlertTitle>Ошибка</AlertTitle>
+          <AlertDescription>
+            Не удалось загрузить данные о ваших курсах. Пожалуйста, попробуйте
+            обновить страницу.
+          </AlertDescription>
+        </Alert>
       </main>
     )
   }
@@ -41,7 +55,7 @@ export default function DayPage() {
   // Если у пользователя есть курсы, но нет активного
   if (enrollmentsQuery.data && enrollmentsQuery.data.length > 0) {
     return (
-      <main className="flex flex-col space-y-6 py-4 container max-w-[600px]">
+      <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
         <Alert>
           <AlertTitle>Выберите активный курс</AlertTitle>
           <AlertDescription>
@@ -71,7 +85,7 @@ export default function DayPage() {
 
   // Если у пользователя нет курсов
   return (
-    <main className="flex flex-col space-y-6 py-4 container max-w-[600px]">
+    <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
       <Alert>
         <AlertTitle>У вас нет активных курсов</AlertTitle>
         <AlertDescription>

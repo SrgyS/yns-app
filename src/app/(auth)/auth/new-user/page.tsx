@@ -1,6 +1,6 @@
 import { server } from '@/app/server'
 import { UpdateProfileForm } from '@/features/update-profile/update-profile-form'
-import { SessionService } from '@/kernel/lib/next-auth/server'
+import { SessionService } from '@/kernel/lib/next-auth/module'
 import { Separator } from '@/shared/ui/separator'
 import { redirect } from 'next/navigation'
 
@@ -26,7 +26,7 @@ export default async function NewUserPage({
         </p>
       </div>
       <Separator />
-      <UpdateProfileForm userId={session.user.id} callbackUrl={callbackUrl} />
+      <UpdateProfileForm userId={session.user.id} callbackUrl={callbackUrl} variant="onboarding" />
     </main>
   )
 }

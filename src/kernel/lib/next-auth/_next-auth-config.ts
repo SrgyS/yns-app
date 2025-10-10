@@ -11,8 +11,8 @@ import { privateConfig } from '@/shared/config/private'
 import { AdapterUser } from 'next-auth/adapters'
 import { injectable } from 'inversify'
 import { CreateUserService } from '../../services/create-user'
-import { AuthCredentialsService } from '@/entity/user/_services/auth-credentials'
-import { UserRepository } from '@/entity/user/_repositories/user'
+import { AuthCredentialsService } from '@/entities/user/_services/auth-credentials'
+import { UserRepository } from '@/entities/user/_repositories/user'
 
 const prismaAdapter = PrismaAdapter(dbClient)
 
@@ -61,10 +61,16 @@ export class NextAuthConfig {
           token.id = user.id
           token.role = user.role
           token.picture = user.image
+          token.name = user.name
         }
 
-        if (trigger === 'update' && session?.user?.image !== undefined) {
-          token.picture = session.user.image
+        if (trigger === 'update' && session?.user) {
+          if (session.user.image !== undefined) {
+            token.picture = session.user.image
+          }
+          if (session.user.name !== undefined) {
+            token.name = session.user.name
+          }
         }
 
         return token
@@ -77,6 +83,7 @@ export class NextAuthConfig {
             id: token.id,
             role: token.role,
             image: token.picture,
+            name: token.name,
           },
         }
       },

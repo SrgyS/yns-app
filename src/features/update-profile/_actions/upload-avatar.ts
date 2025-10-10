@@ -7,7 +7,7 @@ import { BadRequest } from '@/shared/lib/errors'
 
 import { redirect } from 'next/navigation'
 import { fileStorage } from '@/shared/lib/file-storage/file-storage'
-import { SessionService } from '@/kernel/lib/next-auth/server'
+import { SessionService } from '@/kernel/lib/next-auth/module'
 
 const resultSchema = z.object({
   avatar: z.object({

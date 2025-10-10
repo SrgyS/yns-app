@@ -10,10 +10,11 @@
       "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
       "readOnly": true
     },
-    "dayNumber": {
+    "dayNumberInWeek": {
       "type": "integer",
       "minimum": 1,
-      "description": "Порядковый номер дня в курсе"
+      "maximum": 7,
+      "description": "Порядковый номер дня в неделе (1-7)"
     },
     "weekNumber": {
       "type": "integer",
@@ -41,7 +42,8 @@
     },
     "mealPlanId": {
       "type": "string",
-      "description": "ID плана питания (slug MealPlan)"
+      "description": "ID плана питания (slug MealPlan)",
+      "nullable": true
     },
     "contentBlocks": {
       "type": "array",
@@ -70,11 +72,10 @@
     }
   },
   "required": [
-    "dayNumber",
+    "dayNumberInWeek",
     "weekNumber",
     "courseSlug",
-    "warmupId",
-    "mealPlanId"
+    "warmupId"
   ],
   "additionalProperties": false
 }

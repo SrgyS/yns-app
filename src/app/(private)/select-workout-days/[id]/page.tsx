@@ -1,9 +1,7 @@
 import { server } from '@/app/server'
-import {
-  GetCourseService,
-} from '@/entity/course/module'
+import { GetCourseService } from '@/entities/course/module'
 import { redirect } from 'next/navigation'
-import { SessionService } from '@/kernel/lib/next-auth/server'
+import { SessionService } from '@/kernel/lib/next-auth/module'
 // Импортируем из индексного файла
 import { SelectWorkoutDaysClient } from '@/features/select-training-days'
 import { toast } from 'sonner'
@@ -39,6 +37,7 @@ export default async function SelectTrainingDays({
       <SelectWorkoutDaysClient
         courseSlug={course.slug}
         courseId={courseId}
+        courseContentType={course.contentType}
         initialSelectedDays={[]}
         minDays={minDays}
         maxDays={minDays}

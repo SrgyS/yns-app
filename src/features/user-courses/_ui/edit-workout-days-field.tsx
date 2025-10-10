@@ -3,7 +3,7 @@ import { EditWorkoutDaysButton } from './edit-workout-days-button'
 import { Separator } from '@/shared/ui/separator'
 import { DAY_LABELS } from '@/features/select-training-days/constants'
 import { DayOfWeek } from '@prisma/client'
-import { UserCourseEnrollmentApi } from '@/entity/course/_domain/course'
+import { UserCourseEnrollmentApi } from '@/entities/course'
 
 
 

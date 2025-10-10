@@ -1,10 +1,9 @@
 'use client'
 
-import { Course } from '@/entity/course'
+import { Course } from '@/entities/course'
 import { MdxCode } from '@/shared/lib/mdx'
-import { Button } from '@/shared/ui/button'
 import { Card, CardFooter, CardHeader, CardTitle } from '@/shared/ui/card'
-import Link from 'next/link'
+import { CourseAction } from './course-action'
 
 export function CourseItem({ course }: { course: Course }) {
   return (
@@ -15,9 +14,10 @@ export function CourseItem({ course }: { course: Course }) {
         {course.shortDescription && <MdxCode code={course.shortDescription} />}
       </CardHeader>
       <CardFooter>
-        <Button>
+        <CourseAction courseId={course.id} courseSlug={course.slug} />
+        {/* <Button>
           <Link href={`/select-workout-days/${course.id}`}>Купить</Link>
-        </Button>
+        </Button> */}
       </CardFooter>
     </Card>
   )

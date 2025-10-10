@@ -22,10 +22,6 @@ export interface Workout {
    */
   type: "WARMUP" | "POSTURE" | "STRENGTH" | "MOBILITY" | "CARDIO";
   /**
-   * Длительность тренировки в минутах
-   */
-  durationMinutes: number;
-  /**
    * Сложность тренировки
    */
   difficulty: "EASY" | "MEDIUM" | "HARD";
@@ -40,7 +36,7 @@ export interface Workout {
   /**
    * URL видео с тренировкой
    */
-  videoUrl?: string;
+  videoId?: string;
   /**
    * Список задействованных групп мышц
    */

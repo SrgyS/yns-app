@@ -55,7 +55,7 @@ export function EditWorkoutDaysClient({
   const saveWorkoutDays = async (keepProgress: boolean) => {
     setIsSubmitting(true)
     try {
-      if (initialSelectedDays.length > 0) {
+      if (selectedDays.length > 0) {
         await updateWorkoutDays({
           enrollmentId,
           selectedWorkoutDays: selectedDays,
@@ -66,7 +66,7 @@ export function EditWorkoutDaysClient({
         await workoutUtils.getWorkoutCompletionStatus.invalidate()
         
         // Инвалидируем кеш для getUserDailyPlan и getEnrollment
-        await courseEnrollmentUtils.course.getUserDailyPlan.invalidate()
+        await workoutUtils.getUserDailyPlan.invalidate()
         await courseEnrollmentUtils.course.getEnrollment.invalidate()
         // Добавляем инвалидацию getEnrollmentByCourseSlug
         await courseEnrollmentUtils.course.getEnrollmentByCourseSlug.invalidate()

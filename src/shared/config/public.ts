@@ -10,4 +10,4 @@ export const publicConfig = publicConfigSchema.parse({
   PUBLIC_URL: process.env.NEXT_PUBLIC_PUBLIC_URL,
 })
 
-export const DEAFAULT_LOGIN_REDIRECT = '/course'
+export const DEAFAULT_LOGIN_REDIRECT = '/'

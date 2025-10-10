@@ -1,6 +1,6 @@
 'use client'
 
-import { Course } from '@/entity/course'
+import { Course } from '@/entities/course'
 import { MdxCode } from '@/shared/lib/mdx'
 import { Button } from '@/shared/ui/button'
 import {
@@ -14,12 +14,13 @@ import { CalendarDays, CheckCircle } from 'lucide-react'
 import { Badge } from '@/shared/ui/badge'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { UserCourseEnrollmentApi } from '@/entity/course/_domain/course'
+import { UserCourseEnrollmentApi } from '@/entities/course'
 import React from 'react'
 import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { SmallSpinner } from '@/shared/ui/small-spinner'
 import { EditWorkoutDaysField } from './edit-workout-days-field'
 import { courseEnrollmentApi } from '@/features/course-enrollment/_api'
+import { workoutApi } from '@/features/daily-plan/_api'
 import { useRouter } from 'next/navigation'
 
 interface UserCourseItemProps {
@@ -31,11 +32,16 @@ export function UserCourseItem({ course, enrollment }: UserCourseItemProps) {
   // Используем хук useCourseEnrollment, который уже настроен для автоматического обновления кэша
   const { activateEnrollment, isActivating } = useCourseEnrollment()
   const courseEnrollmentUtils = courseEnrollmentApi.useUtils()
+  const workoutUtils = workoutApi.useUtils()
   const router = useRouter()
 
-  const handleActivate = () => {
-    // Вызываем функцию активации из хука, обработка ошибок и успеха уже настроена в хуке
-    activateEnrollment(enrollment.id)
+  const handleActivate = async () => {
+    try {
+      await activateEnrollment(enrollment.id)
+      router.refresh()
+    } catch (error) {
+      console.error('Failed to activate course', error)
+    }
   }
 
   // Обработчик для перехода к тренировкам с инвалидацией кеша
@@ -44,7 +50,7 @@ export function UserCourseItem({ course, enrollment }: UserCourseItemProps) {
     
     // Инвалидируем конкретные запросы вместо всего кеша
     await courseEnrollmentUtils.course.getEnrollmentByCourseSlug.invalidate();
-    await courseEnrollmentUtils.course.getUserDailyPlan.invalidate();
+    await workoutUtils.getUserDailyPlan.invalidate();
     await courseEnrollmentUtils.course.getEnrollment.invalidate();
     
     // Переходим на страницу тренировок
@@ -112,7 +118,7 @@ export function UserCourseItem({ course, enrollment }: UserCourseItemProps) {
             variant="secondary"
           >
             <CheckCircle className="mr-2 h-4 w-4" />
-            <SmallSpinner isLoading={isActivating} /> Сделать активным
+            <SmallSpinner isLoading={isActivating} /> Сделать курсом по умолчанию
           </Button>
         )}
       </CardFooter>

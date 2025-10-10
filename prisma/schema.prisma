@@ -60,7 +60,7 @@ enum WorkoutType {
 
 enum CourseContentType {
   FIXED_COURSE // Фиксированный курс
-  SUBSCRIPTION_COURSE_MONTHLY // Курс для подписки
+  SUBSCRIPTION // Курс для подписки
 }
 
 enum MuscleGroup {
@@ -82,19 +82,10 @@ enum DayOfWeek {
   SUNDAY
 }
 
-enum ProductType {
-  course
-  subscription
-}
-
 enum PaymentState {
   pending
   success
   failed
-}
-
-enum UserAccessType {
-  course
 }
 
 enum UserAccessReason {
@@ -104,8 +95,8 @@ enum UserAccessReason {
 }
 
 model Course {
-  id                    String         @id @default(cuid())
-  slug                  String         @unique
+  id                    String            @id @default(cuid())
+  slug                  String            @unique
   title                 String
   description           String
   shortDescription      String?
@@ -113,10 +104,12 @@ model Course {
   image                 String
   draft                 Boolean
   durationWeeks         Int
-  minWorkoutDaysPerWeek Int            @default(5)
+  minWorkoutDaysPerWeek Int               @default(5)
+  contentType           CourseContentType @default(FIXED_COURSE)
   product               CourseProduct?
 
   dailyPlans DailyPlan[] // Дни (планы) в фиксированном курсе
+  weeks      Week[] // Недели для подписочных курсов
 
   enrollments UserCourseEnrollment[]
   mealPlans   MealPlan[]
@@ -147,16 +140,34 @@ model UserCourseEnrollment {
   @@index([userId, startDate])
 }
 
+model Week {
+  id         String      @id @default(cuid())
+  weekNumber Int
+  releaseAt  DateTime
+  courseId   String
+  course     Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  dailyPlans DailyPlan[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@unique([courseId, weekNumber])
+  @@map("weeks")
+}
+
 model DailyPlan {
-  id            String         @id @default(cuid())
-  slug          String // Например, "day-1", "day-2"
-  dayNumber     Int
-  weekNumber    Int
-  description   String?
-  contentBlocks ContentBlock[] // Если нужны дополнительные текстовые блоки в дне
+  id              String         @id @default(cuid())
+  slug            String // Например, "week-1-day-1"
+  dayNumberInWeek Int // 1-7
+  weekNumber      Int
+  description     String?
+  contentBlocks   ContentBlock[] // Если нужны дополнительные текстовые блоки в дне
 
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  // Для подписочных курсов - связь с неделей
+  weekId String?
+  week   Week?   @relation(fields: [weekId], references: [id], onDelete: Cascade)
 
   warmupId String
   warmup   Workout @relation("WarmupDailyPlan", fields: [warmupId], references: [id])
@@ -164,12 +175,13 @@ model DailyPlan {
   mainWorkoutId String?
   mainWorkout   Workout? @relation("MainWorkoutDailyPlan", fields: [mainWorkoutId], references: [id])
 
-  mealPlanId String
-  mealPlan   MealPlan @relation(fields: [mealPlanId], references: [id])
+  mealPlanId String?
+  mealPlan   MealPlan? @relation(fields: [mealPlanId], references: [id], onDelete: SetNull)
 
   userDailyPlans UserDailyPlan[] @relation("OriginalDailyPlan")
 
-  @@unique([courseId, slug]) // Гарантирует уникальность slug для каждого курса
+  @@unique([courseId, slug])
+  @@unique([courseId, weekNumber, dayNumberInWeek])
 }
 
 model UserDailyPlan {
@@ -181,12 +193,12 @@ model UserDailyPlan {
   isWorkoutDay        Boolean
   warmupId            String
   mainWorkoutId       String?
-  mealPlanId          String
+  mealPlanId          String?
   dayOfWeek           DayOfWeek
   weekNumber          Int
   enrollment          UserCourseEnrollment    @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
   mainWorkout         Workout?                @relation("UserDailyMainWorkout", fields: [mainWorkoutId], references: [id])
-  mealPlan            MealPlan                @relation("UserDailyMealPlan", fields: [mealPlanId], references: [id])
+  mealPlan            MealPlan?               @relation("UserDailyMealPlan", fields: [mealPlanId], references: [id], onDelete: SetNull)
   user                User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   warmup              Workout                 @relation("UserDailyWarmup", fields: [warmupId], references: [id])
   workoutCompletions  UserWorkoutCompletion[]
@@ -199,36 +211,42 @@ model UserDailyPlan {
 }
 
 model Workout {
-  id                    String                  @id @default(cuid())
+  id                    String            @id @default(cuid())
   title                 String
   type                  WorkoutType
-  durationMinutes       Int
   difficulty            WorkoutDifficulty
   equipment             String[]
   description           String?
-  videoUrl              String?
+  videoId               String?
   muscles               MuscleGroup[]
-  slug                  String                  @unique
-  mainWorkoutDailyPlans DailyPlan[]             @relation("MainWorkoutDailyPlan")
-  warmupDailyPlans      DailyPlan[]             @relation("WarmupDailyPlan")
+  slug                  String            @unique
+  mainWorkoutDailyPlans DailyPlan[]       @relation("MainWorkoutDailyPlan")
+  warmupDailyPlans      DailyPlan[]       @relation("WarmupDailyPlan")
+
   userDailyMainWorkouts UserDailyPlan[]         @relation("UserDailyMainWorkout")
   userDailyWarmups      UserDailyPlan[]         @relation("UserDailyWarmup")
   favoriteWorkouts      UserFavoriteWorkout[]
   userCompletions       UserWorkoutCompletion[]
+
+  // Kinescope metadata
+  durationSec Int     @default(0)
+  poster      Json?
+  posterUrl   String?
+  progress    Int?
 }
 
 model UserWorkoutCompletion {
-  id               String               @id @default(cuid())
-  userId           String
-  workoutId        String
-  enrollmentId     String
-  completedAt      DateTime             @default(now())
-  workoutType      WorkoutType
-  userDailyPlanId  String
-  enrollment       UserCourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  userDailyPlan    UserDailyPlan        @relation(fields: [userDailyPlanId], references: [id], onDelete: Cascade)
-  user             User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workout          Workout              @relation(fields: [workoutId], references: [id])
+  id                  String               @id @default(cuid())
+  userId              String
+  workoutId           String
+  enrollmentId        String
+  completedAt         DateTime             @default(now())
+  workoutType         WorkoutType
+  userDailyPlanId     String
+  enrollment          UserCourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  userDailyPlan       UserDailyPlan        @relation(fields: [userDailyPlanId], references: [id], onDelete: Cascade)
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workout             Workout              @relation(fields: [workoutId], references: [id])
   originalDailyPlanId String
 
   @@unique([userId, workoutId, enrollmentId, workoutType, userDailyPlanId])
@@ -393,22 +411,11 @@ model PasswordResetToken {
   @@id([email, token])
 }
 
-model OrderItem {
-  id          String      @id @default(cuid())
-  type        ProductType
-  sku         String
-  name        String
-  price       Int
-  quantity    Int
-  paymentId   String
-  hasFeedback Boolean     @default(false)
-  payment     Payment     @relation(fields: [paymentId], references: [id])
-}
-
 model CourseProduct {
   id       String     @id @default(cuid())
   access   AccessType
   price    Int?
+  accessDurationDays  Int?
   courseId String     @unique
   course   Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
@@ -420,19 +427,34 @@ model Payment {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
   state     PaymentState
-  products  OrderItem[]
+  products  Product[]
 }
 
 model UserAccess {
-  id           String               @id @default(cuid())
+  id           String                @id @default(cuid())
   userId       String
   adminId      String?
   courseId     String
-  type         UserAccessType
+  contentType           CourseContentType
   reason       UserAccessReason
+  setupCompleted Boolean              @default(false)
   expiresAt    DateTime?
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-  enrollmentId String               @unique
-  enrollment   UserCourseEnrollment @relation(fields: [enrollmentId], references: [id])
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  enrollmentId String?               @unique
+  enrollment   UserCourseEnrollment? @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, courseId, contentType])
+  @@index([userId, courseId])
+}
+
+model Product {
+  id        String            @id @default(cuid())
+  type      CourseContentType
+  sku       String
+  name      String
+  price     Int
+  quantity  Int
+  paymentId String
+  payment   Payment           @relation(fields: [paymentId], references: [id])
 }

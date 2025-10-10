@@ -1,23 +1,40 @@
-'use client'
-
+import { UserCourseEnrollment, UserCourseEnrollmentApi } from '@/entities/course'
 import { UserCoursesList } from './user-courses-list'
-import { Separator } from '@/shared/ui/separator'
-import { Course } from '@/entity/course'
-import { UserId } from '@/kernel/domain/user'
+import { UserCourseWithEnrollment } from '../_services/get-user-courses-list'
 
 interface UserCoursesSectionProps {
-  id: UserId
-  courses: Course[]
+  courses: UserCourseWithEnrollment[]
 }
 
-export function UserCoursesSection({ id, courses }: UserCoursesSectionProps) {
+function mapEnrollmentToClient(enrollment: UserCourseEnrollment): UserCourseEnrollmentApi {
+  return {
+    id: enrollment.id,
+    userId: enrollment.userId,
+    courseId: enrollment.courseId,
+    selectedWorkoutDays: enrollment.selectedWorkoutDays,
+    startDate: new Date(enrollment.startDate).toISOString(),
+    hasFeedback: enrollment.hasFeedback,
+    active: enrollment.active,
+    course: enrollment.course
+      ? {
+          id: enrollment.course.id,
+          slug: enrollment.course.slug,
+          title: enrollment.course.title,
+        }
+      : undefined,
+  }
+}
+
+export function UserCoursesSection({ courses }: UserCoursesSectionProps) {
+  const items = courses.map(({ course, enrollment }) => ({
+    course,
+    enrollment: mapEnrollmentToClient(enrollment),
+  }))
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium">Мои курсы</h3>
-      </div>
-      <Separator />
-      <UserCoursesList id={id} courses={courses} />
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold">Мои курсы</h3>
+      <UserCoursesList items={items} />
     </div>
   )
 }

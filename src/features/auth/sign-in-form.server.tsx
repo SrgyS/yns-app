@@ -24,11 +24,6 @@ export async function SignInForm({
 
   return (
     <div className={cn('grid gap-6', className)}>
-      {/* {testToken ? (
-        <TestEmailSignInForm testToken={testToken} />
-      ) : (
-        <EmailSignInForm />
-      )} */}
       <EmailSignInForm />
       {showOauthProviders && (
         <>

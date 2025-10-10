@@ -2,7 +2,7 @@
 import { ToggleTheme } from '../theme/toggle-theme'
 import { Layout } from './_ui/layout'
 import { Logo } from './_ui/logo'
-import { MainNav } from './_ui/main-nav'
+import { MainNav } from '@/features/navigation/desktop/main-nav'
 import { Profile } from './_ui/profile'
 
 export function DesktopHeader({

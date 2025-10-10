@@ -7,13 +7,13 @@ import {
   newPasswordSchemaWithToken,
   resetPasswordSchema,
 } from './schemas'
-import { VerificationTokenService } from '@/entity/user/_services/new-verification'
+import { VerificationTokenService } from '@/entities/user/_services/new-verification'
 import { z } from 'zod'
-import { UserRepository } from '@/entity/user/_repositories/user'
+import { UserRepository } from '@/entities/user/_repositories/user'
 import { dbClient } from '@/shared/lib/db'
 import { TRPCError } from '@trpc/server'
-import { ResetPasswordService } from '@/entity/user/_services/reset-password'
-import { NewPasswordService } from '@/entity/user/_services/new-password'
+import { ResetPasswordService } from '@/entities/user/_services/reset-password'
+import { NewPasswordService } from '@/entities/user/_services/new-password'
 
 @injectable()
 export class AuthCredentialsController extends Controller {

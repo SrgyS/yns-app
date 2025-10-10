@@ -5,11 +5,10 @@ import {
 } from '@/kernel/lib/trpc/module'
 import { injectable } from 'inversify'
 import { z } from 'zod'
-import { DayOfWeek } from '@prisma/client'
+import { CourseContentType, DayOfWeek } from '@prisma/client'
 import {
-  CreateUserCourseEnrollmentService,
+  GetCourseService,
   GetCourseEnrollmentService,
-  GetUserDailyPlanService,
   GetUserEnrollmentsService,
   GetActiveEnrollmentService,
   GetUserWorkoutDaysService,
@@ -17,21 +16,28 @@ import {
   ActivateEnrollmentService,
   GetEnrollmentByCourseSlugService,
   GetEnrollmentByIdService,
-} from '@/entity/course/module'
+  GetAvailableWeeksService,
+} from '@/entities/course/module'
+import { CreateUserCourseEnrollmentWithCourseAccessService } from './_services/create-user-course-enrollment-with-access'
+import { CheckCourseAccessService } from '@/entities/user-access/module'
+import { UserAccessRepository } from '@/entities/user-access/_repository/user-access'
 
 @injectable()
 export class CourseEnrollmentController extends Controller {
   constructor(
-    private CreateUserCourseEnrollmentService: CreateUserCourseEnrollmentService,
+    private CreateUserCourseEnrollmentWithCourseAccessService: CreateUserCourseEnrollmentWithCourseAccessService,
+    private getCourseService: GetCourseService,
     private getCourseEnrollmentService: GetCourseEnrollmentService,
-    private getUserDailyPlanService: GetUserDailyPlanService,
     private getUserEnrollmentsService: GetUserEnrollmentsService,
     private getActiveEnrollmentService: GetActiveEnrollmentService,
     private getUserWorkoutDaysService: GetUserWorkoutDaysService,
     private updateWorkoutDaysService: UpdateWorkoutDaysService,
     private activateEnrollmentService: ActivateEnrollmentService,
     private getEnrollmentByCourseSlugService: GetEnrollmentByCourseSlugService,
-    private getEnrollmentByIdService: GetEnrollmentByIdService
+    private getEnrollmentByIdService: GetEnrollmentByIdService,
+    private getAvailableWeeksService: GetAvailableWeeksService,
+    private checkCourseAccessService: CheckCourseAccessService,
+    private userAccessRepository: UserAccessRepository
   ) {
     super()
   }
@@ -44,14 +50,16 @@ export class CourseEnrollmentController extends Controller {
             courseId: z.string(),
             startDate: z.coerce.date(),
             selectedWorkoutDays: z.array(z.nativeEnum(DayOfWeek)),
+            courseContentType: z.nativeEnum(CourseContentType),
             hasFeedback: z.boolean().optional(),
           })
         )
         .mutation(async ({ input, ctx }) => {
-          const enrollment = await this.CreateUserCourseEnrollmentService.exec({
-            userId: ctx.session.user.id,
-            ...input,
-          })
+          const enrollment =
+            await this.CreateUserCourseEnrollmentWithCourseAccessService.exec({
+              userId: ctx.session.user.id,
+              ...input,
+            })
           return enrollment
         }),
 
@@ -84,18 +92,65 @@ export class CourseEnrollmentController extends Controller {
           )
           return enrollment
         }),
-
-      getUserDailyPlan: authorizedProcedure
+      checkAccessByCourseSlug: authorizedProcedure
         .input(
           z.object({
             userId: z.string(),
-            courseId: z.string(),
-            dayNumberInCourse: z.number(),
+            courseSlug: z.string(),
           })
         )
         .query(async ({ input }) => {
-          const dailyPlan = await this.getUserDailyPlanService.exec(input)
-          return dailyPlan
+          const course = await this.getCourseService.exec({
+            slug: input.courseSlug,
+          })
+
+          if (!course || !course.product) {
+            return {
+              hasAccess: false,
+              enrollment: null,
+              activeEnrollment: null,
+              isActive: false,
+              accessExpiresAt: null,
+            }
+          }
+
+          const hasAccess = await this.checkCourseAccessService.exec({
+            userId: input.userId,
+            course: {
+              id: course.id,
+              product: course.product,
+              contentType: course.contentType,
+            },
+          })
+
+          const enrollment = await this.getEnrollmentByCourseSlugService.exec(
+            input.userId,
+            input.courseSlug
+          )
+
+          const activeEnrollment = await this.getActiveEnrollmentService.exec(
+            input.userId
+          )
+
+          const isActive = Boolean(
+            activeEnrollment &&
+              enrollment &&
+              activeEnrollment.courseId === enrollment.courseId
+          )
+
+          const userAccess = await this.userAccessRepository.findUserCourseAccess(
+            input.userId,
+            course.id,
+            course.contentType
+          )
+
+          return {
+            hasAccess,
+            enrollment,
+            activeEnrollment,
+            isActive,
+            accessExpiresAt: userAccess?.expiresAt ?? null,
+          }
         }),
 
       getUserEnrollments: authorizedProcedure
@@ -162,6 +217,42 @@ export class CourseEnrollmentController extends Controller {
           })
 
           return updatedEnrollment
+        }),
+
+      getAvailableWeeks: authorizedProcedure
+        .input(
+          z.object({
+            userId: z.string(),
+            courseSlug: z.string(),
+          })
+        )
+        .query(async ({ input }) => {
+          // Получаем enrollment по courseSlug
+          const enrollment = await this.getEnrollmentByCourseSlugService.exec(
+            input.userId,
+            input.courseSlug
+          )
+
+          if (!enrollment) {
+            throw new Error('Enrollment not found')
+          }
+
+          // Получаем курс для определения типа контента
+          const course = enrollment.course
+          if (!course) {
+            throw new Error('Course not found')
+          }
+
+          // Получаем доступные недели
+          const availableWeeks = await this.getAvailableWeeksService.exec({
+            userId: input.userId,
+            courseId: course.id,
+            enrollmentStartDate: enrollment.startDate,
+            courseContentType: course.contentType || 'FIXED_COURSE',
+            courseDurationWeeks: course.durationWeeks || 4,
+          })
+
+          return availableWeeks
         }),
 
       activateEnrollment: authorizedProcedure

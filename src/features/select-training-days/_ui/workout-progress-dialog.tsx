@@ -40,14 +40,7 @@ export function WorkoutProgressDialog({
             в новое расписание. В противном случае все тренировки будут отмечены как невыполненные.
           </p>
         </div>
-        <DialogFooter>
-          <Button 
-            variant="outline" 
-            onClick={() => onOpenChange(false)}
-            disabled={isLoading}
-          >
-            Отмена
-          </Button>
+        <DialogFooter className="flex justify-center  sm:justify-center">
           <Button 
             variant="destructive" 
             onClick={onSaveWithoutProgress}

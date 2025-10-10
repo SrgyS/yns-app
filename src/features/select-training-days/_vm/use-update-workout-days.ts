@@ -21,7 +21,6 @@ export function useUpdateWorkoutDays() {
         return result
       } catch (error) {
         console.error('Error updating workout days:', error)
-        toast.error('Ошибка при обновлении дней тренировок')
         throw error
       }
     },

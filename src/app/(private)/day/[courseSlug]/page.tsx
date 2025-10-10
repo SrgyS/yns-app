@@ -3,8 +3,8 @@
 import { CalendarTabs } from '@/features/daily-plan/_ui/calendar-tabs'
 import { Button } from '@/shared/ui/button'
 import { Suspense, use } from 'react'
-import { Skeleton } from '@/shared/ui/skeleton'
-import { CourseTitle } from '@/features/daily-plan/_ui/course-title'
+import { Skeleton } from '@/shared/ui/skeleton/skeleton'
+import { CourseBanner } from '@/features/daily-plan/_ui/course-banner'
 import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { CourseActivationBanner } from '@/features/daily-plan/_ui/course-activation-banner'
@@ -20,35 +20,41 @@ interface DayPageProps {
 export default function DayPage({ params }: DayPageProps) {
   const resolvedParams = use(params)
   const { data: session } = useAppSession()
-  const { getEnrollmentByCourseSlug, getActiveEnrollment } =
-    useCourseEnrollment()
+  const { checkAccessByCourseSlug } = useCourseEnrollment()
 
-  // Получаем запись на курс по slug
-  const enrollmentQuery = getEnrollmentByCourseSlug(
+  const accessQuery = checkAccessByCourseSlug(
     session?.user?.id || '',
     resolvedParams.courseSlug
   )
 
-  // Получаем активную запись на курс
-  const activeEnrollmentQuery = getActiveEnrollment(session?.user?.id || '')
-
-  const enrollment = enrollmentQuery.data
-  const activeEnrollment = activeEnrollmentQuery.data
-
   // Проверяем доступ к курсу
-  if (enrollmentQuery.isLoading) {
+  if (accessQuery.isLoading) {
     return (
-      <main className="flex flex-col space-y-6 py-4 container max-w-[600px]">
+      <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
         <Skeleton className="h-6 w-[300px]" />
-        <Skeleton className="h-[400px] w-full" />
+        <Skeleton className="h-[200px] w-full" />
       </main>
     )
   }
 
-  // Если у пользователя нет доступа к курсу
-  if (!enrollment) {
+  const {
+    hasAccess,
+    enrollment,
+    activeEnrollment,
+    isActive,
+    accessExpiresAt,
+  } =
+    accessQuery.data ?? {
+      hasAccess: false,
+      enrollment: null,
+      activeEnrollment: null,
+      isActive: false,
+      accessExpiresAt: null,
+    }
+
+  if (!hasAccess || !enrollment) {
     return (
-      <main className="flex flex-col space-y-6 py-4 container max-w-[600px]">
+      <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
         <Alert variant="destructive">
           <AlertTitle>Доступ запрещен</AlertTitle>
           <AlertDescription>
@@ -63,13 +69,13 @@ export default function DayPage({ params }: DayPageProps) {
     )
   }
 
-  // Проверяем, является ли текущий курс активным
-  const isActive = activeEnrollment?.courseId === enrollment.courseId
-
   return (
-    <main className="flex flex-col space-y-6 py-4 container max-w-[600px]">
+    <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-5 px-3 py-4 sm:space-y-6 sm:px-4 md:px-6">
       <Suspense fallback={<Skeleton className="h-6 w-[300px]" />}>
-        <CourseTitle courseSlug={resolvedParams.courseSlug} />
+        <CourseBanner
+          courseSlug={resolvedParams.courseSlug}
+          accessExpiresAt={accessExpiresAt}
+        />
       </Suspense>
 
       {/* Показываем баннер, если курс не активен */}
@@ -84,7 +90,7 @@ export default function DayPage({ params }: DayPageProps) {
       )}
 
       <CalendarTabs courseSlug={resolvedParams.courseSlug} />
-      <Button variant="outline">Варианты питания</Button>
+      {/* <Button variant="outline">Варианты питания</Button> */}
     </main>
   )
 }

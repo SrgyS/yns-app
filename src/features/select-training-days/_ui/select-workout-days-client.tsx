@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { WorkoutDaySelector } from './workout-day-selector'
 import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
-import { CourseId, CourseSlug } from '@/kernel/domain/course'
+import { ContentType, CourseId, CourseSlug } from '@/kernel/domain/course'
 
 interface SelectWorkoutDaysClientProps {
   initialSelectedDays: DayOfWeek[]
@@ -14,11 +14,13 @@ interface SelectWorkoutDaysClientProps {
   maxDays?: number
   courseId: CourseId
   courseSlug: CourseSlug
+  courseContentType: ContentType
 }
 
 export function SelectWorkoutDaysClient({
   courseSlug,
   courseId,
+  courseContentType,
   initialSelectedDays,
   minDays = 5,
   maxDays = 5,
@@ -33,6 +35,7 @@ export function SelectWorkoutDaysClient({
       // Создаем новую запись на курс
       await createEnrollment({
         courseId,
+        courseContentType,
         selectedWorkoutDays: days,
         startDate: new Date(),
       })
