@@ -1,11 +1,10 @@
-import Link from 'next/link'
 import { server } from '@/app/server'
 import { SessionService } from '@/kernel/lib/next-auth/module'
 import {
   GetActiveEnrollmentService,
   GetUserEnrollmentsService,
 } from '@/entities/course/module'
-import { cn } from '@/shared/ui/utils'
+import { MainNavClient } from './main-nav-client'
 
 export async function MainNav() {
   // Получаем сессию пользователя
@@ -40,45 +39,10 @@ export async function MainNav() {
   }
   
   return (
-    <nav className="flex items-center gap-6 text-sm font-medium flex-row">
-      <Link
-        className="transition-colors hover:text-foreground/80 text-foreground/60"
-        href="/"
-      >
-        Главная
-      </Link>
-      <Link
-        className={cn(
-          "transition-colors hover:text-foreground/80",
-          // Если есть активный курс - обычный стиль
-          hasActiveCourse ? "text-foreground/60" : 
-          // Если есть курсы, но нет активного - выделяем цветом
-          hasAnyCourses ? "text-amber-500 font-semibold" :
-          // Если нет курсов - приглушенный стиль
-          "text-foreground/40"
-        )}
-        href={planUrl}
-      >
-        Мой план
-      </Link>
-      <Link
-        className="transition-colors hover:text-foreground/80 text-foreground/60"
-        href="/practices"
-      >
-        Практики
-      </Link>
-      <Link
-        className="transition-colors hover:text-foreground/80 text-foreground/60"
-        href="/recipes"
-      >
-        Рецепты
-      </Link>
-      <Link
-        className="transition-colors hover:text-foreground/80 text-foreground/60"
-        href="/knowledge"
-      >
-        Знания
-      </Link>
-    </nav>
+    <MainNavClient
+      hasActiveCourse={hasActiveCourse}
+      hasAnyCourses={hasAnyCourses}
+      planUrl={planUrl}
+    />
   )
 }
