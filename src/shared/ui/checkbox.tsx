@@ -21,14 +21,13 @@ function Checkbox({
     >
       <CheckboxPrimitive.Indicator
         data-slot="checkbox-indicator"
-        className="flex items-center justify-center text-current transition-none"
+        className={cn(
+          "flex items-center justify-center text-current transition-opacity duration-200",
+          "data-[state=unchecked]:opacity-20 data-[state=checked]:opacity-100"
+        )}
         forceMount
       >
-        <CheckIcon className={cn(
-          "size-3.5",
-          "transition-opacity duration-200",
-          props.checked ? "opacity-100" : "opacity-20"
-        )} />
+        <CheckIcon className="size-3.5" />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   )
