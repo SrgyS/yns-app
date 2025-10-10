@@ -9,23 +9,49 @@ import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { useWorkoutCalendar } from '../_vm/use-worckout-calendar'
 import { CourseSlug } from '@/kernel/domain/course'
 import { getWeekOfMonth } from 'date-fns'
+import { cn } from '@/shared/ui/utils'
+import { Skeleton } from '@/shared/ui/skeleton/skeleton'
 
 export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
   const today = new Date()
   const { data: session } = useAppSession()
   const { getEnrollmentByCourseSlug } = useCourseEnrollment()
 
-  const enrollmentQuery = getEnrollmentByCourseSlug(session?.user?.id || '', courseSlug)
+  const enrollmentQuery = getEnrollmentByCourseSlug(
+    session?.user?.id || '',
+    courseSlug
+  )
 
   const enrollment = enrollmentQuery.data
-  const programStart = enrollment?.startDate ? new Date(enrollment.startDate) : null
+  const programStart = enrollment?.startDate
+    ? new Date(enrollment.startDate)
+    : null
 
   const durationWeeks = enrollment?.course?.durationWeeks
 
   const isSubscription = enrollment?.course?.contentType === 'SUBSCRIPTION'
 
-  const { noProgram, availableWeeks, currentWeekIndex, weeksMeta } =
-    useWorkoutCalendar(programStart, durationWeeks, courseSlug, isSubscription)
+  const {
+    noProgram,
+    availableWeeks,
+    currentWeekIndex,
+    weeksMeta,
+    isLoading: isCalendarLoading,
+  } = useWorkoutCalendar(
+    programStart,
+    durationWeeks,
+    courseSlug,
+    isSubscription
+  )
+
+  if (enrollmentQuery.isLoading || isCalendarLoading) {
+    return (
+      <div className="flex w-full flex-col gap-2.5 font-medium">
+        <Skeleton className="h-6 w-24" />
+        <Skeleton className="h-10 w-full max-w-sm" />
+      </div>
+    )
+  }
 
   // Для подписки: если недель нет — явно показываем отсутствие доступных тренировок
   if (isSubscription && enrollment && availableWeeks.length === 0) {
@@ -33,7 +59,7 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
   }
 
   if (noProgram || !enrollment || !currentWeekIndex) {
-    return <div>Нет активного курса</div>
+    return <div>Нет доступного курса</div>
   }
 
   const courseId = enrollment.courseId
@@ -60,16 +86,26 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
   }
 
   return (
-    <div className="flex flex-col font-medium w-full">
-      <h3>{format(today, 'LLLL', { locale: ru })}</h3>
-      <Tabs key={defaultWeek} defaultValue={defaultWeek} className="space-y-0">
-        <TabsList className={`rounded-lg bg-muted p-1 flex`}>
+    <div className="flex w-full flex-col gap-2.5 font-medium">
+      <h3 className="text-sm font-semibold capitalize text-muted-foreground sm:text-lg">
+        {format(today, 'LLLL', { locale: ru })}
+      </h3>
+      <Tabs
+        key={defaultWeek}
+        defaultValue={defaultWeek}
+        className="space-y-2.5"
+      >
+        <TabsList className="flex flex-nowrap gap-1.5 overflow-x-auto rounded-lg bg-muted pl-1 pr-1 pt-1 pb-1 text-[11px] sm:text-sm justify-start">
           {availableWeeks.map(w => {
             return (
               <TabsTrigger
                 key={w}
                 value={`week-${w}`}
-                className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md"
+                className={cn(
+                  'whitespace-nowrap rounded-md px-2.5 py-1.5 text-[11px] transition-colors sm:px-3 sm:py-2 sm:text-sm flex-none',
+                  'data-[state=active]:bg-background data-[state=active]:shadow-sm',
+                  'max-[380px]:px-2 max-[380px]:py-1.25 max-[380px]:text-[10px]'
+                )}
               >
                 {getWeekLabel(w)}
               </TabsTrigger>

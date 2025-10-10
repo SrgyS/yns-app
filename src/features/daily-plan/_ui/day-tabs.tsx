@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   addDays,
   format,
@@ -17,6 +17,7 @@ import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { DayOfWeek } from '@prisma/client'
 import { DAY_LABELS } from '@/features/select-training-days/constants'
+import { cn } from '@/shared/ui/utils'
 
 export function DayTabs({
   weekNumber,
@@ -38,6 +39,8 @@ export function DayTabs({
   const { getEnrollment } = useCourseEnrollment()
 
   const enrollmentQuery = getEnrollment(session?.user?.id || '', courseId)
+  const tabsListRef = useRef<HTMLDivElement | null>(null)
+  // const hasResetScrollRef = useRef(false)
 
   // Начало недели для отображения (визуальная неделя)
   const weekStart = useMemo(() => {
@@ -164,45 +167,75 @@ export function DayTabs({
   )
 
   // В JSX проверяем не только наличие данных, но и selectedDayNumberInCourse
+  // useEffect(() => {
+  //   if (typeof window === 'undefined') return
+  //   if (hasResetScrollRef.current) return
+  //   if (window.innerWidth > 480) return
+
+  //   const node = tabsListRef.current
+  //   if (!node) return
+
+  //   let raf2 = 0
+  //   const raf = window.requestAnimationFrame(() => {
+  //     raf2 = window.requestAnimationFrame(() => {
+  //       node.scrollLeft = 0
+  //       hasResetScrollRef.current = true
+  //     })
+  //   })
+
+  //   return () => {
+  //     window.cancelAnimationFrame(raf)
+  //     window.cancelAnimationFrame(raf2)
+  //   }
+  // }, [])
+
   return (
     <Tabs
       key={`week-${weekNumber}`}
       value={selectedDay}
       onValueChange={setSelectedDay}
-      className="space-y-2"
+      className="space-y-2.5"
     >
-      <TabsList className="flex gap-3 bg-transparent h-auto">
+      <TabsList
+        ref={tabsListRef}
+        className="flex h-auto w-full gap-1.5 overflow-x-auto bg-transparent pl-0 pr-0 justify-start sm:gap-3"
+      >
         {days.map(d => (
           <TabsTrigger
             key={d.key}
             value={d.key}
             disabled={d.isDisabled}
-            className={`relative rounded-md border border-muted px-2 pt-4 pb-1 text-xs  transition-colors cursor-pointer basis-0 w-full gap-y-0 grid justify-items-center content-center min-w-[65px] h-20 text-muted-foreground
-              data-[state=active]:bg-primary 
-              data-[state=active]:text-primary-foreground 
-              data-[state=active]:border-primary 
-              dark:data-[state=active]:border-accent-icon
-              data-[state=active]:font-semibold
-              ${d.isWorkoutDay && !d.isDisabled ? 'bg-accent' : ''} 
-              ${d.isDisabled ? 'opacity-50 cursor-not-allowed' : ''} group`}
+            className={cn(
+              'group relative grid h-18 min-w-[54px] flex-none cursor-pointer content-center justify-items-center gap-y-0 rounded-md border border-muted px-1.5 pb-1 pt-3 text-[10px] text-muted-foreground transition-colors sm:h-20 sm:min-w-[72px] sm:px-3 sm:pt-4 sm:text-xs',
+              'data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary dark:data-[state=active]:border-accent-icon data-[state=active]:font-semibold',
+              'max-[360px]:min-w-[50px] max-[360px]:px-1 max-[360px]:pt-2.5',
+              d.isWorkoutDay && !d.isDisabled ? 'bg-accent' : '',
+              d.isDisabled ? 'cursor-not-allowed opacity-50' : ''
+            )}
           >
             {d.isWorkoutDay && !d.isDisabled && (
               <Dumbbell
                 style={{ transform: 'rotate(45deg)' }}
-                className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-accent-icon/80 group-data-[state=active]:text-accent-icon"
+                className="pointer-events-none absolute left-1/2 top-2 -translate-x-1/2 -translate-y-1/2 h-3 w-3 text-accent-icon/80 group-data-[state=active]:text-accent-icon sm:top-3 sm:h-4 sm:w-4"
               />
             )}
-            <div className="flex items-baseline gap-1 leading-tight">
-              <span className="text-lg whitespace-nowrap">{d.label}</span>
-              <span className="text-sm whitespace-nowrap">{d.dateStr}</span>
+            <div className="flex flex-col items-center gap-0.5 leading-tight sm:flex-row sm:items-baseline sm:gap-1">
+              <span className="whitespace-nowrap text-xs sm:text-base">
+                {d.label}
+              </span>
+              <span className="whitespace-nowrap text-[11px] sm:text-sm">
+                {d.dateStr}
+              </span>
             </div>
             {!isSubscription && d.programDay && (
-              <span className="text-xs  leading-none">День {d.programDay}</span>
+              <span className="text-[10px] leading-none sm:text-xs">
+                День {d.programDay}
+              </span>
             )}
           </TabsTrigger>
         ))}
       </TabsList>
-      <TabsContent value={selectedDay} className="flex flex-col gap-4">
+      <TabsContent value={selectedDay} className="flex flex-col gap-4 sm:gap-5">
         {enabled && dailyPlanQuery?.data ? (
           <>
             {dailyPlanQuery.data.warmupId && (

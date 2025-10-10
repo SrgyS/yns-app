@@ -30,7 +30,7 @@ export default function DayPage() {
   // Если данные загружаются, показываем скелетон
   if (enrollmentsQuery.isLoading || activeEnrollmentQuery.isLoading) {
     return (
-      <main className="flex flex-col space-y-6 py-4 container max-w-[600px]">
+      <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
         <Skeleton className="h-6 w-[300px]" />
         <Skeleton className="h-[400px] w-full" />
       </main>
@@ -40,7 +40,7 @@ export default function DayPage() {
   // Если произошла ошибка при загрузке
   if (enrollmentsQuery.isError || activeEnrollmentQuery.isError) {
     return (
-      <main className="flex flex-col space-y-6 py-4 container max-w-[600px]">
+      <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
         <Alert variant="destructive">
           <AlertTitle>Ошибка</AlertTitle>
           <AlertDescription>
@@ -55,7 +55,7 @@ export default function DayPage() {
   // Если у пользователя есть курсы, но нет активного
   if (enrollmentsQuery.data && enrollmentsQuery.data.length > 0) {
     return (
-      <main className="flex flex-col space-y-6 py-4 container max-w-[600px]">
+      <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
         <Alert>
           <AlertTitle>Выберите активный курс</AlertTitle>
           <AlertDescription>
@@ -85,7 +85,7 @@ export default function DayPage() {
 
   // Если у пользователя нет курсов
   return (
-    <main className="flex flex-col space-y-6 py-4 container max-w-[600px]">
+    <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
       <Alert>
         <AlertTitle>У вас нет активных курсов</AlertTitle>
         <AlertDescription>

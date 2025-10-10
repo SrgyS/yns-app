@@ -51,7 +51,7 @@ export function WarmUp({
 
   const playerOptions = useMemo(
     () => ({
-      size: { height: 300 },
+      size: { height: 260 },
     }),
     []
   )
@@ -158,9 +158,9 @@ export function WarmUp({
   }
 
   return (
-    <Card>
-      <CardContent>
-        <h3 className="text-lg font-medium mb-2">{title}</h3>
+    <Card className="gap-4 rounded-lg py-4 sm:rounded-xl sm:py-5 max-[400px]:py-3">
+      <CardContent className="px-4 sm:px-6">
+        <h3 className="mb-2 text-base font-medium sm:text-lg">{title}</h3>
         {workout?.videoId && (
           <KinescopePlayer
             key={`${userDailyPlanId}-${workout.videoId}`}
@@ -171,18 +171,29 @@ export function WarmUp({
           />
         )}
         {(muscleBadges.length > 0 || isCompleted || durationMinutes) && (
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+          <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 sm:mt-4">
             {muscleBadges.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 {muscleBadges.map((muscle, index) => (
-                  <Badge key={`${muscle}-${index}`} variant="secondary">
+                  <Badge
+                    key={`${muscle}-${index}`}
+                    variant="secondary"
+                    className="px-2 py-0.5 text-[11px] sm:text-xs"
+                  >
                     {muscle}
                   </Badge>
                 ))}
               </div>
             )}
             {(isCompleted || durationMinutes) && (
-              <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+              <div
+                className={cn(
+                  'flex items-center gap-1.5 text-[11px] text-muted-foreground sm:gap-2 sm:text-xs justify-self-end',
+                  muscleBadges.length > 0
+                    ? 'col-start-2 row-start-1'
+                    : 'col-span-2 justify-end'
+                )}
+              >
                 {isCompleted && <Badge>Выполнено</Badge>}
                 {durationMinutes && <Badge>{durationMinutes} мин</Badge>}
               </div>
@@ -190,15 +201,17 @@ export function WarmUp({
           </div>
         )}
         {equipmentText && (
-          <p className="mt-3 text-sm">
+          <p className="mt-3 text-xs leading-snug sm:text-sm">
             <span className="text-muted-foreground">Инвентарь:</span>{' '}
             <span>{equipmentText}</span>
           </p>
         )}
       </CardContent>
-      <CardFooter className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">Сложность:</span>
+      <CardFooter className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
+        <div className="flex items-center gap-3 max-[400px]:gap-2">
+          <span className="text-xs text-muted-foreground sm:text-sm">
+            Сложность:
+          </span>
           <span className="flex items-center gap-1">
             {DIFFICULTY_STEPS.map(step => {
               const isActive = difficultyLevel >= step
@@ -206,7 +219,7 @@ export function WarmUp({
                 <span
                   key={step}
                   className={cn(
-                    'h-2.5 w-2.5 rounded-full border transition-colors',
+                    'h-2.5 w-2.5 rounded-full border transition-colors max-[400px]:h-2 max-[400px]:w-2',
                     isActive
                       ? 'border-primary bg-primary'
                       : 'border-muted-foreground/40 bg-transparent'

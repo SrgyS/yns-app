@@ -30,7 +30,7 @@ export default function DayPage({ params }: DayPageProps) {
   // Проверяем доступ к курсу
   if (accessQuery.isLoading) {
     return (
-      <main className="flex flex-col space-y-6 py-4 container max-w-[600px]">
+      <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
         <Skeleton className="h-6 w-[300px]" />
         <Skeleton className="h-[200px] w-full" />
       </main>
@@ -54,7 +54,7 @@ export default function DayPage({ params }: DayPageProps) {
 
   if (!hasAccess || !enrollment) {
     return (
-      <main className="flex flex-col space-y-6 py-4 container max-w-[600px]">
+      <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
         <Alert variant="destructive">
           <AlertTitle>Доступ запрещен</AlertTitle>
           <AlertDescription>
@@ -70,7 +70,7 @@ export default function DayPage({ params }: DayPageProps) {
   }
 
   return (
-    <main className="flex flex-col space-y-6 py-4 container max-w-[600px]">
+    <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-5 px-3 py-4 sm:space-y-6 sm:px-4 md:px-6">
       <Suspense fallback={<Skeleton className="h-6 w-[300px]" />}>
         <CourseBanner
           courseSlug={resolvedParams.courseSlug}

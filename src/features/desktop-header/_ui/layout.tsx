@@ -10,7 +10,7 @@ export function Layout({
   actions?: React.ReactNode
 }) {
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 hidden w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:block">
       <div className="container flex h-14 items-center">
         <div className="mr-4 flex">{logo}</div>
         <div className="flex flex-1 items-center justify-between">
