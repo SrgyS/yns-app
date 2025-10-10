@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import {
   addDays,
   format,
@@ -88,7 +88,8 @@ export function DayTabs({
       // Используем строгое сравнение, чтобы день начала программы был активен
       const isBeforePurchase =
         isBefore(date, effectiveEnrollmentStart) &&
-        format(date, 'yyyy-MM-dd') !== format(effectiveEnrollmentStart, 'yyyy-MM-dd')
+        format(date, 'yyyy-MM-dd') !==
+          format(effectiveEnrollmentStart, 'yyyy-MM-dd')
 
       // Нормализуем даты, чтобы избежать проблем с часовыми поясами
       const normalizedDate = startOfDay(date)
@@ -113,7 +114,9 @@ export function DayTabs({
       // Отключаем дни:
       // - для подписки: только после окончания сгенерированного плана (вся неделя доступна, даже если купил в середине недели)
       // - для фиксированного курса: до покупки и после окончания программы
-      const isDisabled = isSubscription ? isAfterProgram : isBeforePurchase || isAfterProgram
+      const isDisabled = isSubscription
+        ? isAfterProgram
+        : isBeforePurchase || isAfterProgram
 
       // Вычисляем номер дня программы (только для дней в рамках программы)
       const programDay =

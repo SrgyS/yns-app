@@ -31,7 +31,7 @@ export function CheckOrder() {
       })
       router.replace('/')
     }
-  }, [checkQuery.isError, router, toast])
+  }, [checkQuery.isError, router])
 
   useEffect(() => {
     if (checkQuery.data?.state.type === "success") {
