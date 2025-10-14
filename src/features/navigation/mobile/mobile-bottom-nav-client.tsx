@@ -58,7 +58,7 @@ export function MobileBottomNavClient({
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
       <ul
-        className="flex items-center justify-around px-2 pt-2 text-xs max-[370px]:px-1.5 max-[370px]:pt-1.5 max-[370px]:text-[10px]"
+        className="flex items-start justify-around px-2 pt-2 text-xs max-[370px]:px-1.5 max-[370px]:pt-1.5 max-[370px]:text-[10px]"
         style={{
           paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom, 0px))',
         }}
@@ -80,9 +80,9 @@ export function MobileBottomNavClient({
                 <SignInButton
                   variant="ghost"
                   size="sm"
-                  className="h-auto w-full max-w-[140px] flex-col items-center gap-1 px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground max-[370px]:gap-0.5 max-[370px]:px-1.5 max-[370px]:py-0.5 max-[370px]:text-[10px]"
+                  className="h-auto w-full max-w-[140px] flex-col items-center justify-start gap-1 px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground max-[370px]:gap-0.5 max-[370px]:px-1.5 max-[370px]:py-0.5 max-[370px]:text-[10px]"
                 >
-                  <LogIn className="h-5 w-5 max-[370px]:h-4 max-[370px]:w-4" />
+                  <LogIn className="size-6 max-[370px]:size-5" />
                   <span>Войти</span>
                 </SignInButton>
               </li>
@@ -94,19 +94,19 @@ export function MobileBottomNavClient({
               <Link
                 href={href}
                 className={cn(
-                  'group flex flex-col items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground max-[370px]:gap-0.5 max-[370px]:px-1.5 max-[370px]:py-0.5',
+                  'group flex flex-col items-center justify-start gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground max-[370px]:gap-0.5 max-[370px]:px-1.5 max-[370px]:py-0.5',
                   item.key === 'plan' && planStateClass,
                   active && 'text-foreground font-semibold'
                 )}
               >
                 <Icon
                   className={cn(
-                    'h-5 w-5 transition-colors max-[370px]:h-4 max-[370px]:w-4',
+                    'size-6 transition-colors max-[370px]:size-5',
                     active && 'text-foreground'
                   )}
                   aria-hidden="true"
                 />
-                <span>{item.label}</span>
+                <span className="text-center">{item.label}</span>
               </Link>
             </li>
           )
