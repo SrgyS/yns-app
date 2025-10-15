@@ -201,7 +201,7 @@ export function DayTabs({
     >
       <TabsList
         ref={tabsListRef}
-        className="flex h-auto w-full gap-1.5 overflow-x-auto bg-transparent pl-0 pr-0 justify-start sm:gap-3"
+        className="flex h-auto w-full gap-1.5 overflow-x-auto bg-transparent pl-0 pr-0 pb-2.5 justify-start sm:gap-3"
       >
         {days.map(d => (
           <TabsTrigger
