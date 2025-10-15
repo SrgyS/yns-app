@@ -1,89 +1,123 @@
-'use client'
-
-import { useRouter } from 'next/navigation'
-import { useAppSession } from '@/kernel/lib/next-auth/client'
-import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
-import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/alert'
-import { Button } from '@/shared/ui/button'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Skeleton } from '@/shared/ui/skeleton/skeleton'
-import { useEffect } from 'react'
 
-export default function DayPage() {
-  const router = useRouter()
-  const { data: session } = useAppSession()
-  const { getUserEnrollments, getActiveEnrollment } = useCourseEnrollment()
+import { server } from '@/app/server'
+import { ContextFactory } from '@/kernel/lib/trpc/module'
+import { CourseEnrollmentController } from '@/features/course-enrollment/_controller'
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '@/shared/ui/alert'
+import { Button } from '@/shared/ui/button'
+import { createControllerHelpers } from '@/shared/api/server-helpers'
 
-  // Получаем все записи пользователя на курсы
-  const enrollmentsQuery = getUserEnrollments(session?.user?.id || '')
-  
-  // Получаем активную запись на курс
-  const activeEnrollmentQuery = getActiveEnrollment(session?.user?.id || '')
+export default async function DayPage() {
+  const contextFactory = server.get(ContextFactory)
+  const ctx = await contextFactory.createContext()
 
-  useEffect(() => {
-    // Если данные загружены и есть активный курс, перенаправляем на его страницу
-    if (activeEnrollmentQuery.data?.course?.slug) {
-      router.push(`/day/${activeEnrollmentQuery.data.course.slug}`)
-    }
-  }, [activeEnrollmentQuery.data, router])
+  const session = ctx.session
 
-  // Если данные загружаются, показываем скелетон
-  if (enrollmentsQuery.isLoading || activeEnrollmentQuery.isLoading) {
-    return (
-      <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
-        <Skeleton className="h-6 w-[300px]" />
-        <Skeleton className="h-[400px] w-full" />
-      </main>
-    )
+  if (!session?.user?.id) {
+    redirect('/auth/sign-in')
   }
 
-  // Если произошла ошибка при загрузке
-  if (enrollmentsQuery.isError || activeEnrollmentQuery.isError) {
+  const userId = session.user.id
+
+  const { helpers } = createControllerHelpers({
+    container: server,
+    controller: CourseEnrollmentController,
+    ctx,
+  })
+
+  type UserEnrollmentsResult = Awaited<
+    ReturnType<typeof helpers.course.getUserEnrollments.fetch>
+  >
+
+  let enrollments:
+    | Awaited<
+        ReturnType<
+          typeof helpers.course.getUserEnrollments.fetch
+        >
+      >
+    | null = null
+
+  let activeEnrollment:
+    | Awaited<
+        ReturnType<
+          typeof helpers.course.getActiveEnrollment.fetch
+        >
+      >
+    | null = null
+
+  try {
+    ;[activeEnrollment, enrollments] = await Promise.all([
+      helpers.course.getActiveEnrollment.fetch({
+        userId,
+      }),
+      helpers.course.getUserEnrollments.fetch({
+        userId,
+      }),
+    ])
+  } catch (error) {
+    console.error('Failed to load enrollments for day page', error)
     return (
       <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
         <Alert variant="destructive">
           <AlertTitle>Ошибка</AlertTitle>
           <AlertDescription>
-            Не удалось загрузить данные о ваших курсах. Пожалуйста, попробуйте
-            обновить страницу.
+            Не удалось загрузить данные о ваших курсах. Пожалуйста,
+            попробуйте обновить страницу.
           </AlertDescription>
         </Alert>
       </main>
     )
   }
 
-  // Если у пользователя есть курсы, но нет активного
-  if (enrollmentsQuery.data && enrollmentsQuery.data.length > 0) {
+  if (activeEnrollment?.course?.slug) {
+    redirect(`/day/${activeEnrollment.course.slug}`)
+  }
+
+  const hasEnrollments = Array.isArray(enrollments) && enrollments.length > 0
+
+  if (enrollments && hasEnrollments) {
+    const enrollmentList = enrollments
+
     return (
       <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
         <Alert>
           <AlertTitle>Выберите активный курс</AlertTitle>
           <AlertDescription>
-            У вас есть несколько курсов. Выберите один из них, чтобы начать тренировки.
+            У вас есть несколько курсов. Выберите один из них, чтобы начать
+            тренировки.
           </AlertDescription>
         </Alert>
-        
+
         <div className="grid gap-4">
-          {enrollmentsQuery.data.map((enrollment) => (
-            <Button 
-              key={enrollment.id} 
-              onClick={() => {
-                if (enrollment.course?.slug) {
-                  router.push(`/day/${enrollment.course.slug}`)
-                }
-              }}
-              variant="outline"
-              className="justify-start"
-            >
-              {enrollment.course?.title || 'Курс без названия'}
-            </Button>
-          ))}
+          {enrollmentList.map((enrollment: UserEnrollmentsResult[number]) => {
+            const slug = enrollment.course?.slug
+            const title = enrollment.course?.title || 'Курс без названия'
+
+            if (!slug) {
+              return null
+            }
+
+            return (
+              <Button
+                key={enrollment.id}
+                variant="outline"
+                className="justify-start"
+                asChild
+              >
+                <Link href={`/day/${slug}`}>{title}</Link>
+              </Button>
+            )
+          })}
         </div>
       </main>
     )
   }
 
-  // Если у пользователя нет курсов
   return (
     <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
       <Alert>
@@ -92,7 +126,7 @@ export default function DayPage() {
           Приобретите курс, чтобы начать тренировки.
         </AlertDescription>
       </Alert>
-      <Button>
+      <Button asChild>
         <Link href="/">Выбрать курс</Link>
       </Button>
     </main>
