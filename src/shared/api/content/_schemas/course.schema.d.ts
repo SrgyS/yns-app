@@ -60,9 +60,11 @@ export interface Course {
    */
   mealPlans?: string[];
   /**
-   * Минимальное количество тренировок в неделю
+   * Допустимые варианты количества тренировок в неделю
+   *
+   * @minItems 1
    */
-  minWorkoutDaysPerWeek: number;
+  allowedWorkoutDaysPerWeek: [number, ...number[]];
   product: Product;
   /**
    * Тип контента курса
