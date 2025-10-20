@@ -30,7 +30,10 @@ export default async function SelectTrainingDays({
     return redirect('/')
   }
 
-  const minDays = course.minWorkoutDaysPerWeek || 5 
+  const allowedDayOptions =
+    course.allowedWorkoutDaysPerWeek && course.allowedWorkoutDaysPerWeek.length > 0
+      ? course.allowedWorkoutDaysPerWeek
+      : [5]
 
   return (
     <main className="flex flex-col justify-center space-y-6 py-14 container max-w-[800px]">
@@ -39,8 +42,7 @@ export default async function SelectTrainingDays({
         courseId={courseId}
         courseContentType={course.contentType}
         initialSelectedDays={[]}
-        minDays={minDays}
-        maxDays={minDays}
+        allowedDayOptions={allowedDayOptions}
       />
     </main>
   )

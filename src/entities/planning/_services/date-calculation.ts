@@ -1,4 +1,5 @@
 import { DayOfWeek } from '@prisma/client'
+import { differenceInCalendarWeeks, startOfWeek } from 'date-fns'
 
 /**
  * Сервис для работы с датами и вычислениями в планировании
@@ -32,31 +33,18 @@ export class DateCalculationService {
   /**
    * Вычислить номер недели для дня курса
    */
-  calculateWeekNumber(dayIndex: number): number {
-    return Math.floor(dayIndex / 7) + 1
-  }
+  calculateWeekNumber(dayIndex: number, startDate?: Date): number {
+    if (!startDate) {
+      return Math.floor(dayIndex / 7) + 1
+    }
 
-  /**
-   * Вычислить общее количество дней для курса
-   */
-  calculateTotalDays(durationWeeks: number): number {
-    return durationWeeks * 7
-  }
+    const normalizedStart = startOfWeek(startDate, { weekStartsOn: 1 })
+    const currentDate = this.calculateDateForDay(startDate, dayIndex)
 
-  /**
-   * Вычислить диапазон дней для недели
-   */
-  calculateWeekRange(weekNumber: number): { start: number; end: number } {
-    const start = (weekNumber - 1) * 7
-    const end = start + 7
-    return { start, end }
-  }
-
-  /**
-   * Проверить, является ли день тренировочным
-   */
-  isWorkoutDay(date: Date, selectedWorkoutDays: DayOfWeek[]): boolean {
-    const dayOfWeek = this.getDayOfWeek(date)
-    return selectedWorkoutDays.includes(dayOfWeek)
+    return (
+      differenceInCalendarWeeks(currentDate, normalizedStart, {
+        weekStartsOn: 1,
+      }) + 1
+    )
   }
 }

@@ -371,6 +371,12 @@ async function downloadAndUploadContent() {
       await dbClient.$transaction(
         async tx => {
           // Upsert курса со вложенным upsert продукта (прямая 1:1 связь)
+          const allowedWorkoutDays =
+            courseData.allowedWorkoutDaysPerWeek &&
+            courseData.allowedWorkoutDaysPerWeek.length > 0
+              ? courseData.allowedWorkoutDaysPerWeek
+              : [5]
+
           const course = await tx.course.upsert({
             where: { slug: courseSlug },
             update: {
@@ -381,7 +387,7 @@ async function downloadAndUploadContent() {
             image: courseData.image,
             draft: courseData.draft,
             durationWeeks: courseData.durationWeeks,
-            minWorkoutDaysPerWeek: courseData.minWorkoutDaysPerWeek,
+            allowedWorkoutDaysPerWeek: allowedWorkoutDays,
             contentType: courseData.contentType || 'FIXED_COURSE',
             product: {
               upsert: {
@@ -419,7 +425,7 @@ async function downloadAndUploadContent() {
             image: courseData.image,
             draft: courseData.draft,
             durationWeeks: courseData.durationWeeks,
-            minWorkoutDaysPerWeek: courseData.minWorkoutDaysPerWeek,
+            allowedWorkoutDaysPerWeek: allowedWorkoutDays,
             contentType: courseData.contentType || 'FIXED_COURSE',
             product: {
               create: {
@@ -675,9 +681,14 @@ async function downloadAndUploadContent() {
         // После импорта ежедневных планов — предупреждение о несоответствии требуемым количествам
         try {
           const durationWeeks = course.durationWeeks ?? 0
-          const minDays = course.minWorkoutDaysPerWeek ?? 0
+          const allowedDays =
+            course.allowedWorkoutDaysPerWeek &&
+            course.allowedWorkoutDaysPerWeek.length > 0
+              ? course.allowedWorkoutDaysPerWeek
+              : [5]
+          const maxDays = Math.max(...allowedDays)
           const totalDays = durationWeeks * 7
-          const requiredMainWorkoutDays = minDays * durationWeeks
+          const requiredMainWorkoutDays = maxDays * durationWeeks
           const requiredWarmupOnlyDays = Math.max(
             0,
             totalDays - requiredMainWorkoutDays
@@ -698,7 +709,7 @@ async function downloadAndUploadContent() {
             actualWarmupOnlyDays < requiredWarmupOnlyDays
           ) {
             console.warn(
-              `  ⚠️ Предупреждение: Для курса "${courseSlug}" требуются ${requiredMainWorkoutDays} дней с основной тренировкой и ${requiredWarmupOnlyDays} дней только с разминкой за ${durationWeeks} нед., но загружено: ${actualMainWorkoutDays} и ${actualWarmupOnlyDays}. Проверьте daily-plans или настройки durationWeeks/minWorkoutDaysPerWeek в course.yaml.`
+              `  ⚠️ Предупреждение: Для курса "${courseSlug}" требуются ${requiredMainWorkoutDays} дней с основной тренировкой и ${requiredWarmupOnlyDays} дней только с разминкой за ${durationWeeks} нед., но загружено: ${actualMainWorkoutDays} и ${actualWarmupOnlyDays}. Проверьте daily-plans или настройки durationWeeks/allowedWorkoutDaysPerWeek в course.yaml.`
             )
           }
         } catch (e) {

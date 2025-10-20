@@ -26,6 +26,9 @@ export function DayTabs({
   currentDate,
   courseId,
   isSubscription,
+  totalWeeks,
+  availableWeeks,
+  maxDayNumber,
 }: {
   weekNumber: number
   displayWeekStart: Date
@@ -33,6 +36,9 @@ export function DayTabs({
   currentDate: Date
   courseId: string
   isSubscription?: boolean
+  totalWeeks: number
+  availableWeeks: number[]
+  maxDayNumber?: number
 }) {
   const { getDailyPlan } = useDailyPlan()
   const { data: session } = useAppSession()
@@ -64,11 +70,29 @@ export function DayTabs({
       .filter(index => index !== -1)
   }, [selectedWorkoutDays])
 
-  // Вычисляем общее количество дней программы
+  const allowedWeeksArray = useMemo(() => {
+    if (availableWeeks && availableWeeks.length > 0) {
+      return availableWeeks
+    }
+    if (totalWeeks && totalWeeks > 0) {
+      return Array.from({ length: totalWeeks }, (_, i) => i + 1)
+    }
+    return [] as number[]
+  }, [availableWeeks, totalWeeks])
+
+  const allowedWeeksSet = useMemo(() => {
+    return new Set(allowedWeeksArray)
+  }, [allowedWeeksArray])
+
+  const maxAllowedWeek = useMemo(() => {
+    return allowedWeeksArray.length > 0 ? Math.max(...allowedWeeksArray) : 0
+  }, [allowedWeeksArray])
+
   const totalProgramDays = useMemo(() => {
-    const durationWeeks = enrollment?.course?.durationWeeks ?? 4
-    return durationWeeks * 7
-  }, [enrollment?.course?.durationWeeks])
+    return maxDayNumber && maxDayNumber > 0
+      ? maxDayNumber
+      : maxAllowedWeek * 7
+  }, [maxAllowedWeek, maxDayNumber])
 
   // Для подписки базой для расчёта является понедельник недели покупки
   const effectiveEnrollmentStart = useMemo(() => {
@@ -100,7 +124,8 @@ export function DayTabs({
         differenceInDays(normalizedDate, normalizedProgramStart) + 1
 
       // Проверяем, находится ли день после окончания программы
-      const isAfterProgram = daysSinceProgramStart > totalProgramDays
+      const isAfterProgram =
+        totalProgramDays > 0 && daysSinceProgramStart > totalProgramDays
 
       // Проверяем, является ли день тренировочным
       // Определяем день недели (0 - понедельник, 6 - воскресенье)
@@ -111,16 +136,21 @@ export function DayTabs({
         index => index === dayOfWeekIndex
       )
 
+      const isWeekUnavailable = !allowedWeeksSet.has(weekNumber)
+
       // Отключаем дни:
-      // - для подписки: только после окончания сгенерированного плана (вся неделя доступна, даже если купил в середине недели)
-      // - для фиксированного курса: до покупки и после окончания программы
-      const isDisabled = isSubscription
-        ? isAfterProgram
-        : isBeforePurchase || isAfterProgram
+      // - для подписки: дни из недоступных недель или за пределами сгенерированного плана
+      // - для фиксированного курса: до покупки и за пределами разрешённого диапазона
+      const isDisabled = isWeekUnavailable
+        ? true
+        : isSubscription
+          ? isAfterProgram
+          : isBeforePurchase || isAfterProgram
 
       // Вычисляем номер дня программы (только для дней в рамках программы)
       const programDay =
-        daysSinceProgramStart > 0 && daysSinceProgramStart <= totalProgramDays
+        daysSinceProgramStart > 0 &&
+        (totalProgramDays === 0 || daysSinceProgramStart <= totalProgramDays)
           ? daysSinceProgramStart
           : null
 
@@ -143,6 +173,8 @@ export function DayTabs({
     workoutDayIndices,
     totalProgramDays,
     isSubscription,
+    allowedWeeksSet,
+    weekNumber,
   ])
 
   // Находим первый активный день в неделе
@@ -160,7 +192,7 @@ export function DayTabs({
   const enabled =
     !!selectedDayNumberInCourse &&
     selectedDayNumberInCourse > 0 &&
-    selectedDayNumberInCourse <= totalProgramDays
+    (totalProgramDays === 0 || selectedDayNumberInCourse <= totalProgramDays)
 
   // Вызываем хук всегда, но управляем выполнением через enabled
   const dailyPlanQuery = getDailyPlan(

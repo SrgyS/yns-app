@@ -36,6 +36,8 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
     availableWeeks,
     currentWeekIndex,
     weeksMeta,
+    totalWeeks,
+    maxDayNumber,
     isLoading: isCalendarLoading,
   } = useWorkoutCalendar(
     programStart,
@@ -122,6 +124,9 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
               currentDate={today}
               courseId={courseId}
               isSubscription={isSubscription}
+              totalWeeks={totalWeeks}
+              availableWeeks={availableWeeks}
+              maxDayNumber={maxDayNumber ?? undefined}
             />
           </TabsContent>
         ))}

@@ -1,5 +1,4 @@
 import { useMemo } from 'react'
-import { differenceInCalendarWeeks } from 'date-fns'
 import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 
@@ -18,23 +17,40 @@ export function useWorkoutCalendar(
     courseSlug || ''
   )
 
+  const totalWeeksFromApi = availableWeeksQuery.data?.totalWeeks ?? null
+  const availableWeeksFromApi =
+    availableWeeksQuery.data?.availableWeeks ?? null
+  const maxDayNumberFromApi =
+    availableWeeksQuery.data?.maxDayNumber ?? null
+
   const noProgram = !programStart
 
   const totalWeeks = useMemo(() => {
-    if (!programStart) return durationWeeks ?? 4
+    if (totalWeeksFromApi && totalWeeksFromApi > 0) {
+      return totalWeeksFromApi
+    }
+
+    const fallbackWeeks = durationWeeks ?? 4
+
+    if (!programStart) {
+      return fallbackWeeks
+    }
+
     const startDay = programStart.getDay()
-    return startDay === 1 ? (durationWeeks ?? 4) : (durationWeeks ?? 4) + 1
-  }, [programStart, durationWeeks])
+    return startDay === 1 ? fallbackWeeks : fallbackWeeks + 1
+  }, [programStart, durationWeeks, totalWeeksFromApi])
 
   const availableWeeks = useMemo(() => {
-    // Для курсов-подписок используем данные из API. Пока данные грузятся — возвращаем пустой список,
-    // чтобы не падать обратно на логику фиксированных курсов и не показывать неверные недели.
-    if (isSubscription) {
-      return availableWeeksQuery.data?.availableWeeks ?? []
+    if (
+      availableWeeksFromApi &&
+      Array.isArray(availableWeeksFromApi) &&
+      availableWeeksFromApi.length > 0
+    ) {
+      return availableWeeksFromApi
     }
-    // Для обычных курсов возвращаем все недели
+
     return Array.from({ length: totalWeeks }, (_, i) => i + 1)
-  }, [isSubscription, availableWeeksQuery.data, totalWeeks])
+  }, [availableWeeksFromApi, totalWeeks])
 
   const weeksMeta = useMemo(() => {
     if (isSubscription) {
@@ -52,11 +68,18 @@ export function useWorkoutCalendar(
     // Для обычных курсов вычисляем как раньше
     if (!programStart) return 1
     const today = new Date()
-    const weeks = differenceInCalendarWeeks(today, programStart, {
-      weekStartsOn: 1,
-    })
-    return Math.min(Math.max(weeks + 1, 1), totalWeeks)
-  }, [isSubscription, availableWeeksQuery.data, programStart, totalWeeks])
+
+    const diff =
+      (availableWeeksQuery.data?.currentWeekIndex ??
+        Math.ceil((today.getTime() - programStart.getTime()) / (7 * 24 * 60 * 60 * 1000))) || 1
+
+    return Math.min(Math.max(diff, 1), totalWeeks)
+  }, [
+    isSubscription,
+    availableWeeksQuery.data?.currentWeekIndex,
+    programStart,
+    totalWeeks,
+  ])
 
   return {
     noProgram,
@@ -64,6 +87,7 @@ export function useWorkoutCalendar(
     totalWeeks,
     currentWeekIndex,
     weeksMeta,
+    maxDayNumber: maxDayNumberFromApi,
     isLoading: Boolean(isSubscription) ? availableWeeksQuery.isLoading : false,
   }
 }

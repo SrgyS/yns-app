@@ -13,7 +13,7 @@ export type Course = CourseFullInfo & {
   id: CourseId
   slug: CourseSlug
   product: Product
-  minWorkoutDaysPerWeek: number
+  allowedWorkoutDaysPerWeek: number[]
   dependencies: CourseId[]
   contentType: ContentType
 }
