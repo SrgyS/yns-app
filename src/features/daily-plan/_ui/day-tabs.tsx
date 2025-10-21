@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   addDays,
   format,
@@ -29,6 +29,8 @@ export function DayTabs({
   totalWeeks,
   availableWeeks,
   maxDayNumber,
+  onDayChange,
+  isActiveWeek = false,
 }: {
   weekNumber: number
   displayWeekStart: Date
@@ -39,6 +41,8 @@ export function DayTabs({
   totalWeeks: number
   availableWeeks: number[]
   maxDayNumber?: number
+  onDayChange?: (date: Date) => void
+  isActiveWeek?: boolean
 }) {
   const { getDailyPlan } = useDailyPlan()
   const { data: session } = useAppSession()
@@ -188,6 +192,17 @@ export function DayTabs({
   const selectedDayNumberInCourse = useMemo(() => {
     return days.find(d => d.key === selectedDay)?.programDay ?? null
   }, [selectedDay, days])
+
+  const selectedDayDate = useMemo(() => {
+    return days.find(d => d.key === selectedDay)?.date ?? null
+  }, [days, selectedDay])
+
+  useEffect(() => {
+    if (!isActiveWeek) return
+    if (onDayChange && selectedDayDate) {
+      onDayChange(selectedDayDate)
+    }
+  }, [isActiveWeek, onDayChange, selectedDayDate])
 
   const enabled =
     !!selectedDayNumberInCourse &&

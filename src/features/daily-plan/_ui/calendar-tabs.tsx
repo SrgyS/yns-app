@@ -1,6 +1,7 @@
 'use client'
 
-import { format, startOfWeek, addDays } from 'date-fns'
+import { useCallback, useEffect, useState } from 'react'
+import { format, startOfWeek, addDays, isSameDay } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui/tabs'
 import { DayTabs } from './day-tabs'
@@ -46,6 +47,23 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
     isSubscription
   )
 
+  const defaultWeek = `week-${currentWeekIndex}`
+  const [activeWeek, setActiveWeek] = useState(defaultWeek)
+  const [activeDate, setActiveDate] = useState(() => today)
+
+  useEffect(() => {
+    setActiveWeek(defaultWeek)
+  }, [defaultWeek])
+
+  const handleDayChange = useCallback((date: Date) => {
+    setActiveDate(prev => {
+      if (prev && isSameDay(prev, date)) {
+        return prev
+      }
+      return date
+    })
+  }, [])
+
   if (enrollmentQuery.isLoading || isCalendarLoading) {
     return (
       <div className="flex w-full flex-col gap-2.5 font-medium">
@@ -65,7 +83,6 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
   }
 
   const courseId = enrollment.courseId
-  const defaultWeek = `week-${currentWeekIndex}`
 
   const getDisplayWeekStart = (w: number) => {
     if (isSubscription) {
@@ -90,11 +107,12 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
   return (
     <div className="flex w-full flex-col gap-2.5 font-medium">
       <h3 className="text-sm font-semibold capitalize text-muted-foreground sm:text-lg">
-        {format(today, 'LLLL', { locale: ru })}
+        {format(activeDate, 'LLLL', { locale: ru })}
       </h3>
       <Tabs
         key={defaultWeek}
-        defaultValue={defaultWeek}
+        value={activeWeek}
+        onValueChange={setActiveWeek}
         className="space-y-2.5"
       >
         <TabsList className="flex flex-nowrap gap-1.5 overflow-x-auto rounded-lg bg-muted pl-1 pr-1 pt-1 pb-1 text-[11px] sm:text-sm justify-start">
@@ -127,6 +145,8 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
               totalWeeks={totalWeeks}
               availableWeeks={availableWeeks}
               maxDayNumber={maxDayNumber ?? undefined}
+              onDayChange={handleDayChange}
+              isActiveWeek={activeWeek === `week-${w}`}
             />
           </TabsContent>
         ))}
