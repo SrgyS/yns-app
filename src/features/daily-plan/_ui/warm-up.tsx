@@ -168,6 +168,7 @@ export function WarmUp({
             videoId={workout.videoId}
             options={playerOptions}
             onEnded={handleVideoCompleted}
+            className="overflow-hidden rounded-lg sm:rounded-xl"
           />
         )}
         <div className="mt-2 sm:mt-3">
