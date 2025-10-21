@@ -180,6 +180,77 @@ export class UserDailyPlanRepository {
     }
   }
 
+  /**
+   * Возвращает агрегированную информацию по расписанию пользователя.
+   *
+   * @param enrollmentId - идентификатор записи пользователя на курс
+   * @param db - опциональный Prisma-клиент или транзакция; по умолчанию общий `dbClient`
+   *
+   * @returns объект со сведениями:
+   * - `totalWeeks` — максимальный номер недели (`weekNumber`) в расписании;
+   * - `activeWeeks` — количество уникальных недель, для которых уже созданы планы;
+   * - `distinctWeeks` — отсортированный список таких недель;
+   * - `totalDays` — общее количество записей `UserDailyPlan` для enrollment;
+   * - `maxDayNumber` — последний созданный день (`dayNumberInCourse`).
+   *
+   * Используется сервисом `GetAvailableWeeksService`, чтобы
+   * корректно выводить доступные недели и ограничивать дни в UI.
+   */
+  async getWeeklySummary(
+    enrollmentId: string,
+    db: DbClient = this.defaultDb
+  ): Promise<{
+    totalWeeks: number
+    activeWeeks: number
+    distinctWeeks: number[]
+    totalDays: number
+    maxDayNumber: number
+  }> {
+    try {
+      const weekAggregate = await db.userDailyPlan.groupBy({
+        by: ['weekNumber'],
+        where: { enrollmentId },
+        orderBy: { weekNumber: 'asc' },
+      })
+
+      const distinctWeeks = weekAggregate
+        .map(item => item.weekNumber)
+        .filter(week => week !== null) as number[]
+
+      const totalWeeks = distinctWeeks.length
+        ? Math.max(...distinctWeeks)
+        : 0
+
+      const dayAggregate = await db.userDailyPlan.aggregate({
+        where: { enrollmentId },
+        _max: {
+          dayNumberInCourse: true,
+        },
+        _count: {
+          id: true,
+        },
+      })
+
+      const maxDayNumber = dayAggregate._max.dayNumberInCourse ?? 0
+      const totalDays = dayAggregate._count.id ?? 0
+
+      return {
+        totalWeeks,
+        activeWeeks: distinctWeeks.length,
+        distinctWeeks,
+        maxDayNumber,
+        totalDays,
+      }
+    } catch (error) {
+      logger.error({
+        msg: 'Error getting weekly summary for enrollment',
+        enrollmentId,
+        error,
+      })
+      throw new Error('Failed to get weekly summary')
+    }
+  }
+
   async updateUserDailyPlans(
     enrollmentId: string,
     selectedWorkoutDays: DayOfWeek[],

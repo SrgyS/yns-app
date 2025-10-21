@@ -1,4 +1,8 @@
-import { DayOfWeek, DailyPlan as PrismaDailyPlan } from '@prisma/client'
+import {
+  DayOfWeek,
+  DailyPlan as PrismaDailyPlan,
+  Course as PrismaCourse,
+} from '@prisma/client'
 import { DateCalculationService } from './date-calculation'
 import { PlanValidationService } from './plan-validation'
 
@@ -9,9 +13,7 @@ export interface GenerationContext {
     startDate: Date
     selectedWorkoutDays: DayOfWeek[]
   }
-  course: {
-    durationWeeks: number
-    minWorkoutDaysPerWeek: number
+  course: Pick<PrismaCourse, 'durationWeeks' | 'allowedWorkoutDaysPerWeek'> & {
     dailyPlans: PrismaDailyPlan[]
   }
 }
@@ -45,6 +47,14 @@ export interface GenerationRange {
   endDay: number
 }
 
+interface DayIterationMeta {
+  dayIndex: number
+  date: Date
+  dayOfWeek: DayOfWeek
+  isWorkoutDay: boolean
+  weekNumber: number
+}
+
 /**
  * Сервис для генерации планов пользователей
  * Отвечает за создание и обновление UserDailyPlan
@@ -73,12 +83,38 @@ export class PlanGenerationService {
    */
   calculateGenerationRange(
     scope: 'full' | { week: number },
-    durationWeeks: number
+    context: GenerationContext
   ): GenerationRange {
     if (scope === 'full') {
+      const requirements =
+        this.validationService.calculatePlanRequirements(context.course)
+      const selectedWorkoutDaysCount =
+        context.enrollment.selectedWorkoutDays.length
+      const { mainWorkoutDays } = this.validationService.categorizePlans(
+        context.course.dailyPlans
+      )
+
+      const extraWeeks = Math.max(
+        requirements.maxWorkoutDaysPerWeek - selectedWorkoutDaysCount,
+        0
+      )
+
+      const workoutsPerWeek = Math.max(selectedWorkoutDaysCount, 1)
+      const weeksToCoverWorkouts =
+        mainWorkoutDays.length > 0
+          ? Math.ceil(mainWorkoutDays.length / workoutsPerWeek)
+          : 0
+
+      const baseWeeks = requirements.durationWeeks + extraWeeks
+      const totalWeeks = Math.max(
+        baseWeeks,
+        weeksToCoverWorkouts,
+        requirements.durationWeeks
+      )
+
       return {
         startDay: 0,
-        endDay: durationWeeks * 7,
+        endDay: totalWeeks * 7,
       }
     }
 
@@ -94,27 +130,19 @@ export class PlanGenerationService {
    */
   createUserDailyPlanData(
     context: GenerationContext,
-    dayIndex: number,
-    plan: PrismaDailyPlan
+    plan: PrismaDailyPlan,
+    meta: DayIterationMeta
   ): UserDailyPlanCreateData {
-    const currentDate = this.dateService.calculateDateForDay(
-      context.enrollment.startDate,
-      dayIndex
-    )
-    const dayOfWeek = this.dateService.getDayOfWeek(currentDate)
-    const isWorkoutDay = context.enrollment.selectedWorkoutDays.includes(dayOfWeek)
-    const weekNumber = this.dateService.calculateWeekNumber(dayIndex)
-
     return {
       userId: context.enrollment.userId,
       enrollmentId: context.enrollment.id,
-      date: currentDate,
-      dayNumberInCourse: dayIndex + 1,
-      weekNumber,
-      dayOfWeek,
-      isWorkoutDay,
+      date: meta.date,
+      dayNumberInCourse: meta.dayIndex + 1,
+      weekNumber: meta.weekNumber,
+      dayOfWeek: meta.dayOfWeek,
+      isWorkoutDay: meta.isWorkoutDay,
       warmupId: plan.warmupId,
-      mainWorkoutId: isWorkoutDay ? plan.mainWorkoutId : null,
+      mainWorkoutId: meta.isWorkoutDay ? plan.mainWorkoutId : null,
       mealPlanId: plan.mealPlanId ?? null,
       originalDailyPlanId: plan.id,
     }
@@ -125,23 +153,15 @@ export class PlanGenerationService {
    */
   createUserDailyPlanUpdateData(
     context: GenerationContext,
-    dayIndex: number,
-    plan: PrismaDailyPlan
+    plan: PrismaDailyPlan,
+    meta: DayIterationMeta
   ): UserDailyPlanUpdateData {
-    const currentDate = this.dateService.calculateDateForDay(
-      context.enrollment.startDate,
-      dayIndex
-    )
-    const dayOfWeek = this.dateService.getDayOfWeek(currentDate)
-    const isWorkoutDay = context.enrollment.selectedWorkoutDays.includes(dayOfWeek)
-    const weekNumber = this.dateService.calculateWeekNumber(dayIndex)
-
     return {
-      isWorkoutDay,
-      dayOfWeek,
-      weekNumber,
+      isWorkoutDay: meta.isWorkoutDay,
+      dayOfWeek: meta.dayOfWeek,
+      weekNumber: meta.weekNumber,
       warmupId: plan.warmupId,
-      mainWorkoutId: isWorkoutDay ? plan.mainWorkoutId : null,
+      mainWorkoutId: meta.isWorkoutDay ? plan.mainWorkoutId : null,
       mealPlanId: plan.mealPlanId ?? null,
       originalDailyPlanId: plan.id,
     }
@@ -154,39 +174,9 @@ export class PlanGenerationService {
     context: GenerationContext,
     range: GenerationRange
   ): UserDailyPlanCreateData[] {
-    const { mainWorkoutDays, warmupOnlyDays } = this.validationService.categorizePlans(
-      context.course.dailyPlans
+    return this.mapPlansForRange(context, range, (plan, meta) =>
+      this.createUserDailyPlanData(context, plan, meta)
     )
-
-    const plans: UserDailyPlanCreateData[] = []
-    let mainWorkoutIndex = 0
-    let warmupOnlyIndex = 0
-
-    for (let i = range.startDay; i < range.endDay; i++) {
-      const currentDate = this.dateService.calculateDateForDay(
-         context.enrollment.startDate,
-         i
-       )
-      const dayOfWeek = this.dateService.getDayOfWeek(currentDate)
-      const isWorkoutDay = context.enrollment.selectedWorkoutDays.includes(dayOfWeek)
-
-      const { plan: selectedPlan, newMainWorkoutIndex, newWarmupOnlyIndex } = 
-        this.validationService.getNextPlan(
-          isWorkoutDay,
-          mainWorkoutDays,
-          warmupOnlyDays,
-          mainWorkoutIndex,
-          warmupOnlyIndex
-        )
-
-      mainWorkoutIndex = newMainWorkoutIndex
-      warmupOnlyIndex = newWarmupOnlyIndex
-
-      const planData = this.createUserDailyPlanData(context, i, selectedPlan)
-      plans.push(planData)
-    }
-
-    return plans
   }
 
   /**
@@ -196,23 +186,37 @@ export class PlanGenerationService {
     context: GenerationContext,
     range: GenerationRange
   ): UserDailyPlanUpdateData[] {
-    const { mainWorkoutDays, warmupOnlyDays } = this.validationService.categorizePlans(
-      context.course.dailyPlans
+    return this.mapPlansForRange(context, range, (plan, meta) =>
+      this.createUserDailyPlanUpdateData(context, plan, meta)
     )
+  }
 
-    const updateData: UserDailyPlanUpdateData[] = []
+  private mapPlansForRange<T>(
+    context: GenerationContext,
+    range: GenerationRange,
+    mapFn: (plan: PrismaDailyPlan, meta: DayIterationMeta) => T
+  ): T[] {
+    const { mainWorkoutDays, warmupOnlyDays } =
+      this.validationService.categorizePlans(context.course.dailyPlans)
+
+    const result: T[] = []
     let mainWorkoutIndex = 0
     let warmupOnlyIndex = 0
 
-    for (let i = range.startDay; i < range.endDay; i++) {
-      const currentDate = this.dateService.calculateDateForDay(
-         context.enrollment.startDate,
-         i
-       )
-      const dayOfWeek = this.dateService.getDayOfWeek(currentDate)
-      const isWorkoutDay = context.enrollment.selectedWorkoutDays.includes(dayOfWeek)
+    for (let dayIndex = range.startDay; dayIndex < range.endDay; dayIndex++) {
+      const date = this.dateService.calculateDateForDay(
+        context.enrollment.startDate,
+        dayIndex
+      )
+      const dayOfWeek = this.dateService.getDayOfWeek(date)
+      const isWorkoutDay =
+        context.enrollment.selectedWorkoutDays.includes(dayOfWeek)
+      const weekNumber = this.dateService.calculateWeekNumber(
+        dayIndex,
+        context.enrollment.startDate
+      )
 
-      const { plan: selectedPlan, newMainWorkoutIndex, newWarmupOnlyIndex } = 
+      const { plan: selectedPlan, newMainWorkoutIndex, newWarmupOnlyIndex } =
         this.validationService.getNextPlan(
           isWorkoutDay,
           mainWorkoutDays,
@@ -224,10 +228,17 @@ export class PlanGenerationService {
       mainWorkoutIndex = newMainWorkoutIndex
       warmupOnlyIndex = newWarmupOnlyIndex
 
-      const updateData_ = this.createUserDailyPlanUpdateData(context, i, selectedPlan)
-      updateData.push(updateData_)
+      result.push(
+        mapFn(selectedPlan, {
+          dayIndex,
+          date,
+          dayOfWeek,
+          isWorkoutDay,
+          weekNumber,
+        })
+      )
     }
 
-    return updateData
+    return result
   }
 }

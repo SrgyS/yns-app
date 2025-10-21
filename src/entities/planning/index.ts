@@ -1,5 +1,5 @@
 // Domain models
-export * from './_domain/planning'
+export * from './_domain/types'
 
 // Services
 export * from './_services/date-calculation'

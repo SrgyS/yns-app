@@ -33,6 +33,8 @@ export type KinescopePlayerProps = {
   style?: CSSProperties
   onEnded?: () => void
   onError?: (error: unknown) => void
+  onPlay?: () => void
+  onPause?: () => void
 }
 
 export type PlayerHandle = {
@@ -55,13 +57,20 @@ const toStyleSize = (value: number | string | undefined, fallback: string) => {
 }
 
 export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
-  ({ videoId, options, className, style, onEnded, onError }, ref) => {
+  (
+    { videoId, options, className, style, onEnded, onError, onPlay, onPause },
+    ref
+  ) => {
     const containerRef = useRef<HTMLDivElement | null>(null)
     const playerInstanceRef = useRef<KinescopePlayerInstance | null>(null)
     const endedHandlerRef = useRef<((...args: unknown[]) => void) | null>(null)
+    const playHandlerRef = useRef<((...args: unknown[]) => void) | null>(null)
+    const pauseHandlerRef = useRef<((...args: unknown[]) => void) | null>(null)
     const apiRef = useRef<KinescopeApi | null>(null)
     const onEndedRef = useRef(onEnded)
     const onErrorRef = useRef(onError)
+    const onPlayRef = useRef(onPlay)
+    const onPauseRef = useRef(onPause)
     const requestIdRef = useRef(0)
     const [isLoading, setIsLoading] = useState(false)
     const [loadError, setLoadError] = useState<Error | null>(null)
@@ -113,6 +122,14 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
     useEffect(() => {
       onErrorRef.current = onError
     }, [onError])
+
+    useEffect(() => {
+      onPlayRef.current = onPlay
+    }, [onPlay])
+
+    useEffect(() => {
+      onPauseRef.current = onPause
+    }, [onPause])
 
     useImperativeHandle(
       ref,
@@ -194,11 +211,22 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
           playerInstanceRef.current = player
 
           if (player?.Events) {
-            const handler = () => {
+            const endedHandler = () => {
               onEndedRef.current?.()
             }
-            endedHandlerRef.current = handler
-            player.on?.(player.Events.Ended, handler)
+            const playHandler = () => {
+              onPlayRef.current?.()
+            }
+            const pauseHandler = () => {
+              onPauseRef.current?.()
+            }
+
+            endedHandlerRef.current = endedHandler
+            player.on?.(player.Events.Ended, endedHandler)
+            playHandlerRef.current = playHandler
+            player.on?.(player.Events.Play, playHandler)
+            pauseHandlerRef.current = pauseHandler
+            player.on?.(player.Events.Pause, pauseHandler)
           }
 
           if (isMounted && requestId === requestIdRef.current) {
@@ -226,13 +254,23 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
 
         const player = playerInstanceRef.current
         if (player) {
-          if (player.Events && endedHandlerRef.current) {
-            player.off?.(player.Events.Ended, endedHandlerRef.current)
+          if (player.Events) {
+            if (endedHandlerRef.current) {
+              player.off?.(player.Events.Ended, endedHandlerRef.current)
+            }
+            if (playHandlerRef.current) {
+              player.off?.(player.Events.Play, playHandlerRef.current)
+            }
+            if (pauseHandlerRef.current) {
+              player.off?.(player.Events.Pause, pauseHandlerRef.current)
+            }
           }
           player.destroy?.()
         }
         playerInstanceRef.current = null
         endedHandlerRef.current = null
+        playHandlerRef.current = null
+        pauseHandlerRef.current = null
       }
     }, [createOptions, containerId, attempt])
 

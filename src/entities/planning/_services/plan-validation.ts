@@ -1,4 +1,7 @@
-import { DailyPlan as PrismaDailyPlan, Course as PrismaCourse } from '@prisma/client'
+import {
+  DailyPlan as PrismaDailyPlan,
+  Course as PrismaCourse,
+} from '@prisma/client'
 
 export interface ValidationResult {
   isValid: boolean
@@ -6,7 +9,7 @@ export interface ValidationResult {
 }
 
 export interface PlanRequirements {
-  minWorkoutDaysPerWeek: number
+  maxWorkoutDaysPerWeek: number
   durationWeeks: number
   totalDays: number
   requiredMainWorkoutDays: number
@@ -20,13 +23,19 @@ export class PlanValidationService {
   /**
    * Вычислить требования к планам для курса
    */
-  calculatePlanRequirements(course: PrismaCourse): PlanRequirements {
+  calculatePlanRequirements(
+    course: Pick<PrismaCourse, 'durationWeeks' | 'allowedWorkoutDaysPerWeek'>
+  ): PlanRequirements {
     const totalDays = course.durationWeeks * 7
-    const requiredMainWorkoutDays = course.minWorkoutDaysPerWeek * course.durationWeeks
+    const allowed = course.allowedWorkoutDaysPerWeek && course.allowedWorkoutDaysPerWeek.length > 0
+      ? course.allowedWorkoutDaysPerWeek
+      : [5]
+    const maxWorkoutDaysPerWeek = Math.max(...allowed)
+    const requiredMainWorkoutDays = maxWorkoutDaysPerWeek * course.durationWeeks
     const requiredWarmupOnlyDays = totalDays - requiredMainWorkoutDays
 
     return {
-      minWorkoutDaysPerWeek: course.minWorkoutDaysPerWeek,
+      maxWorkoutDaysPerWeek,
       durationWeeks: course.durationWeeks,
       totalDays,
       requiredMainWorkoutDays,
@@ -58,7 +67,6 @@ export class PlanValidationService {
     const requirements = this.calculatePlanRequirements(course)
     const { mainWorkoutDays, warmupOnlyDays } = this.categorizePlans(dailyPlans)
 
-    // Проверка достаточности тренировочных дней
     if (mainWorkoutDays.length < requirements.requiredMainWorkoutDays) {
       errors.push(
         `Not enough main workout days: required ${requirements.requiredMainWorkoutDays}, got ${mainWorkoutDays.length} for a ${course.durationWeeks}-week course`

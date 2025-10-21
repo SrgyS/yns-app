@@ -52,7 +52,11 @@ export class CoursesRepository {
       product,
       draft: course.draft,
       durationWeeks: course.durationWeeks,
-      minWorkoutDaysPerWeek: course.minWorkoutDaysPerWeek,
+      allowedWorkoutDaysPerWeek:
+        course.allowedWorkoutDaysPerWeek &&
+        course.allowedWorkoutDaysPerWeek.length > 0
+          ? course.allowedWorkoutDaysPerWeek
+          : [5],
       contentType: course.contentType,
     }
   }

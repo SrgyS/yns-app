@@ -9,18 +9,18 @@ import { DayItem } from './day-item'
 
 interface WorkoutDaySelectorProps {
   onSelectDays: (selectedDays: DayOfWeek[]) => void // Колбэк, который вызывается при подтверждении выбора
-  minDays?: number // Минимальное количество дней для выбора (по умолчанию 5)
-  maxDays?: number // Максимальное количество дней для выбора (по умолчанию 5)
+  requiredDays: number // Точное количество тренировочных дней, которые нужно выбрать
   isLoading?: boolean // Для состояния загрузки кнопки
   initialSelectedDays?: DayOfWeek[]
+  disabled?: boolean
 }
 
 export function WorkoutDaySelector({
   onSelectDays,
-  minDays = 5,
-  maxDays = 5,
+  requiredDays,
   isLoading = false,
   initialSelectedDays = [],
+  disabled = false,
 }: WorkoutDaySelectorProps) {
   const [selectedDays, setSelectedDays] =
     useState<DayOfWeek[]>(initialSelectedDays)
@@ -44,10 +44,14 @@ export function WorkoutDaySelector({
   }, [selectedDays, initialSelectedDays])
 
   const handleDayToggle = (day: DayOfWeek, checked: boolean) => {
+    if (disabled) {
+      return
+    }
+
     setSelectedDays(prevDays => {
       if (checked) {
-        if (prevDays.length >= maxDays) {
-          toast.error(`Вы можете выбрать не более ${maxDays} дней.`)
+        if (prevDays.length >= requiredDays) {
+          toast.error(`Вы можете выбрать не более ${requiredDays} дней.`)
           return prevDays
         }
         return [...prevDays, day]
@@ -58,8 +62,8 @@ export function WorkoutDaySelector({
   }
 
   const handleSubmit = () => {
-    if (selectedDays.length < minDays || selectedDays.length > maxDays) {
-      toast.error(`Пожалуйста, выберите от ${minDays} до ${maxDays} дней.`)
+    if (selectedDays.length !== requiredDays) {
+      toast.error(`Пожалуйста, выберите ${requiredDays} тренировочных дня.`)
       return
     }
     onSelectDays(selectedDays)
@@ -73,10 +77,11 @@ export function WorkoutDaySelector({
           <DayItem
             day={day}
             today={today}
-            maxDays={maxDays}
+            limit={requiredDays}
             key={day}
             selectedDays={selectedDays}
             onToggle={handleDayToggle}
+            disabled={disabled}
           />
         ))}
       </div>
@@ -85,19 +90,19 @@ export function WorkoutDaySelector({
         <Button
           onClick={handleSubmit}
           disabled={
-            selectedDays.length < minDays ||
-            selectedDays.length > maxDays ||
-            isLoading ||
-            !daysChanged // Добавляем проверку, изменились ли дни
+          disabled ||
+          selectedDays.length !== requiredDays ||
+          isLoading ||
+          !daysChanged // Добавляем проверку, изменились ли дни
           }
         >
           Продолжить
         </Button>
       </div>
 
-      {selectedDays.length > 0 && (
+      {!disabled && selectedDays.length > 0 && (
         <p className="text-sm text-muted-foreground text-center">
-          Выбрано: {selectedDays.length} / {maxDays} дней.
+          Выбрано: {selectedDays.length} / {requiredDays} дней.
         </p>
       )}
     </div>

@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { KinescopePlayer, type PlayerHandle } from './kinescope-player'
 import upperFirst from 'lodash-es/upperFirst'
+import { Timer } from 'lucide-react'
 import { Badge } from '@/shared/ui/badge'
 import { Card, CardContent, CardFooter } from '@/shared/ui/card'
 import { Checkbox } from '@/shared/ui/checkbox'
@@ -39,6 +40,7 @@ export function WarmUp({
   userDailyPlanId,
 }: WarmUpProps) {
   const [isCompleted, setIsCompleted] = useState(initialCompleted)
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false)
   const { data: session } = useAppSession()
 
   const playerRef = useRef<PlayerHandle | null>(null)
@@ -130,10 +132,19 @@ export function WarmUp({
     userDailyPlanId,
   ])
   const handleVideoCompleted = () => {
+    setIsVideoPlaying(false)
     if (!isCompleted) {
       toggleCompleted()
     }
   }
+
+  const handleVideoPlay = useCallback(() => {
+    setIsVideoPlaying(true)
+  }, [])
+
+  const handleVideoPause = useCallback(() => {
+    setIsVideoPlaying(false)
+  }, [])
 
   const toggleCompleted = async () => {
     if (!session?.user?.id || !workout?.type) return
@@ -158,79 +169,120 @@ export function WarmUp({
   }
 
   return (
-    <Card className="gap-4 rounded-lg py-4 sm:rounded-xl sm:py-5 max-[400px]:py-3">
-      <CardContent className="px-4 sm:px-6">
-        <h3 className="mb-2 text-base font-medium sm:text-lg">{title}</h3>
+    <Card className="rounded-lg gap-4 py-3 sm:rounded-xl sm:gap-5 sm:py-4 max-[400px]:gap-3 max-[400px]:py-2">
+      <CardContent className="px-3 sm:px-4">
+        <h3 className="text-base font-medium sm:text-lg mb-1">{title}</h3>
         {workout?.videoId && (
-          <KinescopePlayer
-            key={`${userDailyPlanId}-${workout.videoId}`}
-            ref={playerRef}
-            videoId={workout.videoId}
-            options={playerOptions}
-            onEnded={handleVideoCompleted}
-          />
-        )}
-        {(muscleBadges.length > 0 || isCompleted || durationMinutes) && (
-          <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 sm:mt-4">
-            {muscleBadges.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                {muscleBadges.map((muscle, index) => (
+          <div className="relative">
+            <KinescopePlayer
+              key={`${userDailyPlanId}-${workout.videoId}`}
+              ref={playerRef}
+              videoId={workout.videoId}
+              options={playerOptions}
+              onEnded={handleVideoCompleted}
+              onPlay={handleVideoPlay}
+              onPause={handleVideoPause}
+              className="overflow-hidden rounded-lg sm:rounded-xl"
+            />
+            <div
+              className={cn(
+                'absolute inset-x-0 top-0 transition-opacity duration-200',
+                isVideoPlaying
+                  ? 'pointer-events-none opacity-0'
+                  : 'pointer-events-auto opacity-100'
+              )}
+            >
+              <div className="flex items-center justify-between p-2 sm:p-3">
+                {durationMinutes && (
                   <Badge
-                    key={`${muscle}-${index}`}
                     variant="secondary"
-                    className="px-2 py-0.5 text-[11px] sm:text-xs"
+                    className="bg-background px-2 py-0.5 text-[11px] sm:text-xs"
                   >
-                    {muscle}
+                    <Timer className="size-3 inline-block mr-0.5" />
+                    {durationMinutes} мин
                   </Badge>
-                ))}
-              </div>
-            )}
-            {(isCompleted || durationMinutes) && (
-              <div
-                className={cn(
-                  'flex items-center gap-1.5 text-[11px] text-muted-foreground sm:gap-2 sm:text-xs justify-self-end',
-                  muscleBadges.length > 0
-                    ? 'col-start-2 row-start-1'
-                    : 'col-span-2 justify-end'
                 )}
-              >
-                {isCompleted && <Badge>Выполнено</Badge>}
-                {durationMinutes && <Badge>{durationMinutes} мин</Badge>}
+
+                <FavoriteButton />
               </div>
-            )}
+            </div>
           </div>
         )}
+        <div className="mt-2 sm:mt-3">
+          {workout?.title && (
+            <p className="mt-1 text-xs leading-relaxed  sm:text-sm">
+              {workout.title}
+            </p>
+          )}
+          {workout?.description && (
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+              {workout.description}
+            </p>
+          )}
+        </div>
+
+        {muscleBadges.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5 sm:gap-2">
+            {muscleBadges.map((muscle, index) => (
+              <Badge
+                key={`${muscle}-${index}`}
+                variant="secondary"
+                className="px-2 py-0.5 text-[11px] sm:text-xs"
+              >
+                {muscle}
+              </Badge>
+            ))}
+          </div>
+        )}
+
         {equipmentText && (
-          <p className="mt-3 text-xs leading-snug sm:text-sm">
-            <span className="text-muted-foreground">Инвентарь:</span>{' '}
-            <span>{equipmentText}</span>
+          <p className="mt-2 text-xs leading-snug sm:text-sm">
+            {equipmentText === 'Без инвентаря' ? (
+              <span>{equipmentText}</span>
+            ) : (
+              <>
+                <span className="text-muted-foreground">Инвентарь:</span>{' '}
+                <span>{equipmentText}</span>
+              </>
+            )}
           </p>
         )}
       </CardContent>
-      <CardFooter className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
-        <div className="flex items-center gap-3 max-[400px]:gap-2">
-          <span className="text-xs text-muted-foreground sm:text-sm">
-            Сложность:
-          </span>
-          <span className="flex items-center gap-1">
-            {DIFFICULTY_STEPS.map(step => {
-              const isActive = difficultyLevel >= step
-              return (
-                <span
-                  key={step}
-                  className={cn(
-                    'h-2.5 w-2.5 rounded-full border transition-colors max-[400px]:h-2 max-[400px]:w-2',
-                    isActive
-                      ? 'border-primary bg-primary'
-                      : 'border-muted-foreground/40 bg-transparent'
-                  )}
-                />
-              )
-            })}
-          </span>
+      <CardFooter className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-3">
+        <div className="flex items-center gap-2 max-[400px]:gap-1.5">
+          <Badge
+            variant="outline"
+            className="flex items-center gap-1 px-2 py-0.5 text-[11px] sm:text-xs"
+          >
+            <span>Сложность</span>
+            <span className="flex items-center gap-1">
+              {DIFFICULTY_STEPS.map(step => {
+                const isActive = difficultyLevel >= step
+                return (
+                  <span
+                    key={step}
+                    className={cn(
+                      'h-2.5 w-2.5 rounded-full border transition-colors max-[400px]:h-2 max-[400px]:w-2',
+                      isActive
+                        ? 'border-primary bg-primary'
+                        : 'border-muted-foreground/40 bg-transparent'
+                    )}
+                  />
+                )
+              })}
+            </span>
+          </Badge>
         </div>
-        <div className="flex items-center gap-2">
-          <FavoriteButton />
+        <div className="flex items-center justify-end gap-2">
+          {isCompleted && (
+            <div
+              className={cn(
+                'flex items-center gap-1.5 text-[11px] text-muted-foreground sm:gap-2 sm:text-xs justify-self-end'
+              )}
+            >
+              <Badge>Выполнено</Badge>
+            </div>
+          )}
           <Checkbox
             id={`workout-completed-${workoutId}`}
             checked={isCompleted}

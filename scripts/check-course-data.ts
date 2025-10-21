@@ -8,7 +8,7 @@ async function main() {
     select: {
       slug: true,
       title: true,
-      minWorkoutDaysPerWeek: true
+      allowedWorkoutDaysPerWeek: true,
     }
   })
   

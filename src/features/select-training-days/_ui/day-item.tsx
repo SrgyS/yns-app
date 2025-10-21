@@ -9,22 +9,25 @@ import { DayOfWeek } from '@prisma/client'
 interface DayItemProps {
   day: DayOfWeek
   today: string
-  maxDays: number
+  limit: number
   onToggle: (day: DayOfWeek, checked: boolean) => void
   selectedDays: DayOfWeek[]
+  disabled?: boolean
 }
 
 export function DayItem({
   day,
   today,
-  maxDays,
+  limit,
   onToggle,
   selectedDays,
+  disabled = false,
 }: DayItemProps) {
   return (
     <div
       key={day}
-      className="relative flex flex-col items-center gap-2 border rounded-md px-4 py-6 max-w-[80px]"
+      className="relative flex flex-col items-center gap-2 border rounded-md px-4 py-6 max-w-[80px] opacity-100 data-[disabled=true]:opacity-60 data-[disabled=true]:pointer-events-none"
+      data-disabled={disabled}
     >
       <div className="flex items-center space-x-2">
         <Checkbox
@@ -32,7 +35,8 @@ export function DayItem({
           checked={selectedDays.includes(day)}
           onCheckedChange={(checked: boolean) => onToggle(day, checked)}
           disabled={
-            !selectedDays.includes(day) && selectedDays.length >= maxDays
+            disabled ||
+            (!selectedDays.includes(day) && selectedDays.length >= limit)
           }
         />
         <Label htmlFor={`day-${day}`} className="text-base cursor-pointer">

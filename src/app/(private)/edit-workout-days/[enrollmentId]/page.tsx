@@ -41,16 +41,17 @@ export default async function EditWorkoutDays({ params }: { params: Promise<{ en
   }
   
   const currentWorkoutDays = enrollment.selectedWorkoutDays
-  // Используем minWorkoutDaysPerWeek из курса вместо хардкода
-  const minDays = course.minWorkoutDaysPerWeek || 5 // Используем 5 как значение по умолчанию, если поле не определено
+  const allowedDayOptions =
+    course.allowedWorkoutDaysPerWeek && course.allowedWorkoutDaysPerWeek.length > 0
+      ? course.allowedWorkoutDaysPerWeek
+      : [5]
 
   return (
     <main className="flex flex-col justify-center space-y-6 py-14 container max-w-[800px]">
       <EditWorkoutDaysClient
         enrollmentId={enrollmentId}
         initialSelectedDays={currentWorkoutDays}
-        minDays={minDays}
-        maxDays={minDays}
+        allowedDayOptions={allowedDayOptions}
       />
     </main>
   )

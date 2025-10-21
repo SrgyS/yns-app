@@ -16,11 +16,11 @@ import {
   ActivateEnrollmentService,
   GetEnrollmentByCourseSlugService,
   GetEnrollmentByIdService,
-  GetAvailableWeeksService,
 } from '@/entities/course/module'
 import { CreateUserCourseEnrollmentWithCourseAccessService } from './_services/create-user-course-enrollment-with-access'
 import { CheckCourseAccessService } from '@/entities/user-access/module'
 import { UserAccessRepository } from '@/entities/user-access/_repository/user-access'
+import { GetAvailableWeeksService } from './_services/get-available-weeks'
 
 @injectable()
 export class CourseEnrollmentController extends Controller {
@@ -247,6 +247,7 @@ export class CourseEnrollmentController extends Controller {
           const availableWeeks = await this.getAvailableWeeksService.exec({
             userId: input.userId,
             courseId: course.id,
+            enrollmentId: enrollment.id,
             enrollmentStartDate: enrollment.startDate,
             courseContentType: course.contentType || 'FIXED_COURSE',
             courseDurationWeeks: course.durationWeeks || 4,

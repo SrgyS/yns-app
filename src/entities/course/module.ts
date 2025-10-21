@@ -13,7 +13,6 @@ import { UpdateWorkoutDaysService } from './_services/update-selected-workout-da
 import { GetEnrollmentByIdService } from './_services/get-enrollment-by-id'
 import { ActivateEnrollmentService } from './_services/activate-enrollment'
 import { GetEnrollmentByCourseSlugService } from './_services/get-enrollment-by-course-slug'
-import { GetAvailableWeeksService } from './_services/get-available-weeks'
 
 export const CourseEntityModule = new ContainerModule(context => {
   const { bind } = context
@@ -31,7 +30,6 @@ export const CourseEntityModule = new ContainerModule(context => {
   bind(UpdateWorkoutDaysService).toSelf()
   bind(ActivateEnrollmentService).toSelf()
   bind(GetEnrollmentByCourseSlugService).toSelf()
-  bind(GetAvailableWeeksService).toSelf()
 })
 
 export {
@@ -46,5 +44,4 @@ export {
   UpdateWorkoutDaysService,
   ActivateEnrollmentService,
   GetEnrollmentByCourseSlugService,
-  GetAvailableWeeksService,
 }

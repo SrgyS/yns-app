@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   addDays,
   format,
@@ -26,6 +26,11 @@ export function DayTabs({
   currentDate,
   courseId,
   isSubscription,
+  totalWeeks,
+  availableWeeks,
+  maxDayNumber,
+  onDayChange,
+  isActiveWeek = false,
 }: {
   weekNumber: number
   displayWeekStart: Date
@@ -33,6 +38,11 @@ export function DayTabs({
   currentDate: Date
   courseId: string
   isSubscription?: boolean
+  totalWeeks: number
+  availableWeeks: number[]
+  maxDayNumber?: number
+  onDayChange?: (date: Date) => void
+  isActiveWeek?: boolean
 }) {
   const { getDailyPlan } = useDailyPlan()
   const { data: session } = useAppSession()
@@ -64,11 +74,29 @@ export function DayTabs({
       .filter(index => index !== -1)
   }, [selectedWorkoutDays])
 
-  // Вычисляем общее количество дней программы
+  const allowedWeeksArray = useMemo(() => {
+    if (availableWeeks && availableWeeks.length > 0) {
+      return availableWeeks
+    }
+    if (totalWeeks && totalWeeks > 0) {
+      return Array.from({ length: totalWeeks }, (_, i) => i + 1)
+    }
+    return [] as number[]
+  }, [availableWeeks, totalWeeks])
+
+  const allowedWeeksSet = useMemo(() => {
+    return new Set(allowedWeeksArray)
+  }, [allowedWeeksArray])
+
+  const maxAllowedWeek = useMemo(() => {
+    return allowedWeeksArray.length > 0 ? Math.max(...allowedWeeksArray) : 0
+  }, [allowedWeeksArray])
+
   const totalProgramDays = useMemo(() => {
-    const durationWeeks = enrollment?.course?.durationWeeks ?? 4
-    return durationWeeks * 7
-  }, [enrollment?.course?.durationWeeks])
+    return maxDayNumber && maxDayNumber > 0
+      ? maxDayNumber
+      : maxAllowedWeek * 7
+  }, [maxAllowedWeek, maxDayNumber])
 
   // Для подписки базой для расчёта является понедельник недели покупки
   const effectiveEnrollmentStart = useMemo(() => {
@@ -100,7 +128,8 @@ export function DayTabs({
         differenceInDays(normalizedDate, normalizedProgramStart) + 1
 
       // Проверяем, находится ли день после окончания программы
-      const isAfterProgram = daysSinceProgramStart > totalProgramDays
+      const isAfterProgram =
+        totalProgramDays > 0 && daysSinceProgramStart > totalProgramDays
 
       // Проверяем, является ли день тренировочным
       // Определяем день недели (0 - понедельник, 6 - воскресенье)
@@ -111,16 +140,21 @@ export function DayTabs({
         index => index === dayOfWeekIndex
       )
 
+      const isWeekUnavailable = !allowedWeeksSet.has(weekNumber)
+
       // Отключаем дни:
-      // - для подписки: только после окончания сгенерированного плана (вся неделя доступна, даже если купил в середине недели)
-      // - для фиксированного курса: до покупки и после окончания программы
-      const isDisabled = isSubscription
-        ? isAfterProgram
-        : isBeforePurchase || isAfterProgram
+      // - для подписки: дни из недоступных недель или за пределами сгенерированного плана
+      // - для фиксированного курса: до покупки и за пределами разрешённого диапазона
+      const isDisabled = isWeekUnavailable
+        ? true
+        : isSubscription
+          ? isAfterProgram
+          : isBeforePurchase || isAfterProgram
 
       // Вычисляем номер дня программы (только для дней в рамках программы)
       const programDay =
-        daysSinceProgramStart > 0 && daysSinceProgramStart <= totalProgramDays
+        daysSinceProgramStart > 0 &&
+        (totalProgramDays === 0 || daysSinceProgramStart <= totalProgramDays)
           ? daysSinceProgramStart
           : null
 
@@ -143,6 +177,8 @@ export function DayTabs({
     workoutDayIndices,
     totalProgramDays,
     isSubscription,
+    allowedWeeksSet,
+    weekNumber,
   ])
 
   // Находим первый активный день в неделе
@@ -157,10 +193,21 @@ export function DayTabs({
     return days.find(d => d.key === selectedDay)?.programDay ?? null
   }, [selectedDay, days])
 
+  const selectedDayDate = useMemo(() => {
+    return days.find(d => d.key === selectedDay)?.date ?? null
+  }, [days, selectedDay])
+
+  useEffect(() => {
+    if (!isActiveWeek) return
+    if (onDayChange && selectedDayDate) {
+      onDayChange(selectedDayDate)
+    }
+  }, [isActiveWeek, onDayChange, selectedDayDate])
+
   const enabled =
     !!selectedDayNumberInCourse &&
     selectedDayNumberInCourse > 0 &&
-    selectedDayNumberInCourse <= totalProgramDays
+    (totalProgramDays === 0 || selectedDayNumberInCourse <= totalProgramDays)
 
   // Вызываем хук всегда, но управляем выполнением через enabled
   const dailyPlanQuery = getDailyPlan(
@@ -168,29 +215,6 @@ export function DayTabs({
     selectedDayNumberInCourse || 1,
     enabled
   )
-
-  // В JSX проверяем не только наличие данных, но и selectedDayNumberInCourse
-  // useEffect(() => {
-  //   if (typeof window === 'undefined') return
-  //   if (hasResetScrollRef.current) return
-  //   if (window.innerWidth > 480) return
-
-  //   const node = tabsListRef.current
-  //   if (!node) return
-
-  //   let raf2 = 0
-  //   const raf = window.requestAnimationFrame(() => {
-  //     raf2 = window.requestAnimationFrame(() => {
-  //       node.scrollLeft = 0
-  //       hasResetScrollRef.current = true
-  //     })
-  //   })
-
-  //   return () => {
-  //     window.cancelAnimationFrame(raf)
-  //     window.cancelAnimationFrame(raf2)
-  //   }
-  // }, [])
 
   return (
     <Tabs
@@ -201,7 +225,7 @@ export function DayTabs({
     >
       <TabsList
         ref={tabsListRef}
-        className="flex h-auto w-full gap-1.5 overflow-x-auto bg-transparent pl-0 pr-0 justify-start sm:gap-3"
+        className="flex h-auto w-full gap-1.5 overflow-x-auto bg-transparent pl-0 pr-0 pb-2.5 justify-start sm:gap-3"
       >
         {days.map(d => (
           <TabsTrigger
@@ -222,14 +246,9 @@ export function DayTabs({
                 className="pointer-events-none absolute left-1/2 top-2 -translate-x-1/2 -translate-y-1/2 h-3 w-3 text-accent-icon/80 group-data-[state=active]:text-accent-icon sm:top-3 sm:h-4 sm:w-4"
               />
             )}
-            <div className="flex flex-col items-center gap-0.5 leading-tight sm:flex-row sm:items-baseline sm:gap-1">
-              <span className="whitespace-nowrap text-xs sm:text-base">
-                {d.label}
-              </span>
-              <span className="whitespace-nowrap text-[11px] sm:text-sm">
-                {d.dateStr}
-              </span>
-            </div>
+            <span className="whitespace-nowrap text-xs leading-tight sm:text-base mb-2">
+              {`${d.label.toUpperCase()} ${d.dateStr}`}
+            </span>
             {!isSubscription && d.programDay && (
               <span className="text-[10px] leading-none sm:text-xs">
                 День {d.programDay}
@@ -239,7 +258,7 @@ export function DayTabs({
         ))}
       </TabsList>
       <TabsContent value={selectedDay} className="flex flex-col gap-4 sm:gap-5">
-        {enabled && dailyPlanQuery?.data ? (
+        {dailyPlanQuery.isLoading ? null : enabled && dailyPlanQuery?.data ? (
           <>
             {dailyPlanQuery.data.warmupId && (
               <WarmUp

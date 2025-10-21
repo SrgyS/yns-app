@@ -104,7 +104,7 @@ model Course {
   image                 String
   draft                 Boolean
   durationWeeks         Int
-  minWorkoutDaysPerWeek Int               @default(5)
+  allowedWorkoutDaysPerWeek Int[]        @default([])
   contentType           CourseContentType @default(FIXED_COURSE)
   product               CourseProduct?
 

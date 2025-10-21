@@ -38,7 +38,7 @@ export interface PlanningContext {
   startDate: Date
   selectedWorkoutDays: DayOfWeek[]
   durationWeeks: number
-  minWorkoutDaysPerWeek: number
+  allowedWorkoutDaysPerWeek: number[]
 }
 
 /**

@@ -62,10 +62,15 @@
             },
             "uniqueItems": true
         },
-        "minWorkoutDaysPerWeek": {
-            "type": "integer",
-            "minimum": 1,
-            "description": "Минимальное количество тренировок в неделю"
+        "allowedWorkoutDaysPerWeek": {
+            "type": "array",
+            "description": "Допустимые варианты количества тренировок в неделю",
+            "items": {
+                "type": "integer",
+                "minimum": 1
+            },
+            "minItems": 1,
+            "uniqueItems": true
         },
         "product": {
             "$ref": "#/definitions/product"
@@ -128,7 +133,7 @@
         "image",
         "draft",
         "durationWeeks",
-        "minWorkoutDaysPerWeek",
+        "allowedWorkoutDaysPerWeek",
         "contentType",
         "product"
     ],

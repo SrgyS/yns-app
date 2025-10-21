@@ -134,7 +134,11 @@ export class PlanningRepository {
         },
         {
           durationWeeks: course.durationWeeks,
-          minWorkoutDaysPerWeek: course.minWorkoutDaysPerWeek,
+          allowedWorkoutDaysPerWeek:
+            course.allowedWorkoutDaysPerWeek &&
+            course.allowedWorkoutDaysPerWeek.length > 0
+              ? course.allowedWorkoutDaysPerWeek
+              : [5],
           dailyPlans: course.dailyPlans,
         }
       )
@@ -142,7 +146,7 @@ export class PlanningRepository {
       // Вычисление диапазона генерации
       const range = this.generationService.calculateGenerationRange(
         options.scope,
-        course.durationWeeks
+        context
       )
 
       // Удаление существующих планов для указанного диапазона
@@ -229,7 +233,11 @@ export class PlanningRepository {
         },
         {
           durationWeeks: course.durationWeeks,
-          minWorkoutDaysPerWeek: course.minWorkoutDaysPerWeek,
+          allowedWorkoutDaysPerWeek:
+            course.allowedWorkoutDaysPerWeek &&
+            course.allowedWorkoutDaysPerWeek.length > 0
+              ? course.allowedWorkoutDaysPerWeek
+              : [5],
           dailyPlans: course.dailyPlans,
         }
       )
@@ -237,7 +245,7 @@ export class PlanningRepository {
       // Вычисление диапазона для полного курса
       const range = this.generationService.calculateGenerationRange(
         'full',
-        course.durationWeeks
+        context
       )
 
       // Генерация данных для обновления
@@ -258,7 +266,7 @@ export class PlanningRepository {
           enrollmentId: enrollment.id,
           date: this.dateService.calculateDateForDay(effectiveStartDate, i),
           dayNumberInCourse,
-          weekNumber: this.dateService.calculateWeekNumber(i),
+          weekNumber: this.dateService.calculateWeekNumber(i, effectiveStartDate),
           dayOfWeek: this.dateService.getDayOfWeek(
             this.dateService.calculateDateForDay(effectiveStartDate, i)
           ),
@@ -282,6 +290,13 @@ export class PlanningRepository {
 
         updated.push(this.toDomain(record))
       }
+
+      await tx.userDailyPlan.deleteMany({
+        where: {
+          enrollmentId,
+          dayNumberInCourse: { gt: updateDataList.length },
+        },
+      })
 
       return updated
     }

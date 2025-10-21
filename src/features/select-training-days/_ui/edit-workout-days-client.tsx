@@ -11,23 +11,41 @@ import { useWorkoutCompletionStore } from '@/shared/store/workout-completion-sto
 import { workoutApi } from '@/features/daily-plan/_api'
 import { courseEnrollmentApi } from '@/features/course-enrollment/_api'
 import { WorkoutProgressDialog } from './workout-progress-dialog'
+import { Checkbox } from '@/shared/ui/checkbox'
+import { Label } from '@/shared/ui/label'
 
 interface EditWorkoutDaysClientProps {
   enrollmentId: string
   initialSelectedDays: DayOfWeek[]
-  minDays?: number
-  maxDays?: number
+  allowedDayOptions?: number[]
 }
 
 export function EditWorkoutDaysClient({
   enrollmentId,
   initialSelectedDays,
-  minDays,
-  maxDays,
+  allowedDayOptions,
 }: EditWorkoutDaysClientProps) {
+  const dayOptions =
+    allowedDayOptions && allowedDayOptions.length > 0
+      ? Array.from(new Set(allowedDayOptions)).sort((a, b) => a - b)
+      : [initialSelectedDays.length || 5]
+  const hasChoice = dayOptions.length > 1
+  const singleOptionValue = dayOptions[0]
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [targetDaysPerWeek, setTargetDaysPerWeek] = useState<number | null>(() => {
+    if (hasChoice) {
+      if (
+        initialSelectedDays.length > 0 &&
+        dayOptions.includes(initialSelectedDays.length)
+      ) {
+        return initialSelectedDays.length
+      }
+      return null
+    }
+    return singleOptionValue
+  })
   const router = useRouter()
   const { updateWorkoutDays, isUpdating } = useUpdateWorkoutDays()
   const { data: session } = useAppSession()
@@ -40,6 +58,9 @@ export function EditWorkoutDaysClient({
   }
 
   const handleDaysSelection = async (days: DayOfWeek[]) => {
+    if (!targetDaysPerWeek|| days.length !== targetDaysPerWeek) {
+      return
+    }
     setSelectedDays(days)
     setIsDialogOpen(true)
   }
@@ -95,22 +116,71 @@ export function EditWorkoutDaysClient({
     }
   }
 
+  const handleModeChange = (value: number | null) => {
+    if (!hasChoice) return
+    setTargetDaysPerWeek(prev => {
+      if (prev === value) return prev
+      return value
+    })
+    setSelectedDays([])
+  }
+
   return (
     <div className="space-y-6 p-4 border rounded-lg shadow-sm bg-card">
       <h2 className="text-xl font-semibold text-center">
         Изменить дни тренировок
       </h2>
-      <p className="text-sm text-muted-foreground text-center">
-        Выберите {minDays} дней в неделю для ваших тренировок. Изменения
-        применятся только к будущим дням.
-      </p>
+      {hasChoice ? (
+        <p className="text-sm text-muted-foreground text-center">
+          Выберите новое количество тренировок в неделю, затем отметьте конкретные дни.
+        </p>
+      ) : (
+        <p className="text-sm text-muted-foreground text-center">
+          Для этого курса предусмотрено {singleOptionValue ?? 0} тренировок в неделю.
+        </p>
+      )}
+      {hasChoice ? (
+        <div className="flex justify-center gap-3">
+          {dayOptions.map(option => (
+            <div
+              key={option}
+              className="flex items-center gap-2 rounded-md border px-4 py-2"
+            >
+              <Checkbox
+                id={`edit-workouts-${option}`}
+                checked={targetDaysPerWeek === option}
+                disabled={isSubmitting || isUpdating}
+                onCheckedChange={checked =>
+                  handleModeChange(checked ? option : null)
+                }
+              />
+              <Label
+                htmlFor={`edit-workouts-${option}`}
+                className="cursor-pointer select-none"
+                onClick={() =>
+                  handleModeChange(
+                    targetDaysPerWeek === option ? null : option
+                  )
+                }
+              >
+                {option} тренировки
+              </Label>
+            </div>
+          ))}
+        </div>
+      ) : null}
       
       <WorkoutDaySelector
+        key={targetDaysPerWeek ?? 'disabled'}
         onSelectDays={handleDaysSelection}
-        minDays={minDays}
-        maxDays={maxDays}
-        initialSelectedDays={initialSelectedDays}
+        requiredDays={targetDaysPerWeek ?? 0}
+        initialSelectedDays={
+          targetDaysPerWeek && initialSelectedDays.length === targetDaysPerWeek
+            ? initialSelectedDays
+            : []
+        }
         isLoading={isSubmitting || isUpdating}
+        disabled={!targetDaysPerWeek}
       />
 
       <WorkoutProgressDialog 
