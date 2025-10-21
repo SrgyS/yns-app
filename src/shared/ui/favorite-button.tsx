@@ -10,15 +10,16 @@ export function FavoriteButton() {
 
   return (
     <Button
-      variant="ghost" // без обводки, минималистично
-      size="icon" // квадратная кнопка для иконки
+      variant="outline"
+      size="icon" 
       onClick={() => setIsFavorite(!isFavorite)}
-      aria-label={isFavorite ? "Удалить из избранного" : "Добавить в избранное"}
+      aria-label={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
+      className="rounded-full p-2 dark:bg-black/80 dark:hover:bg-black/70"
     >
       {isFavorite ? (
-        <Heart className="size-5 text-red-500 fill-red-500" />
+        <Heart className="size-5 text-rose-500 fill-current" />
       ) : (
-        <Heart className="size-5 text-gray-300/50" />
+        <Heart className="size-5 text-muted-foreground" />
       )}
     </Button>
   )
