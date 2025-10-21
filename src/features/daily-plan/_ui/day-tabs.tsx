@@ -216,29 +216,6 @@ export function DayTabs({
     enabled
   )
 
-  // В JSX проверяем не только наличие данных, но и selectedDayNumberInCourse
-  // useEffect(() => {
-  //   if (typeof window === 'undefined') return
-  //   if (hasResetScrollRef.current) return
-  //   if (window.innerWidth > 480) return
-
-  //   const node = tabsListRef.current
-  //   if (!node) return
-
-  //   let raf2 = 0
-  //   const raf = window.requestAnimationFrame(() => {
-  //     raf2 = window.requestAnimationFrame(() => {
-  //       node.scrollLeft = 0
-  //       hasResetScrollRef.current = true
-  //     })
-  //   })
-
-  //   return () => {
-  //     window.cancelAnimationFrame(raf)
-  //     window.cancelAnimationFrame(raf2)
-  //   }
-  // }, [])
-
   return (
     <Tabs
       key={`week-${weekNumber}`}
@@ -269,14 +246,9 @@ export function DayTabs({
                 className="pointer-events-none absolute left-1/2 top-2 -translate-x-1/2 -translate-y-1/2 h-3 w-3 text-accent-icon/80 group-data-[state=active]:text-accent-icon sm:top-3 sm:h-4 sm:w-4"
               />
             )}
-            <div className="flex flex-col items-center gap-0.5 leading-tight sm:flex-row sm:items-baseline sm:gap-1">
-              <span className="whitespace-nowrap text-xs sm:text-base">
-                {d.label}
-              </span>
-              <span className="whitespace-nowrap text-[11px] sm:text-sm">
-                {d.dateStr}
-              </span>
-            </div>
+            <span className="whitespace-nowrap text-xs leading-tight sm:text-base mb-2">
+              {`${d.label.toUpperCase()} ${d.dateStr}`}
+            </span>
             {!isSubscription && d.programDay && (
               <span className="text-[10px] leading-none sm:text-xs">
                 День {d.programDay}
@@ -286,7 +258,7 @@ export function DayTabs({
         ))}
       </TabsList>
       <TabsContent value={selectedDay} className="flex flex-col gap-4 sm:gap-5">
-        {enabled && dailyPlanQuery?.data ? (
+        {dailyPlanQuery.isLoading ? null : enabled && dailyPlanQuery?.data ? (
           <>
             {dailyPlanQuery.data.warmupId && (
               <WarmUp
