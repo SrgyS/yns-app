@@ -3,6 +3,7 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns'
 import { ru } from 'date-fns/locale'
+import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui/tabs'
 import { DayTabs } from './day-tabs'
 import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
@@ -13,7 +14,6 @@ import { getWeekOfMonth } from 'date-fns'
 import { cn } from '@/shared/ui/utils'
 import { Skeleton } from '@/shared/ui/skeleton/skeleton'
 import { Button } from '@/shared/ui/button'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 const MemoizedDayTabs = memo(DayTabs)
 
@@ -202,6 +202,7 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
             <ChevronLeft className="size-4" />
           </Button>
           <div className="rounded-md bg-background px-3 py-1 text-sm font-medium sm:text-base">
+            <Calendar className="size-4 inline-block mr-3 -mt-0.5 mb-0.5" />
             {getWeekLabelSafe(currentWeekNumber)}
           </div>
           <Button
@@ -260,7 +261,9 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
         }
         className="space-y-2.5"
       >
-        {isCompactWeeks ? renderCompactNavigation() : renderScrollableNavigation()}
+        {isCompactWeeks
+          ? renderCompactNavigation()
+          : renderScrollableNavigation()}
 
         {availableWeeksNumbers.map(week => (
           <TabsContent key={`week-${week}`} value={`week-${week}`}>

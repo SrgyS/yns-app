@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
+import { promises as fs } from 'fs'
 import * as path from 'path'
 import { contentParser } from '../src/shared/api/content'
 import manifestSchema from '../src/shared/api/content/_schemas/manifest.schema.json'
@@ -39,6 +40,107 @@ function unwrap<T>(payload: Envelope<T> | T): T {
 
 type MealPlanEntry = MealPlan & { slug: string }
 type DailyPlanEntry = DailyPlan & { slug: string }
+
+const LOCAL_CONTENT_ROOT =
+  process.env.CONTENT_LOCAL_ROOT ?? path.resolve(process.cwd(), '..', 'app-content')
+const SUBSCRIPTION_WINDOW_SIZE = Number(
+  process.env.SUBSCRIPTION_WINDOW_SIZE ?? 4
+)
+const shouldPruneSubscription = process.argv.slice(2).includes('--prune-subscription')
+
+async function directoryExists(dirPath: string): Promise<boolean> {
+  try {
+    const stats = await fs.stat(dirPath)
+    return stats.isDirectory()
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return false
+    }
+    throw error
+  }
+}
+
+async function listDailyPlanSlugsFromRemote(
+  courseSlug: string,
+  sanitizedDir: string
+): Promise<string[]> {
+  const baseUrl = process.env.CONTENT_URL
+  if (!baseUrl) {
+    console.warn('  🟡 CONTENT_URL не задан, пропускаем попытку удалённого чтения daily-plans.')
+    return []
+  }
+
+  const relativePath = `courses/${courseSlug}/${sanitizedDir}`
+  const fetchUrl = `${baseUrl}/${relativePath}`
+
+  try {
+    const headers: Record<string, string> = {
+      Accept: 'application/vnd.github+json',
+    }
+
+    if (process.env.CONTENT_TOKEN) {
+      headers.Authorization = `token ${process.env.CONTENT_TOKEN}`
+    }
+
+    const response = await fetch(fetchUrl, { headers })
+    if (!response.ok) {
+      if (response.status !== 404) {
+        console.warn(
+          `  🟡 Не удалось получить список daily-plans по адресу ${fetchUrl}: ${response.status} ${response.statusText}`
+        )
+      }
+      return []
+    }
+
+    const payload = (await response.json()) as Array<{
+      type?: string
+      name?: string
+    }>
+
+    if (!Array.isArray(payload)) {
+      console.warn(`  🟡 Ожидался массив файлов для ${fetchUrl}, получено другое значение.`)
+      return []
+    }
+
+    return payload
+      .filter(entry => entry.type === 'file' && typeof entry.name === 'string')
+      .map(entry => entry.name as string)
+      .filter(name => name.endsWith('.yaml'))
+      .map(name => name.replace(/\.yaml$/, ''))
+      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+  } catch (error) {
+    console.warn(
+      `  🟡 Ошибка при попытке получить список daily-plans по адресу ${fetchUrl}:`,
+      error instanceof Error ? error.message : error
+    )
+    return []
+  }
+}
+
+async function listDailyPlanSlugsFromDir(
+  courseSlug: string,
+  relativeDir: string
+): Promise<string[]> {
+  const sanitizedDir = relativeDir.replace(/^\/+|\/+$/g, '')
+  const dirPath = path.join(LOCAL_CONTENT_ROOT, 'courses', courseSlug, sanitizedDir)
+
+  if (await directoryExists(dirPath)) {
+    try {
+      const entries = await fs.readdir(dirPath, { withFileTypes: true })
+      return entries
+        .filter(entry => entry.isFile() && entry.name.endsWith('.yaml'))
+        .map(entry => entry.name.replace(/\.yaml$/, ''))
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+    } catch (error) {
+      console.warn(
+        `  🟡 Не удалось прочитать директорию ежедневных планов ${dirPath}.`,
+        error instanceof Error ? error.message : error
+      )
+    }
+  }
+
+  return listDailyPlanSlugsFromRemote(courseSlug, sanitizedDir)
+}
 
 // Утилита для получения метаданных видео из Kinescope
 async function fetchKinescopeVideoMetadata(
@@ -319,10 +421,38 @@ async function downloadAndUploadContent() {
         )
       }
 
-      const initialDailyPlanSlugs: string[] = courseData.dailyPlans || []
+      const configuredDailyPlanSlugs: string[] = Array.isArray(courseData.dailyPlans)
+        ? courseData.dailyPlans
+        : []
+      const dailyPlansDir =
+        typeof courseData.dailyPlansDir === 'string'
+          ? courseData.dailyPlansDir
+          : 'daily-plans'
+      const sanitizedDailyPlansDir = dailyPlansDir.replace(/^\/+|\/+$/g, '')
+
+      let slugsFromDirectory: string[] = []
+      if (
+        courseData.dailyPlansDir ||
+        configuredDailyPlanSlugs.length === 0
+      ) {
+        slugsFromDirectory = await listDailyPlanSlugsFromDir(
+          courseSlug,
+          sanitizedDailyPlansDir
+        )
+      }
+
+      const initialDailyPlanSlugs = Array.from(
+        new Set([...configuredDailyPlanSlugs, ...slugsFromDirectory])
+      )
+
+      if (initialDailyPlanSlugs.length === 0) {
+        console.warn(
+          `  🟡 Не найдено ежедневных планов для курса ${courseSlug}. Проверьте настройки dailyPlans или директорию ${sanitizedDailyPlansDir}.`
+        )
+      }
       const fetchedDailyPlanEntries: DailyPlanEntry[] = []
       for (const dailyPlanSlug of initialDailyPlanSlugs) {
-        const dailyPlanRelativePath = `courses/${courseSlug}/daily-plans/${dailyPlanSlug}.yaml`
+        const dailyPlanRelativePath = `courses/${courseSlug}/${sanitizedDailyPlansDir}/${dailyPlanSlug}.yaml`
         const dailyPlanData = await downloadAndParseValidatedYaml<DailyPlan>(
           dailyPlanRelativePath,
           dailyPlanSchema
@@ -337,25 +467,21 @@ async function downloadAndUploadContent() {
       }
 
       let dailyPlanEntriesToProcess: DailyPlanEntry[] = fetchedDailyPlanEntries
-      let subscriptionPruneInfo:
-        | { firstValidWeek: number; latestWeek: number }
-        | null = null
+      let subscriptionPruneInfo: { latestWeek: number; firstValidWeek: number } | null =
+        null
 
       if (courseData.contentType === 'SUBSCRIPTION') {
         const validPlans = fetchedDailyPlanEntries.filter(
           plan => typeof plan.weekNumber === 'number'
         )
-
         if (validPlans.length > 0) {
           const latestWeek = Math.max(...validPlans.map(plan => plan.weekNumber))
-          const weekWindow = 4
-          const firstValidWeek = Math.max(1, latestWeek - weekWindow + 1)
-
-          subscriptionPruneInfo = { latestWeek, firstValidWeek }
-
-          dailyPlanEntriesToProcess = validPlans.filter(
-            plan => plan.weekNumber >= firstValidWeek
+          const firstValidWeek = Math.max(
+            1,
+            latestWeek - SUBSCRIPTION_WINDOW_SIZE + 1
           )
+          subscriptionPruneInfo = { latestWeek, firstValidWeek }
+          dailyPlanEntriesToProcess = validPlans
         } else {
           dailyPlanEntriesToProcess = []
         }
@@ -447,6 +573,45 @@ async function downloadAndUploadContent() {
           `  ✅ Курс импортирован/обновлен: ${courseData.title} (ID: ${course.id})`
         )
 
+        if (
+          course.contentType === 'SUBSCRIPTION' &&
+          shouldPruneSubscription &&
+          subscriptionPruneInfo
+        ) {
+          console.log(
+            `  🧹 Очистка устаревших планов: сохраняем недели с ${subscriptionPruneInfo.firstValidWeek} по ${subscriptionPruneInfo.latestWeek}`
+          )
+          const { count: deletedUserPlans } = await tx.userDailyPlan.deleteMany({
+            where: {
+              originalDailyPlan: {
+                courseId: course.id,
+                weekNumber: {
+                  lt: subscriptionPruneInfo.firstValidWeek,
+                },
+              },
+            },
+          })
+          if (deletedUserPlans > 0) {
+            console.log(
+              `    - Удалено ${deletedUserPlans} пользовательских планов вне окна`
+            )
+          }
+
+          const { count: deletedDailyPlans } = await tx.dailyPlan.deleteMany({
+            where: {
+              courseId: course.id,
+              weekNumber: {
+                lt: subscriptionPruneInfo.firstValidWeek,
+              },
+            },
+          })
+          if (deletedDailyPlans > 0) {
+            console.log(
+              `    - Удалено ${deletedDailyPlans} ежедневных планов вне окна`
+            )
+          }
+        }
+
         console.log(`  🍽️ Импорт планов питания для курса "${courseSlug}"...`)
         for (const mealPlanData of mealPlanEntries) {
           const breakfastRecipe = await tx.recipe.findUnique({
@@ -529,46 +694,6 @@ async function downloadAndUploadContent() {
         console.log(`  📅 Импорт дневных планов для курса "${courseSlug}"...`)
         if (course.contentType === 'SUBSCRIPTION') {
           console.log('  - Логика для курсов-подписок активирована')
-          if (subscriptionPruneInfo) {
-            console.log(
-              `    - Найдена последняя неделя: ${subscriptionPruneInfo.latestWeek}`
-            )
-            console.log(
-              `    - Установка окна контента: недели с ${subscriptionPruneInfo.firstValidWeek} по ${subscriptionPruneInfo.latestWeek}`
-            )
-
-            const { count: userPlansCount } = await tx.userDailyPlan.deleteMany(
-              {
-                where: {
-                  originalDailyPlan: {
-                    courseId: course.id,
-                    weekNumber: {
-                      lt: subscriptionPruneInfo.firstValidWeek,
-                    },
-                  },
-                },
-              }
-            )
-            if (userPlansCount > 0) {
-              console.log(
-                `    - Удалено ${userPlansCount} связанных пользовательских планов.`
-              )
-            }
-
-            const { count } = await tx.dailyPlan.deleteMany({
-              where: {
-                courseId: course.id,
-                weekNumber: {
-                  lt: subscriptionPruneInfo.firstValidWeek,
-                },
-              },
-            })
-            if (count > 0) {
-              console.log(
-                `    - Удалено ${count} устаревших ежедневных планов.`
-              )
-            }
-          }
           console.log(
             `    - К импорту/обновлению готово ${dailyPlanSlugsToProcess.length} планов.`
           )
