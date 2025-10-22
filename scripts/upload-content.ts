@@ -47,6 +47,7 @@ const SUBSCRIPTION_WINDOW_SIZE = Number(
   process.env.SUBSCRIPTION_WINDOW_SIZE ?? 4
 )
 const shouldPruneSubscription = process.argv.slice(2).includes('--prune-subscription')
+const CONTENT_URL = process.env.CONTENT_URL ?? null
 
 async function directoryExists(dirPath: string): Promise<boolean> {
   try {
@@ -64,18 +65,40 @@ async function listDailyPlanSlugsFromRemote(
   courseSlug: string,
   sanitizedDir: string
 ): Promise<string[]> {
-  const baseUrl = process.env.CONTENT_URL
-  if (!baseUrl) {
-    console.warn('  🟡 CONTENT_URL не задан, пропускаем попытку удалённого чтения daily-plans.')
+  if (!CONTENT_URL) {
+    console.warn(
+      '  🟡 CONTENT_URL не задан, пропускаем попытку удалённого чтения daily-plans.'
+    )
     return []
   }
 
-  const relativePath = `courses/${courseSlug}/${sanitizedDir}`
-  const fetchUrl = `${baseUrl}/${relativePath}`
+  const githubMatch = CONTENT_URL.match(
+    /^https:\/\/github\.com\/([^/]+)\/([^/]+)\/tree\/([^/]+)(?:\/(.*))?$/
+  )
+
+  const useGitHubApi = Boolean(githubMatch)
+
+  const fetchUrl = (() => {
+    if (!useGitHubApi) {
+      return `${CONTENT_URL.replace(/\/$/, '')}/${sanitizedDir}`
+    }
+
+    const [, owner, repo, branch, restPath] = githubMatch as RegExpMatchArray
+    const basePath = restPath ? `${restPath.replace(/\/$/, '')}/` : ''
+    const directoryPath =
+      `${basePath}courses/${courseSlug}/${sanitizedDir}`.replace(/\/+/g, '/')
+    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${directoryPath}`
+    const params = new URLSearchParams({ ref: branch })
+    return `${apiUrl}?${params.toString()}`
+  })()
 
   try {
-    const headers: Record<string, string> = {
-      Accept: 'application/vnd.github+json',
+    const headers: Record<string, string> = {}
+
+    if (useGitHubApi) {
+      headers.Accept = 'application/vnd.github+json'
+    } else {
+      headers.Accept = 'application/json'
     }
 
     if (process.env.CONTENT_TOKEN) {
@@ -92,19 +115,20 @@ async function listDailyPlanSlugsFromRemote(
       return []
     }
 
-    const payload = (await response.json()) as Array<{
-      type?: string
-      name?: string
-    }>
+    const payload = await response.json()
 
     if (!Array.isArray(payload)) {
-      console.warn(`  🟡 Ожидался массив файлов для ${fetchUrl}, получено другое значение.`)
+      console.warn(
+        `  🟡 Ожидался массив файлов для ${fetchUrl}, получено другое значение.`
+      )
       return []
     }
 
     return payload
-      .filter(entry => entry.type === 'file' && typeof entry.name === 'string')
-      .map(entry => entry.name as string)
+      .filter(
+        (entry: any) => entry.type === 'file' && typeof entry.name === 'string'
+      )
+      .map((entry: any) => entry.name as string)
       .filter(name => name.endsWith('.yaml'))
       .map(name => name.replace(/\.yaml$/, ''))
       .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
@@ -122,7 +146,12 @@ async function listDailyPlanSlugsFromDir(
   relativeDir: string
 ): Promise<string[]> {
   const sanitizedDir = relativeDir.replace(/^\/+|\/+$/g, '')
-  const dirPath = path.join(LOCAL_CONTENT_ROOT, 'courses', courseSlug, sanitizedDir)
+  const dirPath = path.join(
+    LOCAL_CONTENT_ROOT,
+    'courses',
+    courseSlug,
+    sanitizedDir
+  )
 
   if (await directoryExists(dirPath)) {
     try {
@@ -188,7 +217,7 @@ async function downloadAndParseValidatedYaml<T>(
   relativePath: string,
   schema: object
 ): Promise<T | null> {
-  const fetchUrl = `${process.env.CONTENT_URL}/${relativePath}`
+  const fetchUrl = `${CONTENT_URL}/${relativePath}`
   const slug = path.basename(relativePath, '.yaml')
 
   try {
@@ -248,7 +277,7 @@ async function downloadAndUploadContent() {
   try {
     console.log('🚀 Начало удаленной загрузки и импорта контента...')
 
-    if (!process.env.CONTENT_URL || !process.env.CONTENT_TOKEN) {
+    if (!CONTENT_URL || !process.env.CONTENT_TOKEN) {
       throw new Error(
         'CONTENT_URL и/или CONTENT_TOKEN не заданы в переменных окружения'
       )
