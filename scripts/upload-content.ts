@@ -48,6 +48,20 @@ const SUBSCRIPTION_WINDOW_SIZE = Number(
 )
 const shouldPruneSubscription = process.argv.slice(2).includes('--prune-subscription')
 const CONTENT_URL = process.env.CONTENT_URL ?? null
+const githubTreeMatch = CONTENT_URL
+  ? CONTENT_URL.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/tree\/([^/]+)(?:\/(.*))?$/)
+  : null
+
+function buildContentFileUrl(relativePath: string): string {
+  if (githubTreeMatch) {
+    const [, owner, repo, branch, restPath] = githubTreeMatch as RegExpMatchArray
+    const basePath = restPath ? `${restPath.replace(/\/$/, '')}/` : ''
+    const normalizedRelative = relativePath.replace(/^\/+/, '')
+    return `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${basePath}${normalizedRelative}`
+  }
+
+  return `${(CONTENT_URL ?? '').replace(/\/$/, '')}/${relativePath.replace(/^\/+/, '')}`
+}
 
 async function directoryExists(dirPath: string): Promise<boolean> {
   try {
@@ -72,21 +86,21 @@ async function listDailyPlanSlugsFromRemote(
     return []
   }
 
-  const githubMatch = CONTENT_URL.match(
-    /^https:\/\/github\.com\/([^/]+)\/([^/]+)\/tree\/([^/]+)(?:\/(.*))?$/
-  )
-
-  const useGitHubApi = Boolean(githubMatch)
+  const useGitHubApi = Boolean(githubTreeMatch)
 
   const fetchUrl = (() => {
+    const dirRelativePath = `courses/${courseSlug}/${sanitizedDir}`.replace(
+      /\/+/g,
+      '/'
+    )
+
     if (!useGitHubApi) {
-      return `${CONTENT_URL.replace(/\/$/, '')}/${sanitizedDir}`
+      return `${(CONTENT_URL ?? '').replace(/\/$/, '')}/${dirRelativePath}`
     }
 
-    const [, owner, repo, branch, restPath] = githubMatch as RegExpMatchArray
+    const [, owner, repo, branch, restPath] = githubTreeMatch as RegExpMatchArray
     const basePath = restPath ? `${restPath.replace(/\/$/, '')}/` : ''
-    const directoryPath =
-      `${basePath}courses/${courseSlug}/${sanitizedDir}`.replace(/\/+/g, '/')
+    const directoryPath = `${basePath}${dirRelativePath}`.replace(/\/+/g, '/')
     const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${directoryPath}`
     const params = new URLSearchParams({ ref: branch })
     return `${apiUrl}?${params.toString()}`
@@ -217,16 +231,23 @@ async function downloadAndParseValidatedYaml<T>(
   relativePath: string,
   schema: object
 ): Promise<T | null> {
-  const fetchUrl = `${CONTENT_URL}/${relativePath}`
+  if (!CONTENT_URL) {
+    throw new Error('CONTENT_URL is not defined; cannot download content files')
+  }
+
+  const fetchUrl = buildContentFileUrl(relativePath)
   const slug = path.basename(relativePath, '.yaml')
 
   try {
-    const response = await fetch(fetchUrl, {
-      headers: {
-        Authorization: `token ${process.env.CONTENT_TOKEN}`,
-        Accept: 'application/vnd.github.v3.raw',
-      },
-    })
+    const headers: Record<string, string> = {}
+    if (process.env.CONTENT_TOKEN) {
+      headers.Authorization = `token ${process.env.CONTENT_TOKEN}`
+    }
+    if (githubTreeMatch) {
+      headers.Accept = 'application/vnd.github.v3.raw'
+    }
+
+    const response = await fetch(fetchUrl, { headers })
 
     if (!response.ok) {
       if (response.status === 404) {
