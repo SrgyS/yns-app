@@ -188,8 +188,8 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
 
   const renderCompactNavigation = () => (
     <>
-      <div className="flex items-center justify-between gap-2 rounded-lg bg-muted px-2 py-1 sm:px-3 sm:py-2">
-        <div className="flex items-center gap-2">
+      <div className="flex w-full items-center gap-2 rounded-lg bg-muted px-2 py-1 sm:flex-nowrap sm:justify-between sm:px-3 sm:py-2">
+        <div className="flex w-full items-center gap-2 sm:w-auto">
           <Button
             type="button"
             variant="ghost"
@@ -201,9 +201,9 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
           >
             <ChevronLeft className="size-4" />
           </Button>
-          <div className="rounded-md bg-background px-3 py-1 text-sm font-medium sm:text-base">
-            <Calendar className="size-4 inline-block mr-3 -mt-0.5 mb-0.5" />
-            {getWeekLabelSafe(currentWeekNumber)}
+          <div className="flex min-w-0 flex-1 items-center justify-center rounded-md bg-background px-2 py-1 text-xs font-medium sm:flex-none sm:px-3 sm:text-base">
+            <Calendar className="mr-2 mb-0.5 mt-[-2px] inline-block size-4 sm:mr-3" />
+            <span className="truncate">{getWeekLabelSafe(currentWeekNumber)}</span>
           </div>
           <Button
             type="button"
@@ -217,11 +217,14 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
             <ChevronRight className="size-4" />
           </Button>
         </div>
-        <span className="text-[11px] text-muted-foreground sm:text-sm">
+        <span className="w-full text-right text-[10px] text-muted-foreground sm:w-auto sm:text-sm">
           Всего недель: {weeksCount}
         </span>
       </div>
-      <TabsList className="sr-only" aria-hidden="true">
+      <TabsList
+        className="sr-only m-0 h-px w-px p-0 !border-0 !shadow-none"
+        aria-hidden="true"
+      >
         {availableWeeksNumbers.map(week => (
           <TabsTrigger key={`compact-${week}`} value={`week-${week}`}>
             {getWeekLabelSafe(week)}
@@ -232,7 +235,7 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
   )
 
   const renderScrollableNavigation = () => (
-    <TabsList className="flex flex-nowrap gap-1.5 overflow-x-auto rounded-lg bg-muted pl-1 pr-1 pt-1 pb-1 text-[11px] sm:text-sm justify-start">
+    <TabsList className="flex w-full flex-nowrap justify-start gap-1.5 overflow-x-auto rounded-lg bg-muted pl-1 pr-1 pt-1 pb-1 text-[11px] sm:text-sm">
       {availableWeeksNumbers.map(week => (
         <TabsTrigger
           key={`list-${week}`}
