@@ -56,6 +56,10 @@ export interface Course {
    */
   dailyPlans?: string[];
   /**
+   * Директория с ежедневными планами относительно курса
+   */
+  dailyPlansDir?: string;
+  /**
    * Список слагов планов питания, входящих в курс
    */
   mealPlans?: string[];

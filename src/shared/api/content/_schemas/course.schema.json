@@ -42,15 +42,20 @@
             "minimum": 1,
             "description": "Продолжительность курса в неделях"
         },
-        "dailyPlans": {
-            "type": "array",
-            "description": "Список слагов ежедневных планов, входящих в курс",
-            "items": {
-                "type": "string",
-                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
-                "description": "Слаг ежедневного плана"
-            },
-            "uniqueItems": true
+    "dailyPlans": {
+        "type": "array",
+        "description": "Список слагов ежедневных планов, входящих в курс",
+        "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "description": "Слаг ежедневного плана"
+        },
+        "uniqueItems": true
+        },
+        "dailyPlansDir": {
+            "type": "string",
+            "description": "Директория с ежедневными планами относительно курса",
+            "pattern": "^[a-z0-9_\\-/]+$"
         },
         "mealPlans": {
             "type": "array",
