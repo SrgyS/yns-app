@@ -14,6 +14,7 @@
     "test:e2e": "npx prisma migrate reset --force && playwright test",
     "upload-content-schema": "ts-node --project tsconfig.script.json ./scripts/upload-content-schema https://raw.githubusercontent.com/SrgyS/content-schema/main/schemas/ ./src/shared/api/content/_schemas",
     "upload-content": "ts-node --project tsconfig.script.json -r tsconfig-paths/register ./scripts/upload-content",
+    "prune-subscription-content": "ts-node --project tsconfig.script.json -r tsconfig-paths/register ./scripts/prune-subscription-content",
     "check-course-data": "ts-node --project tsconfig.script.json -r tsconfig-paths/register ./scripts/check-course-data",
     "check-workout-data": "ts-node --project tsconfig.script.json -r tsconfig-paths/register ./scripts/check-workout-data"
   },
