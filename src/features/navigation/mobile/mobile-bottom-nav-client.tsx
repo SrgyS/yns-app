@@ -94,7 +94,7 @@ export function MobileBottomNavClient({
               <Link
                 href={href}
                 className={cn(
-                  'group flex flex-col items-center justify-start gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground max-[370px]:gap-0.5 max-[370px]:px-1.5 max-[370px]:py-0.5',
+                  'group flex flex-col items-center justify-start gap-1 rounded-md px-1 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground max-[370px]:gap-0.5 max-[370px]:px-1.5 max-[370px]:py-0.5',
                   item.key === 'plan' && planStateClass,
                   active && 'text-foreground font-semibold'
                 )}
