@@ -5,6 +5,21 @@ import { CheckCourseAccessService } from '@/entities/user-access/module'
 import { UserDailyPlan, GetUserDailyPlanParams } from '@/entities/course'
 import { logger } from '@/shared/lib/logger'
 
+const LOG_PREFIX = '[GetUserDailyPlanService]'
+
+async function logTiming<T>(label: string, action: () => Promise<T>): Promise<T> {
+  const start = Date.now()
+  try {
+    return await action()
+  } finally {
+    const duration = Date.now() - start
+    logger.info({
+      msg: `${LOG_PREFIX} ${label}`,
+      durationMs: duration,
+    })
+  }
+}
+
 @injectable()
 export class GetUserDailyPlanService {
   constructor(
@@ -15,7 +30,9 @@ export class GetUserDailyPlanService {
 
   async exec(params: GetUserDailyPlanParams): Promise<UserDailyPlan | null> {
     try {
-      const course = await this.getCourseService.exec({ id: params.courseId })
+      const course = await logTiming('getCourseService.exec', () =>
+        this.getCourseService.exec({ id: params.courseId })
+      )
       if (!course) {
         logger.warn({
           msg: 'Course not found while fetching daily plan',
@@ -32,14 +49,16 @@ export class GetUserDailyPlanService {
         return null
       }
 
-      const hasAccess = await this.checkCourseAccess.exec({
-        userId: params.userId,
-        course: {
-          id: course.id,
-          product: course.product,
-          contentType: course.contentType,
-        },
-      })
+      const hasAccess = await logTiming('checkCourseAccess.exec', () =>
+        this.checkCourseAccess.exec({
+          userId: params.userId,
+          course: {
+            id: course.id,
+            product: course.product,
+            contentType: course.contentType,
+          },
+        })
+      )
 
       if (!hasAccess) {
         logger.info({
@@ -49,8 +68,9 @@ export class GetUserDailyPlanService {
         return null
       }
 
-      const userDailyPlan = await this.userDailyPlanRepository.getUserDailyPlan(
-        params
+      const userDailyPlan = await logTiming(
+        'userDailyPlanRepository.getUserDailyPlan',
+        () => this.userDailyPlanRepository.getUserDailyPlan(params)
       )
 
       if (userDailyPlan) {
