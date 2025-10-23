@@ -21,6 +21,22 @@ import { CreateUserCourseEnrollmentWithCourseAccessService } from './_services/c
 import { CheckCourseAccessService } from '@/entities/user-access/module'
 import { UserAccessRepository } from '@/entities/user-access/_repository/user-access'
 import { GetAvailableWeeksService } from './_services/get-available-weeks'
+import { logger } from '@/shared/lib/logger'
+
+const LOG_PREFIX = '[CourseEnrollmentController]'
+
+async function logTiming<T>(label: string, action: () => Promise<T>): Promise<T> {
+  const start = Date.now()
+  try {
+    return await action()
+  } finally {
+    const duration = Date.now() - start
+    logger.info({
+      msg: `${LOG_PREFIX} ${label}`,
+      durationMs: duration,
+    })
+  }
+}
 
 @injectable()
 export class CourseEnrollmentController extends Controller {
@@ -71,9 +87,13 @@ export class CourseEnrollmentController extends Controller {
           })
         )
         .query(async ({ input }) => {
-          const enrollment = await this.getCourseEnrollmentService.exec(
-            input.userId,
-            input.courseId
+          const enrollment = await logTiming(
+            'getCourseEnrollmentService.exec',
+            () =>
+              this.getCourseEnrollmentService.exec(
+                input.userId,
+                input.courseId
+              )
           )
           return enrollment
         }),
@@ -86,9 +106,13 @@ export class CourseEnrollmentController extends Controller {
           })
         )
         .query(async ({ input }) => {
-          const enrollment = await this.getEnrollmentByCourseSlugService.exec(
-            input.userId,
-            input.courseSlug
+          const enrollment = await logTiming(
+            'getEnrollmentByCourseSlugService.exec',
+            () =>
+              this.getEnrollmentByCourseSlugService.exec(
+                input.userId,
+                input.courseSlug
+              )
           )
           return enrollment
         }),
@@ -100,9 +124,11 @@ export class CourseEnrollmentController extends Controller {
           })
         )
         .query(async ({ input }) => {
-          const course = await this.getCourseService.exec({
-            slug: input.courseSlug,
-          })
+          const course = await logTiming('getCourseService.exec', () =>
+            this.getCourseService.exec({
+              slug: input.courseSlug,
+            })
+          )
 
           if (!course || !course.product) {
             return {
@@ -114,22 +140,28 @@ export class CourseEnrollmentController extends Controller {
             }
           }
 
-          const hasAccess = await this.checkCourseAccessService.exec({
-            userId: input.userId,
-            course: {
-              id: course.id,
-              product: course.product,
-              contentType: course.contentType,
-            },
-          })
-
-          const enrollment = await this.getEnrollmentByCourseSlugService.exec(
-            input.userId,
-            input.courseSlug
+          const hasAccess = await logTiming('checkCourseAccessService.exec', () =>
+            this.checkCourseAccessService.exec({
+              userId: input.userId,
+              course: {
+                id: course.id,
+                product: course.product,
+                contentType: course.contentType,
+              },
+            })
           )
 
-          const activeEnrollment = await this.getActiveEnrollmentService.exec(
-            input.userId
+          const enrollment =
+            await logTiming('getEnrollmentByCourseSlugService.exec', () =>
+              this.getEnrollmentByCourseSlugService.exec(
+                input.userId,
+                input.courseSlug
+              )
+            )
+
+          const activeEnrollment = await logTiming(
+            'getActiveEnrollmentService.exec',
+            () => this.getActiveEnrollmentService.exec(input.userId)
           )
 
           const isActive = Boolean(
@@ -138,10 +170,14 @@ export class CourseEnrollmentController extends Controller {
               activeEnrollment.courseId === enrollment.courseId
           )
 
-          const userAccess = await this.userAccessRepository.findUserCourseAccess(
-            input.userId,
-            course.id,
-            course.contentType
+          const userAccess = await logTiming(
+            'userAccessRepository.findUserCourseAccess',
+            () =>
+              this.userAccessRepository.findUserCourseAccess(
+                input.userId,
+                course.id,
+                course.contentType
+              )
           )
 
           return {

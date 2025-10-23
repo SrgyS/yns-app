@@ -10,6 +10,22 @@ import { UpdateWorkoutCompletionService } from '@/entities/workout/_services/upd
 import { WorkoutType } from '@prisma/client'
 import { GetWorkoutCompletionStatusService } from '@/entities/workout/_services/get-workout-completion-status'
 import { GetUserDailyPlanService } from './_services/get-user-daily-plan'
+import { logger } from '@/shared/lib/logger'
+
+const LOG_PREFIX = '[WorkoutController]'
+
+async function logTiming<T>(label: string, action: () => Promise<T>): Promise<T> {
+  const start = Date.now()
+  try {
+    return await action()
+  } finally {
+    const duration = Date.now() - start
+    logger.info({
+      msg: `${LOG_PREFIX} ${label}`,
+      durationMs: duration,
+    })
+  }
+}
 
 @injectable()
 export class WorkoutController extends Controller {
@@ -32,11 +48,13 @@ export class WorkoutController extends Controller {
         })
       )
       .query(async ({ input }) => {
-        const plan = await this.getUserDailyPlanService.exec({
-          userId: input.userId,
-          courseId: input.courseId,
-          dayNumberInCourse: input.dayNumberInCourse,
-        })
+        const plan = await logTiming('getUserDailyPlanService.exec', () =>
+          this.getUserDailyPlanService.exec({
+            userId: input.userId,
+            courseId: input.courseId,
+            dayNumberInCourse: input.dayNumberInCourse,
+          })
+        )
         return plan
       }),
     getWorkout: authorizedProcedure

@@ -12,6 +12,21 @@ import {
 import { logger } from '@/shared/lib/logger'
 import { PlanningRepository } from '../../planning'
 
+const LOG_PREFIX = '[UserDailyPlanRepository]'
+
+async function logTiming<T>(label: string, action: () => Promise<T>): Promise<T> {
+  const start = Date.now()
+  try {
+    return await action()
+  } finally {
+    const duration = Date.now() - start
+    logger.info({
+      msg: `${LOG_PREFIX} ${label}`,
+      durationMs: duration,
+    })
+  }
+}
+
 export class UserDailyPlanRepository {
   private readonly planningRepository: PlanningRepository
 
@@ -106,25 +121,33 @@ export class UserDailyPlanRepository {
   ): Promise<UserDailyPlan | null> {
     try {
       // Теперь нужно найти enrollment для пользователя и курса
-      const enrollment = await db.userCourseEnrollment.findFirst({
-        where: {
-          userId: params.userId,
-          courseId: params.courseId,
-        },
-      })
+      const enrollment = await logTiming(
+        'userCourseEnrollment.findFirst',
+        () =>
+          db.userCourseEnrollment.findFirst({
+            where: {
+              userId: params.userId,
+              courseId: params.courseId,
+            },
+          })
+      )
 
       if (!enrollment) {
         return null
       }
 
-      const userDailyPlan = await db.userDailyPlan.findUnique({
-        where: {
-          enrollmentId_dayNumberInCourse: {
-            enrollmentId: enrollment.id,
-            dayNumberInCourse: params.dayNumberInCourse,
-          },
-        },
-      })
+      const userDailyPlan = await logTiming(
+        'userDailyPlan.findUnique',
+        () =>
+          db.userDailyPlan.findUnique({
+            where: {
+              enrollmentId_dayNumberInCourse: {
+                enrollmentId: enrollment.id,
+                dayNumberInCourse: params.dayNumberInCourse,
+              },
+            },
+          })
+      )
       return userDailyPlan ? this.toDomain(userDailyPlan) : null
     } catch (error) {
       logger.error({
