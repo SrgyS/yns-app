@@ -20,6 +20,18 @@ import { DAYS_ORDER } from '@/features/daily-plan/constant'
 
 import { DayPageClient } from './day-page-client'
 
+const LOG_PREFIX = '[DayPage]'
+
+async function logTiming<T>(label: string, action: () => Promise<T>): Promise<T> {
+  const start = Date.now()
+  try {
+    return await action()
+  } finally {
+    const duration = Date.now() - start
+    console.log(`${LOG_PREFIX} ${label} completed in ${duration}ms`)
+  }
+}
+
 interface DayPageProps {
   params: Promise<{
     courseSlug: string
@@ -27,10 +39,13 @@ interface DayPageProps {
 }
 
 export default async function DayPage({ params }: DayPageProps) {
+  const overallStart = Date.now()
   const { courseSlug } = await params
 
   const contextFactory = server.get(ContextFactory)
-  const ctx = await contextFactory.createContext()
+  const ctx = await logTiming('createContext', () =>
+    contextFactory.createContext()
+  )
 
   const session = ctx.session
 
@@ -64,51 +79,70 @@ export default async function DayPage({ params }: DayPageProps) {
   })
 
   const access =
-    await courseEnrollmentHelpers.course.checkAccessByCourseSlug.fetch({
-      userId,
-      courseSlug,
-    })
-
-  if (access?.hasAccess && access.enrollment) {
-    const [enrollmentData, availableWeeksData] = await Promise.all([
-      courseEnrollmentHelpers.course.getEnrollment.fetch({
-        userId,
-        courseId: access.enrollment.courseId,
-      }),
-      courseEnrollmentHelpers.course.getAvailableWeeks.fetch({
+    await logTiming('checkAccessByCourseSlug', () =>
+      courseEnrollmentHelpers.course.checkAccessByCourseSlug.fetch({
         userId,
         courseSlug,
-      }),
+      })
+    )
+
+  if (access?.hasAccess && access.enrollment) {
+    const enrollment = access.enrollment
+    const [enrollmentData, availableWeeksData] = await Promise.all([
+      logTiming('getEnrollment.fetch', () =>
+        courseEnrollmentHelpers.course.getEnrollment.fetch({
+          userId,
+          courseId: enrollment.courseId,
+        })
+      ),
+      logTiming('getAvailableWeeks.fetch', () =>
+        courseEnrollmentHelpers.course.getAvailableWeeks.fetch({
+          userId,
+          courseSlug,
+        })
+      ),
     ])
 
     await Promise.all([
-      courseEnrollmentHelpers.course.getEnrollmentByCourseSlug.prefetch({
-        userId,
-        courseSlug,
-      }),
-      courseEnrollmentHelpers.course.getEnrollment.prefetch({
-        userId,
-        courseId: access.enrollment.courseId,
-      }),
-      courseDetailsHelpers.courseDetails.get.prefetch({
-        courseSlug,
-      }),
+      logTiming('getEnrollmentByCourseSlug.prefetch', () =>
+        courseEnrollmentHelpers.course.getEnrollmentByCourseSlug.prefetch({
+          userId,
+          courseSlug,
+        })
+      ),
+      logTiming('getEnrollment.prefetch', () =>
+        courseEnrollmentHelpers.course.getEnrollment.prefetch({
+          userId,
+          courseId: enrollment.courseId,
+        })
+      ),
+      logTiming('courseDetails.get.prefetch', () =>
+        courseDetailsHelpers.courseDetails.get.prefetch({
+          courseSlug,
+        })
+      ),
       (async () => {
         try {
-          const defaultDayNumber = computeDefaultProgramDay({
-            enrollment: enrollmentData,
-            availableWeeks: availableWeeksData,
-          })
+          const defaultDayNumber = await logTiming(
+            'computeDefaultProgramDay',
+            async () =>
+              computeDefaultProgramDay({
+                enrollment: enrollmentData,
+                availableWeeks: availableWeeksData,
+              })
+          )
 
           if (
             defaultDayNumber &&
-            access.enrollment?.courseId
+            enrollment.courseId
           ) {
-            await workoutHelpers.getUserDailyPlan.prefetch({
-              userId,
-              courseId: access.enrollment.courseId,
-              dayNumberInCourse: defaultDayNumber,
-            })
+            await logTiming('getUserDailyPlan.prefetch', () =>
+              workoutHelpers.getUserDailyPlan.prefetch({
+                userId,
+                courseId: enrollment.courseId,
+                dayNumberInCourse: defaultDayNumber,
+              })
+            )
           }
         } catch (error) {
           console.error('Failed to prefetch daily plan', error)
@@ -118,6 +152,9 @@ export default async function DayPage({ params }: DayPageProps) {
   }
 
   const dehydratedState = courseEnrollmentHelpers.dehydrate()
+  console.log(
+    `${LOG_PREFIX} render completed in ${Date.now() - overallStart}ms`
+  )
 
   return (
     <HydrationBoundary state={dehydratedState}>
