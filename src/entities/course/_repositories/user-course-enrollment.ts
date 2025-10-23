@@ -12,6 +12,21 @@ import {
   CourseContentType,
 } from '@prisma/client'
 
+const LOG_PREFIX = '[UserCourseEnrollmentRepository]'
+
+async function logTiming<T>(label: string, action: () => Promise<T>): Promise<T> {
+  const start = Date.now()
+  try {
+    return await action()
+  } finally {
+    const duration = Date.now() - start
+    logger.info({
+      msg: `${LOG_PREFIX} ${label}`,
+      durationMs: duration,
+    })
+  }
+}
+
 @injectable()
 export class UserCourseEnrollmentRepository {
   constructor(private readonly defaultDb: DbClient = dbClient) {}
@@ -115,38 +130,33 @@ export class UserCourseEnrollmentRepository {
 
   async getEnrollmentByUserIdAndCourseSlug(
     userId: string,
-    courseSlug: string
+    courseSlug: string,
+    db: DbClient = this.defaultDb
   ): Promise<UserCourseEnrollment | null> {
     try {
-      // Сначала получаем курс по slug
-      const course = await dbClient.course.findUnique({
-        where: { slug: courseSlug },
-      })
-
-      if (!course) {
-        return null
-      }
-
-      // Затем получаем enrollment по userId и courseId
-      const enrollment = await dbClient.userCourseEnrollment.findUnique({
-        where: {
-          userId_courseId: {
-            userId,
-            courseId: course.id,
-          },
-        },
-        include: {
-          course: {
-            select: {
-              id: true,
-              slug: true,
-              title: true,
-              durationWeeks: true,
-              contentType: true,
+      const enrollment = await logTiming(
+        'userCourseEnrollment.findFirstBySlug',
+        () =>
+          db.userCourseEnrollment.findFirst({
+            where: {
+              userId,
+              course: {
+                slug: courseSlug,
+              },
             },
-          },
-        },
-      })
+            include: {
+              course: {
+                select: {
+                  id: true,
+                  slug: true,
+                  title: true,
+                  durationWeeks: true,
+                  contentType: true,
+                },
+              },
+            },
+          })
+      )
 
       return enrollment ? this.mapPrismaEnrollmentToDomain(enrollment) : null
     } catch (error) {

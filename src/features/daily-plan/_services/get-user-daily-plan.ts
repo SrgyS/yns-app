@@ -2,7 +2,11 @@ import { injectable } from 'inversify'
 import { UserDailyPlanRepository } from '@/entities/course/_repositories/user-daily-plan'
 import { GetCourseService } from '@/entities/course/_services/get-course'
 import { CheckCourseAccessService } from '@/entities/user-access/module'
-import { UserDailyPlan, GetUserDailyPlanParams } from '@/entities/course'
+import {
+  UserDailyPlan,
+  GetUserDailyPlanParams,
+  Course,
+} from '@/entities/course'
 import { logger } from '@/shared/lib/logger'
 
 const LOG_PREFIX = '[GetUserDailyPlanService]'
@@ -28,11 +32,21 @@ export class GetUserDailyPlanService {
     private readonly checkCourseAccess: CheckCourseAccessService
   ) {}
 
-  async exec(params: GetUserDailyPlanParams): Promise<UserDailyPlan | null> {
+  async exec(
+    params: GetUserDailyPlanParams,
+    options: {
+      course?: Course | null
+      hasAccess?: boolean
+    } = {}
+  ): Promise<UserDailyPlan | null> {
     try {
-      const course = await logTiming('getCourseService.exec', () =>
-        this.getCourseService.exec({ id: params.courseId })
-      )
+      const course =
+        options.course !== undefined
+          ? options.course
+          : await logTiming('getCourseService.exec', () =>
+              this.getCourseService.exec({ id: params.courseId })
+            )
+
       if (!course) {
         logger.warn({
           msg: 'Course not found while fetching daily plan',
@@ -49,16 +63,19 @@ export class GetUserDailyPlanService {
         return null
       }
 
-      const hasAccess = await logTiming('checkCourseAccess.exec', () =>
-        this.checkCourseAccess.exec({
-          userId: params.userId,
-          course: {
-            id: course.id,
-            product: course.product,
-            contentType: course.contentType,
-          },
-        })
-      )
+      const hasAccess =
+        options.hasAccess !== undefined
+          ? options.hasAccess
+          : await logTiming('checkCourseAccess.exec', () =>
+              this.checkCourseAccess.exec({
+                userId: params.userId,
+                course: {
+                  id: course.id,
+                  product: course.product,
+                  contentType: course.contentType,
+                },
+              })
+            )
 
       if (!hasAccess) {
         logger.info({
