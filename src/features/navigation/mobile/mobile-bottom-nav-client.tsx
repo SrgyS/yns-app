@@ -2,10 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useCallback, useEffect, useState } from 'react'
+import { LogIn } from 'lucide-react'
 import { NAV_ITEMS } from '@/features/navigation/nav-items'
 import { cn } from '@/shared/ui/utils'
 import { SignInButton } from '@/features/auth/_ui/sign-in-button'
-import { LogIn } from 'lucide-react'
 
 type MobileBottomNavClientProps = {
   planUrl: string
@@ -14,7 +15,7 @@ type MobileBottomNavClientProps = {
   profileHref: string
   isAuthenticated: boolean
 }
-
+let lastPendingHref: string | null = null
 export function MobileBottomNavClient({
   planUrl,
   hasActiveCourse,
@@ -23,37 +24,49 @@ export function MobileBottomNavClient({
   isAuthenticated,
 }: MobileBottomNavClientProps) {
   const pathname = usePathname() ?? '/'
-  const mobileItems = NAV_ITEMS.filter((item) =>
-    item.targets.includes('mobile')
+  const mobileItems = NAV_ITEMS.filter(item => item.targets.includes('mobile'))
+
+  const [pendingHref, setPendingHref] = useState<string | null>(
+    () => lastPendingHref
   )
 
-  const isActive = (href: string) => {
-    const currentPath = pathname === '' ? '/' : pathname
+  const isActive = useCallback(
+    (href: string) => {
+      const currentPath = pathname === '' ? '/' : pathname
 
-    if (href === '/') {
-      return currentPath === '/'
-    }
+      if (href === '/') {
+        return currentPath === '/'
+      }
 
-    if (currentPath === href) {
-      return true
-    }
+      if (currentPath === href) {
+        return true
+      }
 
-    const normalizedHref = href.endsWith('/') ? href.slice(0, -1) : href
-    if (!normalizedHref) {
-      return false
-    }
+      const normalizedHref = href.endsWith('/') ? href.slice(0, -1) : href
+      if (!normalizedHref) {
+        return false
+      }
 
-    return (
-      currentPath === normalizedHref ||
-      currentPath.startsWith(`${normalizedHref}/`)
-    )
-  }
+      return (
+        currentPath === normalizedHref ||
+        currentPath.startsWith(`${normalizedHref}/`)
+      )
+    },
+    [pathname]
+  )
 
   const planStateClass = hasActiveCourse
     ? ''
     : hasAnyCourses
       ? 'text-amber-500 font-semibold'
       : 'text-muted-foreground/50'
+
+  useEffect(() => {
+    if (pendingHref && isActive(pendingHref)) {
+      lastPendingHref = null
+      setPendingHref(null)
+    }
+  }, [pathname, pendingHref, isActive])
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
@@ -63,7 +76,7 @@ export function MobileBottomNavClient({
           paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom, 0px))',
         }}
       >
-        {mobileItems.map((item) => {
+        {mobileItems.map(item => {
           const href =
             item.key === 'plan'
               ? planUrl
@@ -71,7 +84,10 @@ export function MobileBottomNavClient({
                 ? profileHref
                 : item.href
 
-          const active = isActive(href)
+          const isCurrentRoute = isActive(href)
+          const isPending = pendingHref === href
+          const active = pendingHref ? isPending : isCurrentRoute
+          const isDisabled = !pendingHref && isCurrentRoute
           const Icon = item.icon
 
           if (item.key === 'profile' && !isAuthenticated) {
@@ -98,6 +114,20 @@ export function MobileBottomNavClient({
                   item.key === 'plan' && planStateClass,
                   active && 'text-foreground font-semibold'
                 )}
+                prefetch={false}
+                onClick={event => {
+                  console.log('click', { href, isDisabled, isPending, active })
+                  if (isDisabled) {
+                    event.preventDefault()
+                    return
+                  }
+
+                  // Мгновенное обновление визуального состояния
+                  if (!isPending) {
+                    lastPendingHref = href
+                    setPendingHref(href)
+                  }
+                }}
               >
                 <Icon
                   className={cn(
