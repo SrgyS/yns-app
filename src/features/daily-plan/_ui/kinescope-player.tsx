@@ -2,6 +2,7 @@
 
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -131,20 +132,70 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
       onPauseRef.current = onPause
     }, [onPause])
 
+    const detachPlayerHandlers = useCallback(
+      (player: KinescopePlayerInstance | null) => {
+        if (!player?.Events) {
+          return
+        }
+
+        if (endedHandlerRef.current) {
+          player.off?.(player.Events.Ended, endedHandlerRef.current)
+          endedHandlerRef.current = null
+        }
+
+        if (playHandlerRef.current) {
+          player.off?.(player.Events.Play, playHandlerRef.current)
+          playHandlerRef.current = null
+        }
+
+        if (pauseHandlerRef.current) {
+          player.off?.(player.Events.Pause, pauseHandlerRef.current)
+          pauseHandlerRef.current = null
+        }
+      },
+      []
+    )
+
+    const destroyPlayerInstance = useCallback(
+      async (
+        player: KinescopePlayerInstance | null,
+        reason: 'cleanup' | 'imperative' | 'stale'
+      ) => {
+        if (!player?.destroy) {
+          return
+        }
+
+        try {
+          await player.destroy()
+        } catch (destroyError) {
+          console.warn(
+            `Kinescope player destroy failed (${reason})`,
+            destroyError
+          )
+        }
+      },
+      []
+    )
+
     useImperativeHandle(
       ref,
       () => ({
         destroy() {
-          if (playerInstanceRef.current?.destroy) {
-            playerInstanceRef.current.destroy()
+          const player = playerInstanceRef.current
+          if (player) {
+            detachPlayerHandlers(player)
+            void destroyPlayerInstance(player, 'imperative')
           }
           playerInstanceRef.current = null
+          endedHandlerRef.current = null
+          playHandlerRef.current = null
+          pauseHandlerRef.current = null
         },
         getInstance() {
           return playerInstanceRef.current
         },
       }),
-      []
+      [destroyPlayerInstance, detachPlayerHandlers]
     )
 
     const { createOptions, widthStyle, heightStyle } = normalized
@@ -200,7 +251,8 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
           const isStale = !isMounted || requestId !== requestIdRef.current
 
           if (isStale) {
-            player?.destroy?.()
+            detachPlayerHandlers(player)
+            await destroyPlayerInstance(player, 'stale')
             return
           }
 
@@ -254,25 +306,21 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
 
         const player = playerInstanceRef.current
         if (player) {
-          if (player.Events) {
-            if (endedHandlerRef.current) {
-              player.off?.(player.Events.Ended, endedHandlerRef.current)
-            }
-            if (playHandlerRef.current) {
-              player.off?.(player.Events.Play, playHandlerRef.current)
-            }
-            if (pauseHandlerRef.current) {
-              player.off?.(player.Events.Pause, pauseHandlerRef.current)
-            }
-          }
-          player.destroy?.()
+          detachPlayerHandlers(player)
+          void destroyPlayerInstance(player, 'cleanup')
         }
         playerInstanceRef.current = null
         endedHandlerRef.current = null
         playHandlerRef.current = null
         pauseHandlerRef.current = null
       }
-    }, [createOptions, containerId, attempt])
+    }, [
+      attempt,
+      containerId,
+      createOptions,
+      destroyPlayerInstance,
+      detachPlayerHandlers,
+    ])
 
     const handleRetry = () => {
       setLoadError(null)
