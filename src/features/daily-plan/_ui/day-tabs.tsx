@@ -93,9 +93,7 @@ export function DayTabs({
   }, [allowedWeeksArray])
 
   const totalProgramDays = useMemo(() => {
-    return maxDayNumber && maxDayNumber > 0
-      ? maxDayNumber
-      : maxAllowedWeek * 7
+    return maxDayNumber && maxDayNumber > 0 ? maxDayNumber : maxAllowedWeek * 7
   }, [maxAllowedWeek, maxDayNumber])
 
   // Для подписки базой для расчёта является понедельник недели покупки
@@ -233,26 +231,23 @@ export function DayTabs({
             value={d.key}
             disabled={d.isDisabled}
             className={cn(
-              'group relative grid h-18 min-w-[54px] flex-none cursor-pointer content-center justify-items-center gap-y-0 rounded-md border border-muted px-1.5 pb-1 pt-3 text-[10px] text-muted-foreground transition-colors sm:h-20 sm:min-w-[72px] sm:px-3 sm:pt-4 sm:text-xs',
+              'snap-sta text-left flex flex-col items-start min-w-[54px] flex-none cursor-pointer content-center justify-items-center gap-y-0 rounded-md border border-muted px-3  py-2   transition-colors sm:min-w-[72px] sm:text-xs',
               'data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary dark:data-[state=active]:border-accent-icon data-[state=active]:font-semibold',
-              'max-[360px]:min-w-[50px] max-[360px]:px-1 max-[360px]:pt-2.5',
+              'max-[360px]:min-w-[50px]',
               d.isWorkoutDay && !d.isDisabled ? 'bg-accent' : '',
               d.isDisabled ? 'cursor-not-allowed opacity-50' : ''
             )}
           >
-            {d.isWorkoutDay && !d.isDisabled && (
-              <Dumbbell
-                style={{ transform: 'rotate(45deg)' }}
-                className="pointer-events-none absolute left-1/2 top-2 -translate-x-1/2 -translate-y-1/2 h-3 w-3 text-accent-icon/80 group-data-[state=active]:text-accent-icon sm:top-3 sm:h-4 sm:w-4"
-              />
-            )}
-            <span className="whitespace-nowrap text-xs leading-tight sm:text-base mb-2">
+            <div className="whitespace-nowrap text-xs leading-tight flex mb-1">
               {`${d.label.toUpperCase()} ${d.dateStr}`}
-            </span>
+              {d.isWorkoutDay && !d.isDisabled && (
+                <Dumbbell className="pointer-events-none ml-1 h-2 w-2 text-accent-icon/80 group-data-[state=active]:text-accent-icon sm:h-4 sm:w-4" />
+              )}
+            </div>
             {!isSubscription && d.programDay && (
-              <span className="text-[10px] leading-none sm:text-xs">
+              <div className="text-[11px] leading-none sm:text-xs">
                 День {d.programDay}
-              </span>
+              </div>
             )}
           </TabsTrigger>
         ))}
