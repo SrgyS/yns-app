@@ -21,7 +21,7 @@ export async function getNavigationContext(): Promise<NavigationContext> {
 
   const session = await sessionService.get()
 
-  let planUrl = '/day'
+  let planUrl = '/course-access'
   let hasActiveCourse = false
   let hasAnyCourses = false
   const userId = session?.user?.id
