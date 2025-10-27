@@ -37,7 +37,7 @@ export const NAV_ITEMS: NavigationItem[] = [
   {
     key: 'plan',
     label: 'Мой план',
-    href: '/day',
+    href: '/course-access',
     icon: CalendarCheck,
     targets: ['desktop', 'mobile'],
   },

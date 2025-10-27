@@ -1,11 +1,42 @@
 import { useCallback } from 'react'
 import { DayOfWeek } from '@prisma/client'
+import type {
+  UserCourseEnrollment,
+  UserCourseEnrollmentApi,
+} from '@/entities/course'
 import { ContentType } from '@/kernel/domain/course'
 
 import { toast } from 'sonner'
 import { courseEnrollmentApi } from '../_api'
 import { CACHE_SETTINGS } from '@/shared/lib/cache/cache-constants'
 //TODO: проверить используются ли все методы
+
+type EnrollmentShape = UserCourseEnrollment | UserCourseEnrollmentApi
+
+export type CourseAccessState = {
+  hasAccess: boolean
+  enrollment: EnrollmentShape | null
+  activeEnrollment: EnrollmentShape | null
+  isActive: boolean
+  accessExpiresAt: string | Date | null
+}
+
+export const isCourseAccessState = (
+  value: unknown
+): value is CourseAccessState => {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  return (
+    'hasAccess' in value &&
+    'enrollment' in value &&
+    'activeEnrollment' in value &&
+    'isActive' in value &&
+    'accessExpiresAt' in value
+  )
+}
+
 export function useCourseEnrollment() {
   const utils = courseEnrollmentApi.useUtils()
 
@@ -110,10 +141,17 @@ export function useCourseEnrollment() {
   )
 
   const checkAccessByCourseSlug = useCallback(
-    (userId: string, courseSlug: string) => {
+    (
+      userId: string,
+      courseSlug: string,
+      options?: Parameters<typeof checkAccessByCourseSlugQuery>[1]
+    ) => {
       return checkAccessByCourseSlugQuery(
         { userId, courseSlug },
-        CACHE_SETTINGS.FREQUENT_UPDATE
+        {
+          ...CACHE_SETTINGS.FREQUENT_UPDATE,
+          ...(options ?? {}),
+        }
       )
     },
     [checkAccessByCourseSlugQuery]

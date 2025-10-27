@@ -5,11 +5,16 @@ import { Button } from '@/shared/ui/button'
 import { Suspense } from 'react'
 import { Skeleton } from '@/shared/ui/skeleton/skeleton'
 import { CourseBanner } from '@/features/daily-plan/_ui/course-banner'
-import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
+import {
+  isCourseAccessState,
+  useCourseEnrollment,
+  type CourseAccessState,
+} from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { CourseActivationBanner } from '@/features/daily-plan/_ui/course-activation-banner'
 import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/alert'
 import Link from 'next/link'
+import { usePaidAccess } from '@/features/course-enrollment/_vm/paid-access-context'
 
 interface DayPageClientProps {
   courseSlug: string
@@ -18,13 +23,23 @@ interface DayPageClientProps {
 export function DayPageClient({ courseSlug }: DayPageClientProps) {
   const { data: session } = useAppSession()
   const { checkAccessByCourseSlug } = useCourseEnrollment()
+  const paidAccess = usePaidAccess()
+
+  const accessibleEntry = paidAccess?.accessibleCourses.find(
+    entry => entry.enrollment.course?.slug === courseSlug
+  )
+
+  const hasServerAccess = Boolean(accessibleEntry)
 
   const accessQuery = checkAccessByCourseSlug(
     session?.user?.id || '',
-    courseSlug
+    courseSlug,
+    {
+      enabled: !hasServerAccess && Boolean(session?.user?.id),
+    }
   )
 
-  if (accessQuery.isLoading) {
+  if (!hasServerAccess && accessQuery.isLoading) {
     return (
       <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
         <Skeleton className="h-6 w-[300px]" />
@@ -33,20 +48,23 @@ export function DayPageClient({ courseSlug }: DayPageClientProps) {
     )
   }
 
-  const {
-    hasAccess,
-    enrollment,
-    activeEnrollment,
-    isActive,
-    accessExpiresAt,
-  } =
-    accessQuery.data ?? {
-      hasAccess: false,
-      enrollment: null,
-      activeEnrollment: null,
-      isActive: false,
-      accessExpiresAt: null,
-    }
+  const accessData = hasServerAccess
+    ? ({
+        hasAccess: true,
+        enrollment: accessibleEntry?.enrollment ?? null,
+        activeEnrollment: paidAccess?.activeEnrollment ?? null,
+        isActive: Boolean(accessibleEntry?.enrollment.active),
+        accessExpiresAt: accessibleEntry?.accessExpiresAt ?? null,
+      } satisfies CourseAccessState)
+    : isCourseAccessState(accessQuery.data)
+      ? accessQuery.data
+      : undefined
+
+  const hasAccess = accessData?.hasAccess ?? false
+  const enrollment = accessData?.enrollment ?? null
+  const activeEnrollment = accessData?.activeEnrollment ?? null
+  const isActive = accessData?.isActive ?? false
+  const accessExpiresAt = accessData?.accessExpiresAt ?? null
 
   if (!hasAccess || !enrollment) {
     return (

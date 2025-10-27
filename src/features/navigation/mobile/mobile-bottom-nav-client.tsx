@@ -114,15 +114,12 @@ export function MobileBottomNavClient({
                   item.key === 'plan' && planStateClass,
                   active && 'text-foreground font-semibold'
                 )}
-                prefetch={false}
                 onClick={event => {
-                  console.log('click', { href, isDisabled, isPending, active })
                   if (isDisabled) {
                     event.preventDefault()
                     return
                   }
 
-                  // Мгновенное обновление визуального состояния
                   if (!isPending) {
                     lastPendingHref = href
                     setPendingHref(href)
