@@ -11,9 +11,15 @@ import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { useWorkoutCalendar } from '../_vm/use-worckout-calendar'
 import { CourseSlug } from '@/kernel/domain/course'
 import { getWeekOfMonth } from 'date-fns'
-import { cn } from '@/shared/ui/utils'
 import { Skeleton } from '@/shared/ui/skeleton/skeleton'
 import { Button } from '@/shared/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/shared/ui/dropdown-menu'
 
 const MemoizedDayTabs = memo(DayTabs)
 
@@ -153,7 +159,6 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
   }, [shiftWeek])
 
   const weeksCount = availableWeeks.length
-  const isCompactWeeks = weeksCount > 5
 
   const getWeekLabelSafe = useCallback(
     (week: number) => getWeekMeta(week)?.label ?? getWeekLabel(week),
@@ -186,10 +191,16 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
 
   const courseId = enrollment.courseId
 
-  const renderCompactNavigation = () => (
-    <>
-      <div className="flex w-full items-center gap-2 rounded-lg bg-muted px-2 py-1 sm:flex-nowrap sm:justify-between sm:px-3 sm:py-2">
-        <div className="flex w-full items-center gap-2 sm:w-auto">
+  return (
+    <Tabs
+      value={`week-${activeWeekNumber}`}
+      onValueChange={value =>
+        setActiveWeekNumber(Number(value.replace('week-', '')))
+      }
+      className="space-y-2.5 gap-1.5"
+    >
+      <div className="flex w-full items-center sm:gap-2 rounded-lg bg-muted px-2 py-1  justify-between sm:px-3 sm:py-2">
+        <div className="flex items-center gap-2 sm:gap-2">
           <Button
             type="button"
             variant="ghost"
@@ -201,10 +212,44 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
           >
             <ChevronLeft className="size-4" />
           </Button>
-          <div className="flex min-w-0 flex-1 items-center justify-center rounded-md bg-background px-2 py-1 text-xs font-medium sm:flex-none sm:px-3 sm:text-base">
-            <Calendar className="mr-2 mb-0.5 mt-[-2px] inline-block size-4 sm:mr-3" />
-            <span className="truncate">{getWeekLabelSafe(currentWeekNumber)}</span>
-          </div>
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="lg"
+                className="min-w-[130px] justify-between"
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                <span className="truncate">
+                  {getWeekLabelSafe(currentWeekNumber)}
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="start"
+              className="max-h-72 overflow-auto min-w-[130px]"
+            >
+              <DropdownMenuRadioGroup
+                value={String(currentWeekNumber)}
+                onValueChange={value => {
+                  const parsed = Number(value)
+                  if (!Number.isNaN(parsed)) {
+                    setActiveWeekNumber(parsed)
+                  }
+                }}
+              >
+                {availableWeeksNumbers.map(week => (
+                  <DropdownMenuRadioItem
+                    key={`compact-${week}`}
+                    value={String(week)}
+                    className="text-sm"
+                  >
+                    {getWeekLabelSafe(week)}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             type="button"
             variant="ghost"
@@ -217,12 +262,15 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
             <ChevronRight className="size-4" />
           </Button>
         </div>
-        <span className="w-full text-right text-[10px] text-muted-foreground sm:w-auto sm:text-sm">
+        <span className="text-muted-foreground text-sm min-w-0 whitespace-normal">
           Всего недель: {weeksCount}
         </span>
       </div>
+      <h3 className="text-sm mb-0 font-semibold capitalize">
+        {format(activeDate, 'LLLL', { locale: ru })}
+      </h3>
       <TabsList
-        className="sr-only m-0 h-px w-px p-0 !border-0 !shadow-none"
+        className="sr-only m-0 h-px w-px p-0 border-0 shadow-none"
         aria-hidden="true"
       >
         {availableWeeksNumbers.map(week => (
@@ -231,63 +279,26 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
           </TabsTrigger>
         ))}
       </TabsList>
-    </>
-  )
 
-  const renderScrollableNavigation = () => (
-    <TabsList className="flex w-full flex-nowrap justify-start gap-1.5 overflow-x-auto rounded-lg bg-muted pl-1 pr-1 pt-1 pb-1 text-[11px] sm:text-sm">
       {availableWeeksNumbers.map(week => (
-        <TabsTrigger
-          key={`list-${week}`}
-          value={`week-${week}`}
-          className={cn(
-            'whitespace-nowrap rounded-md px-2.5 py-1.5 text-[11px] transition-colors sm:px-3 sm:py-2 sm:text-sm flex-none',
-            'data-[state=active]:bg-background data-[state=active]:shadow-sm',
-            'max-[380px]:px-2 max-[380px]:py-1.25 max-[380px]:text-[10px]'
-          )}
-        >
-          {getWeekLabelSafe(week)}
-        </TabsTrigger>
+        <TabsContent key={`week-${week}`} value={`week-${week}`}>
+          {activeWeekNumber === week ? (
+            <MemoizedDayTabs
+              weekNumber={week}
+              displayWeekStart={getDisplayWeekStartSafe(week)}
+              enrollmentStart={programStart!}
+              currentDate={today}
+              courseId={courseId}
+              isSubscription={isSubscription}
+              totalWeeks={totalWeeks}
+              availableWeeks={availableWeeksNumbers}
+              maxDayNumber={maxDayNumber ?? undefined}
+              onDayChange={handleDayChange}
+              isActiveWeek
+            />
+          ) : null}
+        </TabsContent>
       ))}
-    </TabsList>
-  )
-
-  return (
-    <div className="flex w-full flex-col gap-2.5 font-medium">
-      <h3 className="text-sm font-semibold capitalize text-muted-foreground sm:text-lg">
-        {format(activeDate, 'LLLL', { locale: ru })}
-      </h3>
-      <Tabs
-        value={`week-${activeWeekNumber}`}
-        onValueChange={value =>
-          setActiveWeekNumber(Number(value.replace('week-', '')))
-        }
-        className="space-y-2.5"
-      >
-        {isCompactWeeks
-          ? renderCompactNavigation()
-          : renderScrollableNavigation()}
-
-        {availableWeeksNumbers.map(week => (
-          <TabsContent key={`week-${week}`} value={`week-${week}`}>
-            {activeWeekNumber === week ? (
-              <MemoizedDayTabs
-                weekNumber={week}
-                displayWeekStart={getDisplayWeekStartSafe(week)}
-                enrollmentStart={programStart!}
-                currentDate={today}
-                courseId={courseId}
-                isSubscription={isSubscription}
-                totalWeeks={totalWeeks}
-                availableWeeks={availableWeeksNumbers}
-                maxDayNumber={maxDayNumber ?? undefined}
-                onDayChange={handleDayChange}
-                isActiveWeek
-              />
-            ) : null}
-          </TabsContent>
-        ))}
-      </Tabs>
-    </div>
+    </Tabs>
   )
 }
