@@ -15,7 +15,7 @@ import { WarmUp } from './warm-up'
 import { useDailyPlan } from '../_vm/use-daily-plan'
 import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
-import { DayOfWeek } from '@prisma/client'
+import { DailyContentType, DayOfWeek } from '@prisma/client'
 import { DAY_LABELS } from '@/features/select-training-days/constants'
 import { cn } from '@/shared/ui/utils'
 
@@ -261,6 +261,8 @@ export function DayTabs({
                 workoutId={dailyPlanQuery.data.warmupId}
                 enrollmentId={enrollment?.id || ''}
                 userDailyPlanId={dailyPlanQuery.data.id}
+                contentType={DailyContentType.WARMUP}
+                stepIndex={dailyPlanQuery.data.warmupStepIndex}
               />
             )}
             {dailyPlanQuery.data.isWorkoutDay &&
@@ -270,6 +272,8 @@ export function DayTabs({
                   workoutId={dailyPlanQuery.data.mainWorkoutId}
                   enrollmentId={enrollment?.id || ''}
                   userDailyPlanId={dailyPlanQuery.data.id}
+                  contentType={DailyContentType.MAIN}
+                  stepIndex={dailyPlanQuery.data.mainWorkoutStepIndex!}
                 />
               )}
           </>

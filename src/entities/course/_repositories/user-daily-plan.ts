@@ -46,6 +46,8 @@ export class UserDailyPlanRepository {
       mealPlanId: prismaUserDailyPlan.mealPlanId,
       weekNumber: prismaUserDailyPlan.weekNumber,
       originalDailyPlanId: prismaUserDailyPlan.originalDailyPlanId,
+      warmupStepIndex: prismaUserDailyPlan.warmupStepIndex,
+      mainWorkoutStepIndex: prismaUserDailyPlan.mainWorkoutStepIndex,
     }
   }
 

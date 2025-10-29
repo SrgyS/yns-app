@@ -1,6 +1,6 @@
 import { injectable } from 'inversify'
 import { UserWorkoutCompletionRepository } from '../_repositories/user-workout-completion'
-import { WorkoutType } from '@prisma/client'
+import { DailyContentType, WorkoutType } from '@prisma/client'
 import { logger } from '@/shared/lib/logger'
 
 export interface UpdateWorkoutCompletionParams {
@@ -9,7 +9,8 @@ export interface UpdateWorkoutCompletionParams {
   enrollmentId: string
   workoutType: WorkoutType
   isCompleted: boolean
-  userDailyPlanId: string
+  contentType: DailyContentType
+  stepIndex: number
 }
 
 @injectable()
@@ -18,7 +19,15 @@ export class UpdateWorkoutCompletionService {
     private userWorkoutCompletionRepository: UserWorkoutCompletionRepository
   ) {}
 
-  async exec({ userId, workoutId, enrollmentId, workoutType, isCompleted, userDailyPlanId }: UpdateWorkoutCompletionParams): Promise<void> {
+  async exec({
+    userId,
+    workoutId,
+    enrollmentId,
+    workoutType,
+    isCompleted,
+    contentType,
+    stepIndex,
+  }: UpdateWorkoutCompletionParams): Promise<void> {
     try {
 
       if (isCompleted) {
@@ -27,15 +36,15 @@ export class UpdateWorkoutCompletionService {
           workoutId,
           enrollmentId,
           workoutType,
-          userDailyPlanId,
+          contentType,
+          stepIndex,
         )
       } else {
         await this.userWorkoutCompletionRepository.removeWorkoutCompletion(
           userId,
-          workoutId,
           enrollmentId,
-          workoutType,
-          userDailyPlanId,
+          contentType,
+          stepIndex,
         )
       }
 
@@ -45,7 +54,8 @@ export class UpdateWorkoutCompletionService {
         workoutId,
         enrollmentId,
         workoutType,
-        userDailyPlanId,
+        contentType,
+        stepIndex,
       })
     } catch (error) {
       logger.error({
@@ -54,7 +64,8 @@ export class UpdateWorkoutCompletionService {
         workoutId,
         enrollmentId,
         workoutType,
-        userDailyPlanId,
+        contentType,
+        stepIndex,
         error,
       })
       throw new Error('Failed to update workout completion status')

@@ -64,6 +64,8 @@ export class PlanningRepository {
       mealPlanId: prismaUserDailyPlan.mealPlanId,
       weekNumber: prismaUserDailyPlan.weekNumber,
       originalDailyPlanId: prismaUserDailyPlan.originalDailyPlanId,
+      warmupStepIndex: prismaUserDailyPlan.warmupStepIndex,
+      mainWorkoutStepIndex: prismaUserDailyPlan.mainWorkoutStepIndex,
     }
   }
 
@@ -275,6 +277,8 @@ export class PlanningRepository {
           mainWorkoutId: updateData.mainWorkoutId,
           mealPlanId: updateData.mealPlanId,
           originalDailyPlanId: updateData.originalDailyPlanId,
+          warmupStepIndex: updateData.warmupStepIndex,
+          mainWorkoutStepIndex: updateData.mainWorkoutStepIndex,
         }
 
         const record = await tx.userDailyPlan.upsert({

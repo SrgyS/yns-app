@@ -97,8 +97,8 @@ export function EditWorkoutDaysClient({
           // Очищаем стор с отметками о выполнении тренировок
           useWorkoutCompletionStore.setState({ completions: {} })
         } else {
-          // Если сохраняем прогресс, всё равно очищаем стор, 
-          // чтобы данные загрузились заново с новыми userDailyPlanId
+          // Если сохраняем прогресс, очищаем стор, 
+          // чтобы состояние подтянулось из актуальных шагов расписания
           useWorkoutCompletionStore.setState({ completions: {} })
         }
       } else {

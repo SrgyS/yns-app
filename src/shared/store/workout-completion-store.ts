@@ -1,15 +1,14 @@
 import { create } from 'zustand'
-import { WorkoutType } from '@prisma/client'
+import { DailyContentType } from '@prisma/client'
 
 // Функция для создания уникального ключа
 export const createCompletionKey = (
   userId: string,
-  workoutId: string,
   enrollmentId: string,
-  workoutType: WorkoutType,
-  userDailyPlanId: string
+  contentType: DailyContentType,
+  stepIndex: number
 ): string => {
-  return `${userId}:${workoutId}:${enrollmentId}:${workoutType}:${userDailyPlanId}`
+  return `${userId}:${enrollmentId}:${contentType}:${stepIndex}`
 }
 
 type WorkoutCompletionState = {

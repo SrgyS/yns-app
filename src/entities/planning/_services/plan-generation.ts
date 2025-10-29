@@ -30,6 +30,8 @@ export interface UserDailyPlanCreateData {
   mainWorkoutId: string | null
   mealPlanId: string | null
   originalDailyPlanId: string
+  warmupStepIndex: number
+  mainWorkoutStepIndex: number | null
 }
 
 export interface UserDailyPlanUpdateData {
@@ -40,6 +42,8 @@ export interface UserDailyPlanUpdateData {
   mainWorkoutId: string | null
   mealPlanId: string | null
   originalDailyPlanId: string
+  warmupStepIndex: number
+  mainWorkoutStepIndex: number | null
 }
 
 export interface GenerationRange {
@@ -53,6 +57,8 @@ interface DayIterationMeta {
   dayOfWeek: DayOfWeek
   isWorkoutDay: boolean
   weekNumber: number
+  warmupStepIndex: number
+  mainWorkoutStepIndex: number | null
 }
 
 /**
@@ -145,6 +151,8 @@ export class PlanGenerationService {
       mainWorkoutId: meta.isWorkoutDay ? plan.mainWorkoutId : null,
       mealPlanId: plan.mealPlanId ?? null,
       originalDailyPlanId: plan.id,
+      warmupStepIndex: meta.warmupStepIndex,
+      mainWorkoutStepIndex: meta.mainWorkoutStepIndex,
     }
   }
 
@@ -164,6 +172,8 @@ export class PlanGenerationService {
       mainWorkoutId: meta.isWorkoutDay ? plan.mainWorkoutId : null,
       mealPlanId: plan.mealPlanId ?? null,
       originalDailyPlanId: plan.id,
+      warmupStepIndex: meta.warmupStepIndex,
+      mainWorkoutStepIndex: meta.mainWorkoutStepIndex,
     }
   }
 
@@ -202,6 +212,8 @@ export class PlanGenerationService {
     const result: T[] = []
     let mainWorkoutIndex = 0
     let warmupOnlyIndex = 0
+    let warmupStepIndex = 0
+    let mainWorkoutStepIndex = 0
 
     for (let dayIndex = range.startDay; dayIndex < range.endDay; dayIndex++) {
       const date = this.dateService.calculateDateForDay(
@@ -227,6 +239,13 @@ export class PlanGenerationService {
 
       mainWorkoutIndex = newMainWorkoutIndex
       warmupOnlyIndex = newWarmupOnlyIndex
+      warmupStepIndex += 1
+
+      let currentMainWorkoutStep: number | null = null
+      if (selectedPlan.mainWorkoutId) {
+        mainWorkoutStepIndex += 1
+        currentMainWorkoutStep = mainWorkoutStepIndex
+      }
 
       result.push(
         mapFn(selectedPlan, {
@@ -235,6 +254,8 @@ export class PlanGenerationService {
           dayOfWeek,
           isWorkoutDay,
           weekNumber,
+          warmupStepIndex,
+          mainWorkoutStepIndex: currentMainWorkoutStep,
         })
       )
     }

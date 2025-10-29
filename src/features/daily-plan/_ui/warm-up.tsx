@@ -12,6 +12,7 @@ import { useWorkoutCompletions } from '../_vm/use-workout-completions'
 import { useWorkout } from '../_vm/use-workout'
 import { FavoriteButton } from '@/shared/ui/favorite-button'
 import { cn } from '@/shared/ui/utils'
+import { DailyContentType } from '@prisma/client'
 
 const MUSCLE_GROUP_LABELS = {
   LEGS: 'Ноги',
@@ -30,6 +31,8 @@ interface WarmUpProps {
   enrollmentId: string
   initialCompleted?: boolean
   userDailyPlanId: string
+  contentType: DailyContentType
+  stepIndex: number
 }
 
 export function WarmUp({
@@ -38,6 +41,8 @@ export function WarmUp({
   enrollmentId,
   initialCompleted = false,
   userDailyPlanId,
+  contentType,
+  stepIndex,
 }: WarmUpProps) {
   const [isCompleted, setIsCompleted] = useState(initialCompleted)
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
@@ -110,27 +115,19 @@ export function WarmUp({
   }, [workout?.difficulty])
 
   useEffect(() => {
-    if (workout?.type && session?.user?.id && enrollmentId) {
+    if (session?.user?.id && enrollmentId) {
       const fetchCompletionStatus = async () => {
         const completionStatus = await getWorkoutCompletionStatus(
           session.user.id,
-          workoutId,
           enrollmentId,
-          workout.type,
-          userDailyPlanId
+          contentType,
+          stepIndex
         )
         setIsCompleted(completionStatus)
       }
       fetchCompletionStatus()
     }
-  }, [
-    workout,
-    session,
-    workoutId,
-    enrollmentId,
-    getWorkoutCompletionStatus,
-    userDailyPlanId,
-  ])
+  }, [session, enrollmentId, getWorkoutCompletionStatus, contentType, stepIndex])
   const handleVideoCompleted = () => {
     setIsVideoPlaying(false)
     if (!isCompleted) {
@@ -153,14 +150,15 @@ export function WarmUp({
     // Не обновляем состояние сразу, а только после успешного запроса
 
     try {
-      await updateWorkoutCompletion({
-        userId: session.user.id,
-        workoutId,
-        enrollmentId,
-        workoutType: workout.type,
-        isCompleted: newCompletedState,
-        userDailyPlanId,
-      })
+        await updateWorkoutCompletion({
+          userId: session.user.id,
+          workoutId,
+          enrollmentId,
+          workoutType: workout.type,
+          contentType,
+          stepIndex,
+          isCompleted: newCompletedState,
+        })
       // Обновляем состояние только после успешного запроса
       setIsCompleted(newCompletedState)
     } catch (error) {

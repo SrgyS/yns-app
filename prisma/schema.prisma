@@ -58,6 +58,11 @@ enum WorkoutType {
   CARDIO
 }
 
+enum DailyContentType {
+  WARMUP
+  MAIN
+}
+
 enum CourseContentType {
   FIXED_COURSE // Фиксированный курс
   SUBSCRIPTION // Курс для подписки
@@ -196,12 +201,13 @@ model UserDailyPlan {
   mealPlanId          String?
   dayOfWeek           DayOfWeek
   weekNumber          Int
+  warmupStepIndex     Int
+  mainWorkoutStepIndex Int?
   enrollment          UserCourseEnrollment    @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
   mainWorkout         Workout?                @relation("UserDailyMainWorkout", fields: [mainWorkoutId], references: [id])
   mealPlan            MealPlan?               @relation("UserDailyMealPlan", fields: [mealPlanId], references: [id], onDelete: SetNull)
   user                User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   warmup              Workout                 @relation("UserDailyWarmup", fields: [warmupId], references: [id])
-  workoutCompletions  UserWorkoutCompletion[]
   originalDailyPlanId String
   originalDailyPlan   DailyPlan               @relation("OriginalDailyPlan", fields: [originalDailyPlanId], references: [id])
 
@@ -242,17 +248,15 @@ model UserWorkoutCompletion {
   enrollmentId        String
   completedAt         DateTime             @default(now())
   workoutType         WorkoutType
-  userDailyPlanId     String
+  contentType         DailyContentType
+  stepIndex           Int
   enrollment          UserCourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  userDailyPlan       UserDailyPlan        @relation(fields: [userDailyPlanId], references: [id], onDelete: Cascade)
   user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   workout             Workout              @relation(fields: [workoutId], references: [id])
-  originalDailyPlanId String
 
-  @@unique([userId, workoutId, enrollmentId, workoutType, userDailyPlanId])
+  @@unique([userId, enrollmentId, contentType, stepIndex])
   @@index([userId])
   @@index([enrollmentId])
-  @@index([userDailyPlanId])
 }
 
 model MealPlan {
