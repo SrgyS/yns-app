@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { WorkoutType } from '@prisma/client'
+import { DailyContentType, WorkoutType } from '@prisma/client'
 import { workoutApi } from '../_api'
 import { useWorkoutCompletionStore, createCompletionKey } from '@/shared/store/workout-completion-store'
 
@@ -9,14 +9,19 @@ export function useWorkoutCompletions() {
   
   // Функция для получения статуса выполнения тренировки
   const getWorkoutCompletionStatus = useCallback(
-    async (userId: string, workoutId: string, enrollmentId: string, workoutType: WorkoutType, userDailyPlanId: string): Promise<boolean> => {
+    async (
+      userId: string,
+      enrollmentId: string,
+      contentType: DailyContentType,
+      stepIndex: number
+    ): Promise<boolean> => {
       // Если какой-то из параметров отсутствует, возвращаем false
-      if (!userId || !workoutId || !enrollmentId) {
+      if (!userId || !enrollmentId) {
         return false
       }
       
       // Создаем ключ для хранения в сторе
-      const key = createCompletionKey(userId, workoutId, enrollmentId, workoutType, userDailyPlanId)
+      const key = createCompletionKey(userId, enrollmentId, contentType, stepIndex)
       
       // Проверяем, есть ли значение в сторе
       const cachedValue = useWorkoutCompletionStore.getState().getCompletion(key)
@@ -28,10 +33,9 @@ export function useWorkoutCompletions() {
         // Создаем ключ запроса
         const queryKey = {
           userId,
-          workoutId,
           enrollmentId,
-          workoutType,
-          userDailyPlanId,
+          contentType,
+          stepIndex,
         }
         
         // Запрашиваем данные с сервера
@@ -56,10 +60,10 @@ export function useWorkoutCompletions() {
   const updateWorkoutCompletionMutation = workoutApi.updateWorkoutCompletion.useMutation({
     // При успешном обновлении инвалидируем кэш и обновляем стор
     onSuccess: (_, variables) => {
-      const { userId, workoutId, enrollmentId, workoutType, userDailyPlanId, isCompleted } = variables
+      const { userId, enrollmentId, contentType, stepIndex, isCompleted } = variables
       
       // Создаем ключ для хранения в сторе
-      const key = createCompletionKey(userId, workoutId, enrollmentId, workoutType, userDailyPlanId)
+      const key = createCompletionKey(userId, enrollmentId, contentType, stepIndex)
       
       // Обновляем значение в сторе
       useWorkoutCompletionStore.getState().setCompletion(key, isCompleted)
@@ -67,10 +71,9 @@ export function useWorkoutCompletions() {
       // Инвалидируем конкретный запрос в React Query
       utils.getWorkoutCompletionStatus.invalidate({
         userId,
-        workoutId,
         enrollmentId,
-        workoutType,
-        userDailyPlanId,
+        contentType,
+        stepIndex,
       })
     },
   })
@@ -82,8 +85,9 @@ export function useWorkoutCompletions() {
       workoutId: string
       enrollmentId: string
       workoutType: WorkoutType
+      contentType: DailyContentType
+      stepIndex: number
       isCompleted: boolean
-      userDailyPlanId: string
     }) => {
       try {
         await updateWorkoutCompletionMutation.mutateAsync(params)

@@ -32,6 +32,11 @@ export class UpdateWorkoutDaysService {
         throw new Error('Enrollment not found')
       }
 
+      // Получаем текущие планы до обновления, чтобы иметь исходные индексы
+      const previousPlans = await this.userDailyPlanRepository.getUserDailyPlansByEnrollment(
+        params.enrollmentId
+      )
+
       // Используем транзакцию для атомарного обновления
       await dbClient.$transaction(async tx => {
         // Обновляем выбранные дни в enrollment
@@ -41,47 +46,20 @@ export class UpdateWorkoutDaysService {
           tx
         )
 
-          // Обновляем планы
+        // Обновляем планы
         const updatedPlans = await this.userDailyPlanRepository.updateUserDailyPlans(
           params.enrollmentId,
           params.selectedWorkoutDays,
           tx
         )
 
-        if (params.keepProgress) {
+        if (!params.keepProgress) {
           try {
-            const newUserDailyPlans = await tx.userDailyPlan.findMany({
-              where: { enrollmentId: params.enrollmentId },
-              select: {
-                id: true,
-                originalDailyPlanId: true,
-                warmupId: true,
-                mainWorkoutId: true,
-              },
-            });
-
-            await this.userWorkoutCompletionRepository.updateCompletionsAfterWorkoutDaysChange(
+            await this.userWorkoutCompletionRepository.deleteAllForEnrollment(
               enrollment.userId,
               params.enrollmentId,
-              newUserDailyPlans,
               tx
-            );
-          } catch (error) {
-            logger.error({
-              msg: 'Error updating workout completions after workout days change',
-              enrollmentId: params.enrollmentId,
-              error,
-            });
-            throw new Error('Failed to update workout completions after workout days change');
-          }
-        } else {
-          try {
-            await tx.userWorkoutCompletion.deleteMany({
-              where: {
-                enrollmentId: params.enrollmentId,
-                userDailyPlanId: { in: updatedPlans.map(plan => plan.id) },
-              },
-            });
+            )
           } catch (error) {
             logger.error({
               msg: 'Error deleting workout completions for enrollment',
@@ -89,6 +67,23 @@ export class UpdateWorkoutDaysService {
               error,
             });
             throw new Error('Failed to delete workout completions for enrollment');
+          }
+        } else {
+          try {
+            await this.userWorkoutCompletionRepository.realignCompletionsAfterScheduleChange(
+              enrollment.userId,
+              params.enrollmentId,
+              previousPlans,
+              updatedPlans,
+              tx
+            )
+          } catch (error) {
+            logger.error({
+              msg: 'Error realigning workout completions after schedule change',
+              enrollmentId: params.enrollmentId,
+              error,
+            })
+            throw new Error('Failed to realign workout completions after schedule change')
           }
         }
       })

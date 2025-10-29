@@ -1,6 +1,6 @@
 import { injectable } from 'inversify'
 import { UserWorkoutCompletionRepository } from '../_repositories/user-workout-completion'
-import { WorkoutType } from '@prisma/client'
+import { DailyContentType } from '@prisma/client'
 import { logger } from '@/shared/lib/logger'
 
 @injectable()
@@ -10,27 +10,24 @@ export class GetWorkoutCompletionStatusService {
 
   async exec(
     userId: string,
-    workoutId: string,
     enrollmentId: string,
-    workoutType: WorkoutType,
-    userDailyPlanId: string,
+    contentType: DailyContentType,
+    stepIndex: number,
   ): Promise<boolean> {
     try {
       return await this.userWorkoutCompletionRepository.getWorkoutCompletionStatus(
         userId,
-        workoutId,
         enrollmentId,
-        workoutType,
-        userDailyPlanId,
+        contentType,
+        stepIndex,
       )
     } catch (error) {
       logger.error({
         msg: 'Error getting workout completion status in service',
         userId,
-        workoutId,
         enrollmentId,
-        workoutType,
-        userDailyPlanId,
+        contentType,
+        stepIndex,
         error,
       })
       return false // В случае ошибки возвращаем false (тренировка не выполнена)

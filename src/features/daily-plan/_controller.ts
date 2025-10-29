@@ -7,7 +7,7 @@ import { injectable } from 'inversify'
 import { z } from 'zod'
 import { GetWorkoutService } from '@/entities/workout/module'
 import { UpdateWorkoutCompletionService } from '@/entities/workout/_services/update-workout-completion'
-import { WorkoutType } from '@prisma/client'
+import { DailyContentType, WorkoutType } from '@prisma/client'
 import { GetWorkoutCompletionStatusService } from '@/entities/workout/_services/get-workout-completion-status'
 import { GetUserDailyPlanService } from './_services/get-user-daily-plan'
 import { logger } from '@/shared/lib/logger'
@@ -76,7 +76,8 @@ export class WorkoutController extends Controller {
           enrollmentId: z.string(),
           workoutType: z.nativeEnum(WorkoutType),
           isCompleted: z.boolean(),
-          userDailyPlanId: z.string(),
+          contentType: z.nativeEnum(DailyContentType),
+          stepIndex: z.number().int().nonnegative(),
         })
       )
       .mutation(async ({ input }) => {
@@ -88,19 +89,17 @@ export class WorkoutController extends Controller {
       .input(
         z.object({
           userId: z.string(),
-          workoutId: z.string(),
           enrollmentId: z.string(),
-          workoutType: z.nativeEnum(WorkoutType),
-          userDailyPlanId: z.string(),
+          contentType: z.nativeEnum(DailyContentType),
+          stepIndex: z.number().int().nonnegative(),
         })
       )
       .query(async ({ input }) => {
         const isCompleted = await this.getWorkoutCompletionStatusService.exec(
           input.userId,
-          input.workoutId,
           input.enrollmentId,
-          input.workoutType,
-          input.userDailyPlanId
+          input.contentType,
+          input.stepIndex
         )
         return isCompleted
       }),
