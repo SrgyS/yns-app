@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, Prisma } from '@prisma/client'
 import { promises as fs } from 'fs'
 import * as path from 'path'
 import { contentParser } from '../src/shared/api/content'
@@ -545,7 +545,7 @@ async function downloadAndUploadContent() {
       )
 
       await dbClient.$transaction(
-        async tx => {
+        async (tx: Prisma.TransactionClient) => {
           // Upsert курса со вложенным upsert продукта (прямая 1:1 связь)
           const allowedWorkoutDays =
             courseData.allowedWorkoutDaysPerWeek &&
