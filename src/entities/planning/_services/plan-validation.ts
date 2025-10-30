@@ -104,16 +104,26 @@ export class PlanValidationService {
     let newMainWorkoutIndex = mainWorkoutIndex
     let newWarmupOnlyIndex = warmupOnlyIndex
 
-    if (isWorkoutDay && mainWorkoutIndex < mainWorkoutDays.length) {
-      plan = mainWorkoutDays[mainWorkoutIndex]
+    const hasMainWorkouts = mainWorkoutDays.length > 0
+    const hasWarmupOnlyDays = warmupOnlyDays.length > 0
+
+    if (isWorkoutDay && hasMainWorkouts) {
+      const normalizedIndex = mainWorkoutIndex % mainWorkoutDays.length
+      plan = mainWorkoutDays[normalizedIndex]
       newMainWorkoutIndex++
     } else if (warmupOnlyIndex < warmupOnlyDays.length) {
       plan = warmupOnlyDays[warmupOnlyIndex]
       newWarmupOnlyIndex++
-    } else {
+    } else if (hasWarmupOnlyDays) {
       // Сброс индекса разминочных дней и взятие первого
       newWarmupOnlyIndex = 1
       plan = warmupOnlyDays[0]
+    } else if (hasMainWorkouts) {
+      const normalizedIndex = mainWorkoutIndex % mainWorkoutDays.length
+      plan = mainWorkoutDays[normalizedIndex]
+      newMainWorkoutIndex++
+    } else {
+      throw new Error('No available plans to assign for user daily plan generation')
     }
 
     return {

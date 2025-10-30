@@ -16,18 +16,18 @@ let lastPendingHref: string | null = null
 
 export function MainNavClient({
   planUrl,
-  hasActiveCourse,
-  hasAnyCourses,
+  // hasActiveCourse,
+  // hasAnyCourses,
 }: MainNavClientProps) {
   const pathname = usePathname() ?? ''
   const desktopItems = NAV_ITEMS.filter(item =>
     item.targets.includes('desktop')
   )
-  const planStateClass = hasActiveCourse
-    ? 'text-foreground/60'
-    : hasAnyCourses
-      ? 'text-amber-500 font-semibold'
-      : 'text-foreground/40'
+  // const planStateClass = hasActiveCourse
+  //   ? 'text-foreground/60'
+  //   : hasAnyCourses
+  //     ? 'text-amber-500 font-semibold'
+  //     : 'text-foreground/40'
 
   const [pendingHref, setPendingHref] = useState<string | null>(
     () => lastPendingHref
@@ -79,7 +79,7 @@ export function MainNavClient({
             key={item.key}
             className={cn(
               'transition-colors hover:text-foreground/80 text-foreground/60',
-              item.key === 'plan' && planStateClass,
+              // item.key === 'plan' && planStateClass,
               active && 'text-foreground font-semibold'
             )}
             href={href}
