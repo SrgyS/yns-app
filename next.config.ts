@@ -6,14 +6,14 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '5mb',
     },
   },
-  // images: {
-  //   remotePatterns: [
-  //     {
-  //       protocol: "https",
-  //       hostname: "**",
-  //     },
-  //   ],
-  // },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'oaxqithvqwzlervyjulo.storage.supabase.co',
+      },
+    ],
+  },
   rewrites: async () => [
     {
       source: '/storage/:path*',

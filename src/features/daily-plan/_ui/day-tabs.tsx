@@ -57,22 +57,7 @@ export function DayTabs({
     return displayWeekStart
   }, [displayWeekStart])
 
-  // Получаем выбранные дни тренировок из активной записи
   const enrollment = enrollmentQuery?.data
-
-  // Оптимизируем получение selectedWorkoutDays с помощью useMemo
-  const selectedWorkoutDays = useMemo(() => {
-    return enrollment?.selectedWorkoutDays || []
-  }, [enrollment?.selectedWorkoutDays])
-
-  // Преобразуем DayOfWeek в индексы дней недели (0-6, где 0 - понедельник)
-  const workoutDayIndices = useMemo(() => {
-    return selectedWorkoutDays
-      .map(day => {
-        return DAYS_ORDER.indexOf(day)
-      })
-      .filter(index => index !== -1)
-  }, [selectedWorkoutDays])
 
   const allowedWeeksArray = useMemo(() => {
     if (availableWeeks && availableWeeks.length > 0) {
@@ -103,6 +88,16 @@ export function DayTabs({
       : enrollmentStart
   }, [isSubscription, enrollmentStart])
 
+  const selectedWorkoutDays = useMemo(() => {
+    return enrollment?.selectedWorkoutDays || []
+  }, [enrollment?.selectedWorkoutDays])
+
+  const workoutDayIndices = useMemo(() => {
+    return selectedWorkoutDays
+      .map(day => DAYS_ORDER.indexOf(day))
+      .filter(index => index !== -1)
+  }, [selectedWorkoutDays])
+
   const days = useMemo(() => {
     // Определяем начало недели для отображения дней
     const weekStartForDays = startOfWeek(weekStart, { weekStartsOn: 1 })
@@ -129,15 +124,6 @@ export function DayTabs({
       const isAfterProgram =
         totalProgramDays > 0 && daysSinceProgramStart > totalProgramDays
 
-      // Проверяем, является ли день тренировочным
-      // Определяем день недели (0 - понедельник, 6 - воскресенье)
-      const dayOfWeekIndex = (date.getDay() + 6) % 7 // Преобразуем из JS формата (0 - воскресенье) в наш формат (0 - понедельник)
-
-      // Проверяем, входит ли индекс дня недели в список тренировочных дней
-      const isWorkoutDay = workoutDayIndices.some(
-        index => index === dayOfWeekIndex
-      )
-
       const isWeekUnavailable = !allowedWeeksSet.has(weekNumber)
 
       // Отключаем дни:
@@ -155,6 +141,11 @@ export function DayTabs({
         (totalProgramDays === 0 || daysSinceProgramStart <= totalProgramDays)
           ? daysSinceProgramStart
           : null
+
+      const dayOfWeekIndex = (date.getDay() + 6) % 7
+      const isWorkoutDay = workoutDayIndices.some(
+        index => index === dayOfWeekIndex
+      )
 
       return {
         key: dayOfWeek,
