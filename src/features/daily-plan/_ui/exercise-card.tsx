@@ -25,7 +25,7 @@ const MUSCLE_GROUP_LABELS = {
 
 const DIFFICULTY_STEPS = [1, 2, 3] as const
 
-interface WarmUpProps {
+interface ExerciseCardProps {
   title: string
   workoutId: string
   enrollmentId: string
@@ -35,7 +35,7 @@ interface WarmUpProps {
   stepIndex: number
 }
 
-export function WarmUp({
+export function ExerciseCard({
   title,
   workoutId,
   enrollmentId,
@@ -43,7 +43,7 @@ export function WarmUp({
   userDailyPlanId,
   contentType,
   stepIndex,
-}: WarmUpProps) {
+}: ExerciseCardProps) {
   const [isCompleted, setIsCompleted] = useState(initialCompleted)
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
   const { data: session } = useAppSession()
