@@ -1,18 +1,12 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
 import { server } from '@/app/server'
 import { SessionService } from '@/kernel/lib/next-auth/module'
 import { ActivateEnrollmentService } from '@/entities/course/module'
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from '@/shared/ui/alert'
-import { Button } from '@/shared/ui/button'
 import { GetAccessibleEnrollmentsService } from '@/features/course-enrollment/_services/get-accessible-enrollments'
 import { CourseActivationOption } from '@/features/daily-plan/_ui/course-activation-option'
 import { logger } from '@/shared/lib/logger'
+import { NoAccessCallout } from '@/features/course-enrollment/_ui/no-access-callout'
 
 export default async function CourseAccessGatePage() {
   const sessionService = server.get(SessionService)
@@ -33,16 +27,12 @@ export default async function CourseAccessGatePage() {
   if (accessibleEnrollments.length === 0) {
     return (
       <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
-        <Alert>
-          <AlertTitle>У вас нет купленных курсов</AlertTitle>
-          <AlertDescription>
-            Оформите подписку или приобретите курс, чтобы получить доступ к
-            плану тренировок.
-          </AlertDescription>
-        </Alert>
-        <Button asChild>
-          <Link href="/">Выбрать курс или оформить подписку</Link>
-        </Button>
+        <NoAccessCallout
+          title="У вас нет купленных курсов"
+          description="Оформите подписку или приобретите курс, чтобы получить доступ к плану тренировок."
+          ctaHref="/"
+          ctaLabel="Выбрать курс или оформить подписку"
+        />
       </main>
     )
   }
