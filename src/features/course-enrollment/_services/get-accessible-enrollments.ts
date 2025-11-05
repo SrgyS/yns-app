@@ -1,18 +1,16 @@
 import { injectable } from 'inversify'
 
-import type { Course } from '@/entities/course'
+import type { CourseAccessInfo, UserCourseEnrollment } from '@/entities/course'
 import {
-  GetCourseService,
+  GetCoursesForAccessCheckService,
   GetUserEnrollmentsService,
 } from '@/entities/course/module'
-import type { UserCourseEnrollment } from '@/entities/course'
-import { CheckCourseAccessService } from '@/entities/user-access/module'
 import { UserAccessRepository } from '@/entities/user-access/_repository/user-access'
 import { logger } from '@/shared/lib/logger'
 
 export type AccessibleEnrollment = {
   enrollment: UserCourseEnrollment
-  course: Course
+  course: CourseAccessInfo
   accessExpiresAt: Date | null
 }
 
@@ -20,69 +18,78 @@ export type AccessibleEnrollment = {
 export class GetAccessibleEnrollmentsService {
   constructor(
     private readonly getUserEnrollmentsService: GetUserEnrollmentsService,
-    private readonly getCourseService: GetCourseService,
-    private readonly checkCourseAccessService: CheckCourseAccessService,
+    private readonly getCoursesForAccessCheckService: GetCoursesForAccessCheckService,
     private readonly userAccessRepository: UserAccessRepository
   ) {}
 
   async exec(userId: string): Promise<AccessibleEnrollment[]> {
-    const enrollments =
-      await this.getUserEnrollmentsService.exec(userId)
+    const enrollments = await this.getUserEnrollmentsService.exec(userId)
 
     if (enrollments.length === 0) {
       return []
     }
 
-    const results = await Promise.all(
-      enrollments.map(async enrollment => {
-        try {
-          const course = await this.getCourseService.exec({
-            id: enrollment.courseId,
-          })
+    const courseIds = Array.from(
+      new Set(enrollments.map(enrollment => enrollment.courseId))
+    )
 
-          if (!course || !course.product || !course.contentType) {
-            return null
-          }
+    try {
+      const [courses, accessMap] = await Promise.all([
+        this.getCoursesForAccessCheckService.exec(courseIds),
+        this.userAccessRepository.findUserCoursesAccessMap(userId, courseIds),
+      ])
 
-          const hasAccess = await this.checkCourseAccessService.exec({
-            userId,
-            course: {
-              id: course.id,
-              product: course.product,
-              contentType: course.contentType,
-            },
-          })
+      const courseMap = new Map(courses.map(course => [course.id, course]))
 
-          if (!hasAccess) {
-            return null
-          }
+      const accessible: AccessibleEnrollment[] = []
 
-          const userAccess =
-            await this.userAccessRepository.findUserCourseAccess(
-              userId,
-              course.id,
-              course.contentType
-            )
+      for (const enrollment of enrollments) {
+        const course = courseMap.get(enrollment.courseId)
 
-          return {
-            enrollment,
-            course,
-            accessExpiresAt: userAccess?.expiresAt ?? null,
-          }
-        } catch (error) {
-          logger.error({
-            msg: '[GetAccessibleEnrollmentsService] Failed to resolve access',
+        if (!course) {
+          logger.warn({
+            msg: '[GetAccessibleEnrollmentsService] Course not found for enrollment',
             enrollmentId: enrollment.id,
             courseId: enrollment.courseId,
-            error,
           })
-          return null
+          continue
         }
-      })
-    )
 
-    return results.filter(
-      (result): result is AccessibleEnrollment => Boolean(result)
-    )
+        const accessKey = `${course.id}:${course.contentType}`
+        const access = accessMap.get(accessKey)
+
+        if (course.product.access === 'paid') {
+          if (!access) {
+            continue
+          }
+
+          if (access.expiresAt && access.expiresAt.getTime() < Date.now()) {
+            continue
+          }
+
+          accessible.push({
+            enrollment,
+            course,
+            accessExpiresAt: access.expiresAt ?? null,
+          })
+          continue
+        }
+
+        accessible.push({
+          enrollment,
+          course,
+          accessExpiresAt: access?.expiresAt ?? null,
+        })
+      }
+
+      return accessible
+    } catch (error) {
+      logger.error({
+        msg: '[GetAccessibleEnrollmentsService] Failed to resolve access list',
+        userId,
+        error,
+      })
+      return []
+    }
   }
 }

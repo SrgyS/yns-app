@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { server } from '@/app/server'
 import { SessionService } from '@/kernel/lib/next-auth/module'
 import {
@@ -14,43 +15,47 @@ export type NavigationContext = {
   isAuthenticated: boolean
 }
 
-export async function getNavigationContext(): Promise<NavigationContext> {
-  const sessionService = server.get(SessionService)
-  const getActiveEnrollmentService = server.get(GetActiveEnrollmentService)
-  const getUserEnrollmentsService = server.get(GetUserEnrollmentsService)
+export const getNavigationContext = cache(
+  async (): Promise<NavigationContext> => {
+    const sessionService = server.get(SessionService)
+    const getActiveEnrollmentService = server.get(GetActiveEnrollmentService)
+    const getUserEnrollmentsService = server.get(GetUserEnrollmentsService)
 
-  const session = await sessionService.get()
+    const session = await sessionService.get()
 
-  let planUrl = '/course-access'
-  let hasActiveCourse = false
-  let hasAnyCourses = false
-  const userId = session?.user?.id
+    let planUrl = '/course-access'
+    let hasActiveCourse = false
+    let hasAnyCourses = false
+    const userId = session?.user?.id
 
-  if (userId) {
-    try {
-      const activeEnrollment = await getActiveEnrollmentService.exec(userId)
+    if (userId) {
+      try {
+        const [activeEnrollment, enrollments] = await Promise.all([
+          getActiveEnrollmentService.exec(userId),
+          getUserEnrollmentsService.exec(userId),
+        ])
 
-      if (activeEnrollment?.course?.slug) {
-        planUrl = `/day/${activeEnrollment.course.slug}`
-        hasActiveCourse = true
+        if (activeEnrollment?.course?.slug) {
+          planUrl = `/day/${activeEnrollment.course.slug}`
+          hasActiveCourse = true
+        }
+
+        hasAnyCourses = enrollments.length > 0
+      } catch (error) {
+        console.error('Ошибка при получении курсов пользователя:', error)
       }
+    }
 
-      const enrollments = await getUserEnrollmentsService.exec(userId)
-      hasAnyCourses = enrollments.length > 0
-    } catch (error) {
-      console.error('Ошибка при получении курсов пользователя:', error)
+    const profileHref = userId ? `/profile/${userId}` : '/auth/sign-in'
+    const isAuthenticated = Boolean(userId)
+
+    return {
+      planUrl,
+      hasActiveCourse,
+      hasAnyCourses,
+      profileHref,
+      sessionUserId: userId,
+      isAuthenticated,
     }
   }
-
-  const profileHref = userId ? `/profile/${userId}` : '/auth/sign-in'
-  const isAuthenticated = Boolean(userId)
-
-  return {
-    planUrl,
-    hasActiveCourse,
-    hasAnyCourses,
-    profileHref,
-    sessionUserId: userId,
-    isAuthenticated,
-  }
-}
+)

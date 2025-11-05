@@ -81,6 +81,14 @@ export type UserCourseEnrollmentApi = {
   }
 }
 
+export type CourseAccessInfo = {
+  id: CourseId
+  slug: CourseSlug
+  title: string
+  contentType: ContentType
+  product: CourseProduct
+}
+
 export type UserDailyPlan = {
   id: string
   userId: string

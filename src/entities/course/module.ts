@@ -1,7 +1,8 @@
 import { ContainerModule } from 'inversify'
-import { GetCoursesListService } from './_services/get-courses-list'
 import { CoursesRepository } from './_repositories/course'
+import { GetCoursesListService } from './_services/get-courses-list'
 import { GetCourseService } from './_services/get-course'
+import { GetCoursesForAccessCheckService } from './_services/get-courses-for-access-check'
 import { UserDailyPlanRepository } from './_repositories/user-daily-plan'
 import { UserCourseEnrollmentRepository } from './_repositories/user-course-enrollment'
 import { CreateUserCourseEnrollmentService } from './_services/create-user-course-enrollment'
@@ -19,6 +20,7 @@ export const CourseEntityModule = new ContainerModule(context => {
   bind(GetCoursesListService).toSelf()
   bind(CoursesRepository).toSelf()
   bind(GetCourseService).toSelf()
+  bind(GetCoursesForAccessCheckService).toSelf()
   bind(UserDailyPlanRepository).toSelf()
   bind(UserCourseEnrollmentRepository).toSelf()
   bind(CreateUserCourseEnrollmentService).toSelf()
@@ -35,6 +37,7 @@ export const CourseEntityModule = new ContainerModule(context => {
 export {
   GetCoursesListService,
   GetCourseService,
+  GetCoursesForAccessCheckService,
   CreateUserCourseEnrollmentService,
   GetCourseEnrollmentService,
   GetUserEnrollmentsService,
