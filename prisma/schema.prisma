@@ -58,6 +58,36 @@ enum WorkoutType {
   CARDIO
 }
 
+enum WorkoutSection {
+  STRENGTH            // Силовые
+  CORRECTION  // Коррекция осанки
+  FUNCTIONAL          // Функциональные
+  WARMUP              // Зарядки
+  PAIN        // Решает боль
+}
+
+enum WorkoutSubsection {
+  UPPER_BODY          // Верхняя часть
+  LOWER_BODY          // Нижняя часть
+  FULL_BODY           // Все тело
+  SPINE               // Позвоночник
+  JOINT   // Суставы
+  ANTI_EDEMA          // От отеков
+  ANTI_TENSION        // От зажимов
+  PELVIC_FLOOR        // Мышцы тазового дна
+  STRETCHING          // Растяжка
+  INERTIAL            // Инерционные
+  NECK                // Шея
+  BACK                // Спина
+  FEET                // Стопы
+  ABDOMEN             // Живот
+  PELVIS_SPINE        // Таз + позвоночник
+  BREATHING           // Дыхание
+  ENERGY_BOOST        // Зарядись энергией
+  PILATES       // Силовой пилатес
+  PELVIC_HIP_JOINT     // тбс
+}
+
 enum DailyContentType {
   WARMUP
   MAIN
@@ -225,6 +255,8 @@ model Workout {
   description           String?
   videoId               String?
   muscles               MuscleGroup[]
+  section               WorkoutSection
+  subsections           WorkoutSubsection[]
   slug                  String            @unique
   mainWorkoutDailyPlans DailyPlan[]       @relation("MainWorkoutDailyPlan")
   warmupDailyPlans      DailyPlan[]       @relation("WarmupDailyPlan")

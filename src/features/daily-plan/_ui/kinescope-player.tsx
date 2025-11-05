@@ -346,7 +346,7 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
           <Skeleton className="absolute inset-0 z-10 h-full w-full pointer-events-none" />
         )}
         {loadError && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 rounded-md border border-destructive/30 bg-background/90 p-4 text-center text-sm text-muted-foreground backdrop-blur-sm">
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 rounded-lg border border-destructive/30 bg-background/90 p-4 text-center text-sm text-muted-foreground backdrop-blur-sm">
             <p>Не удалось загрузить видео.</p>
             {/* {loadError.message && (
               <p className="text-xs opacity-70">{loadError.message}</p>

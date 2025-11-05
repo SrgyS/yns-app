@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { CourseSlug } from '@/kernel/domain/course'
 import { FullPageSpinner } from '@/shared/ui/full-page-spinner'
@@ -19,8 +18,6 @@ export function CheckAccessGuard({
   children: React.ReactNode
   courseSlug: CourseSlug
 }) {
-  const router = useRouter()
-  const redirectInitiatedRef = useRef(false)
   const paidAccess = usePaidAccess()
   const { data: session, status } = useAppSession()
   const { checkAccessByCourseSlug } = useCourseEnrollment()
@@ -45,7 +42,7 @@ export function CheckAccessGuard({
   })
 
   useEffect(() => {
-    if (hasServerAccess || !shouldFetch || redirectInitiatedRef.current) {
+    if (hasServerAccess || !shouldFetch) {
       return
     }
 
@@ -53,8 +50,6 @@ export function CheckAccessGuard({
       const message =
         error instanceof Error ? error.message : 'Ошибка доступа'
       toast.error(message)
-      redirectInitiatedRef.current = true
-      router.replace('/course-access')
       return
     }
 
@@ -64,34 +59,19 @@ export function CheckAccessGuard({
       const enrollment = accessData?.enrollment
       if (!hasAccess || !enrollment) {
         toast.error('У вас нет доступа к этому курсу')
-        redirectInitiatedRef.current = true
-        router.replace('/course-access')
       }
     }
-  }, [
-    shouldFetch,
-    isError,
-    isSuccess,
-    error,
-    data,
-    router,
-    courseSlug,
-    hasServerAccess,
-  ])
+  }, [shouldFetch, isError, isSuccess, error, data, hasServerAccess, courseSlug])
 
   const isLoading =
     status === 'loading' || (shouldFetch && isPending)
 
   const canRenderChildren =
-    hasServerAccess ||
-    (status === 'authenticated' &&
-      isSuccess &&
-      !redirectInitiatedRef.current &&
-      Boolean(
-        isCourseAccessState(data) &&
-          data.hasAccess &&
-          data.enrollment
-      ))
+    status === 'authenticated' &&
+    (hasServerAccess ||
+      !shouldFetch ||
+      isSuccess ||
+      isError)
 
   return (
     <>

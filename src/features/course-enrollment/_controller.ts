@@ -21,7 +21,10 @@ import { CreateUserCourseEnrollmentWithCourseAccessService } from './_services/c
 import { CheckCourseAccessService } from '@/entities/user-access/module'
 import { UserAccessRepository } from '@/entities/user-access/_repository/user-access'
 import { GetAvailableWeeksService } from './_services/get-available-weeks'
+import { GetAccessibleEnrollmentsService } from './_services/get-accessible-enrollments'
 import { logger } from '@/shared/lib/logger'
+import type { PaidAccessState } from './_vm/paid-access-types'
+import { toUserCourseEnrollmentApi } from './_lib/map-user-course-enrollment'
 
 const LOG_PREFIX = '[CourseEnrollmentController]'
 
@@ -52,6 +55,7 @@ export class CourseEnrollmentController extends Controller {
     private getEnrollmentByCourseSlugService: GetEnrollmentByCourseSlugService,
     private getEnrollmentByIdService: GetEnrollmentByIdService,
     private getAvailableWeeksService: GetAvailableWeeksService,
+    private getAccessibleEnrollmentsService: GetAccessibleEnrollmentsService,
     private checkCourseAccessService: CheckCourseAccessService,
     private userAccessRepository: UserAccessRepository
   ) {
@@ -60,6 +64,49 @@ export class CourseEnrollmentController extends Controller {
 
   public router = router({
     course: router({
+      getAccessibleEnrollments: authorizedProcedure.query(async ({ ctx }) => {
+        const accessibleEnrollments = await logTiming(
+          'getAccessibleEnrollmentsService.exec',
+          () => this.getAccessibleEnrollmentsService.exec(ctx.session.user.id)
+        )
+
+        if (accessibleEnrollments.length === 0) {
+          const emptyState: PaidAccessState = {
+            hasAccess: false,
+            activeEnrollment: null,
+            activeCourseSlug: null,
+            accessExpiresAt: null,
+            accessibleCourses: [],
+          }
+          return emptyState
+        }
+
+        const activeAccessible = accessibleEnrollments.find(
+          entry => entry.enrollment.active && entry.course.slug
+        )
+
+        const accessibleCourses = accessibleEnrollments.map(entry => ({
+          enrollment: toUserCourseEnrollmentApi(entry.enrollment),
+          accessExpiresAt: entry.accessExpiresAt
+            ? entry.accessExpiresAt.toISOString()
+            : null,
+        }))
+
+        const paidAccessState: PaidAccessState = {
+          hasAccess: true,
+          activeEnrollment: activeAccessible
+            ? toUserCourseEnrollmentApi(activeAccessible.enrollment)
+            : null,
+          activeCourseSlug: activeAccessible?.course.slug ?? null,
+          accessExpiresAt: activeAccessible?.accessExpiresAt
+            ? activeAccessible.accessExpiresAt.toISOString()
+            : null,
+          accessibleCourses,
+        }
+
+        return paidAccessState
+      }),
+
       createEnrollment: authorizedProcedure
         .input(
           z.object({

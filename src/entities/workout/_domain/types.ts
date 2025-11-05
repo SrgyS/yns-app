@@ -1,4 +1,10 @@
-import { MuscleGroup, WorkoutDifficulty, WorkoutType } from '@prisma/client'
+import {
+  MuscleGroup,
+  WorkoutDifficulty,
+  WorkoutSection,
+  WorkoutSubsection,
+  WorkoutType,
+} from '@prisma/client'
 
 export type Workout = {
   id: string
@@ -11,6 +17,8 @@ export type Workout = {
   description: string | null
   videoId: string | null
   muscles: MuscleGroup[]
+  section: WorkoutSection
+  subsections: WorkoutSubsection[]
   poster: Record<string, string> | null
   posterUrl: string | null
   progress: number | null

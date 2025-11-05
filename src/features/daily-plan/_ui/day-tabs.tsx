@@ -11,7 +11,7 @@ import { ru } from 'date-fns/locale'
 import { Dumbbell } from 'lucide-react'
 import { DAYS_ORDER } from '../constant'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
-import { WarmUp } from './warm-up'
+import { ExerciseCard } from './exercise-card'
 import { useDailyPlan } from '../_vm/use-daily-plan'
 import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
@@ -247,7 +247,7 @@ export function DayTabs({
         {dailyPlanQuery.isLoading ? null : enabled && dailyPlanQuery?.data ? (
           <>
             {dailyPlanQuery.data.warmupId && (
-              <WarmUp
+              <ExerciseCard
                 title="Зарядка"
                 workoutId={dailyPlanQuery.data.warmupId}
                 enrollmentId={enrollment?.id || ''}
@@ -258,7 +258,7 @@ export function DayTabs({
             )}
             {dailyPlanQuery.data.isWorkoutDay &&
               dailyPlanQuery.data.mainWorkoutId && (
-                <WarmUp
+                <ExerciseCard
                   title="Тренировка"
                   workoutId={dailyPlanQuery.data.mainWorkoutId}
                   enrollmentId={enrollment?.id || ''}

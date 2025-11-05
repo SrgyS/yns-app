@@ -11,4 +11,5 @@ export type {
   CreateUserCourseEnrollmentParams,
   GetUserDailyPlanByEnrollmentParams,
   GetUserDailyPlanParams,
+  CourseAccessInfo,
 } from './_domain/types'

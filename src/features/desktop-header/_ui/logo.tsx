@@ -3,9 +3,11 @@ import Image from 'next/image'
 
 export function Logo() {
   return (
-    <Link className="flex items-center space-x-2" href="/">
-      <Image src="/yns-logo.png" alt="Logo image" width={32} height={32} />
-      <span className="font-bold inline-block">Yanasporte.online</span>
+    <Link className="flex items-center space-x-1" href="/">
+      <Image src="/logo-yns.png" alt="Logo image" width={24} height={24} />
+      <span className="inline-block font-bold font-inter">
+        ya&middot;na&middot;sporte
+      </span>
     </Link>
   )
 }

@@ -1,6 +1,6 @@
 import { injectable } from 'inversify'
 import { Course as PrismaCourse } from '@prisma/client'
-import { Course } from '@/entities/course'
+import { Course, CourseAccessInfo } from '@/entities/course'
 import { CourseId, CourseProduct, CourseSlug } from '@/kernel/domain/course'
 import { dbClient } from '@/shared/lib/db'
 import { compileMDX } from '@/shared/lib/mdx/server'
@@ -83,5 +83,49 @@ export class CoursesRepository {
       include: { product: true, dependencies: true },
     })
     return course ? this.mapPrismaToDomain(course) : undefined
+  }
+
+  async getCoursesForAccessCheck(
+    courseIds: CourseId[]
+  ): Promise<CourseAccessInfo[]> {
+    if (courseIds.length === 0) {
+      return []
+    }
+
+    const courses = await dbClient.course.findMany({
+      where: {
+        id: {
+          in: courseIds,
+        },
+      },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        contentType: true,
+        product: {
+          select: {
+            access: true,
+            price: true,
+            accessDurationDays: true,
+          },
+        },
+      },
+    })
+
+    return courses.map(course => ({
+      id: course.id,
+      slug: course.slug,
+      title: course.title,
+      contentType: course.contentType ?? 'FIXED_COURSE',
+      product:
+        course.product?.access === 'paid'
+          ? {
+              access: 'paid',
+              price: course.product.price ?? 0,
+              accessDurationDays: course.product.accessDurationDays ?? 0,
+            }
+          : { access: 'free' },
+    }))
   }
 }

@@ -41,4 +41,32 @@ export interface Workout {
    * Список задействованных групп мышц
    */
   muscles: ("LEGS" | "GLUTES" | "UPPER_BODY" | "BACK" | "PELVIC_FLOOR" | "CORE")[];
+  /**
+   * Раздел тренировки
+   */
+  section: "WARMUP" | "CORRECTION" | "STRENGTH" | "FUNCTIONAL" | "PAIN";
+  /**
+   * Подкатегории внутри раздела
+   */
+  subsections: (
+    | "UPPER_BODY"
+    | "LOWER_BODY"
+    | "FULL_BODY"
+    | "SPINE"
+    | "JOINT"
+    | "ANTI_EDEMA"
+    | "ANTI_TENSION"
+    | "PELVIC_FLOOR"
+    | "STRETCHING"
+    | "INERTIAL"
+    | "NECK"
+    | "FEET"
+    | "BACK"
+    | "ABDOMEN"
+    | "PELVIS_SPINE"
+    | "BREATHING"
+    | "ENERGY_BOOST"
+    | "PILATES"
+    | "PELVIC_HIP_JOINT"
+  )[];
 }

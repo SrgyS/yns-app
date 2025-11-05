@@ -48,6 +48,7 @@ export function useCourseEnrollment() {
           utils.course.getActiveEnrollment.invalidate(),
           utils.course.getEnrollmentByCourseSlug.invalidate(),
           utils.course.checkAccessByCourseSlug.invalidate(),
+          utils.course.getAccessibleEnrollments.invalidate(),
         ])
       },
     })
@@ -79,7 +80,7 @@ export function useCourseEnrollment() {
     (userId: string, courseId: string) => {
       return getEnrollmentQuery(
         { userId, courseId },
-         CACHE_SETTINGS.FREQUENT_UPDATE
+        CACHE_SETTINGS.FREQUENT_UPDATE
       )
     },
     [getEnrollmentQuery]
@@ -116,8 +117,11 @@ export function useCourseEnrollment() {
     courseEnrollmentApi.course.activateEnrollment.useMutation({
       async onSuccess() {
         // Инвалидируем все запросы, связанные с записями пользователя на курсы
-        await utils.course.getUserEnrollments.invalidate()
-        await utils.course.getActiveEnrollment.invalidate()
+        await Promise.all([
+          utils.course.getUserEnrollments.invalidate(),
+          utils.course.getActiveEnrollment.invalidate(),
+          utils.course.getAccessibleEnrollments.invalidate(),
+        ])
         toast.success('Курс выбран!')
       },
       onError() {
@@ -159,6 +163,8 @@ export function useCourseEnrollment() {
 
   const getAvailableWeeksQuery =
     courseEnrollmentApi.course.getAvailableWeeks.useQuery
+  const getAccessibleEnrollmentsQuery =
+    courseEnrollmentApi.course.getAccessibleEnrollments.useQuery
 
   const getAvailableWeeks = useCallback(
     (userId: string, courseSlug: string) => {
@@ -168,6 +174,18 @@ export function useCourseEnrollment() {
       )
     },
     [getAvailableWeeksQuery]
+  )
+
+  const getAccessibleEnrollments = useCallback(
+    (
+      options?: Parameters<typeof getAccessibleEnrollmentsQuery>[1]
+    ) => {
+      return getAccessibleEnrollmentsQuery(undefined, {
+        ...CACHE_SETTINGS.FREQUENT_UPDATE,
+        ...(options ?? {}),
+      })
+    },
+    [getAccessibleEnrollmentsQuery]
   )
   return {
     createEnrollment,
@@ -179,6 +197,7 @@ export function useCourseEnrollment() {
     getEnrollmentByCourseSlug,
     checkAccessByCourseSlug,
     getAvailableWeeks,
+    getAccessibleEnrollments,
     isCreating: createEnrollmentMutation.isPending,
     isActivating,
   }

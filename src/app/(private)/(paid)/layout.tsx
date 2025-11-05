@@ -2,35 +2,11 @@ import { redirect } from 'next/navigation'
 
 import { server } from '@/app/server'
 import { SessionService } from '@/kernel/lib/next-auth/module'
-import type { UserCourseEnrollment } from '@/entities/course'
-import {
-  PaidAccessProvider,
-  type PaidAccessState,
-} from '@/features/course-enrollment/_vm/paid-access-context'
+import type { PaidAccessState } from '@/features/course-enrollment/_vm/paid-access-types'
+import { PaidAccessProviderClient } from '@/features/course-enrollment/_vm/paid-access-provider-client'
 import { GetAccessibleEnrollmentsService } from '@/features/course-enrollment/_services/get-accessible-enrollments'
-
-function toUserCourseEnrollmentApi(
-  enrollment: UserCourseEnrollment
-) {
-  // We pass this through React context on the client, so convert nested dates
-  // to their serialized (API) shape ahead of time.
-  return {
-    id: enrollment.id,
-    userId: enrollment.userId,
-    courseId: enrollment.courseId,
-    selectedWorkoutDays: enrollment.selectedWorkoutDays,
-    startDate: new Date(enrollment.startDate).toISOString(),
-    hasFeedback: enrollment.hasFeedback,
-    active: enrollment.active,
-    course: enrollment.course
-      ? {
-          id: enrollment.course.id,
-          slug: enrollment.course.slug,
-          title: enrollment.course.title,
-        }
-      : undefined,
-  }
-}
+import { toUserCourseEnrollmentApi } from '@/features/course-enrollment/_lib/map-user-course-enrollment'
+import { NoAccessCallout } from '@/features/course-enrollment/_ui/no-access-callout'
 
 export default async function Layout({
   children,
@@ -53,16 +29,21 @@ export default async function Layout({
   const accessibleEnrollments =
     await getAccessibleEnrollmentsService.exec(userId)
 
-  if (accessibleEnrollments.length === 0) {
-    redirect('/course-access')
-  }
+  const hasAccess = accessibleEnrollments.length > 0
 
   const activeAccessible = accessibleEnrollments.find(entry =>
     entry.enrollment.active
   )
 
+  const accessibleCourses = accessibleEnrollments.map(entry => ({
+    enrollment: toUserCourseEnrollmentApi(entry.enrollment),
+    accessExpiresAt: entry.accessExpiresAt
+      ? entry.accessExpiresAt.toISOString()
+      : null,
+  }))
+
   const paidAccessState: PaidAccessState = {
-    hasAccess: true,
+    hasAccess,
     activeEnrollment: activeAccessible
       ? toUserCourseEnrollmentApi(activeAccessible.enrollment)
       : null,
@@ -70,17 +51,29 @@ export default async function Layout({
     accessExpiresAt: activeAccessible?.accessExpiresAt
       ? activeAccessible.accessExpiresAt.toISOString()
       : null,
-    accessibleCourses: accessibleEnrollments.map(entry => ({
-      enrollment: toUserCourseEnrollmentApi(entry.enrollment),
-      accessExpiresAt: entry.accessExpiresAt
-        ? entry.accessExpiresAt.toISOString()
-        : null,
-    })),
+    accessibleCourses,
+  }
+
+  if (!hasAccess) {
+    return (
+      <PaidAccessProviderClient initialState={paidAccessState}>
+        <div className="pb-[72px] flex flex-col grow">
+          <div className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
+            <NoAccessCallout
+              title="У вас нет купленных курсов"
+              description="Оформите подписку или приобретите курс, чтобы получить доступ к платному контенту."
+              ctaLabel="Выбрать курс или оформить подписку"
+              ctaHref="/"
+            />
+          </div>
+        </div>
+      </PaidAccessProviderClient>
+    )
   }
 
   return (
-    <PaidAccessProvider value={paidAccessState}>
+    <PaidAccessProviderClient initialState={paidAccessState}>
       <div className="pb-[72px] flex flex-col grow">{children}</div>
-    </PaidAccessProvider>
+    </PaidAccessProviderClient>
   )
 }

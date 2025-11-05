@@ -14,6 +14,7 @@ import { ParsingError, ValidationError } from '../src/shared/lib/errors'
 import { WeeksConfiguration } from '@/shared/api/content/_schemas/weeks.schema'
 import type { MealPlan } from '@/shared/api/content/_schemas/meal-plan.schema'
 import type { DailyPlan } from '@/shared/api/content/_schemas/daily-plan.schema'
+import type { Workout as WorkoutContent } from '../src/shared/api/content/_schemas/workout.schema'
 
 export type KinescopePoster = {
   id: string
@@ -376,10 +377,11 @@ async function downloadAndUploadContent() {
     console.log('💪 Импорт тренировок...')
     for (const workoutSlug of allEntities.workouts) {
       const workoutRelativePath = `workouts/${workoutSlug}.yaml`
-      const workoutData = await downloadAndParseValidatedYaml<any>(
-        workoutRelativePath,
-        workoutSchema
-      )
+      const workoutData =
+        await downloadAndParseValidatedYaml<WorkoutContent>(
+          workoutRelativePath,
+          workoutSchema
+        )
       if (workoutData) {
         let kinescopeMeta: KinescopeVideo | null = null
         if (workoutData.videoId && process.env.KINESCOPE_API_KEY) {
@@ -387,13 +389,12 @@ async function downloadAndUploadContent() {
         }
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { slug: _slug, ...restData } = workoutData as Record<
-          string,
-          unknown
-        >
+        const { slug: _slug, section, subsections, ...restData } = workoutData
 
         const dataForUpsert = {
           ...restData,
+          section,
+          subsections: Array.isArray(subsections) ? subsections : [],
           durationSec: kinescopeMeta?.duration,
           progress: kinescopeMeta?.progress,
           poster: kinescopeMeta?.poster,

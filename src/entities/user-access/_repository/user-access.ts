@@ -25,6 +25,33 @@ export class UserAccessRepository {
     return userAccess
   }
 
+  async findUserCoursesAccessMap(
+    userId: UserId,
+    courseIds: CourseId[],
+    db: DbClient = dbClient
+  ): Promise<Map<string, CourseUserAccess>> {
+    if (courseIds.length === 0) {
+      return new Map()
+    }
+
+    const userAccesses = await db.userAccess.findMany({
+      where: {
+        userId,
+        courseId: {
+          in: courseIds,
+        },
+      },
+    })
+
+    const result = new Map<string, CourseUserAccess>()
+    for (const access of userAccesses) {
+      const key = this.getAccessMapKey(access.courseId, access.contentType)
+      result.set(key, this.dbUserAccessToUserAccess(access))
+    }
+
+    return result
+  }
+
   async save(userAccess: UserAccess, db: DbClient = dbClient): Promise<UserAccess> {
     return this.dbUserAccessToUserAccess(
       await db.userAccess.upsert({
@@ -58,10 +85,13 @@ export class UserAccessRepository {
   }
 
   private dbUserAccessToUserAccess(
-    userAccess: NotNull<
-      Awaited<ReturnType<UserAccessRepository['queryCourseUserAccess']>>
+    userAccess: Awaited<
+      ReturnType<UserAccessRepository['queryCourseUserAccess']>
     >
-  ): UserAccess {
+  ): CourseUserAccess {
+    if (!userAccess) {
+      throw new Error('Cannot map empty user access entity')
+    }
     return {
       courseId: userAccess.courseId,
       userId: userAccess.userId,
@@ -89,6 +119,8 @@ export class UserAccessRepository {
       },
     })
   }
-}
 
-type NotNull<T> = T extends null ? never : T
+  private getAccessMapKey(courseId: CourseId, contentType: ContentType) {
+    return `${courseId}:${contentType}`
+  }
+}

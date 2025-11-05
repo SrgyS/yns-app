@@ -1,8 +1,14 @@
 import { injectable } from 'inversify'
 import { dbClient } from '@/shared/lib/db'
-import { Workout} from '../_domain/types'
+import { Workout } from '../_domain/types'
 import { logger } from '@/shared/lib/logger'
-import { Workout as PrismaWorkout, WorkoutType } from '@prisma/client'
+import {
+  Prisma,
+  Workout as PrismaWorkout,
+  WorkoutSection,
+  WorkoutSubsection,
+  WorkoutType,
+} from '@prisma/client'
 import { PosterSchema } from '../_domain/schema'
 
 @injectable()
@@ -35,6 +41,8 @@ export class WorkoutRepository {
       description: prismaWorkout.description,
       videoId: prismaWorkout.videoId,
       muscles: prismaWorkout.muscles,
+      section: prismaWorkout.section,
+      subsections: prismaWorkout.subsections,
       poster: this.toPoster(p?.poster as unknown),
       progress: (p?.progress ?? null) as number | null,
       posterUrl: (p?.posterUrl ?? null) as string | null,
@@ -79,7 +87,7 @@ export class WorkoutRepository {
     try {
       const workout = await dbClient.workout.findUnique({
         where: { id },
-        select: { type: true }
+        select: { type: true },
       })
 
       return workout ? workout.type : undefined
@@ -90,6 +98,49 @@ export class WorkoutRepository {
         error,
       })
       return undefined
+    }
+  }
+
+  async listBySection(params: {
+    section: WorkoutSection
+    subsection?: WorkoutSubsection | null
+    search?: string | null
+    take?: number
+    skip?: number
+  }): Promise<Workout[]> {
+    const { section, subsection, search, take, skip } = params
+
+    const where: Prisma.WorkoutWhereInput = {
+      section,
+    }
+
+    if (subsection) {
+      where.subsections = { has: subsection }
+    }
+
+    if (search) {
+      where.title = {
+        contains: search,
+        mode: 'insensitive',
+      }
+    }
+
+    try {
+      const workouts = await dbClient.workout.findMany({
+        where,
+        orderBy: { title: 'asc' },
+        take,
+        skip,
+      })
+
+      return workouts.map(workout => this.mapPrismaWorkoutToDomain(workout))
+    } catch (error) {
+      logger.error({
+        msg: 'Error listing workouts by section',
+        params,
+        error,
+      })
+      throw new Error('Failed to list workouts')
     }
   }
 }

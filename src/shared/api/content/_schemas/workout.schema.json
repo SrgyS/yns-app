@@ -65,6 +65,45 @@
                 ]
             },
             "description": "Список задействованных групп мышц"
+        },
+        "section": {
+            "type": "string",
+            "enum": [
+                "WARMUP",
+                "CORRECTION",
+                "STRENGTH",
+                "FUNCTIONAL",
+                "PAIN"
+            ],
+            "description": "Раздел тренировки"
+        },
+        "subsections": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "enum": [
+                    "UPPER_BODY",
+                    "LOWER_BODY",
+                    "FULL_BODY",
+                    "SPINE",
+                    "JOINT",
+                    "ANTI_EDEMA",
+                    "ANTI_TENSION",
+                    "PELVIC_FLOOR",
+                    "STRETCHING",
+                    "INERTIAL",
+                    "NECK",
+                    "FEET",
+                    "BACK",
+                    "ABDOMEN",
+                    "PELVIS_SPINE",
+                    "BREATHING",
+                    "ENERGY_BOOST",
+                    "PILATES",
+                    "PELVIC_HIP_JOINT"
+                ]
+            },
+            "description": "Подкатегории внутри раздела"
         }
     },
     "required": [
@@ -72,7 +111,9 @@
         "type",
         "difficulty",
         "equipment",
-        "muscles"
+        "muscles",
+        "section",
+        "subsections"
     ],
     "additionalProperties": false
 }

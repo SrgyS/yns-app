@@ -1,5 +1,9 @@
 import type { Metadata } from 'next'
-import { Montserrat, Nunito_Sans } from 'next/font/google'
+import {
+  Montserrat,
+Inter,
+  Nunito_Sans,
+} from 'next/font/google'
 import './globals.css'
 import { cn } from '@/shared/ui/utils'
 import { AppProvider } from './_providers/app-provider'
@@ -7,6 +11,13 @@ import { AppProvider } from './_providers/app-provider'
 const montserrat = Montserrat({
   subsets: ['latin', 'cyrillic'],
   variable: '--font-montserrat',
+})
+
+const inter = Inter({
+  subsets: ['latin', 'cyrillic'],
+  variable: '--font-montserrat-alt',
+  display: 'swap',
+  weight: ['400', '600', '700'],
 })
 
 const nunitoSans = Nunito_Sans({
@@ -31,6 +42,7 @@ export default function RootLayout({
         className={cn(
           'min-h-screen bg-background antialiased font-sans',
           montserrat.variable,
+          inter.variable,
           nunitoSans.variable
         )}
       >

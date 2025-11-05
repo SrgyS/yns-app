@@ -1,7 +1,6 @@
 'use client'
 
 import { CalendarTabs } from '@/features/daily-plan/_ui/calendar-tabs'
-import { Button } from '@/shared/ui/button'
 import { Suspense } from 'react'
 import { Skeleton } from '@/shared/ui/skeleton/skeleton'
 import { CourseBanner } from '@/features/daily-plan/_ui/course-banner'
@@ -12,9 +11,8 @@ import {
 } from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { CourseActivationBanner } from '@/features/daily-plan/_ui/course-activation-banner'
-import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/alert'
-import Link from 'next/link'
 import { usePaidAccess } from '@/features/course-enrollment/_vm/paid-access-context'
+import { NoAccessCallout } from '@/features/course-enrollment/_ui/no-access-callout'
 
 interface DayPageClientProps {
   courseSlug: string
@@ -69,16 +67,12 @@ export function DayPageClient({ courseSlug }: DayPageClientProps) {
   if (!hasAccess || !enrollment) {
     return (
       <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
-        <Alert variant="destructive">
-          <AlertTitle>Доступ запрещен</AlertTitle>
-          <AlertDescription>
-            У вас нет доступа к этому курсу. Приобретите курс, чтобы получить
-            доступ.
-          </AlertDescription>
-        </Alert>
-        <Button>
-          <Link href={'/'}>Купить курс</Link>
-        </Button>
+        <NoAccessCallout
+          title="Доступ запрещен"
+          description="У вас нет доступа к этому курсу. Приобретите курс, чтобы продолжить."
+          ctaHref="/"
+          ctaLabel="Купить курс"
+        />
       </main>
     )
   }
