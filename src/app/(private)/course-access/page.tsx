@@ -7,6 +7,7 @@ import { GetAccessibleEnrollmentsService } from '@/features/course-enrollment/_s
 import { CourseActivationOption } from '@/features/daily-plan/_ui/course-activation-option'
 import { logger } from '@/shared/lib/logger'
 import { NoAccessCallout } from '@/features/course-enrollment/_ui/no-access-callout'
+import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/alert'
 
 export default async function CourseAccessGatePage() {
   const sessionService = server.get(SessionService)
