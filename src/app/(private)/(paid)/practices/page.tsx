@@ -94,7 +94,6 @@ export default function PracticesPage() {
                 <Link
                   key={type.key}
                   href={`/practices?section=${sectionSegment}`}
-                  className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   <PracticeTypeCard type={type} />
                 </Link>
@@ -116,7 +115,10 @@ export default function PracticesPage() {
 
   return (
     <div className="container space-y-6 py-10">
-      <PracticeSectionHero practiceType={selectedType} onBack={handleCloseCategories} />
+      <PracticeSectionHero
+        practiceType={selectedType}
+        onBack={handleCloseCategories}
+      />
 
       {subcategories.length > 0 ? (
         <div className="columns-1 gap-4 md:columns-2">

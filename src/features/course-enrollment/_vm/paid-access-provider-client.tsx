@@ -17,14 +17,11 @@ export function PaidAccessProviderClient({
   initialState,
   children,
 }: PaidAccessProviderClientProps) {
-  const { data, isLoading, isFetching, isError, error } =
-    courseEnrollmentApi.course.getAccessibleEnrollments.useQuery(
-      undefined,
-      {
-        ...CACHE_SETTINGS.FREQUENT_UPDATE,
-        initialData: initialState,
-      }
-    )
+  const { data, isLoading, isError, error } =
+    courseEnrollmentApi.course.getAccessibleEnrollments.useQuery(undefined, {
+      ...CACHE_SETTINGS.FREQUENT_UPDATE,
+      initialData: initialState,
+    })
 
   useEffect(() => {
     if (isError) {
@@ -38,7 +35,7 @@ export function PaidAccessProviderClient({
     return data ?? initialState
   }, [data, initialState])
 
-  const showSpinner = (isLoading && !data) || isFetching
+  const showSpinner = isLoading && !data
 
   return (
     <>

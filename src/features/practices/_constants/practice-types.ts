@@ -189,10 +189,10 @@ export const PRACTICE_TYPES: PracticeType[] = [
     subcategories: [],
   },
   {
-    key: 'bonus',
+    key: 'pain',
     title: 'Бонусные тренировки',
     description: 'Дополнительные занятия для разнообразия программы.',
-    section: WorkoutSection.WARMUP,
+    section: WorkoutSection.PAIN,
     subcategories: [],
   },
 ]

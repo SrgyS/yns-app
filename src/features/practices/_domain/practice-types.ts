@@ -6,7 +6,7 @@ export type PracticeTypeKey =
   | 'functional'
   | 'correction'
   | 'favorite'
-  | 'bonus'
+  | 'pain'
 
 export type PracticeSubcategory = {
   key: string
