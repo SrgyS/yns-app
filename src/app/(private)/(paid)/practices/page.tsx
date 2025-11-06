@@ -12,6 +12,7 @@ import type {
 import { PracticeSectionHero } from '@/features/practices/_ui/practice-section-hero'
 import { PracticeSubcategoryCard } from '@/features/practices/_ui/practice-subcategory-card'
 import { PracticeTypeCard } from '@/features/practices/_ui/practice-type-card'
+import { Card, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card'
 
 function EmptyState({ message }: { message: string }) {
   return (
@@ -94,7 +95,6 @@ export default function PracticesPage() {
                 <Link
                   key={type.key}
                   href={`/practices?section=${sectionSegment}`}
-                  className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   <PracticeTypeCard type={type} />
                 </Link>
@@ -116,7 +116,10 @@ export default function PracticesPage() {
 
   return (
     <div className="container space-y-6 py-10">
-      <PracticeSectionHero practiceType={selectedType} onBack={handleCloseCategories} />
+      <PracticeSectionHero
+        practiceType={selectedType}
+        onBack={handleCloseCategories}
+      />
 
       {subcategories.length > 0 ? (
         <div className="columns-1 gap-4 md:columns-2">
