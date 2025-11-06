@@ -12,7 +12,6 @@ import type {
 import { PracticeSectionHero } from '@/features/practices/_ui/practice-section-hero'
 import { PracticeSubcategoryCard } from '@/features/practices/_ui/practice-subcategory-card'
 import { PracticeTypeCard } from '@/features/practices/_ui/practice-type-card'
-import { Card, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card'
 
 function EmptyState({ message }: { message: string }) {
   return (
