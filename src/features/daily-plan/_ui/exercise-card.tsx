@@ -11,8 +11,11 @@ import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { useWorkoutCompletions } from '../_vm/use-workout-completions'
 import { useWorkout } from '../_vm/use-workout'
 import { FavoriteButton } from '@/shared/ui/favorite-button'
+import { useWorkoutFavorites } from '../_vm/use-workout-favorites'
 import { cn } from '@/shared/ui/utils'
 import { DailyContentType } from '@prisma/client'
+import { toast } from 'sonner'
+import { TRPCClientError } from '@trpc/client'
 
 const MUSCLE_GROUP_LABELS = {
   LEGS: 'Ноги',
@@ -55,6 +58,12 @@ export function ExerciseCard({
 
   const { getWorkoutCompletionStatus, updateWorkoutCompletion } =
     useWorkoutCompletions()
+  const {
+    isFavorite: checkIsFavorite,
+    toggleFavorite,
+    isLoading: favoritesLoading,
+    isToggling: isTogglingFavorite,
+  } = useWorkoutFavorites({ enabled: Boolean(session?.user?.id) })
 
   const playerOptions = useMemo(
     () => ({
@@ -204,7 +213,25 @@ export function ExerciseCard({
                   </Badge>
                 )}
 
-                <FavoriteButton />
+                <FavoriteButton
+                  isFavorite={checkIsFavorite(workoutId)}
+                  onToggle={async () => {
+                    try {
+                      await toggleFavorite(workoutId)
+                    } catch (error) {
+                      if (
+                        error instanceof TRPCClientError &&
+                        error.data?.code === 'FORBIDDEN'
+                      ) {
+                        toast.error('Нет активного доступа к тренировкам')
+                      } else {
+                        toast.error('Не удалось обновить избранное')
+                      }
+                    }
+                  }}
+                  disabled={!session?.user?.id || !workoutId}
+                  isLoading={favoritesLoading || isTogglingFavorite}
+                />
               </div>
             </div>
           </div>
