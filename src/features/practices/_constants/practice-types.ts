@@ -4,6 +4,7 @@ import {
   type PracticeType,
   type PracticeSubcategory,
   type PracticeTypeKey,
+  type PracticeGroup,
 } from '../_domain/practice-types'
 import { resolvePracticeImagePath } from '../_lib/image-path'
 
@@ -181,14 +182,6 @@ export const PRACTICE_TYPES: PracticeType[] = [
     ],
   },
   {
-    key: 'favorite',
-    title: 'Избранное',
-    description: 'Собранные любимые тренировки в одном месте.',
-    imagePath: image('practices/course4-2.f43f5b9e.webp'),
-    section: WorkoutSection.WARMUP,
-    subcategories: [],
-  },
-  {
     key: 'pain',
     title: 'Бонусные тренировки',
     description: 'Дополнительные занятия для разнообразия программы.',
@@ -197,4 +190,18 @@ export const PRACTICE_TYPES: PracticeType[] = [
   },
 ]
 
-export { type PracticeType, type PracticeTypeKey, type PracticeSubcategory }
+export const PRACTICE_GROUPS: PracticeGroup[] = [
+  {
+    key: 'favorite',
+    title: 'Избранное',
+    description: 'Собранные любимые тренировки в одном месте.',
+    imagePath: image('practices/course4-2.f43f5b9e.webp'),
+  },
+]
+
+export {
+  type PracticeType,
+  type PracticeTypeKey,
+  type PracticeSubcategory,
+  type PracticeGroup,
+}

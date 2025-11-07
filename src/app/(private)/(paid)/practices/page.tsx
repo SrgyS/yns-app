@@ -4,14 +4,19 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
-import { PRACTICE_TYPES } from '@/features/practices/_constants/practice-types'
+import {
+  PRACTICE_TYPES,
+  PRACTICE_GROUPS,
+} from '@/features/practices/_constants/practice-types'
 import type {
   PracticeSubcategory,
   PracticeType,
+  PracticeGroup,
 } from '@/features/practices/_domain/practice-types'
 import { PracticeSectionHero } from '@/features/practices/_ui/practice-section-hero'
 import { PracticeSubcategoryCard } from '@/features/practices/_ui/practice-subcategory-card'
 import { PracticeTypeCard } from '@/features/practices/_ui/practice-type-card'
+import { PracticeGroupCard } from '@/features/practices/_ui/practice-group-card'
 
 function EmptyState({ message }: { message: string }) {
   return (
@@ -108,6 +113,13 @@ export default function PracticesPage() {
               />
             )
           })}
+          {PRACTICE_GROUPS.length > 0 && (
+            <>
+              {PRACTICE_GROUPS.map((group: PracticeGroup) => (
+                <PracticeGroupCard key={group.key} group={group} />
+              ))}
+            </>
+          )}
         </div>
       </div>
     )
