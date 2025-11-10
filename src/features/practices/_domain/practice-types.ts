@@ -5,7 +5,6 @@ export type PracticeTypeKey =
   | 'strength'
   | 'functional'
   | 'correction'
-  | 'favorite'
   | 'pain'
 
 export type PracticeSubcategory = {
@@ -23,4 +22,13 @@ export type PracticeType = {
   imagePath?: string
   section: WorkoutSection
   subcategories: PracticeSubcategory[]
+}
+
+export type PracticeGroupKey = 'favorite'
+
+export type PracticeGroup = {
+  key: PracticeGroupKey
+  title: string
+  description: string
+  imagePath?: string
 }

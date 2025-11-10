@@ -101,6 +101,31 @@ export class WorkoutRepository {
     }
   }
 
+  async listByIds(ids: string[]): Promise<Workout[]> {
+    if (ids.length === 0) {
+      return []
+    }
+
+    try {
+      const workouts = await dbClient.workout.findMany({
+        where: {
+          id: {
+            in: ids,
+          },
+        },
+      })
+
+      return workouts.map(workout => this.mapPrismaWorkoutToDomain(workout))
+    } catch (error) {
+      logger.error({
+        msg: 'Error listing workouts by ids',
+        ids,
+        error,
+      })
+      throw new Error('Failed to list workouts by ids')
+    }
+  }
+
   async listBySection(params: {
     section: WorkoutSection
     subsection?: WorkoutSubsection | null

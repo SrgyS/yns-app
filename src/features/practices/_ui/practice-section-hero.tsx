@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import type { PracticeType } from '../_domain/practice-types'
+import { Button } from '@/shared/ui/button'
 
 type PracticeSectionHeroProps = {
   practiceType: PracticeType
@@ -35,14 +36,10 @@ export function PracticeSectionHero({
 
       <div className="relative z-10 flex flex-col gap-6 px-6 pb-6 pt-6 md:pt-8">
         <div>
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex size-9 items-center justify-center rounded-full bg-background/80 text-foreground shadow-sm transition hover:bg-background"
-          >
+          <Button type="button" onClick={onBack} size="icon" variant="outline">
             <ArrowLeft className="size-4" />
             <span className="sr-only">Назад</span>
-          </button>
+          </Button>
         </div>
 
         <div className="flex flex-col gap-2 text-white">
