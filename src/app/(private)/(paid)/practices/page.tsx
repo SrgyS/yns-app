@@ -11,7 +11,6 @@ import {
 import type {
   PracticeSubcategory,
   PracticeType,
-  PracticeGroup,
 } from '@/features/practices/_domain/practice-types'
 import { PracticeSectionHero } from '@/features/practices/_ui/practice-section-hero'
 import { PracticeSubcategoryCard } from '@/features/practices/_ui/practice-subcategory-card'
@@ -79,7 +78,7 @@ export default function PracticesPage() {
 
   if (!selectedType) {
     return (
-      <div className="container space-y-8 py-10">
+      <div className="container space-y-8 py-10 max-w-2xl">
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold">Отдельные тренировки</h1>
           <p className="text-muted-foreground">
@@ -89,6 +88,16 @@ export default function PracticesPage() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
+          {PRACTICE_GROUPS.length > 0 &&
+            PRACTICE_GROUPS.map(group => {
+              const sectionSegment = encodeURIComponent(group.key)
+              return (
+                <Link key={group.key} href={`/practices/${sectionSegment}`}>
+                  <PracticeGroupCard group={group} />
+                </Link>
+              )
+            })}
+
           {PRACTICE_TYPES.map(type => {
             if (type.subcategories.length === 0) {
               const sectionSegment = encodeURIComponent(
@@ -113,20 +122,13 @@ export default function PracticesPage() {
               />
             )
           })}
-          {PRACTICE_GROUPS.length > 0 && (
-            <>
-              {PRACTICE_GROUPS.map((group: PracticeGroup) => (
-                <PracticeGroupCard key={group.key} group={group} />
-              ))}
-            </>
-          )}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="container space-y-6 py-10">
+    <div className="container space-y-6 py-10 max-w-2xl">
       <PracticeSectionHero
         practiceType={selectedType}
         onBack={handleCloseCategories}

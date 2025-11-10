@@ -30,7 +30,10 @@ export function useWorkoutFavorites(
         return {}
       }
 
-      await utils.getFavoriteWorkouts.cancel()
+      await Promise.all([
+        utils.getFavoriteWorkouts.cancel(),
+        utils.getFavoriteWorkoutDetails.cancel(),
+      ])
 
       const previousFavorites = utils.getFavoriteWorkouts.getData()
       const updated = new Set(previousFavorites ?? [])
@@ -52,6 +55,7 @@ export function useWorkoutFavorites(
     },
     onSettled: () => {
       utils.getFavoriteWorkouts.invalidate()
+      utils.getFavoriteWorkoutDetails.invalidate()
     },
   })
 

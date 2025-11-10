@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { KinescopePlayer, type PlayerHandle } from './kinescope-player'
-import upperFirst from 'lodash-es/upperFirst'
 import { Timer } from 'lucide-react'
 import { Badge } from '@/shared/ui/badge'
 import { Card, CardContent, CardFooter } from '@/shared/ui/card'
@@ -16,17 +15,12 @@ import { cn } from '@/shared/ui/utils'
 import { DailyContentType } from '@prisma/client'
 import { toast } from 'sonner'
 import { TRPCClientError } from '@trpc/client'
-
-const MUSCLE_GROUP_LABELS = {
-  LEGS: 'Ноги',
-  GLUTES: 'Ягодицы',
-  UPPER_BODY: 'Верх тела',
-  BACK: 'Спина',
-  PELVIC_FLOOR: 'Тазовое дно',
-  CORE: 'Кор',
-} as const
-
-const DIFFICULTY_STEPS = [1, 2, 3] as const
+import {
+  formatEquipmentList,
+  formatMuscleLabels,
+  getDifficultyLevel,
+  getDurationMinutes,
+} from '@/entities/workout/_lib/workout-formatters'
 
 interface ExerciseCardProps {
   title: string
@@ -58,6 +52,7 @@ export function ExerciseCard({
 
   const { getWorkoutCompletionStatus, updateWorkoutCompletion } =
     useWorkoutCompletions()
+
   const {
     isFavorite: checkIsFavorite,
     toggleFavorite,
@@ -73,56 +68,28 @@ export function ExerciseCard({
     []
   )
 
-  const durationMinutes = useMemo(() => {
-    if (!workout?.durationSec) return null
-    const minutes = Math.round(workout.durationSec / 60)
-    if (minutes <= 0) {
-      return 1
-    }
-    return minutes
-  }, [workout?.durationSec])
+  const durationMinutes = useMemo(
+    () => getDurationMinutes(workout?.durationSec ?? null),
+    [workout?.durationSec]
+  )
 
-  const muscleBadges = useMemo(() => {
-    if (!Array.isArray(workout?.muscles) || workout.muscles.length === 0) {
-      return []
-    }
-
-    return workout.muscles
-      .map(muscle => {
-        if (muscle in MUSCLE_GROUP_LABELS) {
-          return MUSCLE_GROUP_LABELS[muscle as keyof typeof MUSCLE_GROUP_LABELS]
-        }
-
-        return upperFirst(muscle.toLowerCase().replace(/_/g, ' '))
-      })
-      .filter(Boolean)
-  }, [workout?.muscles])
+  const muscleBadges = useMemo(
+    () => formatMuscleLabels(workout?.muscles),
+    [workout?.muscles]
+  )
 
   const equipmentText = useMemo(() => {
-    if (!Array.isArray(workout?.equipment)) return null
-
-    const normalized = workout.equipment
-      .map(item => upperFirst(item))
-      .filter(Boolean)
-
-    if (normalized.length === 0) {
-      return 'Без инвентаря'
+    const formatted = formatEquipmentList(workout?.equipment)
+    if (formatted) {
+      return formatted
     }
-
-    return normalized.join(', ')
+    return Array.isArray(workout?.equipment) ? 'Без инвентаря' : null
   }, [workout?.equipment])
 
-  const difficultyLevel = useMemo(() => {
-    if (!workout?.difficulty) return 0
-
-    const map: Record<string, number> = {
-      EASY: 1,
-      MEDIUM: 2,
-      HARD: 3,
-    }
-
-    return map[workout.difficulty] ?? 0
-  }, [workout?.difficulty])
+  const difficultyLevel = useMemo(
+    () => getDifficultyLevel(workout?.difficulty),
+    [workout?.difficulty]
+  )
 
   useEffect(() => {
     if (session?.user?.id && enrollmentId) {
@@ -137,7 +104,14 @@ export function ExerciseCard({
       }
       fetchCompletionStatus()
     }
-  }, [session, enrollmentId, getWorkoutCompletionStatus, contentType, stepIndex])
+  }, [
+    session,
+    enrollmentId,
+    getWorkoutCompletionStatus,
+    contentType,
+    stepIndex,
+  ])
+
   const handleVideoCompleted = () => {
     setIsVideoPlaying(false)
     if (!isCompleted) {
@@ -162,18 +136,19 @@ export function ExerciseCard({
     // Не обновляем состояние сразу, а только после успешного запроса
 
     try {
-        await updateWorkoutCompletion({
-          userId: session.user.id,
-          workoutId,
-          enrollmentId,
-          workoutType: workout.type,
-          contentType,
-          stepIndex,
-          isCompleted: newCompletedState,
-        })
+      await updateWorkoutCompletion({
+        userId: session.user.id,
+        workoutId,
+        enrollmentId,
+        workoutType: workout.type,
+        contentType,
+        stepIndex,
+        isCompleted: newCompletedState,
+      })
       // Обновляем состояние только после успешного запроса
       setIsCompleted(newCompletedState)
     } catch (error) {
+      toast.error('Ошибка при обновлении статуса тренировки')
       console.error('Error updating workout completion status:', error)
     }
   }
@@ -284,7 +259,7 @@ export function ExerciseCard({
           >
             <span>Сложность</span>
             <span className="flex items-center gap-1">
-              {DIFFICULTY_STEPS.map(step => {
+              {[1, 2, 3].map(step => {
                 const isActive = difficultyLevel >= step
                 return (
                   <span

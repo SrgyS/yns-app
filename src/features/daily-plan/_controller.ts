@@ -13,6 +13,7 @@ import { GetUserDailyPlanService } from './_services/get-user-daily-plan'
 import { logger } from '@/shared/lib/logger'
 import { ToggleFavoriteWorkoutService } from '@/entities/workout/_services/toggle-favorite-workout'
 import { ListFavoriteWorkoutsService } from '@/entities/workout/_services/list-favorite-workouts'
+import { ListWorkoutsByIdsService } from '@/entities/workout/_services/list-workouts-by-ids'
 import { GetAccessibleEnrollmentsService } from '@/features/course-enrollment/_services/get-accessible-enrollments'
 import { TRPCError } from '@trpc/server'
 
@@ -40,7 +41,8 @@ export class WorkoutController extends Controller {
     private getUserDailyPlanService: GetUserDailyPlanService,
     private toggleFavoriteWorkoutService: ToggleFavoriteWorkoutService,
     private listFavoriteWorkoutsService: ListFavoriteWorkoutsService,
-    private getAccessibleEnrollmentsService: GetAccessibleEnrollmentsService
+    private getAccessibleEnrollmentsService: GetAccessibleEnrollmentsService,
+    private listWorkoutsByIdsService: ListWorkoutsByIdsService
   ) {
     super()
   }
@@ -144,5 +146,18 @@ export class WorkoutController extends Controller {
           workoutId: input.workoutId,
         }
       }),
+    getFavoriteWorkoutDetails: authorizedProcedure.query(async ({ ctx }) => {
+      const userId = ctx.session.user.id
+      await this.assertHasActiveAccess(userId)
+      const favorites = await this.listFavoriteWorkoutsService.exec(userId)
+
+      if (favorites.length === 0) {
+        return []
+      }
+
+      const workoutIds = favorites.map(favorite => favorite.workoutId)
+      const workouts = await this.listWorkoutsByIdsService.exec(workoutIds)
+      return workouts
+    }),
   })
 }
