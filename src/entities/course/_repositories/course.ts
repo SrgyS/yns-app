@@ -16,7 +16,7 @@ export class CoursesRepository {
       const result = await compileMDX(source)
       return result.code
     } catch (error) {
-      logger.warn('Ошибка компиляции MDX:', error)
+      logger.warn({ err: error }, 'Ошибка компиляции MDX')
       return ''
     }
   }
