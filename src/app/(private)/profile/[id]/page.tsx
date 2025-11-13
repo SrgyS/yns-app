@@ -1,6 +1,12 @@
 import { UserCoursesSection } from '@/features/user-courses/_ui/user-courses-section'
 import Link from 'next/link'
-import { Edit, Dumbbell, BookOpen, ChevronRight } from 'lucide-react'
+import {
+  Edit,
+  Dumbbell,
+  BookOpen,
+  ChevronRight,
+  LayoutDashboard,
+} from 'lucide-react'
 import { server } from '@/app/server'
 import { ProfileAvatar } from '@/entities/user/client'
 import { SessionService } from '@/kernel/lib/next-auth/module'
@@ -26,6 +32,8 @@ export default async function ProfilePage({
   }
 
   const user = session.user
+  const canAccessAdmin =
+    user.role === 'ADMIN' || user.role === 'STAFF'
 
   const getUserCoursesListService = server.get(GetUserCoursesListService)
   const courses = await getUserCoursesListService.exec(id)
@@ -44,6 +52,14 @@ export default async function ProfilePage({
             </h1>
             <p className="text-sm text-muted-foreground">{user.email}</p>
           </div>
+          {canAccessAdmin && (
+            <Button asChild size="sm" className="gap-2">
+              <Link href="/admin">
+                <LayoutDashboard className="h-4 w-4" />
+                Админ-панель
+              </Link>
+            </Button>
+          )}
         </div>
 
         <Card>
