@@ -32,8 +32,7 @@ export default async function ProfilePage({
   }
 
   const user = session.user
-  const canAccessAdmin =
-    user.role === 'ADMIN' || user.role === 'STAFF'
+  const canAccessAdmin = user.role === 'ADMIN' || user.role === 'STAFF'
 
   const getUserCoursesListService = server.get(GetUserCoursesListService)
   const courses = await getUserCoursesListService.exec(id)
@@ -41,7 +40,7 @@ export default async function ProfilePage({
   return (
     <>
       <div className="fixed top-4 right-4 md:hidden">
-        <ToggleTheme variant={'outline'}/>
+        <ToggleTheme variant={'outline'} />
       </div>
       <main className="space-y-8 py-14 container max-w-[800px]">
         <div className="flex flex-col items-center space-y-4">
@@ -54,7 +53,7 @@ export default async function ProfilePage({
           </div>
           {canAccessAdmin && (
             <Button asChild size="sm" className="gap-2">
-              <Link href="/admin">
+              <Link href="/admin/courses">
                 <LayoutDashboard className="h-4 w-4" />
                 Админ-панель
               </Link>

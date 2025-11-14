@@ -8,20 +8,24 @@ import {
   SidebarMenuItem,
 } from '@/shared/ui/sidebar'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+
 export function NavMain({
   items,
 }: {
   items: {
     title: string
-    href: string
+    url: string
     icon?: LucideIcon
-    isActive?: boolean
+    // isActive?: boolean
     // items?: {
     //   title: string
     //   url: string
     // }[]
   }[]
 }) {
+  const pathname = usePathname()
+
   return (
     <SidebarGroup>
       <SidebarMenu>
@@ -55,10 +59,14 @@ export function NavMain({
           //       </CollapsibleContent>
           //     </SidebarMenuItem>
           //   </Collapsible>
-          <SidebarMenuItem key={item.href}>
-            <SidebarMenuButton asChild tooltip={item.title}>
-              <Link href={item.href} className="flex items-center gap-2">
-                {item.icon && <item.icon />}
+          <SidebarMenuItem key={item.url}>
+            <SidebarMenuButton
+              asChild
+              tooltip={item.title}
+              isActive={pathname.startsWith(item.url)}
+            >
+              <Link href={item.url} className="flex items-center gap-2">
+                {item.icon ? <item.icon className="h-4 w-4" /> : null}
                 <span>{item.title}</span>
               </Link>
             </SidebarMenuButton>

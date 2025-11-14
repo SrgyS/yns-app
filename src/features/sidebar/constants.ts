@@ -3,17 +3,17 @@ import { GraduationCap, LineChart, Users } from 'lucide-react'
 export const adminNavItems = [
   {
     title: 'Пользователи',
-    href: '/admin/users',
+    url: '/admin/users',
     icon: Users,
   },
   {
     title: 'Курсы',
-    href: '/admin/courses',
+    url: '/admin/courses',
     icon: GraduationCap,
   },
   {
     title: 'Аналитика',
-    href: '/admin/analytics',
+    url: '/admin/analytics',
     icon: LineChart,
   },
 ]
