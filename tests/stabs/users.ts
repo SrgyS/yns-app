@@ -13,6 +13,7 @@ export const USER = {
   email: 'user@gmail.com',
   testPassword: '1234',
   role: $Enums.ROLE.USER,
+  name: 'seed USER-1',
 }
 
 export const USER_2 = {
@@ -20,4 +21,5 @@ export const USER_2 = {
   email: 'user2@gmail.com',
   testPassword: '1234',
   role: $Enums.ROLE.USER,
+  name: 'seed USER-2',
 }

@@ -6,15 +6,13 @@ export const revalidate = 3600
 export default async function Home() {
   return (
     <main className="container flex min-h-screen flex-col p-8">
-      <Card className="bg-gradient-to-r from-slate-300 to-slate-500">
+      <Card className="from-primary/20 to-background bg-linear-to-bl to-50%">
         <CardContent>
-          <span className="text-xs sm:text-xl text-neutral-800">
-            ОНЛАЙН ФИТНЕС-КЛУБ
-          </span>
-          <h1 className="text-4xl sm:text-6xl font-bold font-inter pb-3 text-neutral-800">
+          <span className="text-xs sm:text-xl">ОНЛАЙН ФИТНЕС-КЛУБ</span>
+          <h1 className="text-4xl sm:text-6xl font-bold font-inter pb-3 ">
             YA·NA·SPORTE
           </h1>
-          <span className="text-base sm:text-lg text-neutral-800">
+          <span className="text-base sm:text-lg">
             Тренировки, которые ты любишь. Результаты, которые ты видишь.
           </span>
         </CardContent>

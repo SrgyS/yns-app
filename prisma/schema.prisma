@@ -16,6 +16,7 @@ datasource db {
 
 enum ROLE {
   ADMIN
+  STAFF
   USER
 }
 
@@ -374,6 +375,7 @@ model User {
   emailVerified      DateTime?
   image              String?
   name               String?
+  phone              String?
   role               ROLE                    @default(USER)
   password           String?
   accounts           Account[]

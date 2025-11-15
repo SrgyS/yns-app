@@ -8,7 +8,7 @@ import {
   startOfDay,
 } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { Dumbbell } from 'lucide-react'
+import { CalendarCheck } from 'lucide-react'
 import { DAYS_ORDER } from '../constant'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
 import { ExerciseCard } from './exercise-card'
@@ -223,16 +223,16 @@ export function DayTabs({
             disabled={d.isDisabled}
             className={cn(
               'snap-sta text-left flex flex-col items-start min-w-[54px] flex-none cursor-pointer content-center justify-items-center gap-y-0 rounded-md border border-muted px-3  py-2   transition-colors sm:min-w-[72px] sm:text-xs',
-              'data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary dark:data-[state=active]:border-accent-icon data-[state=active]:font-semibold',
+              'data-[state=active]:bg-primary/10 data-[state=active]:border-primary dark:data-[state=active]:border-premium data-[state=active]:font-semibold',
               'max-[360px]:min-w-[50px]',
-              d.isWorkoutDay && !d.isDisabled ? 'bg-accent' : '',
+              d.isWorkoutDay && !d.isDisabled ? 'bg-muted/40' : '',
               d.isDisabled ? 'cursor-not-allowed opacity-50' : ''
             )}
           >
             <div className="whitespace-nowrap text-xs leading-tight flex mb-1">
               {`${d.label.toUpperCase()} ${d.dateStr}`}
               {d.isWorkoutDay && !d.isDisabled && (
-                <Dumbbell className="pointer-events-none ml-1 h-2 w-2 text-accent-icon/80 group-data-[state=active]:text-accent-icon sm:h-4 sm:w-4" />
+                <CalendarCheck className="pointer-events-none ml-1 h-2 w-2 text-primary group-data-sm:h-4 sm:w-4" />
               )}
             </div>
             {!isSubscription && d.programDay && (

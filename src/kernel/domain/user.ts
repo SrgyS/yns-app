@@ -1,9 +1,10 @@
 export type UserId = string
-export type Role = 'ADMIN' | 'USER'
+export type Role = 'ADMIN' | 'USER' | 'STAFF'
 
 export const ROLES: Record<Role, Role> = {
   ADMIN: 'ADMIN',
   USER: 'USER',
+  STAFF: 'STAFF',
 }
 
 export type SharedUser = {
