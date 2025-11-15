@@ -16,6 +16,10 @@ export class ListAdminUsersService {
       id: filters.id?.trim() || undefined,
       email: filters.email?.trim() || undefined,
       phone: filters.phone?.trim() || undefined,
+      hasAvatar: filters.hasAvatar ?? 'any',
+      hasActiveAccess: filters.hasActiveAccess ?? 'any',
+      sortBy: filters.sortBy ?? 'createdAt',
+      sortDir: filters.sortDir ?? 'desc',
     }
 
     const { items, total } = await this.repository.list(sanitizedFilters)

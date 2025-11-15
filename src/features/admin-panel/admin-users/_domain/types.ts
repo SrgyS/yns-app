@@ -8,6 +8,9 @@ export type AdminUserListFilters = {
   phone?: string
   role?: ROLE
   hasAvatar: AvatarFilter
+  hasActiveAccess: 'active' | 'inactive' | 'any'
+  sortBy: 'createdAt' | 'name'
+  sortDir: 'asc' | 'desc'
   page: number
   pageSize: number
 }

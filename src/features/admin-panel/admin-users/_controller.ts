@@ -18,6 +18,9 @@ const listInputSchema = z.object({
   phone: z.string().trim().optional(),
   role: z.nativeEnum(ROLE).optional(),
   hasAvatar: avatarFilterSchema.default('any'),
+  hasActiveAccess: z.enum(['active', 'inactive', 'any']).default('any'),
+  sortBy: z.enum(['createdAt', 'name']).default('createdAt'),
+  sortDir: z.enum(['asc', 'desc']).default('desc'),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 })

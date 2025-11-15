@@ -25,8 +25,23 @@ export class AdminUserRepository {
   }> {
     const whereConditions: Prisma.Sql[] = []
 
+    const hasActiveAccessSql = Prisma.sql`
+      EXISTS (
+        SELECT 1
+        FROM "UserAccess" ua
+        WHERE ua."userId" = u.id
+          AND (ua."expiresAt" IS NULL OR ua."expiresAt" > NOW())
+      )
+    `
+
+    const escapeLikePattern = (value: string) =>
+      value.replace(/[%_]/g, match => `\\${match}`)
+
     if (filters.id) {
-      whereConditions.push(Prisma.sql`u.id = ${filters.id}`)
+      const escapedId = escapeLikePattern(filters.id)
+      whereConditions.push(
+        Prisma.sql`u.id::text ILIKE ${`%${escapedId}%`} ESCAPE '\\'`
+      )
     }
 
     if (filters.email) {
@@ -41,8 +56,16 @@ export class AdminUserRepository {
       )
     }
 
+    if (filters.hasActiveAccess === 'active') {
+      whereConditions.push(hasActiveAccessSql)
+    }
+
+    if (filters.hasActiveAccess === 'inactive') {
+      whereConditions.push(Prisma.sql`NOT ${hasActiveAccessSql}`)
+    }
+
     if (filters.role) {
-      whereConditions.push(Prisma.sql`u.role = ${filters.role}`)
+      whereConditions.push(Prisma.sql`u.role = ${filters.role}::"ROLE"`)
     }
 
     if (filters.hasAvatar === 'with') {
@@ -64,6 +87,13 @@ export class AdminUserRepository {
 
     const offset = (filters.page - 1) * filters.pageSize
 
+    const orderColumn =
+      filters.sortBy === 'name'
+        ? Prisma.sql`COALESCE(NULLIF(BTRIM(u.name), ''), u.email)`
+        : Prisma.sql`u."createdAt"`
+    const orderDirection =
+      filters.sortDir === 'asc' ? Prisma.sql`ASC` : Prisma.sql`DESC`
+
     const rows = await dbClient.$queryRaw<AdminUserRow[]>(
       Prisma.sql`
         SELECT
@@ -73,15 +103,10 @@ export class AdminUserRepository {
           u.image,
           u.phone,
           u.role,
-          EXISTS (
-            SELECT 1
-            FROM "UserAccess" ua
-            WHERE ua."userId" = u.id
-              AND (ua."expiresAt" IS NULL OR ua."expiresAt" > NOW())
-          ) AS "hasActiveAccess"
+          ${hasActiveAccessSql} AS "hasActiveAccess"
         FROM "User" u
         ${whereSql}
-        ORDER BY u."createdAt" DESC
+        ORDER BY ${orderColumn} ${orderDirection}
         LIMIT ${filters.pageSize}
         OFFSET ${offset}
       `
