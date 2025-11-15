@@ -50,7 +50,6 @@ export function useAdminUsers() {
       startTransition(() => {
         router.replace(query ? `${pathname}?${query}` : pathname, {
           scroll: false,
-          shallow: true,
         })
       })
     },
