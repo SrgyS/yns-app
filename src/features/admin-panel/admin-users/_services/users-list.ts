@@ -4,7 +4,7 @@ import {
   AdminUserListFilters,
   AdminUserListResult,
 } from '../_domain/types'
-import { AdminUserRepository } from '../_repositories/admin-user-repository'
+import { AdminUserRepository } from '../_repositories/admin-users'
 
 @injectable()
 export class ListAdminUsersService {

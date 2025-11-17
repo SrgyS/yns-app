@@ -5,7 +5,7 @@ import {
   defaultPermissionsByRole,
   StaffPermissionFlags,
 } from '../_domain/staff-permission'
-import { StaffPermissionRepository } from '../_repositories/staff-permission-repository'
+import { StaffPermissionRepository } from '../_repositories/staff-permissions'
 
 type Subject = {
   id: string

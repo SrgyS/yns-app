@@ -8,7 +8,7 @@ import {
   authorizedProcedure,
   router,
 } from '@/kernel/lib/trpc/module'
-import { ListAdminUsersService } from './_services/list-admin-users'
+import { ListAdminUsersService } from './_services/users-list'
 
 const avatarFilterSchema = z.enum(['any', 'with', 'without'])
 
