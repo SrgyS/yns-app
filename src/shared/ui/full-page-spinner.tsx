@@ -1,7 +1,9 @@
 import { useAppearanceDelay } from '../lib/react'
 import { Spinner } from './spinner'
 
-export function FullPageSpinner({ isLoading }: { isLoading?: boolean }) {
+export function FullPageSpinner({
+  isLoading,
+}: Readonly<{ isLoading?: boolean }>) {
   const show = useAppearanceDelay(isLoading)
 
   if (show) {

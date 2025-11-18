@@ -32,13 +32,13 @@ export default async function Layout({
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen bg-background">
-        <AdminPanelSidebar user={session.user} />
-        <SidebarInset className="flex min-h-screen flex-1 flex-col">
-          <SidebarTrigger />
-          <div className="flex-1 px-4 py-4">{children}</div>
-        </SidebarInset>
-      </div>
+      <AdminPanelSidebar user={session.user} />
+      <SidebarInset>
+        <div className="m-1">
+          <SidebarTrigger className="cursor-pointer" />
+        </div>
+        <div className="flex-1 px-2 py-1">{children}</div>
+      </SidebarInset>
     </SidebarProvider>
   )
 }

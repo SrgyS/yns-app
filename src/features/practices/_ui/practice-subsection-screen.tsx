@@ -39,7 +39,7 @@ export function PracticeSubsectionScreen({
   onBack,
   className,
   useContainer = true,
-}: PracticeSubsectionScreenProps) {
+}: Readonly<PracticeSubsectionScreenProps>) {
   const router = useRouter()
   const [search, setSearch] = useState('')
   const normalizedSearch = search.trim() || undefined
@@ -170,7 +170,7 @@ type EmptyStateProps = {
   message: string
 }
 
-export function PracticeEmptyState({ message }: EmptyStateProps) {
+export function PracticeEmptyState({ message }: Readonly<EmptyStateProps>) {
   return (
     <div className="rounded-xl border border-dashed border-border/60 p-6 text-center text-sm text-muted-foreground">
       {message}

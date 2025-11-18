@@ -396,6 +396,7 @@ model StaffPermission {
   canEditAccess   Boolean @default(false)
   canManageUsers  Boolean @default(false)
   canGrantAccess  Boolean @default(false)
+  canLoginAsUser  Boolean @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
