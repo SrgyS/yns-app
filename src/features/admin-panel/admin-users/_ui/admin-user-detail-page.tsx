@@ -1,6 +1,7 @@
 'use client'
 
 import { useAdminUserDetail } from '../_hooks/use-admin-user-detail'
+import { useAdminPermissions } from '../_hooks/use-admin-permissions'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent } from '@/shared/ui/card'
@@ -9,6 +10,7 @@ import { formatDate } from './utils/format-date'
 import { AccessesTable } from './tables/accesses'
 import { PaymentsTable } from './tables/payments'
 import { Badge } from '@/shared/ui/badge'
+import { GrantAccessDialog } from './grant-access-dialog'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { FullPageSpinner } from '@/shared/ui/full-page-spinner'
@@ -21,11 +23,29 @@ const ROLE_LABELS: Record<string, string> = {
 
 export function AdminUserDetailPage({ userId }: Readonly<{ userId: string }>) {
   const { data, isLoading } = useAdminUserDetail(userId)
+  const { data: viewerPermissions, isLoading: isPermissionsLoading } =
+    useAdminPermissions()
 
-  if (isLoading || !data) {
+  if (isLoading || isPermissionsLoading) {
     return (
       <div className="absolute inset-0 flex items-center justify-center z-10">
         <FullPageSpinner isLoading />
+      </div>
+    )
+  }
+
+  if (!viewerPermissions?.canManageUsers) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center text-muted-foreground">
+        Нет прав для просмотра этой страницы
+      </div>
+    )
+  }
+
+  if (!data) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center text-muted-foreground">
+        Пользователь не найден
       </div>
     )
   }
@@ -96,7 +116,7 @@ export function AdminUserDetailPage({ userId }: Readonly<{ userId: string }>) {
                 <Button
                   variant="outline"
                   className="w-full cursor-pointer"
-                  disabled={!profile.staffPermissions.canLoginAsUser}
+                  disabled={!viewerPermissions.canLoginAsUser}
                 >
                   Войти под пользователем
                 </Button>
@@ -111,7 +131,7 @@ export function AdminUserDetailPage({ userId }: Readonly<{ userId: string }>) {
           </Card>
         </aside>
         <section className="space-y-6 min-w-0">
-          <div className="flex flex-wrap items-center  gap-6">
+          <div className="flex flex-wrap items-center gap-6">
             <div className="flex flex-col">
               <h1 className="text-2xl font-semibold">
                 Управление пользователем
@@ -120,7 +140,10 @@ export function AdminUserDetailPage({ userId }: Readonly<{ userId: string }>) {
                 Просмотр доступов, платежей и активности
               </p>
             </div>
-            <Button>Выдать доступ</Button>
+            <GrantAccessDialog
+              userId={userId}
+              disabled={!viewerPermissions.canGrantAccess}
+            />
           </div>
           <Tabs defaultValue="accesses" className="space-y-4 w-fit">
             <div className="overflow-x-auto">
@@ -141,9 +164,7 @@ export function AdminUserDetailPage({ userId }: Readonly<{ userId: string }>) {
             </TabsContent>
             <TabsContent value="payments">
               <PaymentsTable
-                data={
-                  profile.staffPermissions.canViewPayments ? data.payments : []
-                }
+                data={viewerPermissions.canViewPayments ? data.payments : []}
               />
             </TabsContent>
             <TabsContent value="activity">

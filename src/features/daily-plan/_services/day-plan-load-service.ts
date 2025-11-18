@@ -1,5 +1,5 @@
 import { injectable } from 'inversify'
-import { CourseContentType, DayOfWeek } from '@prisma/client'
+import { CourseContentType } from '@prisma/client'
 import {
   addDays,
   differenceInCalendarWeeks,
@@ -10,19 +10,17 @@ import {
 } from 'date-fns'
 
 import { CourseSlug } from '@/kernel/domain/course'
-import {
-  Course,
-  UserCourseEnrollment,
-  UserDailyPlan,
-} from '@/entities/course'
+import { Course, UserCourseEnrollment, UserDailyPlan } from '@/entities/course'
 import { GetCourseService } from '@/entities/course/_services/get-course'
 import { CheckCourseAccessService } from '@/entities/user-access/module'
 import { GetEnrollmentByCourseSlugService } from '@/entities/course/_services/get-enrollment-by-course-slug'
-import { GetAvailableWeeksService } from '@/features/course-enrollment/_services/get-available-weeks'
+import {
+  AvailableWeeksResult,
+  GetAvailableWeeksService,
+} from '@/features/course-enrollment/_services/get-available-weeks'
 import { GetActiveEnrollmentService } from '@/entities/course/_services/get-active-enrollment'
 import { UserAccessRepository } from '@/entities/user-access/_repository/user-access'
 import { GetUserDailyPlanService } from './get-user-daily-plan'
-import { AvailableWeeksResult } from '@/features/course-enrollment/_services/get-available-weeks'
 import { DAYS_ORDER } from '../constant'
 
 type AccessPayload = {
@@ -31,6 +29,7 @@ type AccessPayload = {
   activeEnrollment: UserCourseEnrollment | null
   isActive: boolean
   accessExpiresAt: Date | null
+  setupCompleted: boolean
 }
 
 export interface DayPlanLoadParams {
@@ -77,6 +76,7 @@ export class DayPlanLoadService {
           activeEnrollment: null,
           isActive: false,
           accessExpiresAt: null,
+          setupCompleted: false,
         },
         enrollment: null,
         enrollmentByCourseId: null,
@@ -95,10 +95,9 @@ export class DayPlanLoadService {
       },
     })
 
-    const enrollmentBySlug =
-      hasAccess
-        ? await this.getEnrollmentByCourseSlugService.exec(userId, courseSlug)
-        : null
+    const enrollmentBySlug = hasAccess
+      ? await this.getEnrollmentByCourseSlugService.exec(userId, courseSlug)
+      : null
 
     const enrollmentByCourseId = enrollmentBySlug
 
@@ -118,14 +117,14 @@ export class DayPlanLoadService {
     )
 
     let availableWeeks: AvailableWeeksResult | null = null
+
     if (hasAccess && enrollmentBySlug) {
       availableWeeks = await this.getAvailableWeeksService.exec({
         userId,
         courseId: enrollmentBySlug.courseId,
         enrollmentId: enrollmentBySlug.id,
         enrollmentStartDate: enrollmentBySlug.startDate,
-        courseContentType:
-          course.contentType as unknown as CourseContentType,
+        courseContentType: course.contentType as unknown as CourseContentType,
         courseDurationWeeks: course.durationWeeks,
       })
     }
@@ -164,6 +163,7 @@ export class DayPlanLoadService {
         activeEnrollment,
         isActive,
         accessExpiresAt: userAccess?.expiresAt ?? null,
+        setupCompleted: Boolean(userAccess?.setupCompleted),
       },
       enrollment: enrollmentBySlug,
       enrollmentByCourseId,
@@ -187,9 +187,7 @@ export function computeDefaultProgramDay({
     return null
   }
 
-  const startDate = enrollment.startDate
-    ? new Date(enrollment.startDate)
-    : null
+  const startDate = enrollment.startDate ? new Date(enrollment.startDate) : null
 
   if (!startDate || Number.isNaN(startDate.getTime())) {
     return null
@@ -200,9 +198,14 @@ export function computeDefaultProgramDay({
   const isSubscription = enrollment.course?.contentType === 'SUBSCRIPTION'
 
   const selectedWorkoutDays = enrollment.selectedWorkoutDays ?? []
-  const workoutDayIndices = selectedWorkoutDays
-    .map(day => DAYS_ORDER.indexOf(day as DayOfWeek))
-    .filter(index => index !== -1)
+
+  const workoutDayIndices = selectedWorkoutDays.reduce((acc, day) => {
+    const index = DAYS_ORDER.indexOf(day)
+    if (index !== -1) {
+      acc.add(index)
+    }
+    return acc
+  }, new Set<number>())
 
   const programStart = startDate
   const effectiveEnrollmentStart = isSubscription
@@ -226,7 +229,9 @@ export function computeDefaultProgramDay({
     return Math.min(Math.max(weeks + 1, 1), Math.max(durationWeeks, 1))
   })()
 
-  const currentWeek = isSubscription ? subscriptionCurrentWeek : nonSubscriptionWeek
+  const currentWeek = isSubscription
+    ? subscriptionCurrentWeek
+    : nonSubscriptionWeek
 
   const displayWeekStart = isSubscription
     ? (() => {
@@ -255,7 +260,7 @@ export function computeDefaultProgramDay({
     const isAfterProgram = daysSinceProgramStart > totalProgramDays
 
     const dayOfWeekIndex = (date.getDay() + 6) % 7
-    const isWorkoutDay = workoutDayIndices.some(idx => idx === dayOfWeekIndex)
+    const isWorkoutDay = workoutDayIndices.has(dayOfWeekIndex)
 
     const isDisabled = isSubscription
       ? isAfterProgram

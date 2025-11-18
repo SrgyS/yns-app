@@ -5,7 +5,7 @@ import { MdxCode } from '@/shared/lib/mdx'
 import { Card, CardFooter, CardHeader, CardTitle } from '@/shared/ui/card'
 import { CourseAction } from './course-action'
 
-export function CourseItem({ course }: { course: Course }) {
+export function CourseItem({ course }: Readonly<{ course: Course }>) {
   return (
     <Card>
       <CardHeader>

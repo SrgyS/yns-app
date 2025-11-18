@@ -7,6 +7,7 @@ import { StaffPermissionRepository } from './_repositories/staff-permissions'
 import { ListAdminUsersService } from './_services/users-list'
 import { GetAdminUserDetailService } from './_services/get-admin-user-detail'
 import { StaffPermissionService } from './_services/staff-permissions'
+import { GrantCourseAccessService } from './_services/grant-course-access'
 
 export const AdminUsersModule = new ContainerModule(context => {
   const { bind } = context
@@ -16,6 +17,7 @@ export const AdminUsersModule = new ContainerModule(context => {
   bind(ListAdminUsersService).toSelf()
   bind(GetAdminUserDetailService).toSelf()
   bind(StaffPermissionService).toSelf()
+  bind(GrantCourseAccessService).toSelf()
   bind(Controller).to(AdminUsersController)
 })
 

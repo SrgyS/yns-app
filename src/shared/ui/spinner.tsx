@@ -1,7 +1,7 @@
 import { cn } from '@/shared/ui/utils'
 import { HTMLAttributes } from 'react'
 
-type SpinnerProps = HTMLAttributes<HTMLOutputElement> & {
+type SpinnerProps = HTMLAttributes<HTMLSpanElement> & {
   'aria-label'?: string
 }
 

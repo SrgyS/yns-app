@@ -26,7 +26,7 @@ function serializeForQuery<T>(value: T): T {
   if (value === undefined) {
     return value
   }
-  return JSON.parse(JSON.stringify(value)) as T
+  return structuredClone(value) as T
 }
 
 interface DayPageProps {
@@ -52,14 +52,12 @@ export default async function DayPage({ params }: DayPageProps) {
 
   const userId = session.user.id
 
-  const {
-    helpers: courseEnrollmentHelpers,
-    queryClient,
-  } = createControllerHelpers({
-    container: server,
-    controller: CourseEnrollmentController,
-    ctx,
-  })
+  const { helpers: courseEnrollmentHelpers, queryClient } =
+    createControllerHelpers({
+      container: server,
+      controller: CourseEnrollmentController,
+      ctx,
+    })
 
   const { helpers: courseDetailsHelpers } = createControllerHelpers({
     container: server,
@@ -85,10 +83,9 @@ export default async function DayPage({ params }: DayPageProps) {
       userId,
       courseSlug,
     })
-  queryClient.setQueryData(
-    checkAccessOptions.queryKey,
-    (() => serializeForQuery(loadResult.access)) as any
-  )
+
+  queryClient.setQueryData(checkAccessOptions.queryKey, (() =>
+    serializeForQuery(loadResult.access)) as any)
 
   if (loadResult.enrollment) {
     const enrollmentBySlugOptions =
@@ -96,23 +93,20 @@ export default async function DayPage({ params }: DayPageProps) {
         userId,
         courseSlug,
       })
-    queryClient.setQueryData(
-      enrollmentBySlugOptions.queryKey,
-      (() => serializeForQuery(loadResult.enrollment)) as any
-    )
+
+    queryClient.setQueryData(enrollmentBySlugOptions.queryKey, (() =>
+      serializeForQuery(loadResult.enrollment)) as any)
 
     const enrollmentOptions =
       courseEnrollmentHelpers.course.getEnrollment.queryOptions({
         userId,
         courseId: loadResult.enrollment.courseId,
       })
-  queryClient.setQueryData(
-    enrollmentOptions.queryKey,
-    (() =>
+
+    queryClient.setQueryData(enrollmentOptions.queryKey, (() =>
       serializeForQuery(
         loadResult.enrollmentByCourseId ?? loadResult.enrollment
-      )) as any
-  )
+      )) as any)
   }
 
   if (loadResult.availableWeeks) {
@@ -121,10 +115,9 @@ export default async function DayPage({ params }: DayPageProps) {
         userId,
         courseSlug,
       })
-    queryClient.setQueryData(
-      availableWeeksOptions.queryKey,
-      (() => serializeForQuery(loadResult.availableWeeks)) as any
-    )
+
+    queryClient.setQueryData(availableWeeksOptions.queryKey, (() =>
+      serializeForQuery(loadResult.availableWeeks)) as any)
   }
 
   if (loadResult.defaultDayNumber && loadResult.enrollment) {
@@ -133,10 +126,9 @@ export default async function DayPage({ params }: DayPageProps) {
       courseId: loadResult.enrollment.courseId,
       dayNumberInCourse: loadResult.defaultDayNumber,
     })
-    queryClient.setQueryData(
-      dailyPlanOptions.queryKey,
-      (() => serializeForQuery(loadResult.initialDailyPlan)) as any
-    )
+
+    queryClient.setQueryData(dailyPlanOptions.queryKey, (() =>
+      serializeForQuery(loadResult.initialDailyPlan)) as any)
   }
 
   if (loadResult.access.hasAccess) {

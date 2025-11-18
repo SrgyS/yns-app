@@ -40,6 +40,7 @@ export default async function Layout({
     accessExpiresAt: entry.accessExpiresAt
       ? entry.accessExpiresAt.toISOString()
       : null,
+    setupCompleted: entry.setupCompleted,
   }))
 
   const paidAccessState: PaidAccessState = {

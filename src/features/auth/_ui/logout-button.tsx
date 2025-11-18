@@ -5,7 +5,7 @@ import { ChevronRight, LogOut } from 'lucide-react'
 import { LogoutConfirmationDialog } from '@/features/auth/_ui/logout-confirmation-dialog'
 import { useState } from 'react'
 
-export function LogoutButton({ email }: { email: string }) {
+export function LogoutButton({ email }: Readonly<{ email: string }>) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   const handleLogoutClick = () => {
@@ -21,7 +21,7 @@ export function LogoutButton({ email }: { email: string }) {
       >
         <div className="flex items-center gap-2">
           <LogOut className="h-4 w-4" />
-          Выйти из системы
+          Выйти
         </div>
         <ChevronRight className="h-4 w-4" />
       </Button>
