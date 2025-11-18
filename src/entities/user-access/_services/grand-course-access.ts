@@ -17,17 +17,17 @@ type Command = {
 
 @injectable()
 export class GrandCourseAccessService {
-  constructor(private userAccessRepository: UserAccessRepository) {}
+  constructor(private readonly userAccessRepository: UserAccessRepository) {}
   async exec(command: Command) {
     const courseAccess = await this.userAccessRepository.findUserCourseAccess(
       command.userId,
       command.courseId,
-      command.contentType,
-    );
+      command.contentType
+    )
 
     const hasActiveAccess = Boolean(
       courseAccess &&
-        (courseAccess.expiresAt == null || courseAccess.expiresAt > new Date()),
+        (courseAccess.expiresAt == null || courseAccess.expiresAt > new Date())
     )
 
     if (hasActiveAccess) {
@@ -42,9 +42,7 @@ export class GrandCourseAccessService {
       (courseAccess?.expiresAt == null || courseAccess.expiresAt > new Date())
 
     const setupCompleted =
-      command.contentType === 'SUBSCRIPTION'
-        ? true
-        : shouldKeepSetup
+      command.contentType === 'SUBSCRIPTION' ? true : shouldKeepSetup
 
     const newCourseAccess: CourseUserAccess = {
       courseId: command.courseId,
@@ -58,6 +56,6 @@ export class GrandCourseAccessService {
       setupCompleted,
     }
 
-    return this.userAccessRepository.save(newCourseAccess);
+    return this.userAccessRepository.save(newCourseAccess)
   }
 }

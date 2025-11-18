@@ -8,13 +8,14 @@ import { dbClient } from '@/shared/lib/db'
 type CreateEnrollmentOptions = {
   reuseExistingEnrollment?: boolean
   existingEnrollment?: UserCourseEnrollment | null
+  skipPlanGeneration?: boolean
 }
 
 @injectable()
 export class CreateUserCourseEnrollmentService {
   constructor(
-    private userCourseEnrollmentRepository: UserCourseEnrollmentRepository,
-    private userDailyPlanRepository: UserDailyPlanRepository
+    private readonly userCourseEnrollmentRepository: UserCourseEnrollmentRepository,
+    private readonly userDailyPlanRepository: UserDailyPlanRepository
   ) {}
 
   async exec(
@@ -33,7 +34,10 @@ export class CreateUserCourseEnrollmentService {
           ))
 
         const reuseExisting =
-          Boolean(options.reuseExistingEnrollment) && Boolean(existingEnrollment)
+          Boolean(options.reuseExistingEnrollment) &&
+          Boolean(existingEnrollment)
+
+        const skipPlanGeneration = Boolean(options.skipPlanGeneration)
 
         const preserveExistingPlans =
           reuseExisting && params.courseContentType === 'SUBSCRIPTION'
@@ -106,7 +110,7 @@ export class CreateUserCourseEnrollmentService {
           }
         }
 
-        if (!preserveExistingPlans) {
+        if (!preserveExistingPlans && !skipPlanGeneration) {
           await this.userDailyPlanRepository.generateUserDailyPlansForEnrollment(
             enrollment.id,
             tx

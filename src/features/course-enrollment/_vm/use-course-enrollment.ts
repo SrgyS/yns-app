@@ -19,6 +19,7 @@ export type CourseAccessState = {
   activeEnrollment: EnrollmentShape | null
   isActive: boolean
   accessExpiresAt: string | Date | null
+  setupCompleted: boolean
 }
 
 export const isCourseAccessState = (
@@ -33,7 +34,8 @@ export const isCourseAccessState = (
     'enrollment' in value &&
     'activeEnrollment' in value &&
     'isActive' in value &&
-    'accessExpiresAt' in value
+    'accessExpiresAt' in value &&
+    'setupCompleted' in value
   )
 }
 

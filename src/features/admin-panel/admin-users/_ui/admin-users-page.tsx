@@ -1,14 +1,14 @@
 'use client'
 
 import { useAdminUsers } from '../_hooks/use-admin-users'
-import { Spinner } from '@/shared/ui/spinner'
-import { DataTable } from './users-table/data-table'
 import {
   AdminUsersTableProvider,
   adminUsersColumns,
-} from './users-table/column'
+  UsersTable,
+} from './tables/users'
 import { AdminUsersPagination } from './admin-users-pagination'
 import { AdminUsersSortButton } from './admin-users-sort-button'
+import { FullPageSpinner } from '@/shared/ui/full-page-spinner'
 
 export function AdminUsersPage() {
   const { data, isLoading, isFetching, filters, setFilter, setSorting } =
@@ -16,14 +16,18 @@ export function AdminUsersPage() {
 
   if (!data) {
     return (
-      <div className="flex min-h-[300px] items-center justify-center text-muted-foreground">
-        {isLoading ? <Spinner /> : 'Не удалось загрузить пользователей'}
+      <div className="absolute inset-0 flex items-center justify-center z-10">
+        {isLoading ? (
+          <FullPageSpinner isLoading />
+        ) : (
+          'Не удалось загрузить пользователей'
+        )}
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-fit">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Пользователи</h1>
@@ -38,7 +42,7 @@ export function AdminUsersPage() {
             sortDir={filters.sortDir}
             onChange={setSorting}
           />
-          {isFetching && <Spinner className="size-5 text-muted-foreground" />}
+          {isFetching && <FullPageSpinner isLoading={isFetching} />}
         </div>
       </div>
       <AdminUsersTableProvider
@@ -47,7 +51,7 @@ export function AdminUsersPage() {
           onFilterChange: (key, value) => setFilter(key, value),
         }}
       >
-        <DataTable columns={adminUsersColumns} data={data.items} />
+        <UsersTable columns={adminUsersColumns} data={data.items} />
       </AdminUsersTableProvider>
       <AdminUsersPagination
         page={data.page}

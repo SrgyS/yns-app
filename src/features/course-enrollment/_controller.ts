@@ -90,6 +90,7 @@ export class CourseEnrollmentController extends Controller {
           accessExpiresAt: entry.accessExpiresAt
             ? entry.accessExpiresAt.toISOString()
             : null,
+          setupCompleted: entry.setupCompleted,
         }))
 
         const paidAccessState: PaidAccessState = {
@@ -184,6 +185,7 @@ export class CourseEnrollmentController extends Controller {
               activeEnrollment: null,
               isActive: false,
               accessExpiresAt: null,
+              setupCompleted: false,
             }
           }
 
@@ -233,6 +235,7 @@ export class CourseEnrollmentController extends Controller {
             activeEnrollment,
             isActive,
             accessExpiresAt: userAccess?.expiresAt ?? null,
+            setupCompleted: Boolean(userAccess?.setupCompleted),
           }
         }),
 

@@ -11,8 +11,7 @@ export function Spinner({
   ...props
 }: SpinnerProps) {
   return (
-    <span
-      role="status"
+    <output
       aria-live="polite"
       aria-label={ariaLabel}
       className={cn(
@@ -22,6 +21,6 @@ export function Spinner({
       {...props}
     >
       <span className="sr-only">{ariaLabel}</span>
-    </span>
+    </output>
   )
 }

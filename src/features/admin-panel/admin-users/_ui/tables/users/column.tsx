@@ -16,8 +16,8 @@ import {
 } from '@/shared/ui/select'
 import { cn } from '@/shared/ui/utils'
 
-import { AdminUserListFilters, AdminUserListItem } from '../../_domain/types'
-import type { AdminUsersFilterKey } from '../../_hooks/use-admin-users'
+import { AdminUserListFilters, AdminUserListItem } from '../../../_domain/types'
+import type { AdminUsersFilterKey } from '../../../_hooks/use-admin-users'
 import { Button } from '@/shared/ui/button'
 
 const roleLabels: Record<AdminUserListItem['role'], string> = {

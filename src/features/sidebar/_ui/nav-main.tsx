@@ -6,6 +6,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/shared/ui/sidebar'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -25,6 +26,13 @@ export function NavMain({
   }[]
 }) {
   const pathname = usePathname()
+  const { isMobile, setOpenMobile } = useSidebar()
+
+  const handleNavigate = () => {
+    if (isMobile) {
+      setOpenMobile(false)
+    }
+  }
 
   return (
     <SidebarGroup>
@@ -65,7 +73,11 @@ export function NavMain({
               tooltip={item.title}
               isActive={pathname.startsWith(item.url)}
             >
-              <Link href={item.url} className="flex items-center gap-2">
+              <Link
+                href={item.url}
+                className="flex items-center gap-2"
+                onClick={handleNavigate}
+              >
                 {item.icon ? <item.icon className="h-4 w-4" /> : null}
                 <span>{item.title}</span>
               </Link>

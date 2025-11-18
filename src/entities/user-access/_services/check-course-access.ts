@@ -14,24 +14,24 @@ export type Query = {
 
 @injectable()
 export class CheckCourseAccessService {
-  constructor(private userAccessRepository: UserAccessRepository) {}
+  constructor(private readonly userAccessRepository: UserAccessRepository) {}
   async exec(query: Query) {
-    if (query.course.product.access === "free") {
-      return true;
+    if (query.course.product.access === 'free') {
+      return true
     }
 
     const access = await this.userAccessRepository.findUserCourseAccess(
       query.userId,
       query.course.id,
-      query.course.contentType,
-    );
+      query.course.contentType
+    )
 
-    if (!access) return false;
+    if (!access) return false
 
     if (access.expiresAt && access.expiresAt.getTime() < Date.now()) {
-      return false;
+      return false
     }
 
-    return true;
+    return true
   }
 }

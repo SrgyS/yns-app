@@ -1,14 +1,16 @@
-import { ContainerModule } from "inversify";
-import { GrandCourseAccessService } from "./_services/grand-course-access";
-import { CheckCourseAccessService } from "./_services/check-course-access";
-import { UserAccessRepository } from "./_repository/user-access";
+import { ContainerModule } from 'inversify'
+import { GrandCourseAccessService } from './_services/grand-course-access'
+import { CheckCourseAccessService } from './_services/check-course-access'
+import { UserAccessRepository } from './_repository/user-access'
 
-export const UserAccessModule = new ContainerModule((context) => {
-  const { bind } = context;
-  
-  bind(UserAccessRepository).toSelf();
-  bind(CheckCourseAccessService).toSelf();
-  bind(GrandCourseAccessService).toSelf();
-});
+export const UserAccessModule = new ContainerModule(context => {
+  const { bind } = context
 
-export { CheckCourseAccessService, GrandCourseAccessService };
+  bind(UserAccessRepository).toSelf()
+  bind(CheckCourseAccessService).toSelf()
+  bind(GrandCourseAccessService).toSelf()
+})
+
+export { CheckCourseAccessService } from './_services/check-course-access'
+export { GrandCourseAccessService } from './_services/grand-course-access'
+export { UserAccessRepository } from './_repository/user-access'

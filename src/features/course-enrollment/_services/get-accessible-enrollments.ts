@@ -12,6 +12,7 @@ export type AccessibleEnrollment = {
   enrollment: UserCourseEnrollment
   course: CourseAccessInfo
   accessExpiresAt: Date | null
+  setupCompleted: boolean
 }
 
 @injectable()
@@ -71,6 +72,7 @@ export class GetAccessibleEnrollmentsService {
             enrollment,
             course,
             accessExpiresAt: access.expiresAt ?? null,
+            setupCompleted: Boolean(access.setupCompleted),
           })
           continue
         }
@@ -79,6 +81,7 @@ export class GetAccessibleEnrollmentsService {
           enrollment,
           course,
           accessExpiresAt: access?.expiresAt ?? null,
+          setupCompleted: access ? Boolean(access.setupCompleted) : true,
         })
       }
 

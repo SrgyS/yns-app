@@ -39,7 +39,7 @@ export function PracticeSubsectionScreen({
   onBack,
   className,
   useContainer = true,
-}: PracticeSubsectionScreenProps) {
+}: Readonly<PracticeSubsectionScreenProps>) {
   const router = useRouter()
   const [search, setSearch] = useState('')
   const normalizedSearch = search.trim() || undefined
@@ -71,6 +71,41 @@ export function PracticeSubsectionScreen({
     useContainer ? 'container space-y-6 py-10 max-w-2xl' : 'space-y-6 py-10',
     className
   )
+
+  let content: React.ReactNode
+
+  if (isError) {
+    content = (
+      <NoAccessCallout
+        title="Доступ ограничен"
+        description={
+          error instanceof Error
+            ? error.message
+            : 'Тренировки доступны только при активном доступе.'
+        }
+        ctaLabel="Выбрать курс"
+        ctaHref="/"
+      />
+    )
+  } else if ((isLoading || isFetching) && workouts.length === 0) {
+    content = <PracticeWorkoutsSkeleton />
+  } else if (workouts.length) {
+    content = (
+      <div className="grid gap-5">
+        {workouts.map(workout => (
+          <PracticeWorkoutCard
+            key={workout.id}
+            workout={workout}
+            favoriteControls={favoriteControls}
+          />
+        ))}
+      </div>
+    )
+  } else {
+    content = (
+      <PracticeEmptyState message="Нет тренировок для выбранного подраздела." />
+    )
+  }
 
   return (
     <div className={containerClasses}>
@@ -113,32 +148,7 @@ export function PracticeSubsectionScreen({
           </Badge>
         </div>
 
-        {isError ? (
-          <NoAccessCallout
-            title="Доступ ограничен"
-            description={
-              error instanceof Error
-                ? error.message
-                : 'Тренировки доступны только при активном доступе.'
-            }
-            ctaLabel="Выбрать курс"
-            ctaHref="/"
-          />
-        ) : (isLoading || isFetching) && workouts.length === 0 ? (
-          <PracticeWorkoutsSkeleton />
-        ) : workouts.length ? (
-          <div className="grid gap-5">
-            {workouts.map(workout => (
-              <PracticeWorkoutCard
-                key={workout.id}
-                workout={workout}
-                favoriteControls={favoriteControls}
-              />
-            ))}
-          </div>
-        ) : (
-          <PracticeEmptyState message="Нет тренировок для выбранного подраздела." />
-        )}
+        {content}
       </div>
     </div>
   )
@@ -151,10 +161,12 @@ type PracticeWorkoutsSkeletonProps = {
 export function PracticeWorkoutsSkeleton({
   items = 3,
 }: PracticeWorkoutsSkeletonProps = {}) {
+  const placeholders = Array.from({ length: items }, (_, index) => `skeleton-${index}`)
+
   return (
     <div className="space-y-4">
-      {Array.from({ length: items }).map((_, index) => (
-        <Card key={index} className="rounded-xl border-border/80 p-4">
+      {placeholders.map(key => (
+        <Card key={key} className="rounded-xl border-border/80 p-4">
           <CardContent className="space-y-4 p-0">
             <Skeleton className="h-5 w-2/3" />
             <Skeleton className="h-52 w-full" />
@@ -170,7 +182,7 @@ type EmptyStateProps = {
   message: string
 }
 
-export function PracticeEmptyState({ message }: EmptyStateProps) {
+export function PracticeEmptyState({ message }: Readonly<EmptyStateProps>) {
   return (
     <div className="rounded-xl border border-dashed border-border/60 p-6 text-center text-sm text-muted-foreground">
       {message}

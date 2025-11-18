@@ -9,5 +9,6 @@ export type PaidAccessState = {
   accessibleCourses: Array<{
     enrollment: UserCourseEnrollmentApi
     accessExpiresAt: string | null
+    setupCompleted: boolean
   }>
 }

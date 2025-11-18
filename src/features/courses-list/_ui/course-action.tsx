@@ -2,17 +2,16 @@
 import { Button } from '@/shared/ui/button'
 import Link from 'next/link'
 import { CourseId, CourseSlug } from '@/kernel/domain/course'
-import { type CourseAction } from '../_domain/types'
 import { useCourseAction } from '../_vm/use-course-action'
 import { Skeleton } from '@/shared/ui/skeleton/skeleton'
 
 export function CourseAction({
   courseId,
   courseSlug,
-}: {
+}: Readonly<{
   courseId: CourseId
   courseSlug: CourseSlug
-}) {
+}>) {
   const action = useCourseAction(courseId, courseSlug)
 
   if (action.type === 'pending') {
