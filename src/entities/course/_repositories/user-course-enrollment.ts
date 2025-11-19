@@ -66,12 +66,13 @@ export class UserCourseEnrollmentRepository {
     db: DbClient = this.defaultDb
   ): Promise<UserCourseEnrollment | null> {
     try {
-      const enrollment = await db.userCourseEnrollment.findUnique({
+      const enrollment = await db.userCourseEnrollment.findFirst({
         where: {
-          userId_courseId: {
-            userId,
-            courseId,
-          },
+          userId,
+          courseId,
+        },
+        orderBy: {
+          startDate: 'desc',
         },
         include: {
           course: {
@@ -203,6 +204,47 @@ export class UserCourseEnrollmentRepository {
     }
   }
 
+  async getEnrollmentsByIds(
+    ids: string[],
+    db: DbClient = this.defaultDb
+  ): Promise<UserCourseEnrollment[]> {
+    if (ids.length === 0) {
+      return []
+    }
+
+    try {
+      const enrollments = await db.userCourseEnrollment.findMany({
+        where: {
+          id: {
+            in: ids,
+          },
+        },
+        include: {
+          course: {
+            select: {
+              id: true,
+              slug: true,
+              title: true,
+              durationWeeks: true,
+              contentType: true,
+            },
+          },
+        },
+      })
+
+      return enrollments.map(enrollment =>
+        this.mapPrismaEnrollmentToDomain(enrollment)
+      )
+    } catch (error) {
+      logger.error({
+        msg: 'Error getting enrollments by ids',
+        ids,
+        error,
+      })
+      throw new Error('Failed to get enrollments by ids')
+    }
+  }
+
   async updateSelectedWorkoutDays(
     enrollmentId: string,
     selectedWorkoutDays: DayOfWeek[],
@@ -300,7 +342,6 @@ export class UserCourseEnrollmentRepository {
       where: { id: enrollmentId },
       data: {
         active: false,
-        selectedWorkoutDays: [],
       },
     })
   }

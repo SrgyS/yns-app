@@ -1,10 +1,8 @@
 import { cache } from 'react'
 import { server } from '@/app/server'
 import { SessionService } from '@/kernel/lib/next-auth/module'
-import {
-  GetActiveEnrollmentService,
-  GetUserEnrollmentsService,
-} from '@/entities/course/module'
+import { GetActiveEnrollmentService } from '@/entities/course/module'
+import { GetUserEnrollmentsService } from '@/features/course-enrollment/_services/get-user-enrollments'
 
 export type NavigationContext = {
   planUrl: string

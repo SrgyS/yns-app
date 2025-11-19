@@ -52,7 +52,7 @@ export class GrandCourseAccessService {
       adminId: command.adminId,
       id: generateId(),
       expiresAt: command.expiresAt ?? null,
-      enrollmentId: courseAccess?.enrollmentId ?? null,
+      enrollmentId: null,
       setupCompleted,
     }
 

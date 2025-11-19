@@ -8,13 +8,10 @@ import { z } from 'zod'
 import { CourseContentType, DayOfWeek } from '@prisma/client'
 import {
   GetCourseService,
-  GetCourseEnrollmentService,
-  GetUserEnrollmentsService,
   GetActiveEnrollmentService,
   GetUserWorkoutDaysService,
   UpdateWorkoutDaysService,
   ActivateEnrollmentService,
-  GetEnrollmentByCourseSlugService,
   GetEnrollmentByIdService,
 } from '@/entities/course/module'
 import { CreateUserCourseEnrollmentWithCourseAccessService } from './_services/create-user-course-enrollment-with-access'
@@ -22,6 +19,9 @@ import { CheckCourseAccessService } from '@/entities/user-access/module'
 import { UserAccessRepository } from '@/entities/user-access/_repository/user-access'
 import { GetAvailableWeeksService } from './_services/get-available-weeks'
 import { GetAccessibleEnrollmentsService } from './_services/get-accessible-enrollments'
+import { GetCourseEnrollmentService } from './_services/get-course-enrollment'
+import { GetUserEnrollmentsService } from './_services/get-user-enrollments'
+import { GetEnrollmentByCourseSlugService } from './_services/get-enrollment-by-course-slug'
 import { logger } from '@/shared/lib/logger'
 import type { PaidAccessState } from './_vm/paid-access-types'
 import { toUserCourseEnrollmentApi } from './_lib/map-user-course-enrollment'

@@ -205,6 +205,32 @@ export class UserDailyPlanRepository {
     }
   }
 
+  async deleteByEnrollment(
+    enrollmentId: string,
+    db: DbClient = this.defaultDb
+  ): Promise<number> {
+    try {
+      const result = await db.userDailyPlan.deleteMany({
+        where: { enrollmentId },
+      })
+
+      logger.info({
+        msg: 'Deleted user daily plans for enrollment',
+        enrollmentId,
+        deletedCount: result.count,
+      })
+
+      return result.count
+    } catch (error) {
+      logger.error({
+        msg: 'Error deleting user daily plans',
+        enrollmentId,
+        error,
+      })
+      throw new Error('Failed to delete user daily plans')
+    }
+  }
+
   /**
    * Возвращает агрегированную информацию по расписанию пользователя.
    *

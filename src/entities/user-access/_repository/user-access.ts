@@ -10,9 +10,7 @@ import {
 
 @injectable()
 export class UserAccessRepository {
-  constructor(
-    private readonly logHistory: LogUserAccessHistoryService
-  ) {}
+  constructor(private readonly logHistory: LogUserAccessHistoryService) {}
   async findUserCourseAccess(
     userId: UserId,
     courseId: CourseId,
@@ -30,6 +28,44 @@ export class UserAccessRepository {
     }
     const userAccess = this.dbUserAccessToUserAccess(userAccessDb)
     return userAccess
+  }
+
+  async findActiveAccessByCourse(
+    userId: UserId,
+    courseId: CourseId,
+    db: DbClient = dbClient
+  ): Promise<CourseUserAccess | undefined> {
+    const courseUserAccess = await db.userAccess.findFirst({
+      where: {
+        userId,
+        courseId,
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+
+    return courseUserAccess
+      ? this.dbUserAccessToUserAccess(courseUserAccess)
+      : undefined
+  }
+
+  async findActiveAccesses(
+    userId: UserId,
+    db: DbClient = dbClient
+  ): Promise<CourseUserAccess[]> {
+    const records = await db.userAccess.findMany({
+      where: {
+        userId,
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+
+    return records.map(record => this.dbUserAccessToUserAccess(record))
   }
 
   async findUserCoursesAccessMap(
@@ -75,41 +111,40 @@ export class UserAccessRepository {
   ): Promise<UserAccess> {
     const db = options?.db ?? dbClient
     const saved = await db.userAccess.upsert({
-        where: {
-          id: userAccess.id,
-        },
-        create: {
-          id: userAccess.id,
-          userId: userAccess.userId,
-          courseId: userAccess.courseId,
-          contentType: userAccess.contentType,
-          reason: userAccess.reason,
-          adminId: userAccess.adminId,
-          enrollmentId: userAccess.enrollmentId ?? null,
-          setupCompleted: userAccess.setupCompleted,
-          expiresAt: userAccess.expiresAt ?? null,
-        },
-        update: {
-          reason: userAccess.reason,
-          adminId: userAccess.adminId,
-          enrollmentId: userAccess.enrollmentId ?? null,
-          setupCompleted: userAccess.setupCompleted,
-          expiresAt: userAccess.expiresAt ?? null,
-        },
-      })
+      where: {
+        id: userAccess.id,
+      },
+      create: {
+        id: userAccess.id,
+        userId: userAccess.userId,
+        courseId: userAccess.courseId,
+        contentType: userAccess.contentType,
+        reason: userAccess.reason,
+        adminId: userAccess.adminId,
+        enrollmentId: userAccess.enrollmentId ?? null,
+        setupCompleted: userAccess.setupCompleted,
+        expiresAt: userAccess.expiresAt ?? null,
+      },
+      update: {
+        reason: userAccess.reason,
+        adminId: userAccess.adminId,
+        enrollmentId: userAccess.enrollmentId ?? null,
+        setupCompleted: userAccess.setupCompleted,
+        expiresAt: userAccess.expiresAt ?? null,
+      },
+    })
 
     await this.logHistory.log(
       {
         userAccessId: saved.id,
         action: options?.action ?? 'save',
         adminId: userAccess.adminId,
-        payload:
-          options?.payload ?? {
-            reason: saved.reason,
-            enrollmentId: saved.enrollmentId,
-            expiresAt: saved.expiresAt,
-            setupCompleted: saved.setupCompleted,
-          },
+        payload: options?.payload ?? {
+          reason: saved.reason,
+          enrollmentId: saved.enrollmentId,
+          expiresAt: saved.expiresAt,
+          setupCompleted: saved.setupCompleted,
+        },
       },
       db
     )

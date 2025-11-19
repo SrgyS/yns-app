@@ -23,7 +23,9 @@ import {
 
 const MemoizedDayTabs = memo(DayTabs)
 
-export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
+export function CalendarTabs({
+  courseSlug,
+}: Readonly<{ courseSlug: CourseSlug }>) {
   const today = useMemo(() => new Date(), [])
   const { data: session } = useAppSession()
   const { getEnrollmentByCourseSlug } = useCourseEnrollment()
@@ -185,8 +187,12 @@ export function CalendarTabs({ courseSlug }: { courseSlug: CourseSlug }) {
     return <div>Нет доступных тренировок</div>
   }
 
-  if (noProgram || !enrollment || !currentWeekIndex) {
+  if (noProgram || !enrollment) {
     return <div>Нет доступного курса</div>
+  }
+
+  if (!currentWeekIndex) {
+    return <div>Нет доступных тренировок</div>
   }
 
   const courseId = enrollment.courseId

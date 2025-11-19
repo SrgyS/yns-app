@@ -6,14 +6,11 @@ import { GetCoursesForAccessCheckService } from './_services/get-courses-for-acc
 import { UserDailyPlanRepository } from './_repositories/user-daily-plan'
 import { UserCourseEnrollmentRepository } from './_repositories/user-course-enrollment'
 import { CreateUserCourseEnrollmentService } from './_services/create-user-course-enrollment'
-import { GetCourseEnrollmentService } from './_services/get-course-enrollment'
-import { GetUserEnrollmentsService } from './_services/get-user-enrollments'
 import { GetActiveEnrollmentService } from './_services/get-active-enrollment'
 import { GetUserWorkoutDaysService } from './_services/get-user-workout-days'
 import { UpdateWorkoutDaysService } from './_services/update-selected-workout-days'
 import { GetEnrollmentByIdService } from './_services/get-enrollment-by-id'
 import { ActivateEnrollmentService } from './_services/activate-enrollment'
-import { GetEnrollmentByCourseSlugService } from './_services/get-enrollment-by-course-slug'
 
 export const CourseEntityModule = new ContainerModule(context => {
   const { bind } = context
@@ -24,27 +21,19 @@ export const CourseEntityModule = new ContainerModule(context => {
   bind(UserDailyPlanRepository).toSelf()
   bind(UserCourseEnrollmentRepository).toSelf()
   bind(CreateUserCourseEnrollmentService).toSelf()
-  bind(GetCourseEnrollmentService).toSelf()
-  bind(GetUserEnrollmentsService).toSelf()
   bind(GetActiveEnrollmentService).toSelf()
   bind(GetUserWorkoutDaysService).toSelf()
   bind(GetEnrollmentByIdService).toSelf()
   bind(UpdateWorkoutDaysService).toSelf()
   bind(ActivateEnrollmentService).toSelf()
-  bind(GetEnrollmentByCourseSlugService).toSelf()
 })
 
-export {
-  GetCoursesListService,
-  GetCourseService,
-  GetCoursesForAccessCheckService,
-  CreateUserCourseEnrollmentService,
-  GetCourseEnrollmentService,
-  GetUserEnrollmentsService,
-  GetActiveEnrollmentService,
-  GetUserWorkoutDaysService,
-  GetEnrollmentByIdService,
-  UpdateWorkoutDaysService,
-  ActivateEnrollmentService,
-  GetEnrollmentByCourseSlugService,
-}
+export { GetCoursesListService } from './_services/get-courses-list'
+export { GetCourseService } from './_services/get-course'
+export { GetCoursesForAccessCheckService } from './_services/get-courses-for-access-check'
+export { CreateUserCourseEnrollmentService } from './_services/create-user-course-enrollment'
+export { GetActiveEnrollmentService } from './_services/get-active-enrollment'
+export { GetUserWorkoutDaysService } from './_services/get-user-workout-days'
+export { GetEnrollmentByIdService } from './_services/get-enrollment-by-id'
+export { UpdateWorkoutDaysService } from './_services/update-selected-workout-days'
+export { ActivateEnrollmentService } from './_services/activate-enrollment'
