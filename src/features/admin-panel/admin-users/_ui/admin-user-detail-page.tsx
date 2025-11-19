@@ -145,36 +145,42 @@ export function AdminUserDetailPage({ userId }: Readonly<{ userId: string }>) {
               disabled={!viewerPermissions.canGrantAccess}
             />
           </div>
-          <Tabs defaultValue="accesses" className="space-y-4 w-fit">
-            <div className="overflow-x-auto">
-              <TabsList className="bg-transparent border-b p-0 gap-6 rounded-none">
-                {tabs.map(tab => (
-                  <TabsTrigger
-                    key={tab.value}
-                    value={tab.value}
-                    className="relative max-w-fit rounded-none border-none px-4 pb-3 pt-2 text-sm font-medium shadow-none data-[state=active]:shadow-none after:absolute after:-bottom-px after:left-0 after:right-0 after:h-[3px] after:bg-transparent data-[state=active]:after:bg-primary data-[state=active]:after:z-10"
-                  >
-                    {tab.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </div>
-            <TabsContent value="accesses">
-              <AccessesTable data={data.accesses} />
-            </TabsContent>
-            <TabsContent value="payments">
-              <PaymentsTable
-                data={viewerPermissions.canViewPayments ? data.payments : []}
-              />
-            </TabsContent>
-            <TabsContent value="activity">
-              <Card>
-                <CardContent className="py-10 text-center text-sm text-muted-foreground">
-                  История активности пока недоступна
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+          <div className="w-full overflow-x-auto md:overflow-visible">
+            <Tabs defaultValue="accesses" className="space-y-4 w-full min-w-0">
+              <div className="overflow-x-auto">
+                <TabsList className="bg-transparent border-b p-0 gap-6 rounded-none">
+                  {tabs.map(tab => (
+                    <TabsTrigger
+                      key={tab.value}
+                      value={tab.value}
+                      className="relative max-w-fit rounded-none border-none px-4 pb-3 pt-2 text-sm font-medium shadow-none data-[state=active]:shadow-none after:absolute after:-bottom-px after:left-0 after:right-0 after:h-[3px] after:bg-transparent data-[state=active]:after:bg-primary data-[state=active]:after:z-10"
+                    >
+                      {tab.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
+              <TabsContent value="accesses">
+                <AccessesTable
+                  data={data.accesses}
+                  userId={userId}
+                  canEditAccess={viewerPermissions.canEditAccess}
+                />
+              </TabsContent>
+              <TabsContent value="payments">
+                <PaymentsTable
+                  data={viewerPermissions.canViewPayments ? data.payments : []}
+                />
+              </TabsContent>
+              <TabsContent value="activity">
+                <Card>
+                  <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                    История активности пока недоступна
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
         </section>
       </div>
     </>

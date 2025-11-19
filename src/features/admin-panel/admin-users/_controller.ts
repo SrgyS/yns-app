@@ -14,6 +14,7 @@ import { StaffPermissionFlags } from './_domain/staff-permission'
 import { StaffPermissionService } from './_services/staff-permissions'
 import { AdminUserDetail } from './_domain/user-detail'
 import { GrantCourseAccessService } from './_services/grant-course-access'
+import { CloseUserAccessService } from './_services/close-user-access'
 
 const avatarFilterSchema = z.enum(['any', 'with', 'without'])
 
@@ -36,13 +37,18 @@ const grantAccessInput = z.object({
   expiresAt: z.string().datetime().optional().nullable(),
 })
 
+const closeAccessInput = z.object({
+  accessId: z.string().min(1),
+})
+
 @injectable()
 export class AdminUsersController extends Controller {
   constructor(
     private readonly listAdminUsersService: ListAdminUsersService,
     private readonly staffPermissionService: StaffPermissionService,
     private readonly getAdminUserDetailService: GetAdminUserDetailService,
-    private readonly grantCourseAccessService: GrantCourseAccessService
+    private readonly grantCourseAccessService: GrantCourseAccessService,
+    private readonly closeUserAccessService: CloseUserAccessService
   ) {
     super()
   }
@@ -106,9 +112,24 @@ export class AdminUsersController extends Controller {
 
               return { success: true }
             }),
+          close: authorizedProcedure
+            .input(closeAccessInput)
+            .mutation(async ({ ctx, input }) => {
+              this.ensureAdmin(ctx.session.user.role)
+              const permissions = await this.getPermissions(ctx)
+              if (!permissions.canEditAccess) {
+                throw new TRPCError({ code: 'FORBIDDEN' })
+              }
+
+              await this.closeUserAccessService.exec({
+                accessId: input.accessId,
+                adminId: ctx.session.user.id,
+              })
+
+              return { success: true }
+            }),
         }),
       }),
     }),
   })
 }
-

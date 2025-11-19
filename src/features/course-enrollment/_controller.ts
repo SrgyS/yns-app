@@ -44,20 +44,20 @@ async function logTiming<T>(label: string, action: () => Promise<T>): Promise<T>
 @injectable()
 export class CourseEnrollmentController extends Controller {
   constructor(
-    private CreateUserCourseEnrollmentWithCourseAccessService: CreateUserCourseEnrollmentWithCourseAccessService,
-    private getCourseService: GetCourseService,
-    private getCourseEnrollmentService: GetCourseEnrollmentService,
-    private getUserEnrollmentsService: GetUserEnrollmentsService,
-    private getActiveEnrollmentService: GetActiveEnrollmentService,
-    private getUserWorkoutDaysService: GetUserWorkoutDaysService,
-    private updateWorkoutDaysService: UpdateWorkoutDaysService,
-    private activateEnrollmentService: ActivateEnrollmentService,
-    private getEnrollmentByCourseSlugService: GetEnrollmentByCourseSlugService,
-    private getEnrollmentByIdService: GetEnrollmentByIdService,
-    private getAvailableWeeksService: GetAvailableWeeksService,
-    private getAccessibleEnrollmentsService: GetAccessibleEnrollmentsService,
-    private checkCourseAccessService: CheckCourseAccessService,
-    private userAccessRepository: UserAccessRepository
+    private readonly CreateUserCourseEnrollmentWithCourseAccessService: CreateUserCourseEnrollmentWithCourseAccessService,
+    private readonly getCourseService: GetCourseService,
+    private readonly getCourseEnrollmentService: GetCourseEnrollmentService,
+    private readonly getUserEnrollmentsService: GetUserEnrollmentsService,
+    private readonly getActiveEnrollmentService: GetActiveEnrollmentService,
+    private readonly getUserWorkoutDaysService: GetUserWorkoutDaysService,
+    private readonly updateWorkoutDaysService: UpdateWorkoutDaysService,
+    private readonly activateEnrollmentService: ActivateEnrollmentService,
+    private readonly getEnrollmentByCourseSlugService: GetEnrollmentByCourseSlugService,
+    private readonly getEnrollmentByIdService: GetEnrollmentByIdService,
+    private readonly getAvailableWeeksService: GetAvailableWeeksService,
+    private readonly getAccessibleEnrollmentsService: GetAccessibleEnrollmentsService,
+    private readonly checkCourseAccessService: CheckCourseAccessService,
+    private readonly userAccessRepository: UserAccessRepository
   ) {
     super()
   }
@@ -138,10 +138,7 @@ export class CourseEnrollmentController extends Controller {
           const enrollment = await logTiming(
             'getCourseEnrollmentService.exec',
             () =>
-              this.getCourseEnrollmentService.exec(
-                input.userId,
-                input.courseId
-              )
+              this.getCourseEnrollmentService.exec(input.userId, input.courseId)
           )
           return enrollment
         }),
@@ -189,24 +186,27 @@ export class CourseEnrollmentController extends Controller {
             }
           }
 
-          const hasAccess = await logTiming('checkCourseAccessService.exec', () =>
-            this.checkCourseAccessService.exec({
-              userId: input.userId,
-              course: {
-                id: course.id,
-                product: course.product,
-                contentType: course.contentType,
-              },
-            })
+          const hasAccess = await logTiming(
+            'checkCourseAccessService.exec',
+            () =>
+              this.checkCourseAccessService.exec({
+                userId: input.userId,
+                course: {
+                  id: course.id,
+                  product: course.product,
+                  contentType: course.contentType,
+                },
+              })
           )
 
-          const enrollment =
-            await logTiming('getEnrollmentByCourseSlugService.exec', () =>
+          const enrollment = await logTiming(
+            'getEnrollmentByCourseSlugService.exec',
+            () =>
               this.getEnrollmentByCourseSlugService.exec(
                 input.userId,
                 input.courseSlug
               )
-            )
+          )
 
           const activeEnrollment = await logTiming(
             'getActiveEnrollmentService.exec',

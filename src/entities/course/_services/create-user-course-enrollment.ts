@@ -9,6 +9,7 @@ type CreateEnrollmentOptions = {
   reuseExistingEnrollment?: boolean
   existingEnrollment?: UserCourseEnrollment | null
   skipPlanGeneration?: boolean
+  forceNewEnrollment?: boolean
 }
 
 @injectable()
@@ -25,15 +26,17 @@ export class CreateUserCourseEnrollmentService {
     try {
       // Используем транзакцию для атомарного создания enrollment и userDailyPlan
       return await dbClient.$transaction(async tx => {
-        const existingEnrollment =
-          options.existingEnrollment ??
-          (await this.userCourseEnrollmentRepository.getEnrollment(
-            params.userId,
-            params.courseId,
-            tx
-          ))
+        const existingEnrollment = options.forceNewEnrollment
+          ? null
+          : options.existingEnrollment ??
+            (await this.userCourseEnrollmentRepository.getEnrollment(
+              params.userId,
+              params.courseId,
+              tx
+            ))
 
         const reuseExisting =
+          !options.forceNewEnrollment &&
           Boolean(options.reuseExistingEnrollment) &&
           Boolean(existingEnrollment)
 
@@ -42,14 +45,13 @@ export class CreateUserCourseEnrollmentService {
         const preserveExistingPlans =
           reuseExisting && params.courseContentType === 'SUBSCRIPTION'
 
-        const existingEnrollments =
+        const userEnrollments =
           await this.userCourseEnrollmentRepository.getUserEnrollments(
             params.userId,
             tx
           )
 
-        if (existingEnrollments.length > 0) {
-          // Деактивируем все предыдущие записи пользователя на курсы
+        if (userEnrollments.length > 0) {
           await this.userCourseEnrollmentRepository.deactivateUserEnrollments(
             params.userId,
             tx
@@ -108,6 +110,12 @@ export class CreateUserCourseEnrollmentService {
               title: newEnrollment.course.title,
             },
           }
+        }
+
+        if (!options.forceNewEnrollment && existingEnrollment && !preserveExistingPlans) {
+          await tx.userDailyPlan.deleteMany({
+            where: { enrollmentId: existingEnrollment.id },
+          })
         }
 
         if (!preserveExistingPlans && !skipPlanGeneration) {

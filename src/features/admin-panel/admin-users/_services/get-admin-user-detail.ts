@@ -56,6 +56,13 @@ export class GetAdminUserDetailService {
     const accessesDb = await dbClient.userAccess.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
+      include: {
+        history: {
+          where: { action: 'close' },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+      },
     })
 
     const courseIds = Array.from(
@@ -64,7 +71,7 @@ export class GetAdminUserDetailService {
     const adminIds = Array.from(
       new Set(
         accessesDb
-          .map(access => access.adminId)
+          .flatMap(access => [access.adminId, access.history[0]?.adminId])
           .filter((id): id is string => Boolean(id))
       )
     )
@@ -99,26 +106,37 @@ export class GetAdminUserDetailService {
 
     const adminMap = new Map(admins.map(admin => [admin.id, admin]))
 
-    const accesses: AdminUserAccess[] = accessesDb.map(access => ({
-      id: access.id,
-      courseId: access.courseId,
-      courseTitle:
-        courseMap.get(access.courseId)?.title ?? 'Без названия',
-      contentType:
-        courseMap.get(access.courseId)?.contentType ?? 'FIXED_COURSE',
-      reason: access.reason,
-      adminName: access.adminId
-        ? adminMap.get(access.adminId)?.name ?? null
-        : null,
-      adminEmail: access.adminId
-        ? adminMap.get(access.adminId)?.email ?? null
-        : null,
-      createdAt: formatISO(access.createdAt),
-      startsAt: access.createdAt ? formatISO(access.createdAt) : null,
-      expiresAt: access.expiresAt ? formatISO(access.expiresAt) : null,
-      isActive:
-        !access.expiresAt || access.expiresAt.getTime() > Date.now(),
-    }))
+    const accesses: AdminUserAccess[] = accessesDb.map(access => {
+      const closedEntry = access.history[0]
+      const closedAdmin = closedEntry?.adminId
+        ? adminMap.get(closedEntry.adminId)
+        : null
+
+      return {
+        id: access.id,
+        courseId: access.courseId,
+        courseTitle:
+          courseMap.get(access.courseId)?.title ?? 'Без названия',
+        contentType:
+          courseMap.get(access.courseId)?.contentType ?? 'FIXED_COURSE',
+        reason: access.reason,
+        adminName: access.adminId
+          ? adminMap.get(access.adminId)?.name ?? null
+          : null,
+        adminEmail: access.adminId
+          ? adminMap.get(access.adminId)?.email ?? null
+          : null,
+        closedByName: closedAdmin?.name ?? null,
+        closedAt: closedEntry?.createdAt
+          ? formatISO(closedEntry.createdAt)
+          : null,
+        createdAt: formatISO(access.createdAt),
+        startsAt: access.createdAt ? formatISO(access.createdAt) : null,
+        expiresAt: access.expiresAt ? formatISO(access.expiresAt) : null,
+        isActive:
+          !access.expiresAt || access.expiresAt.getTime() > Date.now(),
+      }
+    })
 
     const paymentsDb = await dbClient.payment.findMany({
       where: { userId },

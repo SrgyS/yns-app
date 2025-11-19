@@ -7,12 +7,19 @@ import { CourseSlug } from '@/kernel/domain/course'
 @injectable()
 export class GetEnrollmentByCourseSlugService {
   constructor(
-    private userCourseEnrollmentRepository: UserCourseEnrollmentRepository
+    private readonly userCourseEnrollmentRepository: UserCourseEnrollmentRepository
   ) {}
 
-  async exec(userId: string, courseSlug: CourseSlug): Promise<UserCourseEnrollment | null> {
+  async exec(
+    userId: string,
+    courseSlug: CourseSlug
+  ): Promise<UserCourseEnrollment | null> {
     try {
-      const enrollment = await this.userCourseEnrollmentRepository.getEnrollmentByUserIdAndCourseSlug(userId, courseSlug)
+      const enrollment =
+        await this.userCourseEnrollmentRepository.getEnrollmentByUserIdAndCourseSlug(
+          userId,
+          courseSlug
+        )
 
       if (enrollment) {
         logger.info({

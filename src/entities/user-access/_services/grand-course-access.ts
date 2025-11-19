@@ -50,12 +50,14 @@ export class GrandCourseAccessService {
       contentType: command.contentType,
       reason: command.reason,
       adminId: command.adminId,
-      id: courseAccess?.id ?? generateId(),
+      id: generateId(),
       expiresAt: command.expiresAt ?? null,
       enrollmentId: courseAccess?.enrollmentId ?? null,
       setupCompleted,
     }
 
-    return this.userAccessRepository.save(newCourseAccess)
+    return this.userAccessRepository.save(newCourseAccess, {
+      action: 'grant',
+    })
   }
 }

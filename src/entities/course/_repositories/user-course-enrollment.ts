@@ -292,6 +292,19 @@ export class UserCourseEnrollmentRepository {
     }
   }
 
+  async updateEnrollmentOnClose(
+    enrollmentId: string,
+    db: DbClient = this.defaultDb
+  ) {
+    await db.userCourseEnrollment.update({
+      where: { id: enrollmentId },
+      data: {
+        active: false,
+        selectedWorkoutDays: [],
+      },
+    })
+  }
+
   async activateEnrollment(
     enrollmentId: string,
     db: DbClient = this.defaultDb
