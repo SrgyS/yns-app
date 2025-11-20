@@ -2,7 +2,7 @@
 
 import { adminUsersApi } from '../_api'
 
-export function useAdminPermissions() {
+export function useAdminAbility() {
   return adminUsersApi.admin.user.permissions.useQuery(undefined, {
     staleTime: 30 * 1000,
   })

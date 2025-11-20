@@ -23,19 +23,19 @@ export const checkAbilityProcedure = <Ability>({
   check,
   create,
 }: {
-  check?: (ability: Ability) => boolean
-  create: (session: SharedSession) => Ability
+  check?: (ability: Ability) => boolean | Promise<boolean>
+  create: (session: SharedSession) => Ability | Promise<Ability>
 }) =>
-  authorizedProcedure.use(({ ctx, next }) => {
-    const ability = create(ctx.session)
+  authorizedProcedure.use(async ({ ctx, next }) => {
+    const ability = await create(ctx.session)
 
-    if (check && !check(ability)) {
+    if (check && !(await check(ability))) {
       throw new TRPCError({ code: 'FORBIDDEN' })
     }
 
     return next({
       ctx: {
-        session: ctx.session,
+        ...ctx,
         ability,
       },
     })
@@ -47,19 +47,22 @@ export const checkAbilityInputProcedure = <Ability, Input extends ZodTypeAny>({
   input,
 }: {
   input: Input
-  check: (ability: Ability, input: z.infer<Input>) => boolean
-  create: (session: SharedSession) => Ability
+  check: (
+    ability: Ability,
+    input: z.infer<Input>
+  ) => boolean | Promise<boolean>
+  create: (session: SharedSession) => Ability | Promise<Ability>
 }) =>
-  authorizedProcedure.input(input).use(({ ctx, next, input: params }) => {
-    const ability = create(ctx.session)
+  authorizedProcedure.input(input).use(async ({ ctx, next, input: params }) => {
+    const ability = await create(ctx.session)
 
-    if (!check(ability, params)) {
+    if (!(await check(ability, params))) {
       throw new TRPCError({ code: 'FORBIDDEN' })
     }
 
     return next({
       ctx: {
-        session: ctx.session,
+        ...ctx,
         ability,
       },
     })

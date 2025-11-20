@@ -5,16 +5,17 @@ import { TRPCError } from '@trpc/server'
 
 import {
   Controller,
-  authorizedProcedure,
+  checkAbilityProcedure,
   router,
 } from '@/kernel/lib/trpc/module'
 import { ListAdminUsersService } from './_services/users-list'
 import { GetAdminUserDetailService } from './_services/get-admin-user-detail'
-import { StaffPermissionFlags } from './_domain/staff-permission'
 import { StaffPermissionService } from './_services/staff-permissions'
 import { AdminUserDetail } from './_domain/user-detail'
 import { GrantCourseAccessService } from './_services/grant-course-access'
 import { CloseUserAccessService } from './_services/close-user-access'
+import { createAdminAbility } from './_domain/ability'
+import { SharedSession } from '@/kernel/domain/user'
 
 const avatarFilterSchema = z.enum(['any', 'with', 'without'])
 
@@ -53,56 +54,59 @@ export class AdminUsersController extends Controller {
     super()
   }
 
-  private ensureAdmin(role: string) {
+  private ensureAdmin(role: ROLE) {
     if (role !== 'ADMIN' && role !== 'STAFF') {
       throw new TRPCError({ code: 'FORBIDDEN' })
     }
   }
 
-  private async getPermissions(ctx: {
-    session: { user: { id: string; role: ROLE } }
-  }): Promise<StaffPermissionFlags> {
-    return this.staffPermissionService.getPermissionsForUser({
-      id: ctx.session.user.id,
-      role: ctx.session.user.role,
-    })
+  private createAbility = async (session: SharedSession) => {
+    const role = session.user.role as ROLE
+    this.ensureAdmin(role)
+
+    const permissions = await this.staffPermissionService.getPermissionsForUser(
+      {
+        id: session.user.id,
+        role,
+      }
+    )
+
+    return createAdminAbility(session, permissions)
   }
 
   public router = router({
     admin: router({
       user: router({
-        list: authorizedProcedure
+        list: checkAbilityProcedure({
+          create: this.createAbility,
+          check: ability => ability.canManageUsers,
+        })
           .input(listInputSchema)
-          .query(async ({ ctx, input }) => {
-            this.ensureAdmin(ctx.session.user.role)
-            await this.getPermissions(ctx)
-
+          .query(async ({ input }) => {
             return this.listAdminUsersService.exec({
               ...input,
               hasAvatar: input.hasAvatar ?? 'any',
             })
           }),
-        permissions: authorizedProcedure.query(async ({ ctx }) => {
-          this.ensureAdmin(ctx.session.user.role)
-          return this.getPermissions(ctx)
-        }),
-        detail: authorizedProcedure
+        permissions: checkAbilityProcedure({
+          create: this.createAbility,
+          check: ability => ability.canVisitAdminPanel,
+        }).query(({ ctx }) => ctx.ability),
+        detail: checkAbilityProcedure({
+          create: this.createAbility,
+          check: ability => ability.canManageUsers,
+        })
           .input(z.object({ userId: z.string().min(1) }))
-          .query(async ({ ctx, input }): Promise<AdminUserDetail> => {
-            this.ensureAdmin(ctx.session.user.role)
-            await this.getPermissions(ctx)
+          .query(async ({ input }): Promise<AdminUserDetail> => {
             return this.getAdminUserDetailService.exec(input.userId)
           }),
         access: router({
-          grant: authorizedProcedure
+          grant: checkAbilityProcedure({
+            create: this.createAbility,
+            check: ability => ability.canGrantAccess,
+          })
             .input(grantAccessInput)
             .mutation(async ({ ctx, input }) => {
-              this.ensureAdmin(ctx.session.user.role)
-              const permissions = await this.getPermissions(ctx)
-              if (!permissions.canGrantAccess) {
-                throw new TRPCError({ code: 'FORBIDDEN' })
-              }
-
               await this.grantCourseAccessService.exec({
                 userId: input.userId,
                 courseId: input.courseId,
@@ -112,15 +116,12 @@ export class AdminUsersController extends Controller {
 
               return { success: true }
             }),
-          close: authorizedProcedure
+          close: checkAbilityProcedure({
+            create: this.createAbility,
+            check: ability => ability.canEditAccess,
+          })
             .input(closeAccessInput)
             .mutation(async ({ ctx, input }) => {
-              this.ensureAdmin(ctx.session.user.role)
-              const permissions = await this.getPermissions(ctx)
-              if (!permissions.canEditAccess) {
-                throw new TRPCError({ code: 'FORBIDDEN' })
-              }
-
               await this.closeUserAccessService.exec({
                 accessId: input.accessId,
                 adminId: ctx.session.user.id,

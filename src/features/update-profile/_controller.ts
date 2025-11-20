@@ -19,8 +19,8 @@ const withUseridSchema = z.object({
 @injectable()
 export class UpdateProfileController extends Controller {
   constructor(
-    private updateProfileService: UpdateProfileService,
-    private getProfileService: GetProfileService
+    private readonly updateProfileService: UpdateProfileService,
+    private readonly getProfileService: GetProfileService
   ) {
     super()
   }

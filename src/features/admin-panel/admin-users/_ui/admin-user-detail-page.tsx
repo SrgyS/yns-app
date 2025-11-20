@@ -1,7 +1,7 @@
 'use client'
 
 import { useAdminUserDetail } from '../_hooks/use-admin-user-detail'
-import { useAdminPermissions } from '../_hooks/use-admin-permissions'
+import { useAdminAbility } from '../_hooks/use-admin-ability'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent } from '@/shared/ui/card'
@@ -23,8 +23,8 @@ const ROLE_LABELS: Record<string, string> = {
 
 export function AdminUserDetailPage({ userId }: Readonly<{ userId: string }>) {
   const { data, isLoading } = useAdminUserDetail(userId)
-  const { data: viewerPermissions, isLoading: isPermissionsLoading } =
-    useAdminPermissions()
+  const { data: viewerAbility, isLoading: isPermissionsLoading } =
+    useAdminAbility()
 
   if (isLoading || isPermissionsLoading) {
     return (
@@ -34,7 +34,7 @@ export function AdminUserDetailPage({ userId }: Readonly<{ userId: string }>) {
     )
   }
 
-  if (!viewerPermissions?.canManageUsers) {
+  if (!viewerAbility?.canManageUsers) {
     return (
       <div className="flex min-h-[400px] items-center justify-center text-muted-foreground">
         Нет прав для просмотра этой страницы
@@ -116,7 +116,7 @@ export function AdminUserDetailPage({ userId }: Readonly<{ userId: string }>) {
                 <Button
                   variant="outline"
                   className="w-full cursor-pointer"
-                  disabled={!viewerPermissions.canLoginAsUser}
+                  disabled={!viewerAbility.canLoginAsUser}
                 >
                   Войти под пользователем
                 </Button>
@@ -142,7 +142,7 @@ export function AdminUserDetailPage({ userId }: Readonly<{ userId: string }>) {
             </div>
             <GrantAccessDialog
               userId={userId}
-              disabled={!viewerPermissions.canGrantAccess}
+              disabled={!viewerAbility.canGrantAccess}
             />
           </div>
           <div className="w-full overflow-x-auto md:overflow-visible">
@@ -164,12 +164,12 @@ export function AdminUserDetailPage({ userId }: Readonly<{ userId: string }>) {
                 <AccessesTable
                   data={data.accesses}
                   userId={userId}
-                  canEditAccess={viewerPermissions.canEditAccess}
+                  canEditAccess={viewerAbility.canEditAccess}
                 />
               </TabsContent>
               <TabsContent value="payments">
                 <PaymentsTable
-                  data={viewerPermissions.canViewPayments ? data.payments : []}
+                  data={viewerAbility.canViewPayments ? data.payments : []}
                 />
               </TabsContent>
               <TabsContent value="activity">
