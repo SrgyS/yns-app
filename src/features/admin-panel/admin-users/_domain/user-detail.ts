@@ -26,6 +26,8 @@ export type AdminUserAccess = {
   reason: UserAccessReason
   adminName: string | null
   adminEmail: string | null
+  closedByName: string | null
+  closedAt: string | null
   createdAt: string
   startsAt: string | null
   expiresAt: string | null

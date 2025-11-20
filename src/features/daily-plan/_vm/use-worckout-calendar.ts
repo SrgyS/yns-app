@@ -88,6 +88,6 @@ export function useWorkoutCalendar(
     currentWeekIndex,
     weeksMeta,
     maxDayNumber: maxDayNumberFromApi,
-    isLoading: Boolean(isSubscription) ? availableWeeksQuery.isLoading : false,
+    isLoading: isSubscription ? availableWeeksQuery.isLoading : false,
   }
 }

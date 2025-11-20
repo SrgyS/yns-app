@@ -13,7 +13,7 @@ import { CourseSlug } from '@/kernel/domain/course'
 import { Course, UserCourseEnrollment, UserDailyPlan } from '@/entities/course'
 import { GetCourseService } from '@/entities/course/_services/get-course'
 import { CheckCourseAccessService } from '@/entities/user-access/module'
-import { GetEnrollmentByCourseSlugService } from '@/entities/course/_services/get-enrollment-by-course-slug'
+import { GetEnrollmentByCourseSlugService } from '@/features/course-enrollment/_services/get-enrollment-by-course-slug'
 import {
   AvailableWeeksResult,
   GetAvailableWeeksService,

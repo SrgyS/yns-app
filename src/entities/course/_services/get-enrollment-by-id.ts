@@ -6,12 +6,15 @@ import { logger } from '@/shared/lib/logger'
 @injectable()
 export class GetEnrollmentByIdService {
   constructor(
-    private userCourseEnrollmentRepository: UserCourseEnrollmentRepository
+    private readonly userCourseEnrollmentRepository: UserCourseEnrollmentRepository
   ) {}
 
   async exec(enrollmentId: string): Promise<UserCourseEnrollment | null> {
     try {
-      const enrollment = await this.userCourseEnrollmentRepository.getEnrollmentById(enrollmentId)
+      const enrollment =
+        await this.userCourseEnrollmentRepository.getEnrollmentById(
+          enrollmentId
+        )
 
       if (enrollment) {
         logger.info({

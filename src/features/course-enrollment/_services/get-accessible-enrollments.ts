@@ -1,10 +1,8 @@
 import { injectable } from 'inversify'
 
 import type { CourseAccessInfo, UserCourseEnrollment } from '@/entities/course'
-import {
-  GetCoursesForAccessCheckService,
-  GetUserEnrollmentsService,
-} from '@/entities/course/module'
+import { GetCoursesForAccessCheckService } from '@/entities/course/module'
+import { GetUserEnrollmentsService } from './get-user-enrollments'
 import { UserAccessRepository } from '@/entities/user-access/_repository/user-access'
 import { logger } from '@/shared/lib/logger'
 

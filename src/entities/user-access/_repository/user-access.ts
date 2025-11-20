@@ -3,9 +3,14 @@ import { dbClient, type DbClient } from '@/shared/lib/db'
 import { ContentType, CourseId } from '@/kernel/domain/course'
 import { UserId } from '@/kernel/domain/user'
 import { CourseUserAccess, UserAccess } from '../_domain/type'
+import {
+  LogUserAccessHistoryService,
+  type UserAccessHistoryAction,
+} from '../_services/log-user-access-history'
 
 @injectable()
 export class UserAccessRepository {
+  constructor(private readonly logHistory: LogUserAccessHistoryService) {}
   async findUserCourseAccess(
     userId: UserId,
     courseId: CourseId,
@@ -25,6 +30,44 @@ export class UserAccessRepository {
     return userAccess
   }
 
+  async findActiveAccessByCourse(
+    userId: UserId,
+    courseId: CourseId,
+    db: DbClient = dbClient
+  ): Promise<CourseUserAccess | undefined> {
+    const courseUserAccess = await db.userAccess.findFirst({
+      where: {
+        userId,
+        courseId,
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+
+    return courseUserAccess
+      ? this.dbUserAccessToUserAccess(courseUserAccess)
+      : undefined
+  }
+
+  async findActiveAccesses(
+    userId: UserId,
+    db: DbClient = dbClient
+  ): Promise<CourseUserAccess[]> {
+    const records = await db.userAccess.findMany({
+      where: {
+        userId,
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+
+    return records.map(record => this.dbUserAccessToUserAccess(record))
+  }
+
   async findUserCoursesAccessMap(
     userId: UserId,
     courseIds: CourseId[],
@@ -41,47 +84,77 @@ export class UserAccessRepository {
           in: courseIds,
         },
       },
+      orderBy: {
+        createdAt: 'desc',
+      },
     })
 
     const result = new Map<string, CourseUserAccess>()
     for (const access of userAccesses) {
       const key = this.getAccessMapKey(access.courseId, access.contentType)
+      if (result.has(key)) {
+        continue
+      }
       result.set(key, this.dbUserAccessToUserAccess(access))
     }
 
     return result
   }
 
-  async save(userAccess: UserAccess, db: DbClient = dbClient): Promise<UserAccess> {
-    return this.dbUserAccessToUserAccess(
-      await db.userAccess.upsert({
-        where: {
-          userId_courseId_contentType: {
-            userId: userAccess.userId,
-            courseId: userAccess.courseId,
-            contentType: userAccess.contentType,
-          },
+  async save(
+    userAccess: UserAccess,
+    options?: {
+      db?: DbClient
+      action?: UserAccessHistoryAction
+      payload?: Record<string, unknown>
+    }
+  ): Promise<UserAccess> {
+    const db = options?.db ?? dbClient
+    const saved = await db.userAccess.upsert({
+      where: {
+        id: userAccess.id,
+      },
+      create: {
+        id: userAccess.id,
+        userId: userAccess.userId,
+        courseId: userAccess.courseId,
+        contentType: userAccess.contentType,
+        reason: userAccess.reason,
+        adminId: userAccess.adminId,
+        enrollmentId: userAccess.enrollmentId ?? null,
+        setupCompleted: userAccess.setupCompleted,
+        expiresAt: userAccess.expiresAt ?? null,
+      },
+      update: {
+        reason: userAccess.reason,
+        adminId: userAccess.adminId,
+        enrollmentId: userAccess.enrollmentId ?? null,
+        setupCompleted: userAccess.setupCompleted,
+        expiresAt: userAccess.expiresAt ?? null,
+      },
+    })
+
+    await this.logHistory.log(
+      {
+        userAccessId: saved.id,
+        action: options?.action ?? 'save',
+        adminId: userAccess.adminId,
+        payload: options?.payload ?? {
+          reason: saved.reason,
+          enrollmentId: saved.enrollmentId,
+          expiresAt: saved.expiresAt,
+          setupCompleted: saved.setupCompleted,
         },
-        create: {
-          id: userAccess.id,
-          userId: userAccess.userId,
-          courseId: userAccess.courseId,
-          contentType: userAccess.contentType,
-          reason: userAccess.reason,
-          adminId: userAccess.adminId,
-          enrollmentId: userAccess.enrollmentId ?? null,
-          setupCompleted: userAccess.setupCompleted,
-          expiresAt: userAccess.expiresAt ?? null,
-        },
-        update: {
-          reason: userAccess.reason,
-          adminId: userAccess.adminId,
-          enrollmentId: userAccess.enrollmentId ?? null,
-          setupCompleted: userAccess.setupCompleted,
-          expiresAt: userAccess.expiresAt ?? null,
-        },
-      })
+      },
+      db
     )
+
+    return this.dbUserAccessToUserAccess(saved)
+  }
+
+  async findById(id: string, db: DbClient = dbClient) {
+    const record = await db.userAccess.findUnique({ where: { id } })
+    return record ? this.dbUserAccessToUserAccess(record) : undefined
   }
 
   private dbUserAccessToUserAccess(
@@ -116,6 +189,9 @@ export class UserAccessRepository {
         userId,
         courseId,
         contentType,
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     })
   }

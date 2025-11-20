@@ -56,13 +56,17 @@ export class GrantCourseAccessService {
         },
         {
           skipPlanGeneration: true,
+          forceNewEnrollment: true,
         }
       )
 
-    await this.userAccessRepository.save({
-      ...savedAccess,
-      enrollmentId: enrollment.id,
-      setupCompleted: false,
-    })
+    await this.userAccessRepository.save(
+      {
+        ...savedAccess,
+        enrollmentId: enrollment.id,
+        setupCompleted: false,
+      },
+      { action: 'grant' }
+    )
   }
 }

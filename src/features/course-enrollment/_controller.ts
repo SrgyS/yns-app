@@ -8,13 +8,10 @@ import { z } from 'zod'
 import { CourseContentType, DayOfWeek } from '@prisma/client'
 import {
   GetCourseService,
-  GetCourseEnrollmentService,
-  GetUserEnrollmentsService,
   GetActiveEnrollmentService,
   GetUserWorkoutDaysService,
   UpdateWorkoutDaysService,
   ActivateEnrollmentService,
-  GetEnrollmentByCourseSlugService,
   GetEnrollmentByIdService,
 } from '@/entities/course/module'
 import { CreateUserCourseEnrollmentWithCourseAccessService } from './_services/create-user-course-enrollment-with-access'
@@ -22,6 +19,9 @@ import { CheckCourseAccessService } from '@/entities/user-access/module'
 import { UserAccessRepository } from '@/entities/user-access/_repository/user-access'
 import { GetAvailableWeeksService } from './_services/get-available-weeks'
 import { GetAccessibleEnrollmentsService } from './_services/get-accessible-enrollments'
+import { GetCourseEnrollmentService } from './_services/get-course-enrollment'
+import { GetUserEnrollmentsService } from './_services/get-user-enrollments'
+import { GetEnrollmentByCourseSlugService } from './_services/get-enrollment-by-course-slug'
 import { logger } from '@/shared/lib/logger'
 import type { PaidAccessState } from './_vm/paid-access-types'
 import { toUserCourseEnrollmentApi } from './_lib/map-user-course-enrollment'
@@ -44,20 +44,20 @@ async function logTiming<T>(label: string, action: () => Promise<T>): Promise<T>
 @injectable()
 export class CourseEnrollmentController extends Controller {
   constructor(
-    private CreateUserCourseEnrollmentWithCourseAccessService: CreateUserCourseEnrollmentWithCourseAccessService,
-    private getCourseService: GetCourseService,
-    private getCourseEnrollmentService: GetCourseEnrollmentService,
-    private getUserEnrollmentsService: GetUserEnrollmentsService,
-    private getActiveEnrollmentService: GetActiveEnrollmentService,
-    private getUserWorkoutDaysService: GetUserWorkoutDaysService,
-    private updateWorkoutDaysService: UpdateWorkoutDaysService,
-    private activateEnrollmentService: ActivateEnrollmentService,
-    private getEnrollmentByCourseSlugService: GetEnrollmentByCourseSlugService,
-    private getEnrollmentByIdService: GetEnrollmentByIdService,
-    private getAvailableWeeksService: GetAvailableWeeksService,
-    private getAccessibleEnrollmentsService: GetAccessibleEnrollmentsService,
-    private checkCourseAccessService: CheckCourseAccessService,
-    private userAccessRepository: UserAccessRepository
+    private readonly CreateUserCourseEnrollmentWithCourseAccessService: CreateUserCourseEnrollmentWithCourseAccessService,
+    private readonly getCourseService: GetCourseService,
+    private readonly getCourseEnrollmentService: GetCourseEnrollmentService,
+    private readonly getUserEnrollmentsService: GetUserEnrollmentsService,
+    private readonly getActiveEnrollmentService: GetActiveEnrollmentService,
+    private readonly getUserWorkoutDaysService: GetUserWorkoutDaysService,
+    private readonly updateWorkoutDaysService: UpdateWorkoutDaysService,
+    private readonly activateEnrollmentService: ActivateEnrollmentService,
+    private readonly getEnrollmentByCourseSlugService: GetEnrollmentByCourseSlugService,
+    private readonly getEnrollmentByIdService: GetEnrollmentByIdService,
+    private readonly getAvailableWeeksService: GetAvailableWeeksService,
+    private readonly getAccessibleEnrollmentsService: GetAccessibleEnrollmentsService,
+    private readonly checkCourseAccessService: CheckCourseAccessService,
+    private readonly userAccessRepository: UserAccessRepository
   ) {
     super()
   }
@@ -138,10 +138,7 @@ export class CourseEnrollmentController extends Controller {
           const enrollment = await logTiming(
             'getCourseEnrollmentService.exec',
             () =>
-              this.getCourseEnrollmentService.exec(
-                input.userId,
-                input.courseId
-              )
+              this.getCourseEnrollmentService.exec(input.userId, input.courseId)
           )
           return enrollment
         }),
@@ -189,24 +186,27 @@ export class CourseEnrollmentController extends Controller {
             }
           }
 
-          const hasAccess = await logTiming('checkCourseAccessService.exec', () =>
-            this.checkCourseAccessService.exec({
-              userId: input.userId,
-              course: {
-                id: course.id,
-                product: course.product,
-                contentType: course.contentType,
-              },
-            })
+          const hasAccess = await logTiming(
+            'checkCourseAccessService.exec',
+            () =>
+              this.checkCourseAccessService.exec({
+                userId: input.userId,
+                course: {
+                  id: course.id,
+                  product: course.product,
+                  contentType: course.contentType,
+                },
+              })
           )
 
-          const enrollment =
-            await logTiming('getEnrollmentByCourseSlugService.exec', () =>
+          const enrollment = await logTiming(
+            'getEnrollmentByCourseSlugService.exec',
+            () =>
               this.getEnrollmentByCourseSlugService.exec(
                 input.userId,
                 input.courseSlug
               )
-            )
+          )
 
           const activeEnrollment = await logTiming(
             'getActiveEnrollmentService.exec',
