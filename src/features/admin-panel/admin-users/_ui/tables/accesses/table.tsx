@@ -38,6 +38,7 @@ export function AccessesTable({
       canEditAccess,
       isClosing: status === 'pending',
       closingAccessId: status === 'pending' ? variables?.accessId : undefined,
+      userId,
       onClose: (accessId: string) => {
         if (!canEditAccess) {
           return
@@ -45,7 +46,7 @@ export function AccessesTable({
         mutate({ accessId })
       },
     }),
-    [canEditAccess, status, variables?.accessId, mutate]
+    [canEditAccess, status, variables?.accessId, mutate, userId]
   )
 
   return (

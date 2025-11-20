@@ -9,6 +9,7 @@ import { GetAdminUserDetailService } from './_services/get-admin-user-detail'
 import { StaffPermissionService } from './_services/staff-permissions'
 import { GrantCourseAccessService } from './_services/grant-course-access'
 import { CloseUserAccessService } from './_services/close-user-access'
+import { ExtendUserAccessService } from './_services/extend-user-access'
 
 export const AdminUsersModule = new ContainerModule(context => {
   const { bind } = context
@@ -20,6 +21,7 @@ export const AdminUsersModule = new ContainerModule(context => {
   bind(StaffPermissionService).toSelf()
   bind(GrantCourseAccessService).toSelf()
   bind(CloseUserAccessService).toSelf()
+  bind(ExtendUserAccessService).toSelf()
   bind(Controller).to(AdminUsersController)
 })
 

@@ -14,6 +14,7 @@ import { StaffPermissionService } from './_services/staff-permissions'
 import { AdminUserDetail } from './_domain/user-detail'
 import { GrantCourseAccessService } from './_services/grant-course-access'
 import { CloseUserAccessService } from './_services/close-user-access'
+import { ExtendUserAccessService } from './_services/extend-user-access'
 import { createAdminAbility } from './_domain/ability'
 import { SharedSession } from '@/kernel/domain/user'
 
@@ -42,6 +43,11 @@ const closeAccessInput = z.object({
   accessId: z.string().min(1),
 })
 
+const extendAccessInput = z.object({
+  accessId: z.string().min(1),
+  expiresAt: z.string().datetime(),
+})
+
 @injectable()
 export class AdminUsersController extends Controller {
   constructor(
@@ -49,7 +55,8 @@ export class AdminUsersController extends Controller {
     private readonly staffPermissionService: StaffPermissionService,
     private readonly getAdminUserDetailService: GetAdminUserDetailService,
     private readonly grantCourseAccessService: GrantCourseAccessService,
-    private readonly closeUserAccessService: CloseUserAccessService
+    private readonly closeUserAccessService: CloseUserAccessService,
+    private readonly extendUserAccessService: ExtendUserAccessService
   ) {
     super()
   }
@@ -125,6 +132,20 @@ export class AdminUsersController extends Controller {
               await this.closeUserAccessService.exec({
                 accessId: input.accessId,
                 adminId: ctx.session.user.id,
+              })
+
+              return { success: true }
+            }),
+          extend: checkAbilityProcedure({
+            create: this.createAbility,
+            check: ability => ability.canEditAccess,
+          })
+            .input(extendAccessInput)
+            .mutation(async ({ ctx, input }) => {
+              await this.extendUserAccessService.exec({
+                accessId: input.accessId,
+                adminId: ctx.session.user.id,
+                expiresAt: new Date(input.expiresAt),
               })
 
               return { success: true }

@@ -6,6 +6,7 @@ type AccessesTableContextValue = {
   canEditAccess: boolean
   isClosing: boolean
   closingAccessId?: string
+  userId: string
   onClose(accessId: string): void
 }
 
