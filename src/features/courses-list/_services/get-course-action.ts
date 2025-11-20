@@ -1,18 +1,18 @@
 import { GetCourseService } from '@/entities/course/module'
-import { injectable } from "inversify";
-import { CourseAction } from "../_domain/types";
-import { CourseId } from "@/kernel/domain/course";
-import { TRPCError } from "@trpc/server";
-import { UserId } from "@/kernel/domain/user";
+import { injectable } from 'inversify'
+import { CourseAction } from '../_domain/types'
+import { CourseId } from '@/kernel/domain/course'
+import { TRPCError } from '@trpc/server'
+import { UserId } from '@/kernel/domain/user'
 import { CheckCourseAccessService } from '@/entities/user-access/module'
-import { getCourseAction } from "../_domain/methods";
+import { getCourseAction } from '../_domain/methods'
 import { UserCourseEnrollmentRepository } from '@/entities/course/_repositories/user-course-enrollment'
 import { UserAccessRepository } from '@/entities/user-access/_repository/user-access'
 
 type Query = {
-  courseId: CourseId;
-  userId?: UserId;
-};
+  courseId: CourseId
+  userId?: UserId
+}
 
 @injectable()
 export class GetCourseActionService {
@@ -20,16 +20,16 @@ export class GetCourseActionService {
     private getCourseService: GetCourseService,
     private getCourseAccess: CheckCourseAccessService,
     private userCourseEnrollmentRepository: UserCourseEnrollmentRepository,
-    private userAccessRepository: UserAccessRepository,
+    private userAccessRepository: UserAccessRepository
   ) {}
   async exec(query: Query): Promise<CourseAction> {
-    const course = await this.getCourseService.exec({ id: query.courseId });
+    const course = await this.getCourseService.exec({ id: query.courseId })
 
     if (!course) {
       throw new TRPCError({
-        code: "BAD_REQUEST",
+        code: 'BAD_REQUEST',
         message: `Course ${query.courseId} not found`,
-      });
+      })
     }
 
     const courseAccess = query.userId
@@ -41,7 +41,7 @@ export class GetCourseActionService {
           },
           userId: query.userId,
         })
-      : false;
+      : false
 
     let needsSetup = false
 
@@ -49,7 +49,7 @@ export class GetCourseActionService {
       const userAccess = await this.userAccessRepository.findUserCourseAccess(
         query.userId,
         course.id,
-        course.contentType,
+        course.contentType
       )
 
       if (course.contentType !== 'SUBSCRIPTION') {
@@ -58,10 +58,11 @@ export class GetCourseActionService {
         if (!setupCompleted) {
           needsSetup = true
         } else {
-          const enrollment = await this.userCourseEnrollmentRepository.getEnrollment(
-            query.userId,
-            course.id,
-          )
+          const enrollment =
+            await this.userCourseEnrollmentRepository.getEnrollment(
+              query.userId,
+              course.id
+            )
 
           if (!enrollment || enrollment.selectedWorkoutDays.length === 0) {
             needsSetup = true
@@ -74,6 +75,6 @@ export class GetCourseActionService {
       course,
       hasAccess: courseAccess,
       needsSetup,
-    });
+    })
   }
 }

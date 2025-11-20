@@ -45,20 +45,19 @@ export class GrantCourseAccessService {
       expiresAt: params.expiresAt ?? null,
     })
 
-    const enrollment =
-      await this.createUserCourseEnrollmentService.exec(
-        {
-          userId: params.userId,
-          courseId: course.id,
-          courseContentType: course.contentType,
-          startDate: new Date(),
-          selectedWorkoutDays: [],
-        },
-        {
-          skipPlanGeneration: true,
-          forceNewEnrollment: true,
-        }
-      )
+    const enrollment = await this.createUserCourseEnrollmentService.exec(
+      {
+        userId: params.userId,
+        courseId: course.id,
+        courseContentType: course.contentType,
+        startDate: new Date(),
+        selectedWorkoutDays: [],
+      },
+      {
+        skipPlanGeneration: true,
+        forceNewEnrollment: true,
+      }
+    )
 
     await this.userAccessRepository.save(
       {

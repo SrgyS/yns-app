@@ -3,7 +3,7 @@ import { invalidateCacheGroup, CACHE_GROUPS } from './cache-invalidation'
 
 export const useNavigationWithCache = () => {
   const router = useRouter()
-  
+
   const navigateWithCacheInvalidation = async (
     path: string,
     cacheGroups: Array<keyof typeof CACHE_GROUPS> = []
@@ -12,10 +12,10 @@ export const useNavigationWithCache = () => {
     for (const group of cacheGroups) {
       await invalidateCacheGroup(group)
     }
-    
+
     // Переходим на указанный путь
     router.push(path)
   }
-  
+
   return { navigateWithCacheInvalidation }
 }

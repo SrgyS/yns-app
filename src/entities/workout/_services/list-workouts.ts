@@ -1,8 +1,5 @@
 import { injectable } from 'inversify'
-import {
-  WorkoutSection,
-  WorkoutSubsection,
-} from '@prisma/client'
+import { WorkoutSection, WorkoutSubsection } from '@prisma/client'
 import { Workout } from '../_domain/types'
 import { WorkoutRepository } from '../_repositories/workout'
 import { logger } from '@/shared/lib/logger'

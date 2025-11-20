@@ -13,23 +13,23 @@ export function ProviderButton({ provider }: { provider: ClientSafeProvider }) {
   const searchParams = useSearchParams()
 
   const callBackUrl = searchParams.get('callbackUrl')
-const getIcon = (provider: ClientSafeProvider) => {
-  switch (provider.id) {
-    case 'github':
-      return <Github className="mr-2 h-4 w-4" />
-    case 'google':
-      return <Globe className="mr-2 h-4 w-4" />
-    default:
-      return null
+  const getIcon = (provider: ClientSafeProvider) => {
+    switch (provider.id) {
+      case 'github':
+        return <Github className="mr-2 h-4 w-4" />
+      case 'google':
+        return <Globe className="mr-2 h-4 w-4" />
+      default:
+        return null
+    }
   }
-}
 
-const oauthSignIn = () => {
-  setIsLoading(true)
-  signIn(provider.id, {
-    callbackUrl: callBackUrl || DEAFAULT_LOGIN_REDIRECT,
-  })
-}
+  const oauthSignIn = () => {
+    setIsLoading(true)
+    signIn(provider.id, {
+      callbackUrl: callBackUrl || DEAFAULT_LOGIN_REDIRECT,
+    })
+  }
 
   return (
     <Button

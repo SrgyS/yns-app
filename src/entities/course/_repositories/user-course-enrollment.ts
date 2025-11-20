@@ -1,10 +1,7 @@
 import { injectable } from 'inversify'
 import { dbClient } from '@/shared/lib/db'
 import type { DbClient } from '@/shared/lib/db'
-import {
-  UserCourseEnrollment,
-  CreateUserCourseEnrollmentParams,
-} from '..'
+import { UserCourseEnrollment, CreateUserCourseEnrollmentParams } from '..'
 import { logger } from '@/shared/lib/logger'
 import {
   UserCourseEnrollment as PrismaUserCourseEnrollment,
@@ -14,7 +11,10 @@ import {
 
 const LOG_PREFIX = '[UserCourseEnrollmentRepository]'
 
-async function logTiming<T>(label: string, action: () => Promise<T>): Promise<T> {
+async function logTiming<T>(
+  label: string,
+  action: () => Promise<T>
+): Promise<T> {
   const start = Date.now()
   try {
     return await action()

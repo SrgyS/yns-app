@@ -28,12 +28,12 @@ export class CreateUserCourseEnrollmentService {
       return await dbClient.$transaction(async tx => {
         const existingEnrollment = options.forceNewEnrollment
           ? null
-          : options.existingEnrollment ??
+          : (options.existingEnrollment ??
             (await this.userCourseEnrollmentRepository.getEnrollment(
               params.userId,
               params.courseId,
               tx
-            ))
+            )))
 
         const reuseExisting =
           !options.forceNewEnrollment &&
@@ -112,7 +112,11 @@ export class CreateUserCourseEnrollmentService {
           }
         }
 
-        if (!options.forceNewEnrollment && existingEnrollment && !preserveExistingPlans) {
+        if (
+          !options.forceNewEnrollment &&
+          existingEnrollment &&
+          !preserveExistingPlans
+        ) {
           await tx.userDailyPlan.deleteMany({
             where: { enrollmentId: existingEnrollment.id },
           })

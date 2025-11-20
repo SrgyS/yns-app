@@ -1,119 +1,96 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Workout",
-    "description": "Схема для описания тренировки",
-    "type": "object",
-    "properties": {
-        "slug": {
-            "type": "string",
-            "description": "Уникальный идентификатор тренировки",
-            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
-            "readOnly": true
-        },
-        "title": {
-            "type": "string",
-            "description": "Название тренировки"
-        },
-        "type": {
-            "type": "string",
-            "enum": [
-                "WARMUP",
-                "POSTURE",
-                "STRENGTH",
-                "MOBILITY",
-                "CARDIO"
-            ],
-            "description": "Тип тренировки"
-        },
-        "difficulty": {
-            "type": "string",
-            "enum": [
-                "EASY",
-                "MEDIUM",
-                "HARD"
-            ],
-            "description": "Сложность тренировки"
-        },
-        "equipment": {
-            "type": "array",
-            "items": {
-                "type": "string"
-            },
-            "description": "Список необходимого инвентаря"
-        },
-        "description": {
-            "type": "string",
-            "description": "Описание тренировки",
-            "nullable": true
-        },
-        "videoId": {
-            "type": "string",
-            "description": "URL видео с тренировкой",
-            "nullable": true
-        },
-        "muscles": {
-            "type": "array",
-            "items": {
-                "type": "string",
-                "enum": [
-                    "LEGS",
-                    "GLUTES",
-                    "UPPER_BODY",
-                    "BACK",
-                    "PELVIC_FLOOR",
-                    "CORE"
-                ]
-            },
-            "description": "Список задействованных групп мышц"
-        },
-        "section": {
-            "type": "string",
-            "enum": [
-                "WARMUP",
-                "CORRECTION",
-                "STRENGTH",
-                "FUNCTIONAL",
-                "PAIN"
-            ],
-            "description": "Раздел тренировки"
-        },
-        "subsections": {
-            "type": "array",
-            "items": {
-                "type": "string",
-                "enum": [
-                    "UPPER_BODY",
-                    "LOWER_BODY",
-                    "FULL_BODY",
-                    "SPINE",
-                    "JOINT",
-                    "ANTI_EDEMA",
-                    "ANTI_TENSION",
-                    "PELVIC_FLOOR",
-                    "STRETCHING",
-                    "INERTIAL",
-                    "NECK",
-                    "FEET",
-                    "BACK",
-                    "ABDOMEN",
-                    "PELVIS_SPINE",
-                    "BREATHING",
-                    "ENERGY_BOOST",
-                    "PILATES",
-                    "PELVIC_HIP_JOINT"
-                ]
-            },
-            "description": "Подкатегории внутри раздела"
-        }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Workout",
+  "description": "Схема для описания тренировки",
+  "type": "object",
+  "properties": {
+    "slug": {
+      "type": "string",
+      "description": "Уникальный идентификатор тренировки",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "readOnly": true
     },
-    "required": [
-        "title",
-        "type",
-        "difficulty",
-        "equipment",
-        "muscles",
-        "section",
-        "subsections"
-    ],
-    "additionalProperties": false
+    "title": {
+      "type": "string",
+      "description": "Название тренировки"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["WARMUP", "POSTURE", "STRENGTH", "MOBILITY", "CARDIO"],
+      "description": "Тип тренировки"
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": ["EASY", "MEDIUM", "HARD"],
+      "description": "Сложность тренировки"
+    },
+    "equipment": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Список необходимого инвентаря"
+    },
+    "description": {
+      "type": "string",
+      "description": "Описание тренировки",
+      "nullable": true
+    },
+    "videoId": {
+      "type": "string",
+      "description": "URL видео с тренировкой",
+      "nullable": true
+    },
+    "muscles": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["LEGS", "GLUTES", "UPPER_BODY", "BACK", "PELVIC_FLOOR", "CORE"]
+      },
+      "description": "Список задействованных групп мышц"
+    },
+    "section": {
+      "type": "string",
+      "enum": ["WARMUP", "CORRECTION", "STRENGTH", "FUNCTIONAL", "PAIN"],
+      "description": "Раздел тренировки"
+    },
+    "subsections": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "UPPER_BODY",
+          "LOWER_BODY",
+          "FULL_BODY",
+          "SPINE",
+          "JOINT",
+          "ANTI_EDEMA",
+          "ANTI_TENSION",
+          "PELVIC_FLOOR",
+          "STRETCHING",
+          "INERTIAL",
+          "NECK",
+          "FEET",
+          "BACK",
+          "ABDOMEN",
+          "PELVIS_SPINE",
+          "BREATHING",
+          "ENERGY_BOOST",
+          "PILATES",
+          "PELVIC_HIP_JOINT"
+        ]
+      },
+      "description": "Подкатегории внутри раздела"
+    }
+  },
+  "required": [
+    "title",
+    "type",
+    "difficulty",
+    "equipment",
+    "muscles",
+    "section",
+    "subsections"
+  ],
+  "additionalProperties": false
 }

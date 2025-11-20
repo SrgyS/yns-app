@@ -1,5 +1,4 @@
-import { createApi } from "@/kernel/lib/trpc/client";
-import { CourseOrderController } from "./_controller";
+import { createApi } from '@/kernel/lib/trpc/client'
+import { CourseOrderController } from './_controller'
 
-export const courseOrderApi =
-  createApi<CourseOrderController["router"]>();
+export const courseOrderApi = createApi<CourseOrderController['router']>()

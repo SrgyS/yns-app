@@ -32,11 +32,12 @@ export class GetAdminUserDetailService {
       throw new Error('Пользователь не найден')
     }
 
-    const permissions =
-      await this.staffPermissionService.getPermissionsForUser({
+    const permissions = await this.staffPermissionService.getPermissionsForUser(
+      {
         id: user.id,
         role: user.role,
-      })
+      }
+    )
 
     const lastActivityAt =
       user.sessions[0]?.updatedAt ?? user.updatedAt ?? user.createdAt
@@ -88,9 +89,7 @@ export class GetAdminUserDetailService {
           })
         : []
 
-    const courseMap = new Map(
-      courses.map(course => [course.id, course])
-    )
+    const courseMap = new Map(courses.map(course => [course.id, course]))
 
     const admins =
       adminIds.length > 0
@@ -115,16 +114,15 @@ export class GetAdminUserDetailService {
       return {
         id: access.id,
         courseId: access.courseId,
-        courseTitle:
-          courseMap.get(access.courseId)?.title ?? 'Без названия',
+        courseTitle: courseMap.get(access.courseId)?.title ?? 'Без названия',
         contentType:
           courseMap.get(access.courseId)?.contentType ?? 'FIXED_COURSE',
         reason: access.reason,
         adminName: access.adminId
-          ? adminMap.get(access.adminId)?.name ?? null
+          ? (adminMap.get(access.adminId)?.name ?? null)
           : null,
         adminEmail: access.adminId
-          ? adminMap.get(access.adminId)?.email ?? null
+          ? (adminMap.get(access.adminId)?.email ?? null)
           : null,
         closedByName: closedAdmin?.name ?? null,
         closedAt: closedEntry?.createdAt
@@ -133,8 +131,7 @@ export class GetAdminUserDetailService {
         createdAt: formatISO(access.createdAt),
         startsAt: access.createdAt ? formatISO(access.createdAt) : null,
         expiresAt: access.expiresAt ? formatISO(access.expiresAt) : null,
-        isActive:
-          !access.expiresAt || access.expiresAt.getTime() > Date.now(),
+        isActive: !access.expiresAt || access.expiresAt.getTime() > Date.now(),
       }
     })
 

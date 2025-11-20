@@ -1,7 +1,6 @@
-import { injectable } from 'inversify';
-import { dbClient } from '@/shared/lib/db';
-import { VerificationToken } from '@/kernel/domain/verification-token';
-
+import { injectable } from 'inversify'
+import { dbClient } from '@/shared/lib/db'
+import { VerificationToken } from '@/kernel/domain/verification-token'
 
 @injectable()
 export class VerificationTokenService {

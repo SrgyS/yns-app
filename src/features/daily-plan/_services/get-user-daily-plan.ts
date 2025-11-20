@@ -11,7 +11,10 @@ import { logger } from '@/shared/lib/logger'
 
 const LOG_PREFIX = '[GetUserDailyPlanService]'
 
-async function logTiming<T>(label: string, action: () => Promise<T>): Promise<T> {
+async function logTiming<T>(
+  label: string,
+  action: () => Promise<T>
+): Promise<T> {
   const start = Date.now()
   try {
     return await action()

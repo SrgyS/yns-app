@@ -56,6 +56,8 @@ export class GetUserCoursesListService {
       })
     )
 
-    return userCourses.filter((item): item is UserCourseWithEnrollment => !!item)
+    return userCourses.filter(
+      (item): item is UserCourseWithEnrollment => !!item
+    )
   }
 }

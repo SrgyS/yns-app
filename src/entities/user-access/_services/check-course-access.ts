@@ -1,16 +1,16 @@
-import { injectable } from "inversify";
-import { UserAccessRepository } from "../_repository/user-access";
-import { UserId } from "@/kernel/domain/user";
-import { ContentType, CourseId, CourseProduct } from "@/kernel/domain/course";
+import { injectable } from 'inversify'
+import { UserAccessRepository } from '../_repository/user-access'
+import { UserId } from '@/kernel/domain/user'
+import { ContentType, CourseId, CourseProduct } from '@/kernel/domain/course'
 
 export type Query = {
-  userId: UserId;
+  userId: UserId
   course: {
-    id: CourseId;
-    product: CourseProduct;
-    contentType: ContentType;
-  };
-};
+    id: CourseId
+    product: CourseProduct
+    contentType: ContentType
+  }
+}
 
 @injectable()
 export class CheckCourseAccessService {

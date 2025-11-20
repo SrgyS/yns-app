@@ -1,5 +1,5 @@
-import { injectable } from "inversify";
-import { AdapterUser } from "next-auth/adapters";
+import { injectable } from 'inversify'
+import { AdapterUser } from 'next-auth/adapters'
 
 @injectable()
 export abstract class CreateUserService {

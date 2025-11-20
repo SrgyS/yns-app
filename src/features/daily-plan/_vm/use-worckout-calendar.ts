@@ -18,10 +18,8 @@ export function useWorkoutCalendar(
   )
 
   const totalWeeksFromApi = availableWeeksQuery.data?.totalWeeks ?? null
-  const availableWeeksFromApi =
-    availableWeeksQuery.data?.availableWeeks ?? null
-  const maxDayNumberFromApi =
-    availableWeeksQuery.data?.maxDayNumber ?? null
+  const availableWeeksFromApi = availableWeeksQuery.data?.availableWeeks ?? null
+  const maxDayNumberFromApi = availableWeeksQuery.data?.maxDayNumber ?? null
 
   const noProgram = !programStart
 
@@ -71,7 +69,10 @@ export function useWorkoutCalendar(
 
     const diff =
       (availableWeeksQuery.data?.currentWeekIndex ??
-        Math.ceil((today.getTime() - programStart.getTime()) / (7 * 24 * 60 * 60 * 1000))) || 1
+        Math.ceil(
+          (today.getTime() - programStart.getTime()) / (7 * 24 * 60 * 60 * 1000)
+        )) ||
+      1
 
     return Math.min(Math.max(diff, 1), totalWeeks)
   }, [

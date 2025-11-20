@@ -1,4 +1,4 @@
-import { DayOfWeek } from "@prisma/client";
+import { DayOfWeek } from '@prisma/client'
 
 export const DAY_LABELS: Record<DayOfWeek, string> = {
   MONDAY: 'пн',
@@ -8,4 +8,4 @@ export const DAY_LABELS: Record<DayOfWeek, string> = {
   FRIDAY: 'пт',
   SATURDAY: 'сб',
   SUNDAY: 'вс',
-};
+}

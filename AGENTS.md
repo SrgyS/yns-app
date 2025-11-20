@@ -1,6 +1,7 @@
 # Repository overview
 
 ## Tech stack
+
 - Next.js 15 App Router with TypeScript.
 - React Query for client-side caching; see `docs/caching-strategy.md` for the shared policy.
 - NextAuth for authentication, wired through Inversify container modules under `src/kernel/lib/next-auth`.
@@ -9,6 +10,7 @@
 - Tailwind-based styling with shadcn-style UI primitives defined in `src/shared/ui`.
 
 ## Directory layout
+
 - `src/app` – Next.js routing layer. Route groups `(public)`, `(private)`, `(auth)` share layout shells. `_providers/app-provider.tsx` composes React Query, Theme, NextAuth session, TRPC clients, and notifications. `server.ts` bootstraps the DI container that loads all domain/feature modules.
 - `src/features` – Feature-sliced UI/logic units (e.g., courses list, enrollment, profile). Each feature folder usually exposes React components plus an Inversify `module.ts` for server wiring.
 - `src/entities` – entities-level modules (course, user, workout, payment, etc.) containing domain-specific adapters, repositories, and shared TRPC controllers. These are registered in the server container via their respective `module.ts` files.
@@ -19,6 +21,7 @@
 - `tests` / `playwright` – Unit and e2e test setup; use `npm run test` for Jest and `npm run test:e2e` for Playwright after ensuring Prisma database is ready.
 
 ## Development tips
+
 - Prefer building new UI pieces inside `src/shared/ui` (for primitives) or feature folders; keep feature dependencies pointing "down" the FSD layers (`shared` → `entities` → `features` → `app`).
 - When adding server-side functionality, register bindings in the relevant `module.ts` so they are loaded by `createServer()` in `src/app/server.ts`.
 - Follow the caching strategy described in `docs/caching-strategy.md` when introducing new React Query hooks.

@@ -26,7 +26,11 @@ export default async function NewUserPage({
         </p>
       </div>
       <Separator />
-      <UpdateProfileForm userId={session.user.id} callbackUrl={callbackUrl} variant="onboarding" />
+      <UpdateProfileForm
+        userId={session.user.id}
+        callbackUrl={callbackUrl}
+        variant="onboarding"
+      />
     </main>
   )
 }

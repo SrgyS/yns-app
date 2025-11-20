@@ -15,7 +15,7 @@ export default async function EditProfilePage({
 
   const sessionService = server.get(SessionService)
   const session = await sessionService.get()
-  
+
   if (!session) {
     return redirect('/auth/sign-in')
   }
@@ -36,10 +36,7 @@ export default async function EditProfilePage({
       </div>
 
       <div className="bg-card rounded-lg border p-6">
-        <UpdateProfileForm 
-          userId={id} 
-          callbackUrl={`/profile/${id}`}
-        />
+        <UpdateProfileForm userId={id} callbackUrl={`/profile/${id}`} />
       </div>
     </main>
   )

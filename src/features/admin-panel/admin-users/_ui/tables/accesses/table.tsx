@@ -37,8 +37,7 @@ export function AccessesTable({
     () => ({
       canEditAccess,
       isClosing: status === 'pending',
-      closingAccessId:
-        status === 'pending' ? variables?.accessId : undefined,
+      closingAccessId: status === 'pending' ? variables?.accessId : undefined,
       onClose: (accessId: string) => {
         if (!canEditAccess) {
           return

@@ -12,13 +12,19 @@ interface UserCoursesListProps {
 
 export function UserCoursesList({ items }: UserCoursesListProps) {
   if (!items.length) {
-    return <div className="text-center py-4">У вас пока нет купленных курсов</div>
+    return (
+      <div className="text-center py-4">У вас пока нет купленных курсов</div>
+    )
   }
 
   return (
     <div className="space-y-4">
       {items.map(({ enrollment, course }) => (
-        <UserCourseItem course={course} enrollment={enrollment} key={enrollment.id} />
+        <UserCourseItem
+          course={course}
+          enrollment={enrollment}
+          key={enrollment.id}
+        />
       ))}
     </div>
   )

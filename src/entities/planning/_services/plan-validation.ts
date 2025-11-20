@@ -27,9 +27,11 @@ export class PlanValidationService {
     course: Pick<PrismaCourse, 'durationWeeks' | 'allowedWorkoutDaysPerWeek'>
   ): PlanRequirements {
     const totalDays = course.durationWeeks * 7
-    const allowed = course.allowedWorkoutDaysPerWeek && course.allowedWorkoutDaysPerWeek.length > 0
-      ? course.allowedWorkoutDaysPerWeek
-      : [5]
+    const allowed =
+      course.allowedWorkoutDaysPerWeek &&
+      course.allowedWorkoutDaysPerWeek.length > 0
+        ? course.allowedWorkoutDaysPerWeek
+        : [5]
     const maxWorkoutDaysPerWeek = Math.max(...allowed)
     const requiredMainWorkoutDays = maxWorkoutDaysPerWeek * course.durationWeeks
     const requiredWarmupOnlyDays = totalDays - requiredMainWorkoutDays
@@ -123,7 +125,9 @@ export class PlanValidationService {
       plan = mainWorkoutDays[normalizedIndex]
       newMainWorkoutIndex++
     } else {
-      throw new Error('No available plans to assign for user daily plan generation')
+      throw new Error(
+        'No available plans to assign for user daily plan generation'
+      )
     }
 
     return {

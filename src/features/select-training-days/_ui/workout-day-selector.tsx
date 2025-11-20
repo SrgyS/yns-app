@@ -34,11 +34,11 @@ export function WorkoutDaySelector({
   // Проверка, изменились ли выбранные дни
   const daysChanged = useMemo(() => {
     if (selectedDays.length !== initialSelectedDays.length) return true
-    
+
     // Сортируем массивы для корректного сравнения
     const sortedSelected = [...selectedDays].sort()
     const sortedInitial = [...initialSelectedDays].sort()
-    
+
     // Сравниваем каждый элемент
     return sortedSelected.some((day, index) => day !== sortedInitial[index])
   }, [selectedDays, initialSelectedDays])
@@ -71,7 +71,6 @@ export function WorkoutDaySelector({
 
   return (
     <div className="space-y-6 p-4 bg-card">
-
       <div className="flex flex-wrap justify-center gap-4">
         {Object.values(DayOfWeek).map(day => (
           <DayItem
@@ -90,10 +89,10 @@ export function WorkoutDaySelector({
         <Button
           onClick={handleSubmit}
           disabled={
-          disabled ||
-          selectedDays.length !== requiredDays ||
-          isLoading ||
-          !daysChanged // Добавляем проверку, изменились ли дни
+            disabled ||
+            selectedDays.length !== requiredDays ||
+            isLoading ||
+            !daysChanged // Добавляем проверку, изменились ли дни
           }
         >
           Продолжить

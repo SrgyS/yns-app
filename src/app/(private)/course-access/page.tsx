@@ -52,9 +52,7 @@ export default async function CourseAccessGatePage() {
     if (courseSlug) {
       let shouldRedirect = true
       if (!single.enrollment.active) {
-        const activateEnrollmentService = server.get(
-          ActivateEnrollmentService
-        )
+        const activateEnrollmentService = server.get(ActivateEnrollmentService)
         try {
           await activateEnrollmentService.exec(single.enrollment.id)
         } catch (error) {

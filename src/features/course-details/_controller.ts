@@ -5,9 +5,7 @@ import { z } from 'zod'
 
 @injectable()
 export class CourseDetailsController extends Controller {
-  constructor(
-    private courseDetailsService: GetCourseDetailsService
-  ) {
+  constructor(private courseDetailsService: GetCourseDetailsService) {
     super()
   }
 

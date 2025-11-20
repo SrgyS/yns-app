@@ -1,15 +1,15 @@
-import { injectable } from "inversify";
-import { PaymentRepository } from "../_repository/payment";
+import { injectable } from 'inversify'
+import { PaymentRepository } from '../_repository/payment'
 
-import { UserId } from "@/kernel/domain/user";
-import { generateId } from "@/shared/lib/id";
+import { UserId } from '@/kernel/domain/user'
+import { generateId } from '@/shared/lib/id'
 import { Payment, Product } from '../_domain/types'
 
 export type Command = {
-  userId: UserId;
-  userEmail: string;
-  products: Product[];
-};
+  userId: UserId
+  userEmail: string
+  products: Product[]
+}
 
 @injectable()
 export class CreatePaymentService {

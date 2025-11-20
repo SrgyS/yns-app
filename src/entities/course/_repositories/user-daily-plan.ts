@@ -1,7 +1,4 @@
-import {
-  DayOfWeek,
-  UserDailyPlan as PrismaUserDailyPlan,
-} from '@prisma/client'
+import { DayOfWeek, UserDailyPlan as PrismaUserDailyPlan } from '@prisma/client'
 import { dbClient } from '@/shared/lib/db'
 import type { DbClient } from '@/shared/lib/db'
 import {
@@ -14,7 +11,10 @@ import { PlanningRepository } from '../../planning'
 
 const LOG_PREFIX = '[UserDailyPlanRepository]'
 
-async function logTiming<T>(label: string, action: () => Promise<T>): Promise<T> {
+async function logTiming<T>(
+  label: string,
+  action: () => Promise<T>
+): Promise<T> {
   const start = Date.now()
   try {
     return await action()
@@ -50,8 +50,6 @@ export class UserDailyPlanRepository {
       mainWorkoutStepIndex: prismaUserDailyPlan.mainWorkoutStepIndex,
     }
   }
-
-
 
   async generateUserDailyPlansForEnrollment(
     enrollmentId: string,
@@ -92,11 +90,12 @@ export class UserDailyPlanRepository {
     db: DbClient = this.defaultDb
   ): Promise<UserDailyPlan[]> {
     try {
-      const result = await this.planningRepository.generateUserDailyPlansForWeek(
-        enrollmentId,
-        weekNumber,
-        db
-      )
+      const result =
+        await this.planningRepository.generateUserDailyPlansForWeek(
+          enrollmentId,
+          weekNumber,
+          db
+        )
 
       logger.info({
         msg: 'Generated user daily plans for week',
@@ -123,32 +122,28 @@ export class UserDailyPlanRepository {
   ): Promise<UserDailyPlan | null> {
     try {
       // Теперь нужно найти enrollment для пользователя и курса
-      const enrollment = await logTiming(
-        'userCourseEnrollment.findFirst',
-        () =>
-          db.userCourseEnrollment.findFirst({
-            where: {
-              userId: params.userId,
-              courseId: params.courseId,
-            },
-          })
+      const enrollment = await logTiming('userCourseEnrollment.findFirst', () =>
+        db.userCourseEnrollment.findFirst({
+          where: {
+            userId: params.userId,
+            courseId: params.courseId,
+          },
+        })
       )
 
       if (!enrollment) {
         return null
       }
 
-      const userDailyPlan = await logTiming(
-        'userDailyPlan.findUnique',
-        () =>
-          db.userDailyPlan.findUnique({
-            where: {
-              enrollmentId_dayNumberInCourse: {
-                enrollmentId: enrollment.id,
-                dayNumberInCourse: params.dayNumberInCourse,
-              },
+      const userDailyPlan = await logTiming('userDailyPlan.findUnique', () =>
+        db.userDailyPlan.findUnique({
+          where: {
+            enrollmentId_dayNumberInCourse: {
+              enrollmentId: enrollment.id,
+              dayNumberInCourse: params.dayNumberInCourse,
             },
-          })
+          },
+        })
       )
       return userDailyPlan ? this.toDomain(userDailyPlan) : null
     } catch (error) {
@@ -268,9 +263,7 @@ export class UserDailyPlanRepository {
         .map(item => item.weekNumber)
         .filter(week => week !== null) as number[]
 
-      const totalWeeks = distinctWeeks.length
-        ? Math.max(...distinctWeeks)
-        : 0
+      const totalWeeks = distinctWeeks.length ? Math.max(...distinctWeeks) : 0
 
       const dayAggregate = await db.userDailyPlan.aggregate({
         where: { enrollmentId },

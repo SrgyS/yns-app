@@ -1,4 +1,7 @@
-import { UserCourseEnrollment, UserCourseEnrollmentApi } from '@/entities/course'
+import {
+  UserCourseEnrollment,
+  UserCourseEnrollmentApi,
+} from '@/entities/course'
 import { UserCoursesList } from './user-courses-list'
 import { UserCourseWithEnrollment } from '../_services/get-user-courses-list'
 
@@ -6,7 +9,9 @@ interface UserCoursesSectionProps {
   courses: UserCourseWithEnrollment[]
 }
 
-function mapEnrollmentToClient(enrollment: UserCourseEnrollment): UserCourseEnrollmentApi {
+function mapEnrollmentToClient(
+  enrollment: UserCourseEnrollment
+): UserCourseEnrollmentApi {
   return {
     id: enrollment.id,
     userId: enrollment.userId,

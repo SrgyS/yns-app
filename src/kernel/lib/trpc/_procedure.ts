@@ -47,10 +47,7 @@ export const checkAbilityInputProcedure = <Ability, Input extends ZodTypeAny>({
   input,
 }: {
   input: Input
-  check: (
-    ability: Ability,
-    input: z.infer<Input>
-  ) => boolean | Promise<boolean>
+  check: (ability: Ability, input: z.infer<Input>) => boolean | Promise<boolean>
   create: (session: SharedSession) => Ability | Promise<Ability>
 }) =>
   authorizedProcedure.input(input).use(async ({ ctx, next, input: params }) => {

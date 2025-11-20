@@ -12,8 +12,11 @@ export class ActivateEnrollmentService {
   async exec(enrollmentId: string): Promise<UserCourseEnrollment> {
     try {
       // Сначала деактивируем все записи пользователя
-      const enrollment = await this.userCourseEnrollmentRepository.getEnrollmentById(enrollmentId)
-      
+      const enrollment =
+        await this.userCourseEnrollmentRepository.getEnrollmentById(
+          enrollmentId
+        )
+
       if (!enrollment) {
         logger.error({
           msg: 'Enrollment not found',
@@ -21,20 +24,25 @@ export class ActivateEnrollmentService {
         })
         throw new Error('Enrollment not found')
       }
-      
+
       // Деактивируем все записи пользователя
-      await this.userCourseEnrollmentRepository.deactivateUserEnrollments(enrollment.userId)
-      
+      await this.userCourseEnrollmentRepository.deactivateUserEnrollments(
+        enrollment.userId
+      )
+
       // Активируем выбранную запись
-      const activatedEnrollment = await this.userCourseEnrollmentRepository.activateEnrollment(enrollmentId)
-      
+      const activatedEnrollment =
+        await this.userCourseEnrollmentRepository.activateEnrollment(
+          enrollmentId
+        )
+
       logger.info({
         msg: 'Successfully activated enrollment',
         enrollmentId,
         userId: activatedEnrollment.userId,
         courseId: activatedEnrollment.courseId,
       })
-      
+
       return activatedEnrollment
     } catch (error) {
       logger.error({

@@ -1,19 +1,19 @@
-import { injectable } from "inversify";
-import { UserId } from "@/kernel/domain/user";
-import { ContentType, CourseId } from "@/kernel/domain/course";
-import { CourseAccessReason, CourseUserAccess } from "../_domain/type";
-import { UserAccessRepository } from "../_repository/user-access";
-import { TRPCError } from "@trpc/server";
-import { generateId } from "@/shared/lib/id";
+import { injectable } from 'inversify'
+import { UserId } from '@/kernel/domain/user'
+import { ContentType, CourseId } from '@/kernel/domain/course'
+import { CourseAccessReason, CourseUserAccess } from '../_domain/type'
+import { UserAccessRepository } from '../_repository/user-access'
+import { TRPCError } from '@trpc/server'
+import { generateId } from '@/shared/lib/id'
 
 type Command = {
-  userId: UserId;
-  courseId: CourseId;
-  reason: CourseAccessReason;
-  adminId?: UserId;
-  contentType: ContentType;
-  expiresAt?: Date | null;
-};
+  userId: UserId
+  courseId: CourseId
+  reason: CourseAccessReason
+  adminId?: UserId
+  contentType: ContentType
+  expiresAt?: Date | null
+}
 
 @injectable()
 export class GrandCourseAccessService {

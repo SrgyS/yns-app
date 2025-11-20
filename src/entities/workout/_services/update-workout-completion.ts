@@ -29,7 +29,6 @@ export class UpdateWorkoutCompletionService {
     stepIndex,
   }: UpdateWorkoutCompletionParams): Promise<void> {
     try {
-
       if (isCompleted) {
         await this.userWorkoutCompletionRepository.markWorkoutAsCompleted(
           userId,
@@ -37,14 +36,14 @@ export class UpdateWorkoutCompletionService {
           enrollmentId,
           workoutType,
           contentType,
-          stepIndex,
+          stepIndex
         )
       } else {
         await this.userWorkoutCompletionRepository.removeWorkoutCompletion(
           userId,
           enrollmentId,
           contentType,
-          stepIndex,
+          stepIndex
         )
       }
 

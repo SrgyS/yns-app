@@ -5,21 +5,22 @@ import { logger } from '@/shared/lib/logger'
 
 @injectable()
 export class GetWorkoutCompletionStatusService {
-  constructor(private userWorkoutCompletionRepository: UserWorkoutCompletionRepository) {}
-
+  constructor(
+    private userWorkoutCompletionRepository: UserWorkoutCompletionRepository
+  ) {}
 
   async exec(
     userId: string,
     enrollmentId: string,
     contentType: DailyContentType,
-    stepIndex: number,
+    stepIndex: number
   ): Promise<boolean> {
     try {
       return await this.userWorkoutCompletionRepository.getWorkoutCompletionStatus(
         userId,
         enrollmentId,
         contentType,
-        stepIndex,
+        stepIndex
       )
     } catch (error) {
       logger.error({
@@ -38,7 +39,7 @@ export class GetWorkoutCompletionStatusService {
     try {
       return await this.userWorkoutCompletionRepository.getUserCompletedWorkouts(
         userId,
-        enrollmentId,
+        enrollmentId
       )
     } catch (error) {
       logger.error({

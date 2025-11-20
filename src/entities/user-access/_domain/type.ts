@@ -1,4 +1,4 @@
-import { ContentType } from "@/kernel/domain/course"
+import { ContentType } from '@/kernel/domain/course'
 
 export type CourseAccessReason = 'paid' | 'free' | 'manual'
 

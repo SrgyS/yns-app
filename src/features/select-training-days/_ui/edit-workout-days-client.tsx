@@ -34,18 +34,20 @@ export function EditWorkoutDaysClient({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [targetDaysPerWeek, setTargetDaysPerWeek] = useState<number | null>(() => {
-    if (hasChoice) {
-      if (
-        initialSelectedDays.length > 0 &&
-        dayOptions.includes(initialSelectedDays.length)
-      ) {
-        return initialSelectedDays.length
+  const [targetDaysPerWeek, setTargetDaysPerWeek] = useState<number | null>(
+    () => {
+      if (hasChoice) {
+        if (
+          initialSelectedDays.length > 0 &&
+          dayOptions.includes(initialSelectedDays.length)
+        ) {
+          return initialSelectedDays.length
+        }
+        return null
       }
-      return null
+      return singleOptionValue
     }
-    return singleOptionValue
-  })
+  )
   const router = useRouter()
   const { updateWorkoutDays, isUpdating } = useUpdateWorkoutDays()
   const { data: session } = useAppSession()
@@ -58,7 +60,7 @@ export function EditWorkoutDaysClient({
   }
 
   const handleDaysSelection = async (days: DayOfWeek[]) => {
-    if (!targetDaysPerWeek|| days.length !== targetDaysPerWeek) {
+    if (!targetDaysPerWeek || days.length !== targetDaysPerWeek) {
       return
     }
     setSelectedDays(days)
@@ -82,22 +84,22 @@ export function EditWorkoutDaysClient({
           selectedWorkoutDays: selectedDays,
           keepProgress,
         })
-        
+
         // Инвалидируем весь кеш статусов выполнения тренировок
         await workoutUtils.getWorkoutCompletionStatus.invalidate()
-        
+
         // Инвалидируем кеш для getUserDailyPlan и getEnrollment
         await workoutUtils.getUserDailyPlan.invalidate()
         await courseEnrollmentUtils.course.getEnrollment.invalidate()
         // Добавляем инвалидацию getEnrollmentByCourseSlug
         await courseEnrollmentUtils.course.getEnrollmentByCourseSlug.invalidate()
-        
+
         // Если не сохраняем прогресс, очищаем стор
         if (!keepProgress) {
           // Очищаем стор с отметками о выполнении тренировок
           useWorkoutCompletionStore.setState({ completions: {} })
         } else {
-          // Если сохраняем прогресс, очищаем стор, 
+          // Если сохраняем прогресс, очищаем стор,
           // чтобы состояние подтянулось из актуальных шагов расписания
           useWorkoutCompletionStore.setState({ completions: {} })
         }
@@ -132,11 +134,13 @@ export function EditWorkoutDaysClient({
       </h2>
       {hasChoice ? (
         <p className="text-sm text-muted-foreground text-center">
-          Выберите новое количество тренировок в неделю, затем отметьте конкретные дни.
+          Выберите новое количество тренировок в неделю, затем отметьте
+          конкретные дни.
         </p>
       ) : (
         <p className="text-sm text-muted-foreground text-center">
-          Для этого курса предусмотрено {singleOptionValue ?? 0} тренировок в неделю.
+          Для этого курса предусмотрено {singleOptionValue ?? 0} тренировок в
+          неделю.
         </p>
       )}
       {hasChoice ? (
@@ -158,9 +162,7 @@ export function EditWorkoutDaysClient({
                 htmlFor={`edit-workouts-${option}`}
                 className="cursor-pointer select-none"
                 onClick={() =>
-                  handleModeChange(
-                    targetDaysPerWeek === option ? null : option
-                  )
+                  handleModeChange(targetDaysPerWeek === option ? null : option)
                 }
               >
                 {option} тренировки
@@ -169,7 +171,7 @@ export function EditWorkoutDaysClient({
           ))}
         </div>
       ) : null}
-      
+
       <WorkoutDaySelector
         key={targetDaysPerWeek ?? 'disabled'}
         onSelectDays={handleDaysSelection}
@@ -183,7 +185,7 @@ export function EditWorkoutDaysClient({
         disabled={!targetDaysPerWeek}
       />
 
-      <WorkoutProgressDialog 
+      <WorkoutProgressDialog
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         onSaveWithProgress={handleSaveWithProgress}

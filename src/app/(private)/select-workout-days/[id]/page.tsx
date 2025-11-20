@@ -22,7 +22,6 @@ export default async function SelectTrainingDays({
   const { id } = await params
   const courseId = id
 
-
   const course = await getCourseService.exec({ id: courseId })
 
   if (!course) {
@@ -31,7 +30,8 @@ export default async function SelectTrainingDays({
   }
 
   const allowedDayOptions =
-    course.allowedWorkoutDaysPerWeek && course.allowedWorkoutDaysPerWeek.length > 0
+    course.allowedWorkoutDaysPerWeek &&
+    course.allowedWorkoutDaysPerWeek.length > 0
       ? course.allowedWorkoutDaysPerWeek
       : [5]
 

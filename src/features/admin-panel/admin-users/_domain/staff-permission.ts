@@ -28,10 +28,7 @@ export const defaultStaffPermissions: StaffPermissionFlags = {
   canLoginAsUser: false,
 }
 
-export const defaultPermissionsByRole: Record<
-  ROLE,
-  StaffPermissionFlags
-> = {
+export const defaultPermissionsByRole: Record<ROLE, StaffPermissionFlags> = {
   ADMIN: defaultAdminPermissions,
   STAFF: defaultStaffPermissions,
   USER: {

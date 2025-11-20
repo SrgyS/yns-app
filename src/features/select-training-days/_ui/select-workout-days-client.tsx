@@ -70,7 +70,10 @@ export function SelectWorkoutDaysClient({
     } catch (error) {
       console.error('Error handling workout days:', error)
       // Проверяем, есть ли сообщение об ошибке
-      const errorMessage = error instanceof Error ? error.message : 'Не удалось создать запись на курс!'
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Не удалось создать запись на курс!'
       toast.error(errorMessage)
     } finally {
       setIsSubmitting(false)
@@ -118,7 +121,8 @@ export function SelectWorkoutDaysClient({
         </>
       ) : (
         <p className="text-sm text-muted-foreground text-center">
-          Для этого курса предусмотрено {singleOptionValue ?? 0} тренировок в неделю.
+          Для этого курса предусмотрено {singleOptionValue ?? 0} тренировок в
+          неделю.
         </p>
       )}
       <WorkoutDaySelector

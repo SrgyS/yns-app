@@ -179,9 +179,7 @@ export function useCourseEnrollment() {
   )
 
   const getAccessibleEnrollments = useCallback(
-    (
-      options?: Parameters<typeof getAccessibleEnrollmentsQuery>[1]
-    ) => {
+    (options?: Parameters<typeof getAccessibleEnrollmentsQuery>[1]) => {
       return getAccessibleEnrollmentsQuery(undefined, {
         ...CACHE_SETTINGS.FREQUENT_UPDATE,
         ...(options ?? {}),

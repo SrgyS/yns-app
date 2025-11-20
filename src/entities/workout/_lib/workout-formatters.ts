@@ -42,9 +42,7 @@ export function formatEquipmentList(
   return normalized.join(', ')
 }
 
-export function formatMuscleLabels(
-  muscles?: MuscleGroup[] | null
-): string[] {
+export function formatMuscleLabels(muscles?: MuscleGroup[] | null): string[] {
   if (!Array.isArray(muscles) || muscles.length === 0) {
     return []
   }

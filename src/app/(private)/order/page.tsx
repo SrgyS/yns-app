@@ -116,11 +116,10 @@
 //   )
 // }
 
+'use client'
 
-"use client";
-
-import { StartOrder } from "@/features/course-order/start-order";
-import { FullPageSpinner } from "@/shared/ui/full-page-spinner";
+import { StartOrder } from '@/features/course-order/start-order'
+import { FullPageSpinner } from '@/shared/ui/full-page-spinner'
 
 export default function Page() {
   return (
@@ -128,5 +127,5 @@ export default function Page() {
       <StartOrder />
       <FullPageSpinner isLoading></FullPageSpinner>
     </>
-  );
+  )
 }

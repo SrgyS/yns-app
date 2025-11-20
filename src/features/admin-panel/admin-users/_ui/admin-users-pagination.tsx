@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { Button } from '@/shared/ui/button'
 
@@ -8,8 +8,11 @@ type AdminUsersPaginationProps = {
   onChange: (page: number) => void
 }
 
-export function AdminUsersPagination({ page, pageCount, onChange }: AdminUsersPaginationProps) {
-
+export function AdminUsersPagination({
+  page,
+  pageCount,
+  onChange,
+}: AdminUsersPaginationProps) {
   const canPrev = page > 1
   const canNext = pageCount === 0 ? false : page < pageCount
 

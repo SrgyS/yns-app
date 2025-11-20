@@ -5,10 +5,7 @@ import { useTheme } from 'next-themes'
 import { Moon, Sun } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
 
-type ToggleThemeProps = Omit<
-  ComponentProps<typeof Button>,
-  'children'
->
+type ToggleThemeProps = Omit<ComponentProps<typeof Button>, 'children'>
 
 export function ToggleTheme({
   variant = 'ghost',

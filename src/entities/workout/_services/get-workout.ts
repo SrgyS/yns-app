@@ -15,7 +15,7 @@ export class GetWorkoutService {
         logger.info({
           msg: 'Successfully retrieved workout by id',
           id,
-          workoutId: workout.id,    
+          workoutId: workout.id,
         })
       }
 

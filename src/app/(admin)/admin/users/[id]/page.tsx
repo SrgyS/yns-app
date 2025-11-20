@@ -8,4 +8,3 @@ export default async function AdminUserPage({
   const { id } = await params
   return <AdminUserDetailPage userId={id} />
 }
-

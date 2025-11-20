@@ -6,7 +6,10 @@ import { ArrowLeft } from 'lucide-react'
 
 import { Badge } from '@/shared/ui/badge'
 import { NoAccessCallout } from '@/features/course-enrollment/_ui/no-access-callout'
-import { PracticeWorkoutsSkeleton, PracticeEmptyState } from './practice-subsection-screen'
+import {
+  PracticeWorkoutsSkeleton,
+  PracticeEmptyState,
+} from './practice-subsection-screen'
 import { PracticeWorkoutCard } from './practice-workout-card'
 import { useFavoriteWorkoutDetails } from '../_vm/use-favorite-workouts'
 import { useWorkoutFavorites } from '@/features/daily-plan/_vm/use-workout-favorites'
@@ -14,13 +17,8 @@ import { Button } from '@/shared/ui/button'
 
 export function FavoritePracticesScreen() {
   const router = useRouter()
-  const {
-    data,
-    isLoading,
-    isFetching,
-    isError,
-    error,
-  } = useFavoriteWorkoutDetails()
+  const { data, isLoading, isFetching, isError, error } =
+    useFavoriteWorkoutDetails()
 
   const workouts = useMemo(() => data ?? [], [data])
   const favoriteControls = useWorkoutFavorites()
@@ -32,7 +30,7 @@ export function FavoritePracticesScreen() {
   return (
     <div className="container max-w-[640px] space-y-6 py-10">
       <div className="flex items-center gap-3">
-       <Button
+        <Button
           type="button"
           onClick={handleBack}
           size="icon"

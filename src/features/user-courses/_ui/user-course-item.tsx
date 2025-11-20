@@ -46,15 +46,15 @@ export function UserCourseItem({ course, enrollment }: UserCourseItemProps) {
 
   // Обработчик для перехода к тренировкам с инвалидацией кеша
   const handleGoToWorkouts = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    
+    e.preventDefault()
+
     // Инвалидируем конкретные запросы вместо всего кеша
-    await courseEnrollmentUtils.course.getEnrollmentByCourseSlug.invalidate();
-    await workoutUtils.getUserDailyPlan.invalidate();
-    await courseEnrollmentUtils.course.getEnrollment.invalidate();
-    
+    await courseEnrollmentUtils.course.getEnrollmentByCourseSlug.invalidate()
+    await workoutUtils.getUserDailyPlan.invalidate()
+    await courseEnrollmentUtils.course.getEnrollment.invalidate()
+
     // Переходим на страницу тренировок
-    router.push(`/day/${course.slug}`);
+    router.push(`/day/${course.slug}`)
   }
 
   const startDateFormatted = format(
@@ -82,7 +82,7 @@ export function UserCourseItem({ course, enrollment }: UserCourseItemProps) {
                 С обратной связью
               </Badge>
             )}
-            <EditWorkoutDaysField enrollment={enrollment}/>
+            <EditWorkoutDaysField enrollment={enrollment} />
             {/* Добавляем информацию о днях тренировок */}
             {/* {enrollment.selectedWorkoutDays && enrollment.selectedWorkoutDays.length > 0 && (
               <div className="space-y-2 mt-4">
@@ -108,9 +108,7 @@ export function UserCourseItem({ course, enrollment }: UserCourseItemProps) {
       </CardContent>
       <CardFooter className="flex justify-between">
         {enrollment.active ? (
-          <Button onClick={handleGoToWorkouts}>
-            Перейти к тренировкам
-          </Button>
+          <Button onClick={handleGoToWorkouts}>Перейти к тренировкам</Button>
         ) : (
           <Button
             onClick={handleActivate}
@@ -118,7 +116,8 @@ export function UserCourseItem({ course, enrollment }: UserCourseItemProps) {
             variant="secondary"
           >
             <CheckCircle className="mr-2 h-4 w-4" />
-            <SmallSpinner isLoading={isActivating} /> Сделать курсом по умолчанию
+            <SmallSpinner isLoading={isActivating} /> Сделать курсом по
+            умолчанию
           </Button>
         )}
       </CardFooter>

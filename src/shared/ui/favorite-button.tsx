@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { useState, useCallback } from 'react'
 import { Heart } from 'lucide-react'
@@ -33,7 +33,9 @@ export function FavoriteButton({
     }
   }, [disabled, isLoading, isPending, onToggle])
 
-  const ariaLabel = isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'
+  const ariaLabel = isFavorite
+    ? 'Удалить из избранного'
+    : 'Добавить в избранное'
   const isDisabled = disabled || isLoading || isPending
 
   return (

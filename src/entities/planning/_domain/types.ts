@@ -15,18 +15,14 @@ export interface Planning {
 /**
  * Область планирования
  */
-export type PlanningScope = 
+export type PlanningScope =
   | { type: 'full' }
   | { type: 'week'; weekNumber: number }
 
 /**
  * Статус планирования
  */
-export type PlanningStatus = 
-  | 'pending'
-  | 'in_progress'
-  | 'completed'
-  | 'failed'
+export type PlanningStatus = 'pending' | 'in_progress' | 'completed' | 'failed'
 
 /**
  * Контекст планирования для генерации

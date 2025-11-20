@@ -1,9 +1,6 @@
 import { injectable } from 'inversify'
 
-import {
-  AdminUserListFilters,
-  AdminUserListResult,
-} from '../_domain/types'
+import { AdminUserListFilters, AdminUserListResult } from '../_domain/types'
 import { AdminUserRepository } from '../_repositories/admin-users'
 
 @injectable()

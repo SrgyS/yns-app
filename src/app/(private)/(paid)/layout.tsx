@@ -31,8 +31,8 @@ export default async function Layout({
 
   const hasAccess = accessibleEnrollments.length > 0
 
-  const activeAccessible = accessibleEnrollments.find(entry =>
-    entry.enrollment.active
+  const activeAccessible = accessibleEnrollments.find(
+    entry => entry.enrollment.active
   )
 
   const accessibleCourses = accessibleEnrollments.map(entry => ({

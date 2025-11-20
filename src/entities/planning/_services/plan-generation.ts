@@ -92,8 +92,9 @@ export class PlanGenerationService {
     context: GenerationContext
   ): GenerationRange {
     if (scope === 'full') {
-      const requirements =
-        this.validationService.calculatePlanRequirements(context.course)
+      const requirements = this.validationService.calculatePlanRequirements(
+        context.course
+      )
       const selectedWorkoutDaysCount =
         context.enrollment.selectedWorkoutDays.length
       const { mainWorkoutDays } = this.validationService.categorizePlans(
@@ -228,14 +229,17 @@ export class PlanGenerationService {
         context.enrollment.startDate
       )
 
-      const { plan: selectedPlan, newMainWorkoutIndex, newWarmupOnlyIndex } =
-        this.validationService.getNextPlan(
-          isWorkoutDay,
-          mainWorkoutDays,
-          warmupOnlyDays,
-          mainWorkoutIndex,
-          warmupOnlyIndex
-        )
+      const {
+        plan: selectedPlan,
+        newMainWorkoutIndex,
+        newWarmupOnlyIndex,
+      } = this.validationService.getNextPlan(
+        isWorkoutDay,
+        mainWorkoutDays,
+        warmupOnlyDays,
+        mainWorkoutIndex,
+        warmupOnlyIndex
+      )
 
       mainWorkoutIndex = newMainWorkoutIndex
       warmupOnlyIndex = newWarmupOnlyIndex

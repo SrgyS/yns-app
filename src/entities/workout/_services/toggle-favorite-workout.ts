@@ -4,19 +4,15 @@ import type { UserId } from '@/kernel/domain/user'
 import { logger } from '@/shared/lib/logger'
 import { UserFavoriteWorkoutRepository } from '../_repositories/user-favorite-workout'
 
-
 @injectable()
 export class ToggleFavoriteWorkoutService {
   constructor(
     private readonly userFavoriteWorkoutRepository: UserFavoriteWorkoutRepository
   ) {}
 
-  async exec({userId, workoutId}: {userId: UserId; workoutId: string}) {
+  async exec({ userId, workoutId }: { userId: UserId; workoutId: string }) {
     try {
-      return await this.userFavoriteWorkoutRepository.toggle(
-        userId,
-        workoutId
-      )
+      return await this.userFavoriteWorkoutRepository.toggle(userId, workoutId)
     } catch (error) {
       logger.error({
         msg: '[ToggleFavoriteWorkoutService] Failed to toggle favorite workout',

@@ -9,8 +9,9 @@ type AccessesTableContextValue = {
   onClose(accessId: string): void
 }
 
-const AccessesTableContext =
-  createContext<AccessesTableContextValue | undefined>(undefined)
+const AccessesTableContext = createContext<
+  AccessesTableContextValue | undefined
+>(undefined)
 
 export function useAccessesTableContext() {
   const context = useContext(AccessesTableContext)

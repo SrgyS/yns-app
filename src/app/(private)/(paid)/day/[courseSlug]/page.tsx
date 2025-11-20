@@ -12,7 +12,10 @@ import { DayPageClient } from './day-page-client'
 
 const LOG_PREFIX = '[DayPage]'
 
-async function logTiming<T>(label: string, action: () => Promise<T>): Promise<T> {
+async function logTiming<T>(
+  label: string,
+  action: () => Promise<T>
+): Promise<T> {
   const start = Date.now()
   try {
     return await action()

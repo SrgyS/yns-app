@@ -4,7 +4,7 @@ import {
   CourseId,
   CourseSlug,
   CourseProduct,
-  ContentType
+  ContentType,
 } from '@/kernel/domain/course'
 
 import { ImageSrc } from '@/shared/api/content/_lib/image'

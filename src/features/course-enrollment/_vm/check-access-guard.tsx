@@ -31,15 +31,10 @@ export function CheckAccessGuard({
   const shouldFetch =
     !hasServerAccess && status === 'authenticated' && Boolean(userId)
 
-  const {
-    data,
-    error,
-    isError,
-    isSuccess,
-    isPending,
-  } = checkAccessByCourseSlug(userId, courseSlug, {
-    enabled: shouldFetch,
-  })
+  const { data, error, isError, isSuccess, isPending } =
+    checkAccessByCourseSlug(userId, courseSlug, {
+      enabled: shouldFetch,
+    })
 
   useEffect(() => {
     if (hasServerAccess || !shouldFetch) {
@@ -47,8 +42,7 @@ export function CheckAccessGuard({
     }
 
     if (isError) {
-      const message =
-        error instanceof Error ? error.message : 'Ошибка доступа'
+      const message = error instanceof Error ? error.message : 'Ошибка доступа'
       toast.error(message)
       return
     }
@@ -61,17 +55,21 @@ export function CheckAccessGuard({
         toast.error('У вас нет доступа к этому курсу')
       }
     }
-  }, [shouldFetch, isError, isSuccess, error, data, hasServerAccess, courseSlug])
+  }, [
+    shouldFetch,
+    isError,
+    isSuccess,
+    error,
+    data,
+    hasServerAccess,
+    courseSlug,
+  ])
 
-  const isLoading =
-    status === 'loading' || (shouldFetch && isPending)
+  const isLoading = status === 'loading' || (shouldFetch && isPending)
 
   const canRenderChildren =
     status === 'authenticated' &&
-    (hasServerAccess ||
-      !shouldFetch ||
-      isSuccess ||
-      isError)
+    (hasServerAccess || !shouldFetch || isSuccess || isError)
 
   return (
     <>

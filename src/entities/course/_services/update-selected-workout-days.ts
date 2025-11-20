@@ -33,9 +33,10 @@ export class UpdateWorkoutDaysService {
       }
 
       // Получаем текущие планы до обновления, чтобы иметь исходные индексы
-      const previousPlans = await this.userDailyPlanRepository.getUserDailyPlansByEnrollment(
-        params.enrollmentId
-      )
+      const previousPlans =
+        await this.userDailyPlanRepository.getUserDailyPlansByEnrollment(
+          params.enrollmentId
+        )
 
       // Используем транзакцию для атомарного обновления
       await dbClient.$transaction(async tx => {
@@ -47,11 +48,12 @@ export class UpdateWorkoutDaysService {
         )
 
         // Обновляем планы
-        const updatedPlans = await this.userDailyPlanRepository.updateUserDailyPlans(
-          params.enrollmentId,
-          params.selectedWorkoutDays,
-          tx
-        )
+        const updatedPlans =
+          await this.userDailyPlanRepository.updateUserDailyPlans(
+            params.enrollmentId,
+            params.selectedWorkoutDays,
+            tx
+          )
 
         if (!params.keepProgress) {
           try {
@@ -65,8 +67,10 @@ export class UpdateWorkoutDaysService {
               msg: 'Error deleting workout completions for enrollment',
               enrollmentId: params.enrollmentId,
               error,
-            });
-            throw new Error('Failed to delete workout completions for enrollment');
+            })
+            throw new Error(
+              'Failed to delete workout completions for enrollment'
+            )
           }
         } else {
           try {
@@ -83,7 +87,9 @@ export class UpdateWorkoutDaysService {
               enrollmentId: params.enrollmentId,
               error,
             })
-            throw new Error('Failed to realign workout completions after schedule change')
+            throw new Error(
+              'Failed to realign workout completions after schedule change'
+            )
           }
         }
       })
