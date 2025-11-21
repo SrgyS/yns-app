@@ -1,0 +1,2 @@
+ALTER TABLE "UserAccess" ADD COLUMN "freezes" JSONB,
+  ADD COLUMN "freezeDaysUsed" INTEGER NOT NULL DEFAULT 0;

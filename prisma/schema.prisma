@@ -493,6 +493,8 @@ model UserAccess {
   createdAt      DateTime              @default(now())
   updatedAt      DateTime              @updatedAt
   enrollmentId   String?
+  freezes        Json?
+  freezeDaysUsed Int                   @default(0)
   enrollment     UserCourseEnrollment? @relation("EnrollmentUserAccess", fields: [enrollmentId], references: [id], onDelete: SetNull)
   history        UserAccessHistory[]
 

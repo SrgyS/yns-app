@@ -54,6 +54,8 @@ export class GrandCourseAccessService {
       expiresAt: command.expiresAt ?? null,
       enrollmentId: null,
       setupCompleted,
+      freezes: [],
+      freezeDaysUsed: 0,
     }
 
     return this.userAccessRepository.save(newCourseAccess, {
