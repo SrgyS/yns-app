@@ -73,7 +73,7 @@ export class GetAdminUserDetailService {
       new Set(
         accessesDb
           .flatMap(access => [access.adminId, access.history[0]?.adminId])
-          .filter((id): id is string => Boolean(id))
+          .filter((id): id is string => !!id)
       )
     )
 
