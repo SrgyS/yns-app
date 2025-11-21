@@ -7,6 +7,7 @@ export type UserAccessHistoryAction =
   | 'close' // закрытие
   | 'change_period' // изменение дат доступа
   | 'freeze' // заморозка доступа
+  | 'freeze_cancel' // отмена заморозки
   | 'save' // технические/устаревшие обновления
 
 type LogEntry = {

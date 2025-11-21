@@ -16,6 +16,7 @@ import { GrantCourseAccessService } from './_services/grant-course-access'
 import { CloseUserAccessService } from './_services/close-user-access'
 import { ExtendUserAccessService } from './_services/extend-user-access'
 import { FreezeUserAccessService } from './_services/freeze-user-access'
+import { UnfreezeUserAccessService } from './_services/unfreeze-user-access'
 import { createAdminAbility } from './_domain/ability'
 import { SharedSession } from '@/kernel/domain/user'
 
@@ -55,6 +56,11 @@ const freezeAccessInput = z.object({
   end: z.string().datetime(),
 })
 
+const unfreezeAccessInput = z.object({
+  accessId: z.string().min(1),
+  freezeId: z.string().min(1),
+})
+
 @injectable()
 export class AdminUsersController extends Controller {
   constructor(
@@ -64,7 +70,8 @@ export class AdminUsersController extends Controller {
     private readonly grantCourseAccessService: GrantCourseAccessService,
     private readonly closeUserAccessService: CloseUserAccessService,
     private readonly extendUserAccessService: ExtendUserAccessService,
-    private readonly freezeUserAccessService: FreezeUserAccessService
+    private readonly freezeUserAccessService: FreezeUserAccessService,
+    private readonly unfreezeUserAccessService: UnfreezeUserAccessService
   ) {
     super()
   }
@@ -169,6 +176,20 @@ export class AdminUsersController extends Controller {
                 adminId: ctx.session.user.id,
                 start: new Date(input.start),
                 end: new Date(input.end),
+              })
+
+              return { success: true }
+            }),
+          freezeCancel: checkAbilityProcedure({
+            create: this.createAbility,
+            check: ability => ability.canEditAccess,
+          })
+            .input(unfreezeAccessInput)
+            .mutation(async ({ ctx, input }) => {
+              await this.unfreezeUserAccessService.exec({
+                accessId: input.accessId,
+                freezeId: input.freezeId,
+                adminId: ctx.session.user.id,
               })
 
               return { success: true }
