@@ -26,6 +26,16 @@ export class FreezeUserAccessService {
     }
 
     const freezes = access.freezes ?? []
+    const now = new Date()
+
+    const hasActiveFreeze = freezes.some(freeze => freeze.end >= now)
+    if (hasActiveFreeze) {
+      throw new Error('Есть активная заморозка')
+    }
+
+    if (access.expiresAt && params.start > access.expiresAt) {
+      throw new Error('Дата начала заморозки позже даты окончания доступа')
+    }
 
     const overlaps = freezes.some(freeze =>
       // пересечения диапазонов [start, end]

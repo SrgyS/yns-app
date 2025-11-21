@@ -110,6 +110,27 @@ export class GetAdminUserDetailService {
       const closedAdmin = closedEntry?.adminId
         ? adminMap.get(closedEntry.adminId)
         : null
+      const freezes =
+        Array.isArray(access.freezes) && access.freezes.length > 0
+          ? access.freezes
+              .map(freeze => {
+                if (
+                  freeze &&
+                  typeof freeze === 'object' &&
+                  'start' in freeze &&
+                  'end' in freeze
+                ) {
+                  return {
+                    start: formatISO(new Date((freeze as any).start)),
+                    end: formatISO(new Date((freeze as any).end)),
+                  }
+                }
+                return null
+              })
+              .filter((freeze): freeze is { start: string; end: string } =>
+                Boolean(freeze)
+              )
+          : []
 
       return {
         id: access.id,
@@ -132,6 +153,7 @@ export class GetAdminUserDetailService {
         startsAt: access.createdAt ? formatISO(access.createdAt) : null,
         expiresAt: access.expiresAt ? formatISO(access.expiresAt) : null,
         isActive: !access.expiresAt || access.expiresAt.getTime() > Date.now(),
+        freezes,
       }
     })
 

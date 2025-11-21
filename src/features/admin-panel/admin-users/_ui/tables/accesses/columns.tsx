@@ -73,6 +73,28 @@ export const accessColumns: ColumnDef<AdminUserAccess>[] = [
     },
   },
   {
+    accessorKey: 'freezes',
+    header: 'Заморозка',
+    cell: ({ row }) => {
+      const freezes = row.original.freezes ?? []
+      if (!freezes.length) {
+        return <span className="text-muted-foreground">—</span>
+      }
+      return (
+        <div className="flex flex-col gap-1">
+          {freezes.map(freeze => (
+            <span
+              key={`${freeze.start}-${freeze.end}`}
+              className="text-xs text-muted-foreground"
+            >
+              {formatDate(freeze.start)} – {formatDate(freeze.end)}
+            </span>
+          ))}
+        </div>
+      )
+    },
+  },
+  {
     id: 'actions',
     header: 'Действия',
     cell: ({ row }) => <AccessActionsCell access={row.original} />,
@@ -80,7 +102,7 @@ export const accessColumns: ColumnDef<AdminUserAccess>[] = [
 ]
 
 function AccessActionsCell({ access }: Readonly<{ access: AdminUserAccess }>) {
-  const { canEditAccess, onClose, isClosing, closingAccessId } =
+  const { canEditAccess, onClose, isClosing, closingAccessId, onFreeze } =
     useAccessesTableContext()
 
   const isActive = access.isActive
@@ -89,6 +111,16 @@ function AccessActionsCell({ access }: Readonly<{ access: AdminUserAccess }>) {
 
   return (
     <div className="flex flex-wrap gap-2 text-xs">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() =>
+          onFreeze({ id: access.id, expiresAt: access.expiresAt ?? null })
+        }
+        disabled={!canEditAccess || !isActive}
+      >
+        Активировать заморозку
+      </Button>
       <Button variant="outline" size="sm" disabled>
         Изменить период
       </Button>
