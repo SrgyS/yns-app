@@ -48,6 +48,9 @@ export function AccessesTable({
   const [freezeTarget, setFreezeTarget] = useState<
     { id: string; expiresAt: string | null } | undefined
   >(undefined)
+  const [unfreezeTarget, setUnfreezeTarget] = useState<
+    { accessId: string; freezeId: string } | undefined
+  >(undefined)
   const closeMutation = adminUsersApi.admin.user.access.close.useMutation({
     onSuccess: () => {
       toast.success('Доступ закрыт')
@@ -79,6 +82,17 @@ export function AccessesTable({
       toast.error(error.message ?? 'Не удалось заморозить доступ')
     },
   })
+  const unfreezeMutation =
+    adminUsersApi.admin.user.access.freezeCancel.useMutation({
+      onSuccess: () => {
+        toast.success('Заморозка отменена')
+        setUnfreezeTarget(undefined)
+        utils.admin.user.detail.invalidate({ userId }).catch(() => undefined)
+      },
+      onError: error => {
+        toast.error(error.message ?? 'Не удалось отменить заморозку')
+      },
+    })
 
   const contextValue = useMemo(
     () => ({
@@ -103,6 +117,12 @@ export function AccessesTable({
           return
         }
         setFreezeTarget(access)
+      },
+      onUnfreeze: (freeze: { accessId: string; freezeId: string }) => {
+        if (!canEditAccess) {
+          return
+        }
+        setUnfreezeTarget(freeze)
       },
     }),
     [canEditAccess, status, variables?.accessId, mutate, userId]
@@ -143,6 +163,18 @@ export function AccessesTable({
             accessId: freezeTarget.id,
             start: start.toISOString(),
             end: end.toISOString(),
+          })
+        }}
+      />
+      <UnfreezeDialog
+        target={unfreezeTarget}
+        onClose={() => setUnfreezeTarget(undefined)}
+        isSubmitting={unfreezeMutation.status === 'pending'}
+        onSubmit={() => {
+          if (!unfreezeTarget) return
+          unfreezeMutation.mutate({
+            accessId: unfreezeTarget.accessId,
+            freezeId: unfreezeTarget.freezeId,
           })
         }}
       />
@@ -201,6 +233,7 @@ function ExtendAccessDialog({
             <Label>Доступ действует до</Label>
             <Calendar
               mode="single"
+              defaultMonth={dateValue ?? undefined}
               selected={dateValue}
               onSelect={day => day && setDateValue(day)}
               disabled={disabledDate}
@@ -354,6 +387,49 @@ function FreezeDialog({
             </Button>
           </DialogFooter>
         </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+type UnfreezeDialogProps = {
+  target?: { accessId: string; freezeId: string }
+  onClose(): void
+  isSubmitting: boolean
+  onSubmit(): void
+}
+
+function UnfreezeDialog({
+  target,
+  onClose,
+  isSubmitting,
+  onSubmit,
+}: Readonly<UnfreezeDialogProps>) {
+  const open = Boolean(target)
+  const handleOpenChange = createDialogOpenChangeHandler(onClose, isSubmitting)
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Отменить заморозку</DialogTitle>
+          <DialogDescription>
+            Заморозка будет удалена. Продление доступа не будет откатываться.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => !isSubmitting && onClose()}
+            disabled={isSubmitting}
+          >
+            Отмена
+          </Button>
+          <Button type="button" variant="destructive" onClick={onSubmit} disabled={isSubmitting}>
+            {isSubmitting && <Spinner className="mr-2 size-3" />} Удалить
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

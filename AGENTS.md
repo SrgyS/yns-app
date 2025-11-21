@@ -26,4 +26,8 @@
 - When adding server-side functionality, register bindings in the relevant `module.ts` so they are loaded by `createServer()` in `src/app/server.ts`.
 - Follow the caching strategy described in `docs/caching-strategy.md` when introducing new React Query hooks.
 - To validate types and formatting, run `npm run lint`, `npm run lint:types`, and `npm run prettier` as needed before committing.
-- Для entity-репозиториев запрещены импорты из других entity; при необходимости общей логики выносите её в соответствующий `_service` уровня feature или выше.
+- For entity repositories, imports from other entities are not allowed. If shared logic is needed, extract it into the corresponding _service at the feature level or higher.
+
+## Coding Rule
+- Avoid negated conditions when an else clause is present (typescript:S7735)
+Use positive condition checks instead of negated ones if the statement contains an else block. This improves readability, reduces cognitive load, and prevents logical ambiguity.

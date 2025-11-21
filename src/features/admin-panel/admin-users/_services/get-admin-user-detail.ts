@@ -112,24 +112,24 @@ export class GetAdminUserDetailService {
         : null
       const freezes =
         Array.isArray(access.freezes) && access.freezes.length > 0
-          ? access.freezes
+          ? (access.freezes
               .map(freeze => {
                 if (
                   freeze &&
                   typeof freeze === 'object' &&
                   'start' in freeze &&
-                  'end' in freeze
+                  'end' in freeze &&
+                  'id' in freeze
                 ) {
                   return {
+                    id: String((freeze as any).id),
                     start: formatISO(new Date((freeze as any).start)),
                     end: formatISO(new Date((freeze as any).end)),
                   }
                 }
                 return null
               })
-              .filter((freeze): freeze is { start: string; end: string } =>
-                Boolean(freeze)
-              )
+              .filter(Boolean) as { id: string; start: string; end: string }[])
           : []
 
       return {
