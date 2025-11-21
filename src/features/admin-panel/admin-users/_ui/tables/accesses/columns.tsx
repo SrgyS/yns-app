@@ -1,27 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { ColumnDef } from '@tanstack/react-table'
-import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
 import { Spinner } from '@/shared/ui/spinner'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/shared/ui/dialog'
-import { Input } from '@/shared/ui/input'
-import { Label } from '@/shared/ui/label'
-import { format } from 'date-fns'
-import { toast } from 'sonner'
+import { Card } from '@/shared/ui/card'
 import type { AdminUserAccess } from '../../../_domain/user-detail'
 import { formatDate } from '../../utils/format-date'
 import { useAccessesTableContext } from './context'
-import { adminUsersApi } from '../../../_api'
+import { cn } from '@/shared/ui/utils'
 
 const REASON_LABELS: Record<string, string> = {
   paid: 'Куплен',
@@ -47,24 +33,7 @@ export const accessColumns: ColumnDef<AdminUserAccess>[] = [
   {
     accessorKey: 'period',
     header: 'Период',
-    cell: ({ row }) => {
-      const isActive = row.original.isActive
-      const start = row.original.startsAt
-      const end = row.original.expiresAt
-      const periodText = end
-        ? `с ${formatDate(start)} по ${formatDate(end)}`
-        : `с ${formatDate(start)} бессрочно`
-      return (
-        <div>
-          <Badge variant={isActive ? 'secondary' : 'outline'}>
-            {isActive ? 'Активен' : 'Завершён'}
-          </Badge>
-          <div className="mt-1 text-xs text-muted-foreground text-wrap">
-            {periodText}
-          </div>
-        </div>
-      )
-    },
+    cell: ({ row }) => <PeriodCell access={row.original} />,
   },
   {
     accessorKey: 'reason',
@@ -120,7 +89,6 @@ function AccessActionsCell({ access }: Readonly<{ access: AdminUserAccess }>) {
 
   return (
     <div className="flex flex-wrap gap-2 text-xs">
-      <ExtendAccessDialog access={access} />
       <Button variant="outline" size="sm" disabled>
         Изменить период
       </Button>
@@ -137,93 +105,42 @@ function AccessActionsCell({ access }: Readonly<{ access: AdminUserAccess }>) {
   )
 }
 
-function ExtendAccessDialog({ access }: Readonly<{ access: AdminUserAccess }>) {
-  const { canEditAccess, userId } = useAccessesTableContext()
-  const [open, setOpen] = useState(false)
-  const [dateValue, setDateValue] = useState('')
-  const utils = adminUsersApi.useUtils()
+function PeriodCell({ access }: Readonly<{ access: AdminUserAccess }>) {
+  const { canEditAccess, onExtend } = useAccessesTableContext()
+  const isActive = access.isActive
+  const start = access.startsAt
+  const end = access.expiresAt
+  const periodText = end
+    ? `с ${formatDate(start)} по ${formatDate(end)}`
+    : `с ${formatDate(start)} бессрочно`
 
-  const extendMutation = adminUsersApi.admin.user.access.extend.useMutation({
-    onSuccess: () => {
-      toast.success('Доступ продлён')
-      setOpen(false)
-      utils.admin.user.detail.invalidate({ userId }).catch(() => undefined)
-    },
-    onError: error => {
-      toast.error(error.message ?? 'Не удалось продлить доступ')
-    },
-  })
-
-  useEffect(() => {
-    if (open) {
-      setDateValue(
-        access.expiresAt ? format(new Date(access.expiresAt), 'yyyy-MM-dd') : ''
-      )
-    }
-  }, [open, access.expiresAt])
-
-  const handleOpenChange = (next: boolean) => {
-    if (extendMutation.status === 'pending') {
+  const handleClick = () => {
+    if (!canEditAccess) {
       return
     }
-    setOpen(next)
+    onExtend({ id: access.id, expiresAt: access.expiresAt })
   }
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!dateValue) {
-      toast.error('Выберите дату окончания доступа')
-      return
-    }
-    extendMutation.mutate({
-      accessId: access.id,
-      expiresAt: new Date(dateValue).toISOString(),
-    })
-  }
-
-  const isSubmitting = extendMutation.status === 'pending'
-  const minDate = format(new Date(), 'yyyy-MM-dd')
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" disabled={!canEditAccess}>
-          Продлить
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Продлить доступ</DialogTitle>
-          <DialogDescription>
-            Укажите новую дату окончания доступа для пользователя.
-          </DialogDescription>
-        </DialogHeader>
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="space-y-2">
-            <Label>Доступ действует до</Label>
-            <Input
-              type="date"
-              value={dateValue}
-              min={minDate}
-              onChange={event => setDateValue(event.target.value)}
-              required
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={isSubmitting}
-            >
-              Отмена
-            </Button>
-            <Button type="submit" disabled={isSubmitting || !dateValue}>
-              {isSubmitting && <Spinner className="mr-2 size-3" />} Продлить
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <Card
+      role="button"
+      tabIndex={canEditAccess && isActive ? 0 : -1}
+      onClick={handleClick}
+      onKeyDown={event => {
+        if (!canEditAccess || !isActive) return
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          handleClick()
+        }
+      }}
+      className={cn(
+        'flex cursor-pointer flex-col gap-1 border-2 p-3 text-left text-xs text-muted-foreground transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+        !canEditAccess || !isActive ? 'pointer-events-none opacity-60' : '',
+        isActive &&
+          'border-green-500 hover:bg-green-50 focus-visible:ring-green-500'
+      )}
+    >
+      <span>{periodText}</span>
+    </Card>
   )
 }

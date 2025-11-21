@@ -25,11 +25,8 @@ export class ExtendUserAccessService {
       throw new Error('Новая дата окончания не заполнена')
     }
 
-    if (
-      currentAccess.expiresAt &&
-      params.expiresAt.getTime() <= currentAccess.expiresAt.getTime()
-    ) {
-      throw new Error('Новая дата должна быть позже текущей даты окончания')
+    if (params.expiresAt.getTime() <= Date.now()) {
+      throw new Error('Дата окончания должна быть в будущем')
     }
 
     await this.userAccessRepository.save(
