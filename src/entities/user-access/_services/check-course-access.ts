@@ -28,7 +28,20 @@ export class CheckCourseAccessService {
 
     if (!access) return false
 
-    if (access.expiresAt && access.expiresAt.getTime() < Date.now()) {
+    const now = Date.now()
+
+    if (access.expiresAt && access.expiresAt.getTime() < now) {
+      return false
+    }
+
+    const isFrozen =
+      access.freezes?.some(
+        freeze =>
+          freeze.start.getTime() <= now &&
+          freeze.end.getTime() >= now
+      ) ?? false
+
+    if (isFrozen) {
       return false
     }
 
