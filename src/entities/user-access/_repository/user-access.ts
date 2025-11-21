@@ -2,7 +2,7 @@ import { injectable } from 'inversify'
 import { dbClient, type DbClient } from '@/shared/lib/db'
 import { ContentType, CourseId } from '@/kernel/domain/course'
 import { UserId } from '@/kernel/domain/user'
-import { CourseUserAccess, UserAccess } from '../_domain/type'
+import { CourseUserAccess, UserAccessFreezePeriod } from '../_domain/type'
 import {
   LogUserAccessHistoryService,
   type UserAccessHistoryAction,
@@ -102,14 +102,15 @@ export class UserAccessRepository {
   }
 
   async save(
-    userAccess: UserAccess,
+    userAccess: CourseUserAccess,
     options?: {
       db?: DbClient
       action?: UserAccessHistoryAction
       payload?: Record<string, unknown>
     }
-  ): Promise<UserAccess> {
+  ): Promise<CourseUserAccess> {
     const db = options?.db ?? dbClient
+    const freezes = userAccess.freezes ?? []
     const saved = await db.userAccess.upsert({
       where: {
         id: userAccess.id,
@@ -124,6 +125,8 @@ export class UserAccessRepository {
         enrollmentId: userAccess.enrollmentId ?? null,
         setupCompleted: userAccess.setupCompleted,
         expiresAt: userAccess.expiresAt ?? null,
+        freezes: this.serializeFreezes(freezes),
+        freezeDaysUsed: userAccess.freezeDaysUsed ?? 0,
       },
       update: {
         reason: userAccess.reason,
@@ -131,6 +134,8 @@ export class UserAccessRepository {
         enrollmentId: userAccess.enrollmentId ?? null,
         setupCompleted: userAccess.setupCompleted,
         expiresAt: userAccess.expiresAt ?? null,
+        freezes: this.serializeFreezes(freezes),
+        freezeDaysUsed: userAccess.freezeDaysUsed ?? 0,
       },
     })
 
@@ -144,6 +149,8 @@ export class UserAccessRepository {
           enrollmentId: saved.enrollmentId,
           expiresAt: saved.expiresAt,
           setupCompleted: saved.setupCompleted,
+          freezes: saved.freezes,
+          freezeDaysUsed: saved.freezeDaysUsed,
         },
       },
       db
@@ -175,6 +182,8 @@ export class UserAccessRepository {
       enrollmentId: userAccess.enrollmentId ?? null,
       expiresAt: userAccess.expiresAt ?? null,
       setupCompleted: userAccess.setupCompleted,
+      freezes: this.parseFreezes(userAccess.freezes),
+      freezeDaysUsed: userAccess.freezeDaysUsed ?? 0,
     }
   }
 
@@ -198,5 +207,52 @@ export class UserAccessRepository {
 
   private getAccessMapKey(courseId: CourseId, contentType: ContentType) {
     return `${courseId}:${contentType}`
+  }
+
+  private parseFreezes(value: unknown): UserAccessFreezePeriod[] {
+    if (!Array.isArray(value)) {
+      return []
+    }
+
+    const result: UserAccessFreezePeriod[] = []
+    for (const item of value) {
+      if (!item || typeof item !== 'object') {
+        continue
+      }
+      const { id, start, end, createdBy, createdAt } = item as Record<
+        string,
+        unknown
+      >
+      if (
+        typeof id !== 'string' ||
+        typeof start !== 'string' ||
+        typeof end !== 'string'
+      ) {
+        continue
+      }
+      let normalizedCreatedBy: string | null | undefined
+      if (typeof createdBy === 'string') {
+        normalizedCreatedBy = createdBy
+      } else if (createdBy === null) {
+        normalizedCreatedBy = null
+      }
+      result.push({
+        id,
+        start: new Date(start),
+        end: new Date(end),
+        createdBy: normalizedCreatedBy,
+        createdAt: new Date(typeof createdAt === 'string' ? createdAt : start),
+      })
+    }
+    return result
+  }
+
+  private serializeFreezes(freezes: UserAccessFreezePeriod[]) {
+    return freezes.map(freeze => ({
+      ...freeze,
+      start: freeze.start.toISOString(),
+      end: freeze.end.toISOString(),
+      createdAt: freeze.createdAt.toISOString(),
+    }))
   }
 }

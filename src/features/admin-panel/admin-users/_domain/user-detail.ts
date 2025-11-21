@@ -32,6 +32,7 @@ export type AdminUserAccess = {
   startsAt: string | null
   expiresAt: string | null
   isActive: boolean
+  freezes: { id: string; start: string; end: string }[]
 }
 
 export type AdminUserPayment = {

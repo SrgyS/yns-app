@@ -17,14 +17,16 @@ type WorkoutCompletionState = {
   getCompletion: (key: string) => boolean | undefined
 }
 
-export const useWorkoutCompletionStore = create<WorkoutCompletionState>((set, get) => ({
-  completions: {},
-  setCompletion: (key: string, isCompleted: boolean) => 
-    set(state => ({
-      completions: {
-        ...state.completions,
-        [key]: isCompleted
-      }
-    })),
-  getCompletion: (key: string) => get().completions[key]
-}))
+export const useWorkoutCompletionStore = create<WorkoutCompletionState>(
+  (set, get) => ({
+    completions: {},
+    setCompletion: (key: string, isCompleted: boolean) =>
+      set(state => ({
+        completions: {
+          ...state.completions,
+          [key]: isCompleted,
+        },
+      })),
+    getCompletion: (key: string) => get().completions[key],
+  })
+)

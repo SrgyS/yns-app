@@ -16,11 +16,10 @@ export class GetCourseEnrollmentService {
     courseId: string
   ): Promise<UserCourseEnrollment | null> {
     try {
-      const access =
-        await this.userAccessRepository.findActiveAccessByCourse(
-          userId,
-          courseId
-        )
+      const access = await this.userAccessRepository.findActiveAccessByCourse(
+        userId,
+        courseId
+      )
 
       if (!access?.enrollmentId) {
         return null

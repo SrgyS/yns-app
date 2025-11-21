@@ -31,10 +31,7 @@ export const POST = async (
     const payment = await getPaymentService.exec({ paymentId })
 
     if (!payment) {
-      return NextResponse.json(
-        { error: 'Payment not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Payment not found' }, { status: 404 })
     }
 
     const signature = Hmac.create(

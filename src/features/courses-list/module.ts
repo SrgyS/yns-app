@@ -8,7 +8,6 @@ export const CoursesListModule = new ContainerModule(context => {
 
   bind(Controller).to(CoursesListController)
   bind(GetCourseActionService).toSelf()
-
 })
 
 export { CoursesListController }

@@ -1,8 +1,6 @@
 import { WorkoutSection, WorkoutSubsection } from '@prisma/client'
 
-import type {
-  PracticeSubcategory,
-} from '../_domain/practice-types'
+import type { PracticeSubcategory } from '../_domain/practice-types'
 import { PRACTICE_TYPES } from '../_constants/practice-types'
 
 export function findPracticeTypeBySection(section: WorkoutSection) {

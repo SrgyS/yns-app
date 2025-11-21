@@ -13,7 +13,8 @@ export class GetUserEnrollmentsService {
 
   async exec(userId: string): Promise<UserCourseEnrollment[]> {
     try {
-      const accesses = await this.userAccessRepository.findActiveAccesses(userId)
+      const accesses =
+        await this.userAccessRepository.findActiveAccesses(userId)
       const enrollmentIds = accesses
         .map(access => access.enrollmentId)
         .filter((id): id is string => Boolean(id))

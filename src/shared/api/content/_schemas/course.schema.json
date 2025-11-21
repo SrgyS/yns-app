@@ -1,146 +1,137 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Course",
-    "description": "Схема для описания курса",
-    "type": "object",
-    "properties": {
-        "slug": {
-            "type": "string",
-            "description": "Уникальный идентификатор тренировки",
-            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
-            "readOnly": true
-        },
-        "title": {
-            "type": "string",
-            "description": "Название курса"
-        },
-        "description": {
-            "type": "string",
-            "description": "Полное описание курса"
-        },
-        "shortDescription": {
-            "type": "string",
-            "description": "Краткое описание курса",
-            "nullable": true
-        },
-        "thumbnail": {
-            "type": "string",
-            "format": "uri",
-            "description": "URL миниатюры курса"
-        },
-        "image": {
-            "type": "string",
-            "format": "uri",
-            "description": "URL основного изображения курса"
-        },
-        "draft": {
-            "type": "boolean",
-            "description": "Является ли курс черновиком (неопубликованным)"
-        },
-        "durationWeeks": {
-            "type": "integer",
-            "minimum": 1,
-            "description": "Продолжительность курса в неделях"
-        },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Course",
+  "description": "Схема для описания курса",
+  "type": "object",
+  "properties": {
+    "slug": {
+      "type": "string",
+      "description": "Уникальный идентификатор тренировки",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "readOnly": true
+    },
+    "title": {
+      "type": "string",
+      "description": "Название курса"
+    },
+    "description": {
+      "type": "string",
+      "description": "Полное описание курса"
+    },
+    "shortDescription": {
+      "type": "string",
+      "description": "Краткое описание курса",
+      "nullable": true
+    },
+    "thumbnail": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL миниатюры курса"
+    },
+    "image": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL основного изображения курса"
+    },
+    "draft": {
+      "type": "boolean",
+      "description": "Является ли курс черновиком (неопубликованным)"
+    },
+    "durationWeeks": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Продолжительность курса в неделях"
+    },
     "dailyPlans": {
-        "type": "array",
-        "description": "Список слагов ежедневных планов, входящих в курс",
-        "items": {
-            "type": "string",
-            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
-            "description": "Слаг ежедневного плана"
-        },
-        "uniqueItems": true
-        },
-        "dailyPlansDir": {
-            "type": "string",
-            "description": "Директория с ежедневными планами относительно курса",
-            "pattern": "^[a-z0-9_\\-/]+$"
-        },
-        "mealPlans": {
-            "type": "array",
-            "description": "Список слагов планов питания, входящих в курс",
-            "items": {
-                "type": "string",
-                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
-                "description": "Слаг плана питания"
-            },
-            "uniqueItems": true
-        },
-        "allowedWorkoutDaysPerWeek": {
-            "type": "array",
-            "description": "Допустимые варианты количества тренировок в неделю",
-            "items": {
-                "type": "integer",
-                "minimum": 1
-            },
-            "minItems": 1,
-            "uniqueItems": true
-        },
-        "product": {
-            "$ref": "#/definitions/product"
-        },
-        "contentType": {
-            "type": "string",
-            "description": "Тип контента курса",
-            "enum": [
-                "FIXED_COURSE",
-                "SUBSCRIPTION"
-            ]
-        }
+      "type": "array",
+      "description": "Список слагов ежедневных планов, входящих в курс",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+        "description": "Слаг ежедневного плана"
+      },
+      "uniqueItems": true
     },
-    "definitions": {
-        "cuid": {
-            "type": "string",
-            "title": "cuid"
-        },
-        "product": {
-            "oneOf": [
-                {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "required": [
-                        "access"
-                    ],
-                    "properties": {
-                        "access": {
-                            "const": "free"
-                        }
-                    }
-                },
-                {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "required": [
-                        "access",
-                        "price",
-                        "accessDurationDays"
-                    ],
-                    "properties": {
-                        "access": {
-                            "const": "paid"
-                        },
-                        "price": {
-                            "type": "number"
-                        },
-                        "accessDurationDays": {
-                            "type": "number"
-                        }
-                    }
-                }
-            ]
-        }
+    "dailyPlansDir": {
+      "type": "string",
+      "description": "Директория с ежедневными планами относительно курса",
+      "pattern": "^[a-z0-9_\\-/]+$"
     },
-    "required": [
-        "title",
-        "description",
-        "thumbnail",
-        "image",
-        "draft",
-        "durationWeeks",
-        "allowedWorkoutDaysPerWeek",
-        "contentType",
-        "product"
-    ],
-    "additionalProperties": false
+    "mealPlans": {
+      "type": "array",
+      "description": "Список слагов планов питания, входящих в курс",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+        "description": "Слаг плана питания"
+      },
+      "uniqueItems": true
+    },
+    "allowedWorkoutDaysPerWeek": {
+      "type": "array",
+      "description": "Допустимые варианты количества тренировок в неделю",
+      "items": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "product": {
+      "$ref": "#/definitions/product"
+    },
+    "contentType": {
+      "type": "string",
+      "description": "Тип контента курса",
+      "enum": ["FIXED_COURSE", "SUBSCRIPTION"]
+    }
+  },
+  "definitions": {
+    "cuid": {
+      "type": "string",
+      "title": "cuid"
+    },
+    "product": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["access"],
+          "properties": {
+            "access": {
+              "const": "free"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["access", "price", "accessDurationDays"],
+          "properties": {
+            "access": {
+              "const": "paid"
+            },
+            "price": {
+              "type": "number"
+            },
+            "accessDurationDays": {
+              "type": "number"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "required": [
+    "title",
+    "description",
+    "thumbnail",
+    "image",
+    "draft",
+    "durationWeeks",
+    "allowedWorkoutDaysPerWeek",
+    "contentType",
+    "product"
+  ],
+  "additionalProperties": false
 }

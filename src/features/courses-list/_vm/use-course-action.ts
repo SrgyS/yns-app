@@ -1,5 +1,5 @@
-import { CourseId, CourseSlug } from "@/kernel/domain/course";
-import { coursesListApi } from "../_api";
+import { CourseId, CourseSlug } from '@/kernel/domain/course'
+import { coursesListApi } from '../_api'
 import { usePathname } from 'next/navigation'
 import { getCourseOrderPath } from '@/kernel/lib/router'
 

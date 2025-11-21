@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import {
   DropdownMenu,
@@ -49,7 +49,11 @@ type AdminUsersSortButtonProps = {
   onChange: (sortBy: 'createdAt' | 'name', sortDir: 'asc' | 'desc') => void
 }
 
-export function AdminUsersSortButton({ sortBy, sortDir, onChange }: AdminUsersSortButtonProps) {
+export function AdminUsersSortButton({
+  sortBy,
+  sortDir,
+  onChange,
+}: AdminUsersSortButtonProps) {
   const activeId = `${sortBy}_${sortDir}`
 
   return (
@@ -64,7 +68,9 @@ export function AdminUsersSortButton({ sortBy, sortDir, onChange }: AdminUsersSo
         {sortOptions.map(option => (
           <DropdownMenuItem
             key={option.id}
-            className={option.id === activeId ? 'font-semibold text-primary' : ''}
+            className={
+              option.id === activeId ? 'font-semibold text-primary' : ''
+            }
             onClick={() => onChange(option.sortBy, option.sortDir)}
           >
             {option.label}

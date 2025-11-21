@@ -71,7 +71,8 @@ export function ProfileForm({
 
   const isSubmitting = updateProfile.isPending
 
-  const isDisabled = (isSubmitting || (!form.formState.isDirty && !allowSubmitPristine))
+  const isDisabled =
+    isSubmitting || (!form.formState.isDirty && !allowSubmitPristine)
 
   return (
     <Form {...form}>
@@ -140,11 +141,7 @@ export function ProfileForm({
             </FormItem>
           )}
         />
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={isDisabled}
-        >
+        <Button type="submit" className="w-full" disabled={isDisabled}>
           <SmallSpinner isLoading={isSubmitting} />
           {submitText}
         </Button>

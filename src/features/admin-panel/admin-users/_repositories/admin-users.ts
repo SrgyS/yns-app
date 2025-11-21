@@ -2,10 +2,7 @@ import { Prisma, ROLE } from '@prisma/client'
 import { injectable } from 'inversify'
 
 import { dbClient } from '@/shared/lib/db'
-import {
-  AdminUserListFilters,
-  AdminUserListItem,
-} from '../_domain/types'
+import { AdminUserListFilters, AdminUserListItem } from '../_domain/types'
 
 type AdminUserRow = {
   id: string
@@ -45,15 +42,11 @@ export class AdminUserRepository {
     }
 
     if (filters.email) {
-      whereConditions.push(
-        Prisma.sql`u.email ILIKE ${`%${filters.email}%`}`
-      )
+      whereConditions.push(Prisma.sql`u.email ILIKE ${`%${filters.email}%`}`)
     }
 
     if (filters.phone) {
-      whereConditions.push(
-        Prisma.sql`u.phone ILIKE ${`%${filters.phone}%`}`
-      )
+      whereConditions.push(Prisma.sql`u.phone ILIKE ${`%${filters.phone}%`}`)
     }
 
     if (filters.hasActiveAccess === 'active') {
@@ -75,9 +68,7 @@ export class AdminUserRepository {
     }
 
     if (filters.hasAvatar === 'without') {
-      whereConditions.push(
-        Prisma.sql`(u.image IS NULL OR trim(u.image) = '')`
-      )
+      whereConditions.push(Prisma.sql`(u.image IS NULL OR trim(u.image) = '')`)
     }
 
     const whereSql =
@@ -112,9 +103,7 @@ export class AdminUserRepository {
       `
     )
 
-    const totalResult = await dbClient.$queryRaw<
-      { count: bigint }[]
-    >(
+    const totalResult = await dbClient.$queryRaw<{ count: bigint }[]>(
       Prisma.sql`
         SELECT COUNT(*)::bigint AS count
         FROM "User" u

@@ -1,23 +1,20 @@
-
-import { injectable } from "inversify";
-import { CourseDetails } from "../_domain/types";
-import { CourseSlug } from "@/kernel/domain/course";
-import { TRPCError } from "@trpc/server";
+import { injectable } from 'inversify'
+import { CourseDetails } from '../_domain/types'
+import { CourseSlug } from '@/kernel/domain/course'
+import { TRPCError } from '@trpc/server'
 // import { createCourseDetails } from "../_domain/factory";
 import { GetCourseService } from '@/entities/course/module'
 
 type Query = {
-  courseSlug: CourseSlug;
-};
+  courseSlug: CourseSlug
+}
 
 @injectable()
 export class GetCourseDetailsService {
-  constructor(
-    private getCourseService: GetCourseService,
-  ) {}
+  constructor(private getCourseService: GetCourseService) {}
   async exec(query: Query): Promise<CourseDetails> {
     const course = await this.getCourseService.exec({ slug: query.courseSlug })
- 
+
     if (!course) {
       throw new TRPCError({
         code: 'BAD_REQUEST',

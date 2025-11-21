@@ -50,9 +50,7 @@ export function CourseActivationOption({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base font-semibold">
-          {courseTitle}
-        </CardTitle>
+        <CardTitle className="text-base font-semibold">{courseTitle}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {expiresAtLabel && (

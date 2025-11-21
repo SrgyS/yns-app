@@ -34,10 +34,10 @@ export function CheckOrder() {
   }, [checkQuery.isError, router])
 
   useEffect(() => {
-    if (checkQuery.data?.state.type === "success") {
-      router.replace(getCoursePath(checkQuery.data.courseSlug ?? ""));
+    if (checkQuery.data?.state.type === 'success') {
+      router.replace(getCoursePath(checkQuery.data.courseSlug ?? ''))
     }
-  }, [router, checkQuery.data?.courseSlug, checkQuery.data?.state.type]);
+  }, [router, checkQuery.data?.courseSlug, checkQuery.data?.state.type])
 
   return null
 }

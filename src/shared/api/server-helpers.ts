@@ -70,9 +70,7 @@ export function createControllerHelpers<TController extends Controller>({
   RouterOf<TController>
 > {
   const resolvedController = resolveController(container, controller)
-  const client =
-    queryClient ??
-    createServerQueryClient(queryClientConfig)
+  const client = queryClient ?? createServerQueryClient(queryClientConfig)
 
   const rawHelpers = createServerSideHelpers<RouterOf<TController>>({
     router: resolvedController.router,

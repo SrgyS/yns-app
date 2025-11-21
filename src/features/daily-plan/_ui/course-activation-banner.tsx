@@ -17,14 +17,14 @@ export function CourseActivationBanner({
 }: CourseActivationBannerProps) {
   const { activateEnrollment, isActivating } = useCourseEnrollment()
   const router = useRouter()
-  
+
   // Получаем информацию о текущем курсе
   const { data: currentCourse } = courseDetailsApi.courseDetails.get.useQuery({
-    courseSlug
+    courseSlug,
   })
   // Получаем информацию об активном курсе
   const { data: activeCourse } = courseDetailsApi.courseDetails.get.useQuery({
-    courseSlug: activeCourseSlug
+    courseSlug: activeCourseSlug,
   })
 
   const handleActivate = async () => {
@@ -42,12 +42,14 @@ export function CourseActivationBanner({
       <AlertDescription className="flex flex-col gap-2">
         <div>
           Курс по умолчанию: <strong>{activeCourse?.title}</strong>
-        
         </div>
-        <div>  Вы на курсе <strong>{currentCourse?.title}</strong></div>
+        <div>
+          {' '}
+          Вы на курсе <strong>{currentCourse?.title}</strong>
+        </div>
         <div className="flex gap-2 mt-2">
-          <Button 
-            onClick={handleActivate} 
+          <Button
+            onClick={handleActivate}
             disabled={isActivating}
             variant="default"
             size="sm"

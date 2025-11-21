@@ -31,9 +31,9 @@ of courses that a signed-in user may open inside the paid section.
 - The filtered results are emitted as:
   ```ts
   {
-    enrollment: UserCourseEnrollment;
-    course: CourseAccessInfo;          // snapshot for UI
-    accessExpiresAt: Date | null;      // when available
+    enrollment: UserCourseEnrollment
+    course: CourseAccessInfo // snapshot for UI
+    accessExpiresAt: Date | null // when available
   }
   ```
   An empty list is returned if the user has no valid courses or if the batched

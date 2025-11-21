@@ -10,7 +10,8 @@ import YAML from 'yaml'
 
 const WINDOW_SIZE = Number(process.env.SUBSCRIPTION_WINDOW_SIZE ?? 4)
 const CONTENT_ROOT =
-  process.env.CONTENT_LOCAL_ROOT ?? path.resolve(process.cwd(), '..', 'app-content')
+  process.env.CONTENT_LOCAL_ROOT ??
+  path.resolve(process.cwd(), '..', 'app-content')
 const CONTENT_URL = process.env.CONTENT_URL?.replace(/\/$/, '') ?? null
 const CONTENT_TOKEN = process.env.CONTENT_TOKEN
 
@@ -70,7 +71,10 @@ async function fetchRemoteText(relativePath: string): Promise<string | null> {
   }
 }
 
-async function readYaml<T>(relativePath: string, schema: object): Promise<T | null> {
+async function readYaml<T>(
+  relativePath: string,
+  schema: object
+): Promise<T | null> {
   const fullPath = path.join(CONTENT_ROOT, relativePath)
   let raw: string | null = null
 
@@ -99,18 +103,27 @@ async function getCourseSlugs(): Promise<string[]> {
     const entries = await fs.readdir(coursesDir, { withFileTypes: true })
     return entries.filter(e => e.isDirectory()).map(e => e.name)
   } catch (error) {
-    console.error('❌ Не удалось прочитать список курсов в CONTENT_ROOT:', error)
+    console.error(
+      '❌ Не удалось прочитать список курсов в CONTENT_ROOT:',
+      error
+    )
     return []
   }
 }
 
 async function pruneCourse(courseSlug: string) {
-  const course = await readYaml<any>(`courses/${courseSlug}/course.yaml`, courseSchema)
+  const course = await readYaml<any>(
+    `courses/${courseSlug}/course.yaml`,
+    courseSchema
+  )
   if (!course || course.contentType !== 'SUBSCRIPTION') {
     return
   }
 
-  const weeks = await readYaml<any>(`courses/${courseSlug}/weeks.yaml`, weeksSchema)
+  const weeks = await readYaml<any>(
+    `courses/${courseSlug}/weeks.yaml`,
+    weeksSchema
+  )
   if (!weeks || !Array.isArray(weeks.weeks) || weeks.weeks.length === 0) {
     console.warn(
       `⚠️  Пропускаем ${courseSlug}: не найдены данные недель или они пустые.`
@@ -139,7 +152,9 @@ async function pruneCourse(courseSlug: string) {
 
   const firstWeekToKeep = Math.max(1, latestWeekNumber - WINDOW_SIZE + 1)
   const dailyPlansDir =
-    typeof course.dailyPlansDir === 'string' ? course.dailyPlansDir : 'daily-plans'
+    typeof course.dailyPlansDir === 'string'
+      ? course.dailyPlansDir
+      : 'daily-plans'
   const normalizedDailyPlansDir = dailyPlansDir.replace(/^\/+|\/+$/g, '')
   const courseDailyPlansDir = path.join(
     CONTENT_ROOT,
@@ -152,7 +167,9 @@ async function pruneCourse(courseSlug: string) {
   await ensureDir(archiveDir)
 
   const entries = await fs.readdir(courseDailyPlansDir, { withFileTypes: true })
-  const planFiles = entries.filter(entry => entry.isFile() && entry.name.endsWith('.yaml'))
+  const planFiles = entries.filter(
+    entry => entry.isFile() && entry.name.endsWith('.yaml')
+  )
 
   let moved = 0
 
@@ -191,11 +208,17 @@ async function pruneCourse(courseSlug: string) {
   }
 
   const filteredWeeks = (weeks.weeks as Array<{ weekNumber: number }>).filter(
-    (week: any) => typeof week?.weekNumber === 'number' && week.weekNumber >= firstWeekToKeep
+    (week: any) =>
+      typeof week?.weekNumber === 'number' && week.weekNumber >= firstWeekToKeep
   )
 
   if (filteredWeeks.length !== weeks.weeks.length) {
-    const weeksPath = path.join(CONTENT_ROOT, 'courses', courseSlug, 'weeks.yaml')
+    const weeksPath = path.join(
+      CONTENT_ROOT,
+      'courses',
+      courseSlug,
+      'weeks.yaml'
+    )
     if (!(await fileExists(weeksPath))) {
       console.warn(
         `⚠️  Не удалось обновить weeks.yaml для курса ${courseSlug}: файл недоступен локально.`

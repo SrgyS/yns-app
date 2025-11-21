@@ -1,1 +1,1 @@
-export type PaymentId = string;
+export type PaymentId = string

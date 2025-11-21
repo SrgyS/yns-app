@@ -1,16 +1,16 @@
-import { injectable } from "inversify";
-import { UserAccessRepository } from "../_repository/user-access";
-import { UserId } from "@/kernel/domain/user";
-import { ContentType, CourseId, CourseProduct } from "@/kernel/domain/course";
+import { injectable } from 'inversify'
+import { UserAccessRepository } from '../_repository/user-access'
+import { UserId } from '@/kernel/domain/user'
+import { ContentType, CourseId, CourseProduct } from '@/kernel/domain/course'
 
 export type Query = {
-  userId: UserId;
+  userId: UserId
   course: {
-    id: CourseId;
-    product: CourseProduct;
-    contentType: ContentType;
-  };
-};
+    id: CourseId
+    product: CourseProduct
+    contentType: ContentType
+  }
+}
 
 @injectable()
 export class CheckCourseAccessService {
@@ -28,7 +28,20 @@ export class CheckCourseAccessService {
 
     if (!access) return false
 
-    if (access.expiresAt && access.expiresAt.getTime() < Date.now()) {
+    const now = Date.now()
+
+    if (access.expiresAt && access.expiresAt.getTime() < now) {
+      return false
+    }
+
+    const isFrozen =
+      access.freezes?.some(
+        freeze =>
+          freeze.start.getTime() <= now &&
+          freeze.end.getTime() >= now
+      ) ?? false
+
+    if (isFrozen) {
       return false
     }
 

@@ -16,9 +16,5 @@ export default async function CourseDayLayout({
 }: LayoutProps) {
   const { courseSlug } = await params
 
-  return (
-    <CheckAccessGuard courseSlug={courseSlug}>
-      {children}
-    </CheckAccessGuard>
-  )
+  return <CheckAccessGuard courseSlug={courseSlug}>{children}</CheckAccessGuard>
 }

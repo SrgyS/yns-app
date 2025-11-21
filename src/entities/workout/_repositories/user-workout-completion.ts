@@ -219,10 +219,15 @@ export class UserWorkoutCompletionRepository {
       }
 
       const buildSequence = (plans: UserDailyPlan[]) => {
-        const sortedPlans = [...plans].sort((a, b) => a.dayNumberInCourse - b.dayNumberInCourse)
+        const sortedPlans = [...plans].sort(
+          (a, b) => a.dayNumberInCourse - b.dayNumberInCourse
+        )
         const warmupCounters = new Map<string, number>()
         const mainCounters = new Map<string, number>()
-        const byKey = new Map<string, { workoutId: string; occurrence: number }>()
+        const byKey = new Map<
+          string,
+          { workoutId: string; occurrence: number }
+        >()
         const byOccurrence = new Map<string, number>()
 
         for (const plan of sortedPlans) {
@@ -230,15 +235,22 @@ export class UserWorkoutCompletionRepository {
           const warmupOccurrence = (warmupCounters.get(plan.warmupId) ?? 0) + 1
           warmupCounters.set(plan.warmupId, warmupOccurrence)
           const warmupKey = `${DailyContentType.WARMUP}:${plan.warmupStepIndex}`
-          byKey.set(warmupKey, { workoutId: plan.warmupId, occurrence: warmupOccurrence })
+          byKey.set(warmupKey, {
+            workoutId: plan.warmupId,
+            occurrence: warmupOccurrence,
+          })
           const warmupOccurrenceKey = `${DailyContentType.WARMUP}:${plan.warmupId}:${warmupOccurrence}`
           byOccurrence.set(warmupOccurrenceKey, plan.warmupStepIndex)
 
           if (plan.mainWorkoutId) {
-            const mainOccurrence = (mainCounters.get(plan.mainWorkoutId) ?? 0) + 1
+            const mainOccurrence =
+              (mainCounters.get(plan.mainWorkoutId) ?? 0) + 1
             mainCounters.set(plan.mainWorkoutId, mainOccurrence)
             const mainKey = `${DailyContentType.MAIN}:${plan.mainWorkoutStepIndex ?? 0}`
-            byKey.set(mainKey, { workoutId: plan.mainWorkoutId, occurrence: mainOccurrence })
+            byKey.set(mainKey, {
+              workoutId: plan.mainWorkoutId,
+              occurrence: mainOccurrence,
+            })
             const mainOccurrenceKey = `${DailyContentType.MAIN}:${plan.mainWorkoutId}:${mainOccurrence}`
             byOccurrence.set(mainOccurrenceKey, plan.mainWorkoutStepIndex ?? 0)
           }
@@ -256,7 +268,9 @@ export class UserWorkoutCompletionRepository {
 
         if (!occurrenceInfo) {
           // Если соответствия нет, удаляем прогресс, чтобы избежать неверной привязки
-          await db.userWorkoutCompletion.delete({ where: { id: completion.id } })
+          await db.userWorkoutCompletion.delete({
+            where: { id: completion.id },
+          })
           continue
         }
 
@@ -288,7 +302,9 @@ export class UserWorkoutCompletionRepository {
         enrollmentId,
         error,
       })
-      throw new Error('Failed to realign workout completions after schedule change')
+      throw new Error(
+        'Failed to realign workout completions after schedule change'
+      )
     }
   }
 }

@@ -6,11 +6,16 @@ type AccessesTableContextValue = {
   canEditAccess: boolean
   isClosing: boolean
   closingAccessId?: string
+  userId: string
   onClose(accessId: string): void
+  onExtend(access: Readonly<{ id: string; expiresAt: string | null }>): void
+  onFreeze(access: Readonly<{ id: string; expiresAt: string | null }>): void
+  onUnfreeze(freeze: Readonly<{ accessId: string; freezeId: string }>): void
 }
 
-const AccessesTableContext =
-  createContext<AccessesTableContextValue | undefined>(undefined)
+const AccessesTableContext = createContext<
+  AccessesTableContextValue | undefined
+>(undefined)
 
 export function useAccessesTableContext() {
   const context = useContext(AccessesTableContext)

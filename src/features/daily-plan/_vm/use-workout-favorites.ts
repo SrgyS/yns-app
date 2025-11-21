@@ -13,9 +13,7 @@ type ToggleContext = {
   previousFavorites?: string[]
 }
 
-export function useWorkoutFavorites(
-  options: UseWorkoutFavoritesOptions = {}
-) {
+export function useWorkoutFavorites(options: UseWorkoutFavoritesOptions = {}) {
   const enabled = options.enabled ?? true
   const utils = workoutApi.useUtils()
 

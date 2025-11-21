@@ -12,7 +12,11 @@ interface MockPaymentButtonProps {
 }
 
 // TODO(prod-integr): удалить после подключения реального платёжного флоу через Prodamus
-export function MockPaymentButton({ courseId, courseSlug, orderId }: MockPaymentButtonProps) {
+export function MockPaymentButton({
+  courseId,
+  courseSlug,
+  orderId,
+}: MockPaymentButtonProps) {
   const router = useRouter()
   const [isProcessing, setIsProcessing] = useState(false)
 
@@ -48,7 +52,12 @@ export function MockPaymentButton({ courseId, courseSlug, orderId }: MockPayment
   }
 
   return (
-    <Button className="w-full sm:w-auto" size="lg" onClick={handleClick} disabled={isProcessing}>
+    <Button
+      className="w-full sm:w-auto"
+      size="lg"
+      onClick={handleClick}
+      disabled={isProcessing}
+    >
       {isProcessing ? 'Обработка…' : 'Оплатить'}
     </Button>
   )

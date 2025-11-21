@@ -123,27 +123,30 @@ export class PlanningRepository {
       )
 
       if (!validation.isValid) {
-        throw new Error(`Course validation failed: ${validation.errors.join(', ')}`)
+        throw new Error(
+          `Course validation failed: ${validation.errors.join(', ')}`
+        )
       }
 
       // Подготовка контекста генерации
-      const context: GenerationContext = this.generationService.prepareGenerationContext(
-        {
-          id: enrollment.id,
-          userId: enrollment.userId,
-          startDate: effectiveStartDate,
-          selectedWorkoutDays,
-        },
-        {
-          durationWeeks: course.durationWeeks,
-          allowedWorkoutDaysPerWeek:
-            course.allowedWorkoutDaysPerWeek &&
-            course.allowedWorkoutDaysPerWeek.length > 0
-              ? course.allowedWorkoutDaysPerWeek
-              : [5],
-          dailyPlans: course.dailyPlans,
-        }
-      )
+      const context: GenerationContext =
+        this.generationService.prepareGenerationContext(
+          {
+            id: enrollment.id,
+            userId: enrollment.userId,
+            startDate: effectiveStartDate,
+            selectedWorkoutDays,
+          },
+          {
+            durationWeeks: course.durationWeeks,
+            allowedWorkoutDaysPerWeek:
+              course.allowedWorkoutDaysPerWeek &&
+              course.allowedWorkoutDaysPerWeek.length > 0
+                ? course.allowedWorkoutDaysPerWeek
+                : [5],
+            dailyPlans: course.dailyPlans,
+          }
+        )
 
       // Вычисление диапазона генерации
       const range = this.generationService.calculateGenerationRange(
@@ -159,7 +162,10 @@ export class PlanningRepository {
       }
 
       // Генерация данных для создания планов
-      const plansData = this.generationService.generatePlansForRange(context, range)
+      const plansData = this.generationService.generatePlansForRange(
+        context,
+        range
+      )
 
       // Создание планов в базе данных
       const created: UserDailyPlan[] = []
@@ -222,27 +228,30 @@ export class PlanningRepository {
       )
 
       if (!validation.isValid) {
-        throw new Error(`Course validation failed: ${validation.errors.join(', ')}`)
+        throw new Error(
+          `Course validation failed: ${validation.errors.join(', ')}`
+        )
       }
 
       // Подготовка контекста генерации
-      const context: GenerationContext = this.generationService.prepareGenerationContext(
-        {
-          id: enrollment.id,
-          userId: enrollment.userId,
-          startDate: effectiveStartDate,
-          selectedWorkoutDays,
-        },
-        {
-          durationWeeks: course.durationWeeks,
-          allowedWorkoutDaysPerWeek:
-            course.allowedWorkoutDaysPerWeek &&
-            course.allowedWorkoutDaysPerWeek.length > 0
-              ? course.allowedWorkoutDaysPerWeek
-              : [5],
-          dailyPlans: course.dailyPlans,
-        }
-      )
+      const context: GenerationContext =
+        this.generationService.prepareGenerationContext(
+          {
+            id: enrollment.id,
+            userId: enrollment.userId,
+            startDate: effectiveStartDate,
+            selectedWorkoutDays,
+          },
+          {
+            durationWeeks: course.durationWeeks,
+            allowedWorkoutDaysPerWeek:
+              course.allowedWorkoutDaysPerWeek &&
+              course.allowedWorkoutDaysPerWeek.length > 0
+                ? course.allowedWorkoutDaysPerWeek
+                : [5],
+            dailyPlans: course.dailyPlans,
+          }
+        )
 
       // Вычисление диапазона для полного курса
       const range = this.generationService.calculateGenerationRange(
@@ -268,7 +277,10 @@ export class PlanningRepository {
           enrollmentId: enrollment.id,
           date: this.dateService.calculateDateForDay(effectiveStartDate, i),
           dayNumberInCourse,
-          weekNumber: this.dateService.calculateWeekNumber(i, effectiveStartDate),
+          weekNumber: this.dateService.calculateWeekNumber(
+            i,
+            effectiveStartDate
+          ),
           dayOfWeek: this.dateService.getDayOfWeek(
             this.dateService.calculateDateForDay(effectiveStartDate, i)
           ),

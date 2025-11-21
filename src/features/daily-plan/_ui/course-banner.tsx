@@ -55,7 +55,9 @@ export function CourseBanner({
       <CardHeader>
         <CardTitle>{courseDetails?.title}</CardTitle>
         <CardDescription>
-          {formattedExpiration ? `Доступ до ${formattedExpiration}` : 'Бессрочный доступ'}
+          {formattedExpiration
+            ? `Доступ до ${formattedExpiration}`
+            : 'Бессрочный доступ'}
         </CardDescription>
         <CardAction>
           <Button

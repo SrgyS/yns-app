@@ -161,7 +161,10 @@ type PracticeWorkoutsSkeletonProps = {
 export function PracticeWorkoutsSkeleton({
   items = 3,
 }: PracticeWorkoutsSkeletonProps = {}) {
-  const placeholders = Array.from({ length: items }, (_, index) => `skeleton-${index}`)
+  const placeholders = Array.from(
+    { length: items },
+    (_, index) => `skeleton-${index}`
+  )
 
   return (
     <div className="space-y-4">

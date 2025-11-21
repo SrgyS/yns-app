@@ -52,9 +52,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "text"
-            ],
+            "enum": ["text"],
             "description": "Тип блока контента"
           },
           "text": {
@@ -62,20 +60,12 @@
             "description": "Текст блока контента"
           }
         },
-        "required": [
-          "type",
-          "text"
-        ],
+        "required": ["type", "text"],
         "additionalProperties": false
       },
       "description": "Дополнительные блоки контента для этого дня"
     }
   },
-  "required": [
-    "dayNumberInWeek",
-    "weekNumber",
-    "courseSlug",
-    "warmupId"
-  ],
+  "required": ["dayNumberInWeek", "weekNumber", "courseSlug", "warmupId"],
   "additionalProperties": false
 }

@@ -16,6 +16,6 @@ export class GetCourseService {
       return this.coursesRepository.courseBySlug(query.slug)
     }
 
-    return this.coursesRepository.courseById(query.id) 
+    return this.coursesRepository.courseById(query.id)
   }
 }

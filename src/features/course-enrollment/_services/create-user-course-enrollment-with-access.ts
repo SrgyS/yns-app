@@ -1,7 +1,10 @@
 import { injectable } from 'inversify'
 import { startOfWeek } from 'date-fns'
 
-import { CreateUserCourseEnrollmentParams, UserCourseEnrollment } from '@/entities/course'
+import {
+  CreateUserCourseEnrollmentParams,
+  UserCourseEnrollment,
+} from '@/entities/course'
 import {
   CreateUserCourseEnrollmentService,
   GetCourseService,

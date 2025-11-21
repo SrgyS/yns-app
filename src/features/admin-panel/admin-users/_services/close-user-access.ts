@@ -13,7 +13,9 @@ export class CloseUserAccessService {
   ) {}
 
   async exec(params: { accessId: string; adminId: string }) {
-    const currentAccess = await this.userAccessRepository.findById(params.accessId)
+    const currentAccess = await this.userAccessRepository.findById(
+      params.accessId
+    )
 
     if (!currentAccess) {
       throw new Error('Доступ не найден')

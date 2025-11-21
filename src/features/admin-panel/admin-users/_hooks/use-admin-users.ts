@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { useCallback, useMemo, useTransition } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
@@ -39,7 +39,10 @@ export function useAdminUsers() {
   const router = useRouter()
   const pathname = usePathname()
 
-  const serializeParams = useCallback(() => new URLSearchParams(searchParams.toString()), [searchParams])
+  const serializeParams = useCallback(
+    () => new URLSearchParams(searchParams.toString()),
+    [searchParams]
+  )
   const [isPending, startTransition] = useTransition()
 
   const updateParams = useCallback(
@@ -114,14 +117,13 @@ export function useAdminUsers() {
         ? hasActiveAccessParam
         : 'any'
     const page = parsePage(searchParams.get('page'), 1)
-    const pageSize = parsePage(
-      searchParams.get('pageSize'),
-      DEFAULT_PAGE_SIZE
-    )
+    const pageSize = parsePage(searchParams.get('pageSize'), DEFAULT_PAGE_SIZE)
     const sortByParam = searchParams.get('sortBy')
-    const sortBy: 'createdAt' | 'name' = sortByParam === 'name' ? 'name' : DEFAULT_SORT_BY
+    const sortBy: 'createdAt' | 'name' =
+      sortByParam === 'name' ? 'name' : DEFAULT_SORT_BY
     const sortDirParam = searchParams.get('sortDir')
-    const sortDir: 'asc' | 'desc' = sortDirParam === 'asc' ? 'asc' : DEFAULT_SORT_DIR
+    const sortDir: 'asc' | 'desc' =
+      sortDirParam === 'asc' ? 'asc' : DEFAULT_SORT_DIR
 
     return {
       id,

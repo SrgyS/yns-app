@@ -43,19 +43,25 @@ type MealPlanEntry = MealPlan & { slug: string }
 type DailyPlanEntry = DailyPlan & { slug: string }
 
 const LOCAL_CONTENT_ROOT =
-  process.env.CONTENT_LOCAL_ROOT ?? path.resolve(process.cwd(), '..', 'app-content')
+  process.env.CONTENT_LOCAL_ROOT ??
+  path.resolve(process.cwd(), '..', 'app-content')
 const SUBSCRIPTION_WINDOW_SIZE = Number(
   process.env.SUBSCRIPTION_WINDOW_SIZE ?? 4
 )
-const shouldPruneSubscription = process.argv.slice(2).includes('--prune-subscription')
+const shouldPruneSubscription = process.argv
+  .slice(2)
+  .includes('--prune-subscription')
 const CONTENT_URL = process.env.CONTENT_URL ?? null
 const githubTreeMatch = CONTENT_URL
-  ? CONTENT_URL.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/tree\/([^/]+)(?:\/(.*))?$/)
+  ? CONTENT_URL.match(
+      /^https:\/\/github\.com\/([^/]+)\/([^/]+)\/tree\/([^/]+)(?:\/(.*))?$/
+    )
   : null
 
 function buildContentFileUrl(relativePath: string): string {
   if (githubTreeMatch) {
-    const [, owner, repo, branch, restPath] = githubTreeMatch as RegExpMatchArray
+    const [, owner, repo, branch, restPath] =
+      githubTreeMatch as RegExpMatchArray
     const basePath = restPath ? `${restPath.replace(/\/$/, '')}/` : ''
     const normalizedRelative = relativePath.replace(/^\/+/, '')
     return `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${basePath}${normalizedRelative}`
@@ -99,7 +105,8 @@ async function listDailyPlanSlugsFromRemote(
       return `${(CONTENT_URL ?? '').replace(/\/$/, '')}/${dirRelativePath}`
     }
 
-    const [, owner, repo, branch, restPath] = githubTreeMatch as RegExpMatchArray
+    const [, owner, repo, branch, restPath] =
+      githubTreeMatch as RegExpMatchArray
     const basePath = restPath ? `${restPath.replace(/\/$/, '')}/` : ''
     const directoryPath = `${basePath}${dirRelativePath}`.replace(/\/+/g, '/')
     const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${directoryPath}`
@@ -377,11 +384,10 @@ async function downloadAndUploadContent() {
     console.log('💪 Импорт тренировок...')
     for (const workoutSlug of allEntities.workouts) {
       const workoutRelativePath = `workouts/${workoutSlug}.yaml`
-      const workoutData =
-        await downloadAndParseValidatedYaml<WorkoutContent>(
-          workoutRelativePath,
-          workoutSchema
-        )
+      const workoutData = await downloadAndParseValidatedYaml<WorkoutContent>(
+        workoutRelativePath,
+        workoutSchema
+      )
       if (workoutData) {
         let kinescopeMeta: KinescopeVideo | null = null
         if (workoutData.videoId && process.env.KINESCOPE_API_KEY) {
@@ -434,7 +440,8 @@ async function downloadAndUploadContent() {
           continue
         }
 
-        const accessDurationDays = (courseData.product as any).accessDurationDays
+        const accessDurationDays = (courseData.product as any)
+          .accessDurationDays
         if (!Number.isInteger(accessDurationDays) || accessDurationDays < 1) {
           console.error(
             `  ❌ Ошибка: Для платного курса '${courseSlug}' требуется положительное целочисленное поле accessDurationDays (количество дней доступа). Получено: ${accessDurationDays}`
@@ -472,7 +479,9 @@ async function downloadAndUploadContent() {
         )
       }
 
-      const configuredDailyPlanSlugs: string[] = Array.isArray(courseData.dailyPlans)
+      const configuredDailyPlanSlugs: string[] = Array.isArray(
+        courseData.dailyPlans
+      )
         ? courseData.dailyPlans
         : []
       const dailyPlansDir =
@@ -482,10 +491,7 @@ async function downloadAndUploadContent() {
       const sanitizedDailyPlansDir = dailyPlansDir.replace(/^\/+|\/+$/g, '')
 
       let slugsFromDirectory: string[] = []
-      if (
-        courseData.dailyPlansDir ||
-        configuredDailyPlanSlugs.length === 0
-      ) {
+      if (courseData.dailyPlansDir || configuredDailyPlanSlugs.length === 0) {
         slugsFromDirectory = await listDailyPlanSlugsFromDir(
           courseSlug,
           sanitizedDailyPlansDir
@@ -518,15 +524,19 @@ async function downloadAndUploadContent() {
       }
 
       let dailyPlanEntriesToProcess: DailyPlanEntry[] = fetchedDailyPlanEntries
-      let subscriptionPruneInfo: { latestWeek: number; firstValidWeek: number } | null =
-        null
+      let subscriptionPruneInfo: {
+        latestWeek: number
+        firstValidWeek: number
+      } | null = null
 
       if (courseData.contentType === 'SUBSCRIPTION') {
         const validPlans = fetchedDailyPlanEntries.filter(
           plan => typeof plan.weekNumber === 'number'
         )
         if (validPlans.length > 0) {
-          const latestWeek = Math.max(...validPlans.map(plan => plan.weekNumber))
+          const latestWeek = Math.max(
+            ...validPlans.map(plan => plan.weekNumber)
+          )
           const firstValidWeek = Math.max(
             1,
             latestWeek - SUBSCRIPTION_WINDOW_SIZE + 1
@@ -558,342 +568,340 @@ async function downloadAndUploadContent() {
             where: { slug: courseSlug },
             update: {
               title: courseData.title,
-            description: courseData.description,
-            shortDescription: courseData.shortDescription,
-            thumbnail: courseData.thumbnail,
-            image: courseData.image,
-            draft: courseData.draft,
-            durationWeeks: courseData.durationWeeks,
-            allowedWorkoutDaysPerWeek: allowedWorkoutDays,
-            contentType: courseData.contentType || 'FIXED_COURSE',
-            product: {
-              upsert: {
-                update: {
-                  access: courseData.product.access,
-                  price:
-                    isPaidCourse
+              description: courseData.description,
+              shortDescription: courseData.shortDescription,
+              thumbnail: courseData.thumbnail,
+              image: courseData.image,
+              draft: courseData.draft,
+              durationWeeks: courseData.durationWeeks,
+              allowedWorkoutDaysPerWeek: allowedWorkoutDays,
+              contentType: courseData.contentType || 'FIXED_COURSE',
+              product: {
+                upsert: {
+                  update: {
+                    access: courseData.product.access,
+                    price: isPaidCourse
                       ? (courseData.product as any).price
                       : null,
-                  accessDurationDays:
-                    isPaidCourse
+                    accessDurationDays: isPaidCourse
                       ? (courseData.product as any).accessDurationDays
                       : null,
+                  },
+                  create: {
+                    access: courseData.product.access,
+                    price: isPaidCourse
+                      ? (courseData.product as any).price
+                      : null,
+                    accessDurationDays: isPaidCourse
+                      ? (courseData.product as any).accessDurationDays
+                      : null,
+                  },
                 },
+              },
+            },
+            create: {
+              slug: courseSlug,
+              title: courseData.title,
+              description: courseData.description,
+              shortDescription: courseData.shortDescription,
+              thumbnail: courseData.thumbnail,
+              image: courseData.image,
+              draft: courseData.draft,
+              durationWeeks: courseData.durationWeeks,
+              allowedWorkoutDaysPerWeek: allowedWorkoutDays,
+              contentType: courseData.contentType || 'FIXED_COURSE',
+              product: {
                 create: {
                   access: courseData.product.access,
-                  price:
-                    isPaidCourse
-                      ? (courseData.product as any).price
-                      : null,
-                  accessDurationDays:
-                    isPaidCourse
-                      ? (courseData.product as any).accessDurationDays
-                      : null,
+                  price: isPaidCourse
+                    ? (courseData.product as any).price
+                    : null,
+                  accessDurationDays: isPaidCourse
+                    ? (courseData.product as any).accessDurationDays
+                    : null,
                 },
               },
             },
-          },
-          create: {
-            slug: courseSlug,
-            title: courseData.title,
-            description: courseData.description,
-            shortDescription: courseData.shortDescription,
-            thumbnail: courseData.thumbnail,
-            image: courseData.image,
-            draft: courseData.draft,
-            durationWeeks: courseData.durationWeeks,
-            allowedWorkoutDaysPerWeek: allowedWorkoutDays,
-            contentType: courseData.contentType || 'FIXED_COURSE',
-            product: {
-              create: {
-                access: courseData.product.access,
-                price:
-                  isPaidCourse
-                    ? (courseData.product as any).price
-                    : null,
-                accessDurationDays:
-                  isPaidCourse
-                    ? (courseData.product as any).accessDurationDays
-                    : null,
-              },
-            },
-          },
-        })
+          })
 
-        console.log(
-          `  ✅ Курс импортирован/обновлен: ${courseData.title} (ID: ${course.id})`
-        )
-
-        if (
-          course.contentType === 'SUBSCRIPTION' &&
-          shouldPruneSubscription &&
-          subscriptionPruneInfo
-        ) {
           console.log(
-            `  🧹 Очистка устаревших планов: сохраняем недели с ${subscriptionPruneInfo.firstValidWeek} по ${subscriptionPruneInfo.latestWeek}`
+            `  ✅ Курс импортирован/обновлен: ${courseData.title} (ID: ${course.id})`
           )
-          const { count: deletedUserPlans } = await tx.userDailyPlan.deleteMany({
-            where: {
-              originalDailyPlan: {
+
+          if (
+            course.contentType === 'SUBSCRIPTION' &&
+            shouldPruneSubscription &&
+            subscriptionPruneInfo
+          ) {
+            console.log(
+              `  🧹 Очистка устаревших планов: сохраняем недели с ${subscriptionPruneInfo.firstValidWeek} по ${subscriptionPruneInfo.latestWeek}`
+            )
+            const { count: deletedUserPlans } =
+              await tx.userDailyPlan.deleteMany({
+                where: {
+                  originalDailyPlan: {
+                    courseId: course.id,
+                    weekNumber: {
+                      lt: subscriptionPruneInfo.firstValidWeek,
+                    },
+                  },
+                },
+              })
+            if (deletedUserPlans > 0) {
+              console.log(
+                `    - Удалено ${deletedUserPlans} пользовательских планов вне окна`
+              )
+            }
+
+            const { count: deletedDailyPlans } = await tx.dailyPlan.deleteMany({
+              where: {
                 courseId: course.id,
                 weekNumber: {
                   lt: subscriptionPruneInfo.firstValidWeek,
                 },
               },
-            },
-          })
-          if (deletedUserPlans > 0) {
-            console.log(
-              `    - Удалено ${deletedUserPlans} пользовательских планов вне окна`
-            )
-          }
-
-          const { count: deletedDailyPlans } = await tx.dailyPlan.deleteMany({
-            where: {
-              courseId: course.id,
-              weekNumber: {
-                lt: subscriptionPruneInfo.firstValidWeek,
-              },
-            },
-          })
-          if (deletedDailyPlans > 0) {
-            console.log(
-              `    - Удалено ${deletedDailyPlans} ежедневных планов вне окна`
-            )
-          }
-        }
-
-        console.log(`  🍽️ Импорт планов питания для курса "${courseSlug}"...`)
-        for (const mealPlanData of mealPlanEntries) {
-          const breakfastRecipe = await tx.recipe.findUnique({
-            where: { slug: mealPlanData.breakfastRecipeId },
-          })
-          const lunchRecipe = await tx.recipe.findUnique({
-            where: { slug: mealPlanData.lunchRecipeId },
-          })
-          const dinnerRecipe = await tx.recipe.findUnique({
-            where: { slug: mealPlanData.dinnerRecipeId },
-          })
-
-          if (!breakfastRecipe || !lunchRecipe || !dinnerRecipe) {
-            console.error(
-              `    ❌ Ошибка: Один или несколько рецептов не найдены для плана питания ${mealPlanData.slug}. Пропускаем.`
-            )
-            continue
-          }
-
-          await tx.mealPlan.upsert({
-            where: {
-              courseId_slug: { courseId: course.id, slug: mealPlanData.slug },
-            },
-            update: {
-              title: mealPlanData.title,
-              description: mealPlanData.description,
-              breakfastRecipeId: breakfastRecipe.id,
-              lunchRecipeId: lunchRecipe.id,
-              dinnerRecipeId: dinnerRecipe.id,
-            },
-            create: {
-              slug: mealPlanData.slug,
-              title: mealPlanData.title,
-              description: mealPlanData.description,
-              courseId: course.id,
-              breakfastRecipeId: breakfastRecipe.id,
-              lunchRecipeId: lunchRecipe.id,
-              dinnerRecipeId: dinnerRecipe.id,
-            },
-          })
-
-          console.log(
-            `    ✅ План питания импортирован/обновлен: ${mealPlanData.slug}`
-          )
-        }
-
-        // Импорт недель для подписочных курсов
-        if (course.contentType === 'SUBSCRIPTION' && weeksData) {
-          console.log(
-            `  📅 Импорт недель для подписочного курса "${courseSlug}"...`
-          )
-          if ((weeksData as any).weeks) {
-            for (const weekData of (weeksData as any).weeks as Array<{
-              weekNumber: number
-              releaseAt: string
-            }>) {
-              await tx.week.upsert({
-                where: {
-                  courseId_weekNumber: {
-                    courseId: course.id,
-                    weekNumber: weekData.weekNumber,
-                  },
-                },
-                update: {
-                  releaseAt: new Date(weekData.releaseAt),
-                },
-                create: {
-                  weekNumber: weekData.weekNumber,
-                  releaseAt: new Date(weekData.releaseAt),
-                  courseId: course.id,
-                },
-              })
+            })
+            if (deletedDailyPlans > 0) {
               console.log(
-                `    ✅ Неделя импортирована/обновлена: неделя ${weekData.weekNumber}`
+                `    - Удалено ${deletedDailyPlans} ежедневных планов вне окна`
               )
             }
           }
-        }
 
-        console.log(`  📅 Импорт дневных планов для курса "${courseSlug}"...`)
-        if (course.contentType === 'SUBSCRIPTION') {
-          console.log('  - Логика для курсов-подписок активирована')
-          console.log(
-            `    - К импорту/обновлению готово ${dailyPlanSlugsToProcess.length} планов.`
-          )
-        }
-
-        for (const dailyPlanSlug of dailyPlanSlugsToProcess) {
-          const dailyPlanData = dailyPlanDataBySlug.get(dailyPlanSlug)
-
-          if (!dailyPlanData) {
-            console.warn(
-              `    🟡 Данные ежедневного плана ${dailyPlanSlug} не найдены после загрузки. Пропускаем.`
-            )
-            continue
-          }
-
-          const warmupWorkout = await tx.workout.findUnique({
-            where: { slug: dailyPlanData.warmupId },
-          })
-          const mainWorkout = dailyPlanData.mainWorkoutId
-            ? await tx.workout.findUnique({
-                where: { slug: dailyPlanData.mainWorkoutId },
-              })
-            : null
-          const mealPlan = dailyPlanData.mealPlanId
-            ? await tx.mealPlan.findUnique({
-                where: {
-                  courseId_slug: {
-                    courseId: course.id,
-                    slug: dailyPlanData.mealPlanId,
-                  },
-                },
-              })
-            : null
-
-          if (!warmupWorkout || (dailyPlanData.mainWorkoutId && !mainWorkout)) {
-            console.error(
-              `    ❌ Ошибка: Не найдены зависимости для ${dailyPlanSlug}. Пропускаем.`
-            )
-            continue
-          }
-
-          if (dailyPlanData.mealPlanId && !mealPlan) {
-            console.warn(
-              `    🟡 План питания '${dailyPlanData.mealPlanId}' не найден для ежедневного плана ${dailyPlanSlug}. Связь mealPlan будет опущена/очищена.`
-            )
-          }
-
-          const dailyPlanUpdateData = {
-            dayNumberInWeek: dailyPlanData.dayNumberInWeek,
-            weekNumber: dailyPlanData.weekNumber,
-            description: dailyPlanData.description,
-            warmup: { connect: { id: warmupWorkout.id } },
-            ...(dailyPlanData.mainWorkoutId
-              ? {
-                  mainWorkout: {
-                    connect: { id: (mainWorkout as { id: string }).id },
-                  },
-                }
-              : { mainWorkout: { disconnect: true } }),
-            ...(mealPlan
-              ? { mealPlan: { connect: { id: mealPlan.id } } }
-              : { mealPlan: { disconnect: true } }),
-          }
-
-          const dailyPlanCreateData = {
-            slug: dailyPlanData.slug,
-            dayNumberInWeek: dailyPlanData.dayNumberInWeek,
-            weekNumber: dailyPlanData.weekNumber,
-            description: dailyPlanData.description,
-            course: { connect: { id: course.id } },
-            warmup: { connect: { id: warmupWorkout.id } },
-            ...(dailyPlanData.mainWorkoutId && mainWorkout
-              ? { mainWorkout: { connect: { id: mainWorkout.id } } }
-              : {}),
-            ...(mealPlan
-              ? { mealPlan: { connect: { id: mealPlan.id } } }
-              : {}),
-          }
-
-          const upsertedPlan = await tx.dailyPlan.upsert({
-            where: {
-              courseId_slug: {
-                courseId: course.id,
-                slug: dailyPlanData.slug,
-              },
-            },
-            update: dailyPlanUpdateData as any,
-            create: dailyPlanCreateData as any,
-            include: { contentBlocks: true },
-          })
-
-          await tx.contentBlock.deleteMany({
-            where: { dailyPlanId: upsertedPlan.id },
-          })
-          if (
-            dailyPlanData.contentBlocks &&
-            dailyPlanData.contentBlocks.length > 0
-          ) {
-            await tx.contentBlock.createMany({
-              data: dailyPlanData.contentBlocks.map((block: any) => ({
-                ...block,
-                dailyPlanId: upsertedPlan.id,
-              })),
+          console.log(`  🍽️ Импорт планов питания для курса "${courseSlug}"...`)
+          for (const mealPlanData of mealPlanEntries) {
+            const breakfastRecipe = await tx.recipe.findUnique({
+              where: { slug: mealPlanData.breakfastRecipeId },
             })
-          }
-          console.log(
-            `    ✅ Ежедневный план импортирован/обновлен: ${dailyPlanData.slug}`
-          )
-        }
-        // После импорта ежедневных планов — предупреждение о несоответствии требуемым количествам
-        try {
-          const durationWeeks = course.durationWeeks ?? 0
-          const allowedDays =
-            course.allowedWorkoutDaysPerWeek &&
-            course.allowedWorkoutDaysPerWeek.length > 0
-              ? course.allowedWorkoutDaysPerWeek
-              : [5]
-          const maxDays = Math.max(...allowedDays)
-          const totalDays = durationWeeks * 7
-          const requiredMainWorkoutDays = maxDays * durationWeeks
-          const requiredWarmupOnlyDays = Math.max(
-            0,
-            totalDays - requiredMainWorkoutDays
-          )
+            const lunchRecipe = await tx.recipe.findUnique({
+              where: { slug: mealPlanData.lunchRecipeId },
+            })
+            const dinnerRecipe = await tx.recipe.findUnique({
+              where: { slug: mealPlanData.dinnerRecipeId },
+            })
 
-          const [actualMainWorkoutDays, actualWarmupOnlyDays] =
-            await Promise.all([
-              tx.dailyPlan.count({
-                where: { courseId: course.id, NOT: { mainWorkoutId: null } },
-              }),
-              tx.dailyPlan.count({
-                where: { courseId: course.id, mainWorkoutId: null },
-              }),
-            ])
+            if (!breakfastRecipe || !lunchRecipe || !dinnerRecipe) {
+              console.error(
+                `    ❌ Ошибка: Один или несколько рецептов не найдены для плана питания ${mealPlanData.slug}. Пропускаем.`
+              )
+              continue
+            }
 
-          if (
-            actualMainWorkoutDays < requiredMainWorkoutDays ||
-            actualWarmupOnlyDays < requiredWarmupOnlyDays
-          ) {
-            console.warn(
-              `  ⚠️ Предупреждение: Для курса "${courseSlug}" требуются ${requiredMainWorkoutDays} дней с основной тренировкой и ${requiredWarmupOnlyDays} дней только с разминкой за ${durationWeeks} нед., но загружено: ${actualMainWorkoutDays} и ${actualWarmupOnlyDays}. Проверьте daily-plans или настройки durationWeeks/allowedWorkoutDaysPerWeek в course.yaml.`
+            await tx.mealPlan.upsert({
+              where: {
+                courseId_slug: { courseId: course.id, slug: mealPlanData.slug },
+              },
+              update: {
+                title: mealPlanData.title,
+                description: mealPlanData.description,
+                breakfastRecipeId: breakfastRecipe.id,
+                lunchRecipeId: lunchRecipe.id,
+                dinnerRecipeId: dinnerRecipe.id,
+              },
+              create: {
+                slug: mealPlanData.slug,
+                title: mealPlanData.title,
+                description: mealPlanData.description,
+                courseId: course.id,
+                breakfastRecipeId: breakfastRecipe.id,
+                lunchRecipeId: lunchRecipe.id,
+                dinnerRecipeId: dinnerRecipe.id,
+              },
+            })
+
+            console.log(
+              `    ✅ План питания импортирован/обновлен: ${mealPlanData.slug}`
             )
           }
-        } catch (e) {
-          console.warn(
-            `  ⚠️ Не удалось выполнить проверку соответствия количеств для курса "${courseSlug}":`,
-            e
-          )
-        }
+
+          // Импорт недель для подписочных курсов
+          if (course.contentType === 'SUBSCRIPTION' && weeksData) {
+            console.log(
+              `  📅 Импорт недель для подписочного курса "${courseSlug}"...`
+            )
+            if ((weeksData as any).weeks) {
+              for (const weekData of (weeksData as any).weeks as Array<{
+                weekNumber: number
+                releaseAt: string
+              }>) {
+                await tx.week.upsert({
+                  where: {
+                    courseId_weekNumber: {
+                      courseId: course.id,
+                      weekNumber: weekData.weekNumber,
+                    },
+                  },
+                  update: {
+                    releaseAt: new Date(weekData.releaseAt),
+                  },
+                  create: {
+                    weekNumber: weekData.weekNumber,
+                    releaseAt: new Date(weekData.releaseAt),
+                    courseId: course.id,
+                  },
+                })
+                console.log(
+                  `    ✅ Неделя импортирована/обновлена: неделя ${weekData.weekNumber}`
+                )
+              }
+            }
+          }
+
+          console.log(`  📅 Импорт дневных планов для курса "${courseSlug}"...`)
+          if (course.contentType === 'SUBSCRIPTION') {
+            console.log('  - Логика для курсов-подписок активирована')
+            console.log(
+              `    - К импорту/обновлению готово ${dailyPlanSlugsToProcess.length} планов.`
+            )
+          }
+
+          for (const dailyPlanSlug of dailyPlanSlugsToProcess) {
+            const dailyPlanData = dailyPlanDataBySlug.get(dailyPlanSlug)
+
+            if (!dailyPlanData) {
+              console.warn(
+                `    🟡 Данные ежедневного плана ${dailyPlanSlug} не найдены после загрузки. Пропускаем.`
+              )
+              continue
+            }
+
+            const warmupWorkout = await tx.workout.findUnique({
+              where: { slug: dailyPlanData.warmupId },
+            })
+            const mainWorkout = dailyPlanData.mainWorkoutId
+              ? await tx.workout.findUnique({
+                  where: { slug: dailyPlanData.mainWorkoutId },
+                })
+              : null
+            const mealPlan = dailyPlanData.mealPlanId
+              ? await tx.mealPlan.findUnique({
+                  where: {
+                    courseId_slug: {
+                      courseId: course.id,
+                      slug: dailyPlanData.mealPlanId,
+                    },
+                  },
+                })
+              : null
+
+            if (
+              !warmupWorkout ||
+              (dailyPlanData.mainWorkoutId && !mainWorkout)
+            ) {
+              console.error(
+                `    ❌ Ошибка: Не найдены зависимости для ${dailyPlanSlug}. Пропускаем.`
+              )
+              continue
+            }
+
+            if (dailyPlanData.mealPlanId && !mealPlan) {
+              console.warn(
+                `    🟡 План питания '${dailyPlanData.mealPlanId}' не найден для ежедневного плана ${dailyPlanSlug}. Связь mealPlan будет опущена/очищена.`
+              )
+            }
+
+            const dailyPlanUpdateData = {
+              dayNumberInWeek: dailyPlanData.dayNumberInWeek,
+              weekNumber: dailyPlanData.weekNumber,
+              description: dailyPlanData.description,
+              warmup: { connect: { id: warmupWorkout.id } },
+              ...(dailyPlanData.mainWorkoutId
+                ? {
+                    mainWorkout: {
+                      connect: { id: (mainWorkout as { id: string }).id },
+                    },
+                  }
+                : { mainWorkout: { disconnect: true } }),
+              ...(mealPlan
+                ? { mealPlan: { connect: { id: mealPlan.id } } }
+                : { mealPlan: { disconnect: true } }),
+            }
+
+            const dailyPlanCreateData = {
+              slug: dailyPlanData.slug,
+              dayNumberInWeek: dailyPlanData.dayNumberInWeek,
+              weekNumber: dailyPlanData.weekNumber,
+              description: dailyPlanData.description,
+              course: { connect: { id: course.id } },
+              warmup: { connect: { id: warmupWorkout.id } },
+              ...(dailyPlanData.mainWorkoutId && mainWorkout
+                ? { mainWorkout: { connect: { id: mainWorkout.id } } }
+                : {}),
+              ...(mealPlan
+                ? { mealPlan: { connect: { id: mealPlan.id } } }
+                : {}),
+            }
+
+            const upsertedPlan = await tx.dailyPlan.upsert({
+              where: {
+                courseId_slug: {
+                  courseId: course.id,
+                  slug: dailyPlanData.slug,
+                },
+              },
+              update: dailyPlanUpdateData as any,
+              create: dailyPlanCreateData as any,
+              include: { contentBlocks: true },
+            })
+
+            await tx.contentBlock.deleteMany({
+              where: { dailyPlanId: upsertedPlan.id },
+            })
+            if (
+              dailyPlanData.contentBlocks &&
+              dailyPlanData.contentBlocks.length > 0
+            ) {
+              await tx.contentBlock.createMany({
+                data: dailyPlanData.contentBlocks.map((block: any) => ({
+                  ...block,
+                  dailyPlanId: upsertedPlan.id,
+                })),
+              })
+            }
+            console.log(
+              `    ✅ Ежедневный план импортирован/обновлен: ${dailyPlanData.slug}`
+            )
+          }
+          // После импорта ежедневных планов — предупреждение о несоответствии требуемым количествам
+          try {
+            const durationWeeks = course.durationWeeks ?? 0
+            const allowedDays =
+              course.allowedWorkoutDaysPerWeek &&
+              course.allowedWorkoutDaysPerWeek.length > 0
+                ? course.allowedWorkoutDaysPerWeek
+                : [5]
+            const maxDays = Math.max(...allowedDays)
+            const totalDays = durationWeeks * 7
+            const requiredMainWorkoutDays = maxDays * durationWeeks
+            const requiredWarmupOnlyDays = Math.max(
+              0,
+              totalDays - requiredMainWorkoutDays
+            )
+
+            const [actualMainWorkoutDays, actualWarmupOnlyDays] =
+              await Promise.all([
+                tx.dailyPlan.count({
+                  where: { courseId: course.id, NOT: { mainWorkoutId: null } },
+                }),
+                tx.dailyPlan.count({
+                  where: { courseId: course.id, mainWorkoutId: null },
+                }),
+              ])
+
+            if (
+              actualMainWorkoutDays < requiredMainWorkoutDays ||
+              actualWarmupOnlyDays < requiredWarmupOnlyDays
+            ) {
+              console.warn(
+                `  ⚠️ Предупреждение: Для курса "${courseSlug}" требуются ${requiredMainWorkoutDays} дней с основной тренировкой и ${requiredWarmupOnlyDays} дней только с разминкой за ${durationWeeks} нед., но загружено: ${actualMainWorkoutDays} и ${actualWarmupOnlyDays}. Проверьте daily-plans или настройки durationWeeks/allowedWorkoutDaysPerWeek в course.yaml.`
+              )
+            }
+          } catch (e) {
+            console.warn(
+              `  ⚠️ Не удалось выполнить проверку соответствия количеств для курса "${courseSlug}":`,
+              e
+            )
+          }
         },
         { timeout: 180000 }
       )

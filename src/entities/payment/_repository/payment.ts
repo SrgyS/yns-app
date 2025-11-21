@@ -1,23 +1,23 @@
-import { injectable } from "inversify";
-import { dbClient } from "@/shared/lib/db";
-import { CourseId } from "@/kernel/domain/course";
-import { UserId } from "@/kernel/domain/user";
-import { PaymentId } from "@/kernel/domain/payment";
+import { injectable } from 'inversify'
+import { dbClient } from '@/shared/lib/db'
+import { CourseId } from '@/kernel/domain/course'
+import { UserId } from '@/kernel/domain/user'
+import { PaymentId } from '@/kernel/domain/payment'
 import { Payment } from '../_domain/types'
-import { CourseContentType } from "@prisma/client";
+import { CourseContentType } from '@prisma/client'
 
 @injectable()
 export class PaymentRepository {
   findCoursePayment(
     userId: UserId,
-    courseId: CourseId,
+    courseId: CourseId
   ): Promise<Payment | undefined> {
-    return this.queryCoursePayment(userId, courseId).then((payment) => {
+    return this.queryCoursePayment(userId, courseId).then(payment => {
       if (!payment) {
-        return undefined;
+        return undefined
       }
-      return this.dbPaymentToPayment(payment);
-    });
+      return this.dbPaymentToPayment(payment)
+    })
   }
 
   findPaymentById(paymentId: PaymentId): Promise<Payment | undefined> {
@@ -30,12 +30,12 @@ export class PaymentRepository {
           products: true,
         },
       })
-      .then((payment) => {
+      .then(payment => {
         if (!payment) {
-          return undefined;
+          return undefined
         }
-        return this.dbPaymentToPayment(payment);
-      });
+        return this.dbPaymentToPayment(payment)
+      })
   }
 
   async save(payment: Payment): Promise<Payment> {
@@ -51,7 +51,7 @@ export class PaymentRepository {
           id: payment.paymentId,
           products: {
             createMany: {
-              data: payment.products.map((product) => ({
+              data: payment.products.map(product => ({
                 name: product.name,
                 price: product.price,
                 quantity: product.quantity,
@@ -67,20 +67,20 @@ export class PaymentRepository {
         include: {
           products: true,
         },
-      }),
-    );
+      })
+    )
   }
 
   private dbPaymentToPayment(
     dbPayment: NotNull<
-      Awaited<ReturnType<PaymentRepository["queryCoursePayment"]>>
-    >,
+      Awaited<ReturnType<PaymentRepository['queryCoursePayment']>>
+    >
   ): Payment {
     return {
       paymentId: dbPayment.id,
       userId: dbPayment.userId,
       userEmail: dbPayment.userEmail,
-      products: dbPayment.products.map((product) => ({
+      products: dbPayment.products.map(product => ({
         name: product.name,
         price: product.price,
         quantity: product.quantity,
@@ -90,25 +90,30 @@ export class PaymentRepository {
       state: {
         type: dbPayment.state,
       },
-    };
+    }
   }
 
   private queryCoursePayment(userId: UserId, courseId: CourseId) {
     return dbClient.payment.findFirst({
       where: {
         userId,
-        products: { 
-          some: { 
-            type: { in: [CourseContentType.FIXED_COURSE, CourseContentType.SUBSCRIPTION] }, 
-            sku: courseId 
-          } 
+        products: {
+          some: {
+            type: {
+              in: [
+                CourseContentType.FIXED_COURSE,
+                CourseContentType.SUBSCRIPTION,
+              ],
+            },
+            sku: courseId,
+          },
         },
       },
       include: {
         products: true,
       },
-    });
+    })
   }
 }
 
-type NotNull<T> = T extends null ? never : T;
+type NotNull<T> = T extends null ? never : T

@@ -1,23 +1,23 @@
-import qs from "qs";
-import { DataObject, Hmac } from "@/shared/lib/hmac";
-import { privateConfig } from "@/shared/config/private";
-import { injectable } from "inversify";
+import qs from 'qs'
+import { DataObject, Hmac } from '@/shared/lib/hmac'
+import { privateConfig } from '@/shared/config/private'
+import { injectable } from 'inversify'
 
-import { PaymentId } from "@/kernel/domain/payment";
-import { UserId } from "@/kernel/domain/user";
+import { PaymentId } from '@/kernel/domain/payment'
+import { UserId } from '@/kernel/domain/user'
 import { Product } from '@/entities/payment/_domain/types'
 
-const baseUrl = privateConfig.PRODAMUS_URL ?? ``;
+const baseUrl = privateConfig.PRODAMUS_URL ?? ``
 
 type Command = {
-  paymentId: PaymentId;
-  urlSuccess: string;
-  urlReturn: string;
-  urlNotification: string;
-  userId: UserId;
-  userEmail: string;
-  products: Product[];
-};
+  paymentId: PaymentId
+  urlSuccess: string
+  urlReturn: string
+  urlNotification: string
+  userId: UserId
+  userEmail: string
+  products: Product[]
+}
 
 @injectable()
 export class ProdamusService {
@@ -33,9 +33,9 @@ export class ProdamusService {
     urlNotification,
   }: Command) {
     const params = {
-      order_id: `${paymentId}-${products.map((p) => p.name).join(",")}`,
-      do: "link",
-      sys: "micro-courses",
+      order_id: `${paymentId}-${products.map(p => p.name).join(',')}`,
+      do: 'link',
+      sys: 'micro-courses',
       customer_email: userEmail,
       urlReturn,
       urlSuccess,
@@ -49,48 +49,48 @@ export class ProdamusService {
             price: product.price,
             quantity: String(product.quantity),
           },
-        };
+        }
       }, {}),
-      payments_limit: "1",
+      payments_limit: '1',
       _param_user_id: userId,
       _param_payment_id: paymentId,
       _param_sign: this.createSignature({ paymentId, userId }),
-    };
+    }
 
     if (privateConfig.PRODAMUS_DEMO_ENABLED) {
       Object.assign(params, {
-        demo_mode: "1",
-      });
+        demo_mode: '1',
+      })
     }
 
-    const signature = this.createSignature({ paymentId });
+    const signature = this.createSignature({ paymentId })
     const res = await fetch(this.formatUrl(baseUrl, params), {
       headers: {
         signature,
       },
-    });
-    return { url: await res.text() };
+    })
+    return { url: await res.text() }
   }
 
   parseOrderId(orderId: string): PaymentId {
-    return orderId.split("-")[0];
+    return orderId.split('-')[0]
   }
 
   checkSignature({ data, sign }: { sign: string; data: DataObject }) {
-    return Hmac.verify(data, privateConfig.PRODAMUS_KEY ?? "", sign) || "";
+    return Hmac.verify(data, privateConfig.PRODAMUS_KEY ?? '', sign) || ''
   }
 
   private createSignature(data: DataObject) {
-    return Hmac.create(data, privateConfig.PRODAMUS_KEY ?? "") || "";
+    return Hmac.create(data, privateConfig.PRODAMUS_KEY ?? '') || ''
   }
 
   private formatUrl(url: string, params?: Record<string, unknown>) {
     const stringifiedParams = qs.stringify(params, {
-      arrayFormat: "brackets",
+      arrayFormat: 'brackets',
       addQueryPrefix: true,
       encode: false,
-    });
+    })
 
-    return `${url}${stringifiedParams}`;
+    return `${url}${stringifiedParams}`
   }
 }

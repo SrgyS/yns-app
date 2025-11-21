@@ -14,6 +14,9 @@ import { StaffPermissionService } from './_services/staff-permissions'
 import { AdminUserDetail } from './_domain/user-detail'
 import { GrantCourseAccessService } from './_services/grant-course-access'
 import { CloseUserAccessService } from './_services/close-user-access'
+import { ExtendUserAccessService } from './_services/extend-user-access'
+import { FreezeUserAccessService } from './_services/freeze-user-access'
+import { UnfreezeUserAccessService } from './_services/unfreeze-user-access'
 import { createAdminAbility } from './_domain/ability'
 import { SharedSession } from '@/kernel/domain/user'
 
@@ -42,6 +45,22 @@ const closeAccessInput = z.object({
   accessId: z.string().min(1),
 })
 
+const extendAccessInput = z.object({
+  accessId: z.string().min(1),
+  expiresAt: z.string().datetime(),
+})
+
+const freezeAccessInput = z.object({
+  accessId: z.string().min(1),
+  start: z.string().datetime(),
+  end: z.string().datetime(),
+})
+
+const unfreezeAccessInput = z.object({
+  accessId: z.string().min(1),
+  freezeId: z.string().min(1),
+})
+
 @injectable()
 export class AdminUsersController extends Controller {
   constructor(
@@ -49,7 +68,10 @@ export class AdminUsersController extends Controller {
     private readonly staffPermissionService: StaffPermissionService,
     private readonly getAdminUserDetailService: GetAdminUserDetailService,
     private readonly grantCourseAccessService: GrantCourseAccessService,
-    private readonly closeUserAccessService: CloseUserAccessService
+    private readonly closeUserAccessService: CloseUserAccessService,
+    private readonly extendUserAccessService: ExtendUserAccessService,
+    private readonly freezeUserAccessService: FreezeUserAccessService,
+    private readonly unfreezeUserAccessService: UnfreezeUserAccessService
   ) {
     super()
   }
@@ -60,7 +82,7 @@ export class AdminUsersController extends Controller {
     }
   }
 
-  private createAbility = async (session: SharedSession) => {
+  private readonly createAbility = async (session: SharedSession) => {
     const role = session.user.role as ROLE
     this.ensureAdmin(role)
 
@@ -124,6 +146,49 @@ export class AdminUsersController extends Controller {
             .mutation(async ({ ctx, input }) => {
               await this.closeUserAccessService.exec({
                 accessId: input.accessId,
+                adminId: ctx.session.user.id,
+              })
+
+              return { success: true }
+            }),
+          extend: checkAbilityProcedure({
+            create: this.createAbility,
+            check: ability => ability.canEditAccess,
+          })
+            .input(extendAccessInput)
+            .mutation(async ({ ctx, input }) => {
+              await this.extendUserAccessService.exec({
+                accessId: input.accessId,
+                adminId: ctx.session.user.id,
+                expiresAt: new Date(input.expiresAt),
+              })
+
+              return { success: true }
+            }),
+          freeze: checkAbilityProcedure({
+            create: this.createAbility,
+            check: ability => ability.canEditAccess,
+          })
+            .input(freezeAccessInput)
+            .mutation(async ({ ctx, input }) => {
+              await this.freezeUserAccessService.exec({
+                accessId: input.accessId,
+                adminId: ctx.session.user.id,
+                start: new Date(input.start),
+                end: new Date(input.end),
+              })
+
+              return { success: true }
+            }),
+          freezeCancel: checkAbilityProcedure({
+            create: this.createAbility,
+            check: ability => ability.canEditAccess,
+          })
+            .input(unfreezeAccessInput)
+            .mutation(async ({ ctx, input }) => {
+              await this.unfreezeUserAccessService.exec({
+                accessId: input.accessId,
+                freezeId: input.freezeId,
                 adminId: ctx.session.user.id,
               })
 

@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import {
   flexRender,
@@ -71,7 +71,10 @@ export function AdminDataTable<TData, TValue>({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center text-sm text-muted-foreground">
+              <TableCell
+                colSpan={columns.length}
+                className="h-24 text-center text-sm text-muted-foreground"
+              >
                 Нет данных
               </TableCell>
             </TableRow>

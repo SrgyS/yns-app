@@ -1,12 +1,15 @@
 import { useCallback } from 'react'
 import { DailyContentType, WorkoutType } from '@prisma/client'
 import { workoutApi } from '../_api'
-import { useWorkoutCompletionStore, createCompletionKey } from '@/shared/store/workout-completion-store'
+import {
+  useWorkoutCompletionStore,
+  createCompletionKey,
+} from '@/shared/store/workout-completion-store'
 
 export function useWorkoutCompletions() {
   // Получаем утилиты для инвалидации кэша
   const utils = workoutApi.useUtils()
-  
+
   // Функция для получения статуса выполнения тренировки
   const getWorkoutCompletionStatus = useCallback(
     async (
@@ -19,16 +22,23 @@ export function useWorkoutCompletions() {
       if (!userId || !enrollmentId) {
         return false
       }
-      
+
       // Создаем ключ для хранения в сторе
-      const key = createCompletionKey(userId, enrollmentId, contentType, stepIndex)
-      
+      const key = createCompletionKey(
+        userId,
+        enrollmentId,
+        contentType,
+        stepIndex
+      )
+
       // Проверяем, есть ли значение в сторе
-      const cachedValue = useWorkoutCompletionStore.getState().getCompletion(key)
+      const cachedValue = useWorkoutCompletionStore
+        .getState()
+        .getCompletion(key)
       if (cachedValue !== undefined) {
         return cachedValue
       }
-      
+
       try {
         // Создаем ключ запроса
         const queryKey = {
@@ -37,16 +47,16 @@ export function useWorkoutCompletions() {
           contentType,
           stepIndex,
         }
-        
+
         // Запрашиваем данные с сервера
         const result = await utils.getWorkoutCompletionStatus.fetch(queryKey, {
           staleTime: 5 * 60 * 1000, // 5 минут
           gcTime: 10 * 60 * 1000, // 10 минут
         })
-        
+
         // Сохраняем результат в сторе
         useWorkoutCompletionStore.getState().setCompletion(key, result)
-        
+
         return result
       } catch (error) {
         console.error('Error getting workout completion status:', error)
@@ -55,29 +65,36 @@ export function useWorkoutCompletions() {
     },
     [utils]
   )
-  
+
   // Мутация для обновления статуса выполнения тренировки
-  const updateWorkoutCompletionMutation = workoutApi.updateWorkoutCompletion.useMutation({
-    // При успешном обновлении инвалидируем кэш и обновляем стор
-    onSuccess: (_, variables) => {
-      const { userId, enrollmentId, contentType, stepIndex, isCompleted } = variables
-      
-      // Создаем ключ для хранения в сторе
-      const key = createCompletionKey(userId, enrollmentId, contentType, stepIndex)
-      
-      // Обновляем значение в сторе
-      useWorkoutCompletionStore.getState().setCompletion(key, isCompleted)
-      
-      // Инвалидируем конкретный запрос в React Query
-      utils.getWorkoutCompletionStatus.invalidate({
-        userId,
-        enrollmentId,
-        contentType,
-        stepIndex,
-      })
-    },
-  })
-  
+  const updateWorkoutCompletionMutation =
+    workoutApi.updateWorkoutCompletion.useMutation({
+      // При успешном обновлении инвалидируем кэш и обновляем стор
+      onSuccess: (_, variables) => {
+        const { userId, enrollmentId, contentType, stepIndex, isCompleted } =
+          variables
+
+        // Создаем ключ для хранения в сторе
+        const key = createCompletionKey(
+          userId,
+          enrollmentId,
+          contentType,
+          stepIndex
+        )
+
+        // Обновляем значение в сторе
+        useWorkoutCompletionStore.getState().setCompletion(key, isCompleted)
+
+        // Инвалидируем конкретный запрос в React Query
+        utils.getWorkoutCompletionStatus.invalidate({
+          userId,
+          enrollmentId,
+          contentType,
+          stepIndex,
+        })
+      },
+    })
+
   // Функция для обновления статуса выполнения тренировки
   const updateWorkoutCompletion = useCallback(
     async (params: {
@@ -99,7 +116,7 @@ export function useWorkoutCompletions() {
     },
     [updateWorkoutCompletionMutation]
   )
-  
+
   return {
     getWorkoutCompletionStatus,
     updateWorkoutCompletion,

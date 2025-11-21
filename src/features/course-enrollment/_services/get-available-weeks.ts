@@ -210,7 +210,10 @@ export class GetAvailableWeeksService {
     const currentWeekStart = startOfWeek(today, { weekStartsOn: 1 })
 
     const baseWindowStart = currentWeekStart
-    let baseWindowEnd = addDays(currentWeekStart, 7 * (this.SUBSCRIPTION_WINDOW_SIZE - 1))
+    let baseWindowEnd = addDays(
+      currentWeekStart,
+      7 * (this.SUBSCRIPTION_WINDOW_SIZE - 1)
+    )
 
     if (expiresAt) {
       const expiryWeekStart = startOfWeek(expiresAt, { weekStartsOn: 1 })
@@ -232,10 +235,15 @@ export class GetAvailableWeeksService {
     const windowEnd = baseWindowEnd
 
     const visibleWeeks = releasedWeeks.filter(week => {
-      const weekStart = startOfWeek(new Date(week.releaseAt), { weekStartsOn: 1 })
+      const weekStart = startOfWeek(new Date(week.releaseAt), {
+        weekStartsOn: 1,
+      })
       const weekEnd = addDays(weekStart, 6)
 
-      return weekEnd.getTime() >= windowStart.getTime() && weekStart.getTime() <= windowEnd.getTime()
+      return (
+        weekEnd.getTime() >= windowStart.getTime() &&
+        weekStart.getTime() <= windowEnd.getTime()
+      )
     })
 
     const availableWeeks = visibleWeeks

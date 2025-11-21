@@ -11,11 +11,15 @@ export class GetUserWorkoutDaysService {
 
   async exec(userId: string, courseId: string): Promise<DayOfWeek[]> {
     try {
-      const enrollment = await this.userCourseEnrollmentRepository.getEnrollment(userId, courseId)
+      const enrollment =
+        await this.userCourseEnrollmentRepository.getEnrollment(
+          userId,
+          courseId
+        )
 
-if(!enrollment){
-  throw new Error('Enrollment not found')
-}
+      if (!enrollment) {
+        throw new Error('Enrollment not found')
+      }
       // Берем тренировочные дни из первого enrollment (они должны быть одинаковыми для всех курсов)
       const workoutDays = enrollment.selectedWorkoutDays
 
@@ -35,4 +39,4 @@ if(!enrollment){
       throw new Error('Failed to get user workout days')
     }
   }
-} 
+}

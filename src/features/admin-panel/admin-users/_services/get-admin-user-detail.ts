@@ -32,11 +32,12 @@ export class GetAdminUserDetailService {
       throw new Error('Пользователь не найден')
     }
 
-    const permissions =
-      await this.staffPermissionService.getPermissionsForUser({
+    const permissions = await this.staffPermissionService.getPermissionsForUser(
+      {
         id: user.id,
         role: user.role,
-      })
+      }
+    )
 
     const lastActivityAt =
       user.sessions[0]?.updatedAt ?? user.updatedAt ?? user.createdAt
@@ -72,7 +73,7 @@ export class GetAdminUserDetailService {
       new Set(
         accessesDb
           .flatMap(access => [access.adminId, access.history[0]?.adminId])
-          .filter((id): id is string => Boolean(id))
+          .filter((id): id is string => !!id)
       )
     )
 
@@ -88,9 +89,7 @@ export class GetAdminUserDetailService {
           })
         : []
 
-    const courseMap = new Map(
-      courses.map(course => [course.id, course])
-    )
+    const courseMap = new Map(courses.map(course => [course.id, course]))
 
     const admins =
       adminIds.length > 0
@@ -111,20 +110,40 @@ export class GetAdminUserDetailService {
       const closedAdmin = closedEntry?.adminId
         ? adminMap.get(closedEntry.adminId)
         : null
+      const freezes =
+        Array.isArray(access.freezes) && access.freezes.length > 0
+          ? (access.freezes
+              .map(freeze => {
+                if (
+                  freeze &&
+                  typeof freeze === 'object' &&
+                  'start' in freeze &&
+                  'end' in freeze &&
+                  'id' in freeze
+                ) {
+                  return {
+                    id: String((freeze as any).id),
+                    start: formatISO(new Date((freeze as any).start)),
+                    end: formatISO(new Date((freeze as any).end)),
+                  }
+                }
+                return null
+              })
+              .filter(Boolean) as { id: string; start: string; end: string }[])
+          : []
 
       return {
         id: access.id,
         courseId: access.courseId,
-        courseTitle:
-          courseMap.get(access.courseId)?.title ?? 'Без названия',
+        courseTitle: courseMap.get(access.courseId)?.title ?? 'Без названия',
         contentType:
           courseMap.get(access.courseId)?.contentType ?? 'FIXED_COURSE',
         reason: access.reason,
         adminName: access.adminId
-          ? adminMap.get(access.adminId)?.name ?? null
+          ? (adminMap.get(access.adminId)?.name ?? null)
           : null,
         adminEmail: access.adminId
-          ? adminMap.get(access.adminId)?.email ?? null
+          ? (adminMap.get(access.adminId)?.email ?? null)
           : null,
         closedByName: closedAdmin?.name ?? null,
         closedAt: closedEntry?.createdAt
@@ -133,8 +152,8 @@ export class GetAdminUserDetailService {
         createdAt: formatISO(access.createdAt),
         startsAt: access.createdAt ? formatISO(access.createdAt) : null,
         expiresAt: access.expiresAt ? formatISO(access.expiresAt) : null,
-        isActive:
-          !access.expiresAt || access.expiresAt.getTime() > Date.now(),
+        isActive: !access.expiresAt || access.expiresAt.getTime() > Date.now(),
+        freezes,
       }
     })
 

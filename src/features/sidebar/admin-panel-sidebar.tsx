@@ -19,18 +19,16 @@ export function AdminPanelSidebar({
   user,
   ...props
 }: React.ComponentProps<typeof Sidebar> & { user: SharedUser }) {
-
-
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-       <NavLogo />
+        <NavLogo />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={adminNavItems} />
       </SidebarContent>
       <SidebarFooter>
-       <NavUser user={user}/>
+        <NavUser user={user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
