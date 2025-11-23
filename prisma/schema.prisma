@@ -377,8 +377,11 @@ model User {
   phone              String?
   role               ROLE                    @default(USER)
   password           String?
+  lastActivityAt     DateTime?
   accounts           Account[]
   sessions           Session[]
+  activities         UserActivity[]
+  paidActivities     UserPaidActivity[]
   enrollments        UserCourseEnrollment[]
   userDailyPlans     UserDailyPlan[]
   favoriteRecipes    UserFavoriteRecipe[]
@@ -398,6 +401,31 @@ model StaffPermission {
   canLoginAsUser  Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+model UserActivity {
+  id        String   @id @default(cuid())
+  userId    String
+  path      String?
+  menu      String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model UserPaidActivity {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime
+  path      String?
+  menu      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date])
 }
 
 model ContentBlock {

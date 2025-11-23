@@ -48,8 +48,15 @@ export type AdminUserPayment = {
   }[]
 }
 
+export type AdminUserActivity = {
+  date: string
+  path: string | null
+  menu: string | null
+}
+
 export type AdminUserDetail = {
   profile: AdminUserProfile
   accesses: AdminUserAccess[]
   payments: AdminUserPayment[]
+  activity: AdminUserActivity[]
 }

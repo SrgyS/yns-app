@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { toast } from 'sonner'
-import { addDays } from 'date-fns'
+import { addDays, endOfDay, startOfDay } from 'date-fns'
 import { type DateRange } from 'react-day-picker'
 import type { AdminUserAccess } from '../../../_domain/user-detail'
 import { Card, CardContent } from '@/shared/ui/card'
@@ -41,6 +41,11 @@ export function AccessesTable({
   userId,
   canEditAccess,
 }: AccessesTableProps) {
+  const toNativeDate = (date: Date) => new Date(date)
+  const toIsoStartOfDay = (date: Date) =>
+    startOfDay(toNativeDate(date)).toISOString()
+  const toIsoEndOfDay = (date: Date) => endOfDay(toNativeDate(date)).toISOString()
+
   const utils = adminUsersApi.useUtils()
   const [extendTarget, setExtendTarget] = useState<
     { id: string; expiresAt: string | null } | undefined
@@ -149,7 +154,7 @@ export function AccessesTable({
           if (!extendTarget) return
           extendMutation.mutate({
             accessId: extendTarget.id,
-            expiresAt: value.toISOString(),
+            expiresAt: toIsoStartOfDay(value),
           })
         }}
       />
@@ -161,8 +166,8 @@ export function AccessesTable({
           if (!freezeTarget) return
           freezeMutation.mutate({
             accessId: freezeTarget.id,
-            start: start.toISOString(),
-            end: end.toISOString(),
+            start: toIsoStartOfDay(start),
+            end: toIsoEndOfDay(end),
           })
         }}
       />
@@ -197,6 +202,11 @@ function ExtendAccessDialog({
 }: Readonly<ExtendDialogProps>) {
   const open = Boolean(target)
   const [dateValue, setDateValue] = useState<Date | undefined>(undefined)
+  const [timeZone, setTimeZone] = useState<string | undefined>(undefined)
+
+  useEffect(() => {
+    setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone)
+  }, [])
 
   useEffect(() => {
     if (target?.expiresAt) {
@@ -239,6 +249,7 @@ function ExtendAccessDialog({
               disabled={disabledDate}
               className="rounded-md border shadow-sm"
               captionLayout="dropdown-months"
+              timeZone={timeZone}
             />
           </div>
           <DialogFooter>
@@ -276,6 +287,11 @@ function FreezeDialog({
   const open = Boolean(target)
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
+  const [timeZone, setTimeZone] = useState<string | undefined>(undefined)
+
+  useEffect(() => {
+    setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone)
+  }, [])
 
   useEffect(() => {
     if (target) {
@@ -359,8 +375,13 @@ function FreezeDialog({
               selected={dateRange}
               onSelect={handleRangeSelect}
               disabled={disabledDate}
+              timeZone={timeZone}
               numberOfMonths={
-                globalThis?.window && window.innerWidth < 640 ? 1 : 2
+                typeof globalThis !== 'undefined' &&
+                'window' in globalThis &&
+                globalThis.window.innerWidth < 640
+                  ? 1
+                  : 2
               }
               className="w-full max-w-full rounded-lg border shadow-sm"
             />
@@ -426,7 +447,12 @@ function UnfreezeDialog({
           >
             Отмена
           </Button>
-          <Button type="button" variant="destructive" onClick={onSubmit} disabled={isSubmitting}>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={onSubmit}
+            disabled={isSubmitting}
+          >
             {isSubmitting && <Spinner className="mr-2 size-3" />} Удалить
           </Button>
         </DialogFooter>

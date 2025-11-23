@@ -6,7 +6,7 @@ import { Spinner } from '@/shared/ui/spinner'
 import { Card } from '@/shared/ui/card'
 import { Trash2, Snowflake } from 'lucide-react'
 import type { AdminUserAccess } from '../../../_domain/user-detail'
-import { formatDate } from '../../utils/format-date'
+import { formatDate, formatDateTime } from '../../utils/format-date'
 import { useAccessesTableContext } from './context'
 import { cn } from '@/shared/ui/utils'
 
@@ -135,7 +135,7 @@ function FreezesCell({ access }: Readonly<{ access: AdminUserAccess }>) {
           className="flex items-center gap-2 text-xs text-muted-foreground"
         >
           <span className="text-wrap">
-            {formatDate(freeze.start)} – {formatDate(freeze.end)}
+            {formatDateTime(freeze.start)} – {formatDateTime(freeze.end)}
           </span>
           <Button
             variant="ghost"
@@ -182,33 +182,31 @@ function PeriodCell({ access }: Readonly<{ access: AdminUserAccess }>) {
     }) ?? false
 
   return (
-    <Card
-      role="button"
-      tabIndex={canEditAccess && isActive ? 0 : -1}
+    <Button
+      asChild
+      variant="ghost"
       onClick={handleClick}
-      onKeyDown={event => {
-        if (!canEditAccess || !isActive) return
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          handleClick()
-        }
-      }}
-      className={cn(
-        'flex cursor-pointer flex-col gap-1 border-2 p-3 text-left text-xs text-muted-foreground transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
-        !canEditAccess || !isActive ? 'pointer-events-none opacity-60' : '',
-        isFrozenToday
-          ? 'border-sky-500 hover:bg-sky-50 focus-visible:ring-sky-500'
-          : isActive &&
-              'border-green-500 hover:bg-green-50 focus-visible:ring-green-500'
-      )}
+      className="h-auto w-full p-0"
     >
-      {isFrozenToday && (
-        <span className="flex items-center gap-1 text-[11px] font-semibold text-sky-700">
-          <Snowflake className="size-3" />
-          Заморожен
-        </span>
-      )}
-      <span>{periodText}</span>
-    </Card>
+      <Card
+        tabIndex={canEditAccess && isActive ? 0 : -1}
+        className={cn(
+          'p-2 flex cursor-pointer flex-col gap-1  transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+          !canEditAccess || !isActive ? 'pointer-events-none opacity-60' : '',
+          isFrozenToday
+            ? 'border-sky-500 hover:bg-sky-50 focus-visible:ring-sky-500'
+            : isActive &&
+                'border-green-500 hover:bg-green-50 focus-visible:ring-green-500'
+        )}
+      >
+        {isFrozenToday && (
+          <span className="flex items-center gap-1 text-xs self-start font-semibold text-sky-700">
+            <Snowflake className="size-3" />
+            Заморожен
+          </span>
+        )}
+        <span>{periodText}</span>
+      </Card>
+    </Button>
   )
 }

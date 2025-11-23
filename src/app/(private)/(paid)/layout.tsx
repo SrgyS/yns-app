@@ -7,6 +7,7 @@ import { PaidAccessProviderClient } from '@/features/course-enrollment/_vm/paid-
 import { GetAccessibleEnrollmentsService } from '@/features/course-enrollment/_services/get-accessible-enrollments'
 import { toUserCourseEnrollmentApi } from '@/features/course-enrollment/_lib/map-user-course-enrollment'
 import { NoAccessCallout } from '@/features/course-enrollment/_ui/no-access-callout'
+import { PaidActivityFlag } from '@/features/activity-tracker/paid-activity-flag'
 
 export default async function Layout({
   children,
@@ -58,6 +59,7 @@ export default async function Layout({
   if (!hasAccess) {
     return (
       <PaidAccessProviderClient initialState={paidAccessState}>
+        <PaidActivityFlag />
         <div className="pb-[72px] flex flex-col grow">
           <div className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
             <NoAccessCallout
@@ -74,6 +76,7 @@ export default async function Layout({
 
   return (
     <PaidAccessProviderClient initialState={paidAccessState}>
+      <PaidActivityFlag />
       <div className="pb-[72px] flex flex-col grow">{children}</div>
     </PaidAccessProviderClient>
   )

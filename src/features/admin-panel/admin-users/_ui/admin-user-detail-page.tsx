@@ -4,22 +4,15 @@ import { useAdminUserDetail } from '../_hooks/use-admin-user-detail'
 import { useAdminAbility } from '../_hooks/use-admin-ability'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
 import { Button } from '@/shared/ui/button'
-import { Card, CardContent } from '@/shared/ui/card'
-import { ProfileAvatar } from '@/entities/user/client'
-import { formatDate } from './utils/format-date'
 import { AccessesTable } from './tables/accesses'
 import { PaymentsTable } from './tables/payments'
-import { Badge } from '@/shared/ui/badge'
 import { GrantAccessDialog } from './grant-access-dialog'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { FullPageSpinner } from '@/shared/ui/full-page-spinner'
+import { AdminUserProfile } from './admin-user-profile'
+import { ActivityTable } from './tables/activity'
 
-const ROLE_LABELS: Record<string, string> = {
-  ADMIN: 'Администратор',
-  STAFF: 'Сотрудник',
-  USER: 'Пользователь',
-}
 
 export function AdminUserDetailPage({ userId }: Readonly<{ userId: string }>) {
   const { data, isLoading } = useAdminUserDetail(userId)
@@ -76,59 +69,7 @@ export function AdminUserDetailPage({ userId }: Readonly<{ userId: string }>) {
       </Button>
       <div className="grid gap-8 md:grid-cols-[300px_1fr]">
         <aside className="space-y-4 min-w-0">
-          <Card className="w-full">
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center gap-3 text-center">
-                <ProfileAvatar profile={profile} className="size-20" />
-                <div>
-                  <p className="text-lg font-semibold">
-                    {profile.name || 'Без имени'}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {profile.email}
-                  </p>
-                </div>
-                <Badge variant="secondary">
-                  {ROLE_LABELS[profile.role] ?? profile.role}
-                </Badge>
-              </div>
-              <dl className="mt-6 space-y-3 text-sm">
-                <div className="flex flex-col">
-                  <dt className="text-muted-foreground">Телефон</dt>
-                  <dd className="font-semibold">{profile.phone ?? '—'}</dd>
-                </div>
-                <div className="flex flex-col">
-                  <dt className="text-muted-foreground">Дата регистрации</dt>
-                  <dd className="font-semibold">
-                    {formatDate(profile.createdAt)}
-                  </dd>
-                </div>
-                <div className="flex flex-col">
-                  <dt className="text-muted-foreground">
-                    Последняя активность
-                  </dt>
-                  <dd className="font-semibold">
-                    {formatDate(profile.lastActivityAt)}
-                  </dd>
-                </div>
-              </dl>
-              <div className="mt-6 space-y-2">
-                <Button
-                  variant="outline"
-                  className="w-full cursor-pointer"
-                  disabled={!viewerAbility.canLoginAsUser}
-                >
-                  Войти под пользователем
-                </Button>
-                <Button variant="outline" className="w-full cursor-pointer">
-                  Сбросить пароль
-                </Button>
-                <Button variant="outline" className="w-full cursor-pointer">
-                  Отправить сообщение
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <AdminUserProfile profile={profile} viewerAbility={viewerAbility} />
         </aside>
         <section className="space-y-6 min-w-0">
           <div className="flex flex-wrap items-center gap-6">
@@ -173,11 +114,10 @@ export function AdminUserDetailPage({ userId }: Readonly<{ userId: string }>) {
                 />
               </TabsContent>
               <TabsContent value="activity">
-                <Card>
-                  <CardContent className="py-10 text-center text-sm text-muted-foreground">
-                    История активности пока недоступна
-                  </CardContent>
-                </Card>
+                <ActivityTable
+                  data={data.activity}
+                  lastActivityAt={data.profile.lastActivityAt}
+                />
               </TabsContent>
             </Tabs>
           </div>

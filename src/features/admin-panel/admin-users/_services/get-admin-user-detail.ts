@@ -6,6 +6,7 @@ import { StaffPermissionService } from './staff-permissions'
 import {
   AdminUserAccess,
   AdminUserDetail,
+  AdminUserActivity,
   AdminUserPayment,
   AdminUserProfile,
 } from '../_domain/user-detail'
@@ -21,10 +22,6 @@ export class GetAdminUserDetailService {
       where: { id: userId },
       include: {
         staffPermission: true,
-        sessions: {
-          orderBy: { updatedAt: 'desc' },
-          take: 1,
-        },
       },
     })
 
@@ -39,8 +36,18 @@ export class GetAdminUserDetailService {
       }
     )
 
+    const lastActivity =
+      (await dbClient.userActivity.findFirst({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        select: { createdAt: true },
+      })) ?? null
+
     const lastActivityAt =
-      user.sessions[0]?.updatedAt ?? user.updatedAt ?? user.createdAt
+      user.lastActivityAt ??
+      lastActivity?.createdAt ??
+      user.updatedAt ??
+      user.createdAt
 
     const profile: AdminUserProfile = {
       id: user.id,
@@ -181,10 +188,23 @@ export class GetAdminUserDetailService {
       })),
     }))
 
+    const paidActivityDb = await dbClient.userPaidActivity.findMany({
+      where: { userId },
+      orderBy: { date: 'desc' },
+      take: 180,
+    })
+
+    const activity: AdminUserActivity[] = paidActivityDb.map(entry => ({
+      date: formatISO(entry.date),
+      path: entry.path ?? null,
+      menu: entry.menu ?? null,
+    }))
+
     return {
       profile,
       accesses,
       payments,
+      activity,
     }
   }
 }
