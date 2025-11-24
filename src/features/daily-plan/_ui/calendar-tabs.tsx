@@ -1,7 +1,13 @@
 'use client'
 
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
-import { format, startOfWeek, addDays, isSameDay } from 'date-fns'
+import {
+  format,
+  startOfWeek,
+  addDays,
+  isSameDay,
+  getWeekOfMonth,
+} from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui/tabs'
@@ -10,7 +16,6 @@ import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { useWorkoutCalendar } from '../_vm/use-worckout-calendar'
 import { CourseSlug } from '@/kernel/domain/course'
-import { getWeekOfMonth } from 'date-fns'
 import { Skeleton } from '@/shared/ui/skeleton/skeleton'
 import { Button } from '@/shared/ui/button'
 import {

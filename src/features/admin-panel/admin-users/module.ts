@@ -12,6 +12,7 @@ import { CloseUserAccessService } from './_services/close-user-access'
 import { ExtendUserAccessService } from './_services/extend-user-access'
 import { FreezeUserAccessService } from './_services/freeze-user-access'
 import { UnfreezeUserAccessService } from './_services/unfreeze-user-access'
+import { UpdateAdminUserService } from './_services/update-admin-user'
 
 export const AdminUsersModule = new ContainerModule(context => {
   const { bind } = context
@@ -26,6 +27,7 @@ export const AdminUsersModule = new ContainerModule(context => {
   bind(ExtendUserAccessService).toSelf()
   bind(FreezeUserAccessService).toSelf()
   bind(UnfreezeUserAccessService).toSelf()
+  bind(UpdateAdminUserService).toSelf()
   bind(Controller).to(AdminUsersController)
 })
 

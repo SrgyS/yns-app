@@ -6,9 +6,11 @@ export type PaidAccessState = {
   activeEnrollment: UserCourseEnrollmentApi | null
   activeCourseSlug: CourseSlug | null
   accessExpiresAt: string | null
+  accessStartedAt: string | null
   accessibleCourses: Array<{
     enrollment: UserCourseEnrollmentApi
     accessExpiresAt: string | null
+    accessStartedAt: string
     setupCompleted: boolean
   }>
 }

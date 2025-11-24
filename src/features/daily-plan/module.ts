@@ -2,7 +2,7 @@ import { ContainerModule } from 'inversify'
 import { Controller } from '@/kernel/lib/trpc/module'
 import { WorkoutController } from './_controller'
 import { GetUserDailyPlanService } from './_services/get-user-daily-plan'
-import { DayPlanLoadService } from './_services/day-plan-load-service'
+import { DayPlanLoadService } from './_services/day-plan-load'
 
 export const DailyPlanModule = new ContainerModule(context => {
   const { bind } = context

@@ -34,10 +34,10 @@ export default async function Layout({
     <SidebarProvider>
       <AdminPanelSidebar user={session.user} />
       <SidebarInset>
-        <div className="m-1">
+        <div className="mt-1 mx-1">
           <SidebarTrigger className="cursor-pointer" />
         </div>
-        <div className="flex-1 px-2 py-1">{children}</div>
+        <div className="flex-1 px-2 pt-2 pb-8">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   )

@@ -12,6 +12,7 @@ import {
 import { CheckCourseAccessService } from '@/entities/user-access/module'
 import { UserAccessRepository } from '@/entities/user-access/_repository/user-access'
 import { UserCourseEnrollmentRepository } from '@/entities/course/_repositories/user-course-enrollment'
+import { GetAccessibleEnrollmentsService } from './get-accessible-enrollments'
 
 @injectable()
 export class CreateUserCourseEnrollmentWithCourseAccessService {
@@ -20,7 +21,8 @@ export class CreateUserCourseEnrollmentWithCourseAccessService {
     private readonly getCourseService: GetCourseService,
     private readonly createUserCourseEnrollment: CreateUserCourseEnrollmentService,
     private readonly userAccessRepository: UserAccessRepository,
-    private readonly userCourseEnrollmentRepository: UserCourseEnrollmentRepository
+    private readonly userCourseEnrollmentRepository: UserCourseEnrollmentRepository,
+    private readonly getAccessibleEnrollmentsService: GetAccessibleEnrollmentsService
   ) {}
 
   async exec(
@@ -59,11 +61,17 @@ export class CreateUserCourseEnrollmentWithCourseAccessService {
       throw new Error('Доступ к курсу не найден')
     }
 
+    const accessibleEnrollments =
+      await this.getAccessibleEnrollmentsService.exec(params.userId)
+
     const existingEnrollment =
-      await this.userCourseEnrollmentRepository.getEnrollment(
+      accessibleEnrollments.find(
+        entry => entry.course.id === params.courseId
+      )?.enrollment ??
+      (await this.userCourseEnrollmentRepository.getEnrollment(
         params.userId,
         params.courseId
-      )
+      ))
 
     const shouldReuseExisting =
       course.contentType === 'SUBSCRIPTION' &&

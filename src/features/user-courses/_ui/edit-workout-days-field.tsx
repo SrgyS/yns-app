@@ -6,8 +6,10 @@ import { UserCourseEnrollmentApi } from '@/entities/course'
 
 export const EditWorkoutDaysField = ({
   enrollment,
+  freezeUntil,
 }: {
   enrollment: UserCourseEnrollmentApi
+  freezeUntil: string | null
 }) => {
   const formatWorkoutDays = (days: string[]) => {
     // Порядок дней недели
@@ -38,7 +40,10 @@ export const EditWorkoutDaysField = ({
       <div className="flex flex-wrap gap-2">
         {formatWorkoutDays(enrollment.selectedWorkoutDays || [])}
       </div>
-      <EditWorkoutDaysButton enrollmentId={enrollment.id} />
+      <EditWorkoutDaysButton
+        enrollmentId={enrollment.id}
+        freezeUntil={freezeUntil}
+      />
     </div>
   )
 }

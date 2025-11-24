@@ -9,6 +9,7 @@ import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course
 import { ContentType, CourseId, CourseSlug } from '@/kernel/domain/course'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { Label } from '@/shared/ui/label'
+import type { PaidAccessState } from '@/features/course-enrollment/_vm/paid-access-types'
 
 interface SelectWorkoutDaysClientProps {
   initialSelectedDays: DayOfWeek[]
@@ -24,7 +25,7 @@ export function SelectWorkoutDaysClient({
   courseContentType,
   initialSelectedDays,
   allowedDayOptions,
-}: SelectWorkoutDaysClientProps) {
+}: Readonly<SelectWorkoutDaysClientProps>) {
   const dayOptions =
     allowedDayOptions && allowedDayOptions.length > 0
       ? Array.from(new Set(allowedDayOptions)).sort((a, b) => a - b)
@@ -38,7 +39,13 @@ export function SelectWorkoutDaysClient({
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
-  const { createEnrollment } = useCourseEnrollment()
+  const { createEnrollment, updateWorkoutDays, getAccessibleEnrollments } =
+    useCourseEnrollment()
+
+  const accessibleQuery = getAccessibleEnrollments({
+    staleTime: 5_000,
+  })
+  const accessible = accessibleQuery.data as PaidAccessState | undefined
 
   const initialDaysForSelector =
     targetDaysPerWeek && initialSelectedDays.length === targetDaysPerWeek
@@ -57,13 +64,38 @@ export function SelectWorkoutDaysClient({
 
     setIsSubmitting(true)
     try {
-      // Создаем новую запись на курс
-      await createEnrollment({
-        courseId,
-        courseContentType,
-        selectedWorkoutDays: days,
-        startDate: new Date(),
-      })
+      let existingEnrollment =
+        accessible && 'accessibleCourses' in accessible
+          ? (accessible.accessibleCourses.find(
+              (entry: PaidAccessState['accessibleCourses'][number]) =>
+                entry.enrollment.courseId === courseId
+            ) ?? null)
+          : null
+
+      if (!existingEnrollment) {
+        const refreshed = await accessibleQuery.refetch()
+        const refreshedData = refreshed.data as PaidAccessState | undefined
+        existingEnrollment =
+          refreshedData?.accessibleCourses.find(
+            (entry: PaidAccessState['accessibleCourses'][number]) =>
+              entry.enrollment.courseId === courseId
+          ) ?? null
+      }
+
+      if (existingEnrollment) {
+        await updateWorkoutDays({
+          enrollmentId: existingEnrollment.enrollment.id,
+          selectedWorkoutDays: days,
+          keepProgress: false,
+        })
+      } else {
+        await createEnrollment({
+          courseId,
+          courseContentType,
+          selectedWorkoutDays: days,
+          startDate: new Date(),
+        })
+      }
       setIsSubmitting(false)
       toast.success('План тренировок готов!')
       router.push(`/day/${courseSlug}`)

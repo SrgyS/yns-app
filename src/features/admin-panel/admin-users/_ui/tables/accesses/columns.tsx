@@ -4,7 +4,7 @@ import { ColumnDef } from '@tanstack/react-table'
 import { Button } from '@/shared/ui/button'
 import { Spinner } from '@/shared/ui/spinner'
 import { Card } from '@/shared/ui/card'
-import { Trash2, Snowflake } from 'lucide-react'
+import { Snowflake } from 'lucide-react'
 import type { AdminUserAccess } from '../../../_domain/user-detail'
 import { formatDate } from '../../utils/format-date'
 import { useAccessesTableContext } from './context'
@@ -74,11 +74,6 @@ export const accessColumns: ColumnDef<AdminUserAccess>[] = [
     },
   },
   {
-    accessorKey: 'freezes',
-    header: 'Заморозка',
-    cell: ({ row }) => <FreezesCell access={row.original} />,
-  },
-  {
     id: 'actions',
     header: 'Действия',
     cell: ({ row }) => <AccessActionsCell access={row.original} />,
@@ -86,7 +81,7 @@ export const accessColumns: ColumnDef<AdminUserAccess>[] = [
 ]
 
 function AccessActionsCell({ access }: Readonly<{ access: AdminUserAccess }>) {
-  const { canEditAccess, onClose, isClosing, closingAccessId, onFreeze } =
+  const { canEditAccess, onClose, isClosing, closingAccessId } =
     useAccessesTableContext()
 
   const isActive = access.isActive
@@ -95,19 +90,9 @@ function AccessActionsCell({ access }: Readonly<{ access: AdminUserAccess }>) {
 
   return (
     <div className="flex flex-wrap gap-2 text-xs">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() =>
-          onFreeze({ id: access.id, expiresAt: access.expiresAt ?? null })
-        }
-        disabled={!canEditAccess || !isActive}
-      >
-        Активировать заморозку
-      </Button>
-      <Button variant="outline" size="sm" disabled>
+      {/* <Button variant="outline" size="sm" disabled>
         Изменить период
-      </Button>
+      </Button> */}
       <Button
         variant="destructive"
         size="sm"
@@ -117,42 +102,6 @@ function AccessActionsCell({ access }: Readonly<{ access: AdminUserAccess }>) {
       >
         {isClosingCurrent && <Spinner className="mr-2 size-2" />} Закрыть
       </Button>
-    </div>
-  )
-}
-
-function FreezesCell({ access }: Readonly<{ access: AdminUserAccess }>) {
-  const freezes = access.freezes ?? []
-  const { onUnfreeze, canEditAccess } = useAccessesTableContext()
-  if (!freezes.length) {
-    return <span className="text-muted-foreground">—</span>
-  }
-  return (
-    <div className="flex flex-col gap-1">
-      {freezes.map(freeze => (
-        <div
-          key={freeze.id}
-          className="flex items-center gap-2 text-xs text-muted-foreground"
-        >
-          <span className="text-wrap">
-            {formatDate(freeze.start)} – {formatDate(freeze.end)}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-destructive hover:text-destructive"
-            onClick={() =>
-              onUnfreeze({
-                accessId: access.id,
-                freezeId: freeze.id,
-              })
-            }
-            disabled={!canEditAccess}
-          >
-            <Trash2 className="size-4" />
-          </Button>
-        </div>
-      ))}
     </div>
   )
 }
@@ -175,40 +124,41 @@ function PeriodCell({ access }: Readonly<{ access: AdminUserAccess }>) {
 
   const now = Date.now()
   const isFrozenToday =
-    access.freezes?.some(freeze => {
+    isActive &&
+    (access.freezes?.some(freeze => {
       const from = new Date(freeze.start).getTime()
       const to = new Date(freeze.end).getTime()
-      return from <= now && to >= now
-    }) ?? false
+      const isCanceled = Boolean(freeze.canceledAt)
+      return !isCanceled && from <= now && to >= now
+    }) ??
+      false)
 
   return (
-    <Card
-      role="button"
-      tabIndex={canEditAccess && isActive ? 0 : -1}
+    <Button
+      asChild
+      variant="ghost"
       onClick={handleClick}
-      onKeyDown={event => {
-        if (!canEditAccess || !isActive) return
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          handleClick()
-        }
-      }}
-      className={cn(
-        'flex cursor-pointer flex-col gap-1 border-2 p-3 text-left text-xs text-muted-foreground transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
-        !canEditAccess || !isActive ? 'pointer-events-none opacity-60' : '',
-        isFrozenToday
-          ? 'border-sky-500 hover:bg-sky-50 focus-visible:ring-sky-500'
-          : isActive &&
-              'border-green-500 hover:bg-green-50 focus-visible:ring-green-500'
-      )}
+      className="h-auto w-full p-0"
     >
-      {isFrozenToday && (
-        <span className="flex items-center gap-1 text-[11px] font-semibold text-sky-700">
-          <Snowflake className="size-3" />
-          Заморожен
-        </span>
-      )}
-      <span>{periodText}</span>
-    </Card>
+      <Card
+        tabIndex={canEditAccess && isActive ? 0 : -1}
+        className={cn(
+          'p-2 flex cursor-pointer flex-col gap-1  transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+          !canEditAccess || !isActive ? 'pointer-events-none opacity-60' : '',
+          isFrozenToday
+            ? 'border-sky-500 hover:bg-sky-50 focus-visible:ring-sky-500'
+            : isActive &&
+                'border-green-500 hover:bg-green-50 focus-visible:ring-green-500'
+        )}
+      >
+        {isFrozenToday && (
+          <span className="flex items-center gap-1 text-xs self-start font-semibold text-sky-700">
+            <Snowflake className="size-3" />
+            Заморожен
+          </span>
+        )}
+        <span>{periodText}</span>
+      </Card>
+    </Button>
   )
 }

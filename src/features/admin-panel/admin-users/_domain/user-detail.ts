@@ -32,7 +32,17 @@ export type AdminUserAccess = {
   startsAt: string | null
   expiresAt: string | null
   isActive: boolean
-  freezes: { id: string; start: string; end: string }[]
+  freezes: { id: string; start: string; end: string; canceledAt: string | null }[]
+}
+
+export type AdminUserFreeze = {
+  id: string
+  start: string
+  end: string
+  createdAt: string
+  createdBy: string | null
+  canceledAt: string | null
+  canceledBy: string | null
 }
 
 export type AdminUserPayment = {
@@ -48,8 +58,16 @@ export type AdminUserPayment = {
   }[]
 }
 
+export type AdminUserActivity = {
+  date: string
+  path: string | null
+  menu: string | null
+}
+
 export type AdminUserDetail = {
   profile: AdminUserProfile
   accesses: AdminUserAccess[]
+  freezes: AdminUserFreeze[]
   payments: AdminUserPayment[]
+  activity: AdminUserActivity[]
 }

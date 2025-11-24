@@ -16,7 +16,7 @@ type PaidAccessProviderClientProps = {
 export function PaidAccessProviderClient({
   initialState,
   children,
-}: PaidAccessProviderClientProps) {
+}: Readonly<PaidAccessProviderClientProps>) {
   const { data, isLoading, isError, error } =
     courseEnrollmentApi.course.getAccessibleEnrollments.useQuery(undefined, {
       ...CACHE_SETTINGS.FREQUENT_UPDATE,

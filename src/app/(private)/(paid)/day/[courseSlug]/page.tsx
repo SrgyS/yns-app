@@ -6,7 +6,7 @@ import { CourseEnrollmentController } from '@/features/course-enrollment/_contro
 import { CourseDetailsController } from '@/features/course-details/_controller'
 import { WorkoutController } from '@/features/daily-plan/_controller'
 import { createControllerHelpers } from '@/shared/api/server-helpers'
-import { DayPlanLoadService } from '@/features/daily-plan/_services/day-plan-load-service'
+import { DayPlanLoadService } from '@/features/daily-plan/_services/day-plan-load'
 
 import { DayPageClient } from './day-page-client'
 
@@ -128,6 +128,7 @@ export default async function DayPage({ params }: DayPageProps) {
       userId,
       courseId: loadResult.enrollment.courseId,
       dayNumberInCourse: loadResult.defaultDayNumber,
+      enrollmentId: loadResult.enrollment.id,
     })
 
     queryClient.setQueryData(dailyPlanOptions.queryKey, (() =>

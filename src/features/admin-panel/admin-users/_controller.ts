@@ -19,6 +19,7 @@ import { FreezeUserAccessService } from './_services/freeze-user-access'
 import { UnfreezeUserAccessService } from './_services/unfreeze-user-access'
 import { createAdminAbility } from './_domain/ability'
 import { SharedSession } from '@/kernel/domain/user'
+import { UpdateAdminUserService } from './_services/update-admin-user'
 
 const avatarFilterSchema = z.enum(['any', 'with', 'without'])
 
@@ -61,6 +62,20 @@ const unfreezeAccessInput = z.object({
   freezeId: z.string().min(1),
 })
 
+const updateUserInput = z.object({
+  userId: z.string().min(1),
+  role: z.nativeEnum(ROLE).optional(),
+  permissions: z
+    .object({
+      canViewPayments: z.boolean().optional(),
+      canEditAccess: z.boolean().optional(),
+      canManageUsers: z.boolean().optional(),
+      canGrantAccess: z.boolean().optional(),
+      canLoginAsUser: z.boolean().optional(),
+    })
+    .optional(),
+})
+
 @injectable()
 export class AdminUsersController extends Controller {
   constructor(
@@ -71,7 +86,8 @@ export class AdminUsersController extends Controller {
     private readonly closeUserAccessService: CloseUserAccessService,
     private readonly extendUserAccessService: ExtendUserAccessService,
     private readonly freezeUserAccessService: FreezeUserAccessService,
-    private readonly unfreezeUserAccessService: UnfreezeUserAccessService
+    private readonly unfreezeUserAccessService: UnfreezeUserAccessService,
+    private readonly updateAdminUserService: UpdateAdminUserService
   ) {
     super()
   }
@@ -114,6 +130,20 @@ export class AdminUsersController extends Controller {
           create: this.createAbility,
           check: ability => ability.canVisitAdminPanel,
         }).query(({ ctx }) => ctx.ability),
+        update: checkAbilityProcedure({
+          create: this.createAbility,
+          check: ability => ability.canManageUsers,
+        })
+          .input(updateUserInput)
+          .mutation(async ({ ctx, input }) => {
+            if (ctx.session.user.role !== 'ADMIN') {
+              throw new TRPCError({ code: 'FORBIDDEN' })
+            }
+
+            await this.updateAdminUserService.exec(input)
+
+            return { success: true }
+          }),
         detail: checkAbilityProcedure({
           create: this.createAbility,
           check: ability => ability.canManageUsers,

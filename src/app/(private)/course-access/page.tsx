@@ -29,7 +29,7 @@ export default async function CourseAccessGatePage() {
     return (
       <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
         <NoAccessCallout
-          title="У вас нет купленных курсов"
+          title="У вас нет доступных курсов"
           description="Оформите подписку или приобретите курс, чтобы получить доступ к плану тренировок."
           ctaHref="/"
           ctaLabel="Выбрать курс или оформить подписку"

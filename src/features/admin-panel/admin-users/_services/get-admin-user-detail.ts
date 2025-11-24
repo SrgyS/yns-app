@@ -6,8 +6,10 @@ import { StaffPermissionService } from './staff-permissions'
 import {
   AdminUserAccess,
   AdminUserDetail,
+  AdminUserActivity,
   AdminUserPayment,
   AdminUserProfile,
+  AdminUserFreeze,
 } from '../_domain/user-detail'
 
 @injectable()
@@ -21,10 +23,6 @@ export class GetAdminUserDetailService {
       where: { id: userId },
       include: {
         staffPermission: true,
-        sessions: {
-          orderBy: { updatedAt: 'desc' },
-          take: 1,
-        },
       },
     })
 
@@ -39,8 +37,18 @@ export class GetAdminUserDetailService {
       }
     )
 
+    const lastActivity =
+      (await dbClient.userActivity.findFirst({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        select: { createdAt: true },
+      })) ?? null
+
     const lastActivityAt =
-      user.sessions[0]?.updatedAt ?? user.updatedAt ?? user.createdAt
+      user.lastActivityAt ??
+      lastActivity?.createdAt ??
+      user.updatedAt ??
+      user.createdAt
 
     const profile: AdminUserProfile = {
       id: user.id,
@@ -69,11 +77,20 @@ export class GetAdminUserDetailService {
     const courseIds = Array.from(
       new Set(accessesDb.map(access => access.courseId))
     )
+    const freezeHistory = await dbClient.userFreeze.findMany({
+      where: { userId },
+      orderBy: { start: 'desc' },
+    })
+
     const adminIds = Array.from(
       new Set(
-        accessesDb
-          .flatMap(access => [access.adminId, access.history[0]?.adminId])
-          .filter((id): id is string => !!id)
+        [
+          ...accessesDb.flatMap(access => [
+            access.adminId,
+            access.history[0]?.adminId,
+          ]),
+          ...freezeHistory.flatMap(entry => [entry.createdBy, entry.canceledBy]),
+        ].filter((id): id is string => Boolean(id))
       )
     )
 
@@ -105,32 +122,25 @@ export class GetAdminUserDetailService {
 
     const adminMap = new Map(admins.map(admin => [admin.id, admin]))
 
+    const freezes: AdminUserFreeze[] = freezeHistory.map(entry => ({
+      id: entry.id,
+      start: formatISO(entry.start),
+      end: formatISO(entry.end),
+      createdAt: formatISO(entry.createdAt),
+      createdBy: entry.createdBy
+        ? adminMap.get(entry.createdBy)?.name ?? null
+        : null,
+      canceledAt: entry.canceledAt ? formatISO(entry.canceledAt) : null,
+      canceledBy: entry.canceledBy
+        ? adminMap.get(entry.canceledBy)?.name ?? null
+        : null,
+    }))
+
     const accesses: AdminUserAccess[] = accessesDb.map(access => {
       const closedEntry = access.history[0]
       const closedAdmin = closedEntry?.adminId
         ? adminMap.get(closedEntry.adminId)
         : null
-      const freezes =
-        Array.isArray(access.freezes) && access.freezes.length > 0
-          ? (access.freezes
-              .map(freeze => {
-                if (
-                  freeze &&
-                  typeof freeze === 'object' &&
-                  'start' in freeze &&
-                  'end' in freeze &&
-                  'id' in freeze
-                ) {
-                  return {
-                    id: String((freeze as any).id),
-                    start: formatISO(new Date((freeze as any).start)),
-                    end: formatISO(new Date((freeze as any).end)),
-                  }
-                }
-                return null
-              })
-              .filter(Boolean) as { id: string; start: string; end: string }[])
-          : []
 
       return {
         id: access.id,
@@ -153,7 +163,12 @@ export class GetAdminUserDetailService {
         startsAt: access.createdAt ? formatISO(access.createdAt) : null,
         expiresAt: access.expiresAt ? formatISO(access.expiresAt) : null,
         isActive: !access.expiresAt || access.expiresAt.getTime() > Date.now(),
-        freezes,
+        freezes: freezes.map(freeze => ({
+          id: freeze.id,
+          start: freeze.start,
+          end: freeze.end,
+          canceledAt: freeze.canceledAt,
+        })),
       }
     })
 
@@ -181,10 +196,24 @@ export class GetAdminUserDetailService {
       })),
     }))
 
+    const paidActivityDb = await dbClient.userPaidActivity.findMany({
+      where: { userId },
+      orderBy: { date: 'desc' },
+      take: 180,
+    })
+
+    const activity: AdminUserActivity[] = paidActivityDb.map(entry => ({
+      date: formatISO(entry.date),
+      path: entry.path ?? null,
+      menu: entry.menu ?? null,
+    }))
+
     return {
       profile,
       accesses,
+      freezes,
       payments,
+      activity,
     }
   }
 }

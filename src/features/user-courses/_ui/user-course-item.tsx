@@ -1,7 +1,6 @@
 'use client'
 
-import { Course } from '@/entities/course'
-import { MdxCode } from '@/shared/lib/mdx'
+import { Course, UserCourseEnrollmentApi } from '@/entities/course'
 import { Button } from '@/shared/ui/button'
 import {
   Card,
@@ -10,11 +9,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/ui/card'
-import { CalendarDays, CheckCircle } from 'lucide-react'
+import { CalendarDays, CheckCircle, Snowflake } from 'lucide-react'
 import { Badge } from '@/shared/ui/badge'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { UserCourseEnrollmentApi } from '@/entities/course'
 import React from 'react'
 import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { SmallSpinner } from '@/shared/ui/small-spinner'
@@ -26,9 +24,18 @@ import { useRouter } from 'next/navigation'
 interface UserCourseItemProps {
   course: Course
   enrollment: UserCourseEnrollmentApi
+  freezeUntil: string | null
+  accessExpiresAt: string | null
+  accessStartedAt: string
 }
 
-export function UserCourseItem({ course, enrollment }: UserCourseItemProps) {
+export function UserCourseItem({
+  course,
+  enrollment,
+  freezeUntil,
+  accessExpiresAt,
+  accessStartedAt,
+}: Readonly<UserCourseItemProps>) {
   // Используем хук useCourseEnrollment, который уже настроен для автоматического обновления кэша
   const { activateEnrollment, isActivating } = useCourseEnrollment()
   const courseEnrollmentUtils = courseEnrollmentApi.useUtils()
@@ -36,6 +43,9 @@ export function UserCourseItem({ course, enrollment }: UserCourseItemProps) {
   const router = useRouter()
 
   const handleActivate = async () => {
+    if (freezeUntil) {
+      return
+    }
     try {
       await activateEnrollment(enrollment.id)
       router.refresh()
@@ -46,6 +56,10 @@ export function UserCourseItem({ course, enrollment }: UserCourseItemProps) {
 
   // Обработчик для перехода к тренировкам с инвалидацией кеша
   const handleGoToWorkouts = async (e: React.MouseEvent) => {
+    if (freezeUntil) {
+      e.preventDefault()
+      return
+    }
     e.preventDefault()
 
     // Инвалидируем конкретные запросы вместо всего кеша
@@ -58,61 +72,64 @@ export function UserCourseItem({ course, enrollment }: UserCourseItemProps) {
   }
 
   const startDateFormatted = format(
-    new Date(enrollment.startDate),
+    new Date(accessStartedAt ?? enrollment.startDate),
     'dd MMMM yyyy',
     { locale: ru }
   )
+  const endDateFormatted = accessExpiresAt
+    ? format(new Date(accessExpiresAt), 'dd MMMM yyyy', { locale: ru })
+    : null
 
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>{course.title}</CardTitle>
+        <div className="flex justify-between">
+          <CardTitle>{course.title}</CardTitle>
+          {freezeUntil && (
+            <Badge
+              variant="outline"
+              className="bg-blue-50 text-blue-700 border-blue-200 gap-1 w-fit"
+            >
+              <Snowflake className="h-3 w-3" />
+              {`заморожен до ${format(new Date(freezeUntil), 'dd.MM.yyyy', {
+                locale: ru,
+              })}`}
+            </Badge>
+          )}
+        </div>
+
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <CalendarDays size={16} />
-          <span>Начало: {startDateFormatted}</span>
+          <span>
+            Доступ: с {startDateFormatted}{' '}
+            {endDateFormatted ? `по ${endDateFormatted}` : 'бессрочно'}
+          </span>
         </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
           <div className="space-y-4">
-            <MdxCode code={course.description} />
-
             {enrollment.hasFeedback && (
               <Badge variant="outline" className="bg-green-50">
                 С обратной связью
               </Badge>
             )}
-            <EditWorkoutDaysField enrollment={enrollment} />
-            {/* Добавляем информацию о днях тренировок */}
-            {/* {enrollment.selectedWorkoutDays && enrollment.selectedWorkoutDays.length > 0 && (
-              <div className="space-y-2 mt-4">
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Дни тренировок:</h3>
-                  <Separator />
-                </div>
-                <div className="text-sm">
-                  {formatWorkoutDays(enrollment.selectedWorkoutDays)}
-                </div>
-                {enrollment.active && (
-                  <Button asChild variant="outline" size="sm">
-                    <Link href={`/edit-workout-days/${enrollment.id}`}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Изменить дни
-                    </Link>
-                  </Button>
-                )}
-              </div>
-            )} */}
+            <EditWorkoutDaysField
+              enrollment={enrollment}
+              freezeUntil={freezeUntil}
+            />
           </div>
         </div>
       </CardContent>
       <CardFooter className="flex justify-between">
         {enrollment.active ? (
-          <Button onClick={handleGoToWorkouts}>Перейти к тренировкам</Button>
+          <Button onClick={handleGoToWorkouts} disabled={!!freezeUntil}>
+            Перейти к тренировкам
+          </Button>
         ) : (
           <Button
             onClick={handleActivate}
-            disabled={isActivating}
+            disabled={isActivating || !!freezeUntil}
             variant="secondary"
           >
             <CheckCircle className="mr-2 h-4 w-4" />

@@ -21,4 +21,10 @@ export class StaffPermissionRepository {
       },
     })
   }
+
+  async deleteByUserId(userId: string) {
+    await dbClient.staffPermission.deleteMany({
+      where: { userId },
+    })
+  }
 }

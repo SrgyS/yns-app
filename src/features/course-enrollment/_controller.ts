@@ -79,6 +79,7 @@ export class CourseEnrollmentController extends Controller {
             activeEnrollment: null,
             activeCourseSlug: null,
             accessExpiresAt: null,
+            accessStartedAt: null,
             accessibleCourses: [],
           }
           return emptyState
@@ -93,6 +94,7 @@ export class CourseEnrollmentController extends Controller {
           accessExpiresAt: entry.accessExpiresAt
             ? entry.accessExpiresAt.toISOString()
             : null,
+          accessStartedAt: entry.accessStartedAt.toISOString(),
           setupCompleted: entry.setupCompleted,
         }))
 
@@ -104,6 +106,9 @@ export class CourseEnrollmentController extends Controller {
           activeCourseSlug: activeAccessible?.course.slug ?? null,
           accessExpiresAt: activeAccessible?.accessExpiresAt
             ? activeAccessible.accessExpiresAt.toISOString()
+            : null,
+          accessStartedAt: activeAccessible
+            ? activeAccessible.accessStartedAt.toISOString()
             : null,
           accessibleCourses,
         }

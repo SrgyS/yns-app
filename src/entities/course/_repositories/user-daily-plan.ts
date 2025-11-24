@@ -3,29 +3,28 @@ import { dbClient } from '@/shared/lib/db'
 import type { DbClient } from '@/shared/lib/db'
 import {
   GetUserDailyPlanByEnrollmentParams,
-  GetUserDailyPlanParams,
   UserDailyPlan,
 } from '..'
 import { logger } from '@/shared/lib/logger'
 import { PlanningRepository } from '../../planning'
 
-const LOG_PREFIX = '[UserDailyPlanRepository]'
+// const LOG_PREFIX = '[UserDailyPlanRepository]'
 
-async function logTiming<T>(
-  label: string,
-  action: () => Promise<T>
-): Promise<T> {
-  const start = Date.now()
-  try {
-    return await action()
-  } finally {
-    const duration = Date.now() - start
-    logger.info({
-      msg: `${LOG_PREFIX} ${label}`,
-      durationMs: duration,
-    })
-  }
-}
+// async function logTiming<T>(
+//   label: string,
+//   action: () => Promise<T>
+// ): Promise<T> {
+//   const start = Date.now()
+//   try {
+//     return await action()
+//   } finally {
+//     const duration = Date.now() - start
+//     logger.info({
+//       msg: `${LOG_PREFIX} ${label}`,
+//       durationMs: duration,
+//     })
+//   }
+// }
 
 export class UserDailyPlanRepository {
   private readonly planningRepository: PlanningRepository
@@ -113,46 +112,6 @@ export class UserDailyPlanRepository {
         error,
       })
       throw new Error('Failed to generate user daily plans for week')
-    }
-  }
-
-  async getUserDailyPlan(
-    params: GetUserDailyPlanParams,
-    db: DbClient = this.defaultDb
-  ): Promise<UserDailyPlan | null> {
-    try {
-      // Теперь нужно найти enrollment для пользователя и курса
-      const enrollment = await logTiming('userCourseEnrollment.findFirst', () =>
-        db.userCourseEnrollment.findFirst({
-          where: {
-            userId: params.userId,
-            courseId: params.courseId,
-          },
-        })
-      )
-
-      if (!enrollment) {
-        return null
-      }
-
-      const userDailyPlan = await logTiming('userDailyPlan.findUnique', () =>
-        db.userDailyPlan.findUnique({
-          where: {
-            enrollmentId_dayNumberInCourse: {
-              enrollmentId: enrollment.id,
-              dayNumberInCourse: params.dayNumberInCourse,
-            },
-          },
-        })
-      )
-      return userDailyPlan ? this.toDomain(userDailyPlan) : null
-    } catch (error) {
-      logger.error({
-        msg: 'Error getting user daily plan',
-        params,
-        error,
-      })
-      throw new Error('Failed to get user daily plan')
     }
   }
 
@@ -261,7 +220,7 @@ export class UserDailyPlanRepository {
 
       const distinctWeeks = weekAggregate
         .map(item => item.weekNumber)
-        .filter(week => week !== null) as number[]
+        .filter(week => week !== null)
 
       const totalWeeks = distinctWeeks.length ? Math.max(...distinctWeeks) : 0
 

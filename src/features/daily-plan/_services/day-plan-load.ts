@@ -145,6 +145,7 @@ export class DayPlanLoadService {
       initialDailyPlan = await this.getUserDailyPlanService.exec(
         {
           userId,
+          enrollmentId: enrollmentBySlug.id,
           courseId: enrollmentBySlug.courseId,
           dayNumberInCourse: defaultDayNumber,
         },
