@@ -89,8 +89,12 @@ export class GetUserDailyPlanService {
       }
 
       const userDailyPlan = await logTiming(
-        'userDailyPlanRepository.getUserDailyPlan',
-        () => this.userDailyPlanRepository.getUserDailyPlan(params)
+        'userDailyPlanRepository.getUserDailyPlanByEnrollment',
+        () =>
+          this.userDailyPlanRepository.getUserDailyPlanByEnrollment({
+            enrollmentId: params.enrollmentId,
+            dayNumberInCourse: params.dayNumberInCourse,
+          })
       )
 
       if (userDailyPlan) {

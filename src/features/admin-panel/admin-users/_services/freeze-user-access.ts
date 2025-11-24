@@ -1,8 +1,8 @@
 import { injectable } from 'inversify'
-import { addDays, differenceInCalendarDays, isAfter, isBefore } from 'date-fns'
+import { addDays, differenceInCalendarDays, isAfter } from 'date-fns'
 
 import { UserAccessRepository } from '@/entities/user-access/_repository/user-access'
-import { generateId } from '@/shared/lib/id'
+import { UserFreezeRepository } from '@/entities/user-access/_repository/user-freeze'
 
 type FreezeParams = {
   accessId: string
@@ -13,7 +13,10 @@ type FreezeParams = {
 
 @injectable()
 export class FreezeUserAccessService {
-  constructor(private readonly userAccessRepository: UserAccessRepository) {}
+  constructor(
+    private readonly userAccessRepository: UserAccessRepository,
+    private readonly userFreezeRepository: UserFreezeRepository
+  ) {}
 
   async exec(params: FreezeParams) {
     const access = await this.userAccessRepository.findById(params.accessId)
@@ -25,57 +28,46 @@ export class FreezeUserAccessService {
       throw new Error('Дата начала позже даты окончания')
     }
 
-    const freezes = access.freezes ?? []
-    const now = new Date()
-
-    const hasActiveFreeze = freezes.some(freeze => freeze.end >= now)
-    if (hasActiveFreeze) {
-      throw new Error('Есть активная заморозка')
-    }
-
     if (access.expiresAt && params.start > access.expiresAt) {
       throw new Error('Дата начала заморозки позже даты окончания доступа')
     }
 
-    const overlaps = freezes.some(freeze =>
-      // пересечения диапазонов [start, end]
-      !(isBefore(params.end, freeze.start) || isAfter(params.start, freeze.end))
-    )
-
-    if (overlaps) {
-      throw new Error('Период заморозки пересекается с существующим')
+    const activeFreeze = await this.userFreezeRepository.findActive(access.userId)
+    if (activeFreeze) {
+      throw new Error('Есть активная заморозка')
     }
 
     const freezeDays = differenceInCalendarDays(params.end, params.start) + 1
-    const newExpiresAt =
-      access.expiresAt == null ? null : addDays(access.expiresAt, freezeDays)
 
-    const updatedFreezes = [
-      ...freezes,
-      {
-        id: generateId(),
-        start: params.start,
-        end: params.end,
-        createdBy: params.adminId,
-        createdAt: new Date(),
-      },
-    ]
+    const userFreeze = await this.userFreezeRepository.create({
+      userId: access.userId,
+      start: params.start,
+      end: params.end,
+      createdBy: params.adminId,
+    })
 
-    await this.userAccessRepository.save(
-      {
-        ...access,
-        expiresAt: newExpiresAt,
-        freezes: updatedFreezes,
-        freezeDaysUsed: (access.freezeDaysUsed ?? 0) + freezeDays,
-      },
-      {
-        action: 'freeze',
-        payload: {
-          start: params.start,
-          end: params.end,
-          addedDays: freezeDays,
-        },
-      }
+    const activeAccesses =
+      await this.userAccessRepository.findActiveAccesses(access.userId)
+    await Promise.all(
+      activeAccesses.map(userAccess => {
+        const expiresAt =
+          userAccess.expiresAt == null
+            ? null
+            : addDays(userAccess.expiresAt, freezeDays)
+
+        return this.userAccessRepository.save(
+          { ...userAccess, expiresAt },
+          {
+            action: 'freeze',
+            payload: {
+              userFreezeId: userFreeze.id,
+              start: params.start,
+              end: params.end,
+              addedDays: freezeDays,
+            },
+          }
+        )
+      })
     )
   }
 }

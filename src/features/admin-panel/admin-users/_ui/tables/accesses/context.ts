@@ -9,8 +9,6 @@ type AccessesTableContextValue = {
   userId: string
   onClose(accessId: string): void
   onExtend(access: Readonly<{ id: string; expiresAt: string | null }>): void
-  onFreeze(access: Readonly<{ id: string; expiresAt: string | null }>): void
-  onUnfreeze(freeze: Readonly<{ accessId: string; freezeId: string }>): void
 }
 
 const AccessesTableContext = createContext<

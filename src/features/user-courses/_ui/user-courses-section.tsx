@@ -30,11 +30,24 @@ function mapEnrollmentToClient(
   }
 }
 
-export function UserCoursesSection({ courses }: UserCoursesSectionProps) {
-  const items = courses.map(({ course, enrollment }) => ({
-    course,
-    enrollment: mapEnrollmentToClient(enrollment),
-  }))
+export function UserCoursesSection({
+  courses,
+}: Readonly<UserCoursesSectionProps>) {
+  const items = courses.map(
+    ({
+      course,
+      enrollment,
+      freezeUntil,
+      accessExpiresAt,
+      accessStartedAt,
+    }) => ({
+      course,
+      enrollment: mapEnrollmentToClient(enrollment),
+      freezeUntil: freezeUntil ? freezeUntil.toISOString() : null,
+      accessExpiresAt: accessExpiresAt ? accessExpiresAt.toISOString() : null,
+      accessStartedAt: accessStartedAt.toISOString(),
+    })
+  )
 
   return (
     <div className="space-y-4">

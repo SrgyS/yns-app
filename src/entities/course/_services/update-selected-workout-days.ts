@@ -5,6 +5,7 @@ import { DayOfWeek } from '@prisma/client'
 import { logger } from '@/shared/lib/logger'
 import { dbClient } from '@/shared/lib/db'
 import { UserWorkoutCompletionRepository } from '@/entities/workout/_repositories/user-workout-completion'
+import { UserAccessRepository } from '@/entities/user-access/_repository/user-access'
 
 export interface UpdateWorkoutDaysParams {
   enrollmentId: string
@@ -15,9 +16,10 @@ export interface UpdateWorkoutDaysParams {
 @injectable()
 export class UpdateWorkoutDaysService {
   constructor(
-    private userCourseEnrollmentRepository: UserCourseEnrollmentRepository,
-    private userDailyPlanRepository: UserDailyPlanRepository,
-    private userWorkoutCompletionRepository: UserWorkoutCompletionRepository
+    private readonly userCourseEnrollmentRepository: UserCourseEnrollmentRepository,
+    private readonly userDailyPlanRepository: UserDailyPlanRepository,
+    private readonly userWorkoutCompletionRepository: UserWorkoutCompletionRepository,
+    private readonly userAccessRepository: UserAccessRepository
   ) {}
 
   async exec(params: UpdateWorkoutDaysParams): Promise<void> {
@@ -55,24 +57,7 @@ export class UpdateWorkoutDaysService {
             tx
           )
 
-        if (!params.keepProgress) {
-          try {
-            await this.userWorkoutCompletionRepository.deleteAllForEnrollment(
-              enrollment.userId,
-              params.enrollmentId,
-              tx
-            )
-          } catch (error) {
-            logger.error({
-              msg: 'Error deleting workout completions for enrollment',
-              enrollmentId: params.enrollmentId,
-              error,
-            })
-            throw new Error(
-              'Failed to delete workout completions for enrollment'
-            )
-          }
-        } else {
+        if (params.keepProgress) {
           try {
             await this.userWorkoutCompletionRepository.realignCompletionsAfterScheduleChange(
               enrollment.userId,
@@ -91,6 +76,36 @@ export class UpdateWorkoutDaysService {
               'Failed to realign workout completions after schedule change'
             )
           }
+        } else {
+          try {
+            await this.userWorkoutCompletionRepository.deleteAllForEnrollment(
+              enrollment.userId,
+              params.enrollmentId,
+              tx
+            )
+          } catch (error) {
+            logger.error({
+              msg: 'Error deleting workout completions for enrollment',
+              enrollmentId: params.enrollmentId,
+              error,
+            })
+            throw new Error(
+              'Failed to delete workout completions for enrollment'
+            )
+          }
+        }
+
+        const access = await this.userAccessRepository.findActiveAccessByCourse(
+          enrollment.userId,
+          enrollment.courseId,
+          tx
+        )
+
+        if (access && !access.setupCompleted) {
+          await this.userAccessRepository.save(
+            { ...access, setupCompleted: true },
+            { db: tx }
+          )
         }
       })
 

@@ -58,6 +58,7 @@ export function DayTabs({
   }, [displayWeekStart])
 
   const enrollment = enrollmentQuery?.data
+  const enrollmentId = enrollment?.id || ''
 
   const allowedWeeksArray = useMemo(() => {
     if (availableWeeks && availableWeeks.length > 0) {
@@ -199,11 +200,15 @@ export function DayTabs({
     (totalProgramDays === 0 || selectedDayNumberInCourse <= totalProgramDays)
 
   // Вызываем хук всегда, но управляем выполнением через enabled
-  const dailyPlanQuery = getDailyPlan(
-    courseId,
-    selectedDayNumberInCourse || 1,
-    enabled
-  )
+  const dailyPlanQuery =
+    enrollmentId && enrollment
+      ? getDailyPlan(
+          enrollmentId,
+          courseId,
+          selectedDayNumberInCourse || 1,
+          enabled
+        )
+      : { data: null, isLoading: false, isFetching: false }
 
   return (
     <Tabs

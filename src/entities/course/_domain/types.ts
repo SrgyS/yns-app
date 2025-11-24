@@ -117,6 +117,7 @@ export type CreateUserCourseEnrollmentParams = {
 export type GetUserDailyPlanParams = {
   userId: string
   courseId: string
+  enrollmentId: string
   dayNumberInCourse: number
 }
 

@@ -388,6 +388,7 @@ model User {
   favoriteWorkouts   UserFavoriteWorkout[]
   workoutCompletions UserWorkoutCompletion[]
   staffPermission    StaffPermission?
+  userFreezes        UserFreeze[]
 }
 
 model StaffPermission {
@@ -521,12 +522,25 @@ model UserAccess {
   createdAt      DateTime              @default(now())
   updatedAt      DateTime              @updatedAt
   enrollmentId   String?
-  freezes        Json?
-  freezeDaysUsed Int                   @default(0)
   enrollment     UserCourseEnrollment? @relation("EnrollmentUserAccess", fields: [enrollmentId], references: [id], onDelete: SetNull)
   history        UserAccessHistory[]
 
   @@index([userId, courseId])
+}
+
+model UserFreeze {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  start      DateTime
+  end        DateTime
+  createdBy  String?
+  createdAt  DateTime @default(now())
+  canceledAt DateTime?
+  canceledBy String?
+
+  @@index([userId, start])
+  @@index([userId, end])
 }
 
 /// История изменений доступа. Action: grant/extend/close и т.д.

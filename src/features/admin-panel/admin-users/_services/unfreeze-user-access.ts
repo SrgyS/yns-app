@@ -1,6 +1,7 @@
 import { injectable } from 'inversify'
 
 import { UserAccessRepository } from '@/entities/user-access/_repository/user-access'
+import { UserFreezeRepository } from '@/entities/user-access/_repository/user-freeze'
 import { differenceInCalendarDays, subDays } from 'date-fns'
 
 type UnfreezeParams = {
@@ -11,7 +12,10 @@ type UnfreezeParams = {
 
 @injectable()
 export class UnfreezeUserAccessService {
-  constructor(private readonly userAccessRepository: UserAccessRepository) {}
+  constructor(
+    private readonly userAccessRepository: UserAccessRepository,
+    private readonly userFreezeRepository: UserFreezeRepository
+  ) {}
 
   async exec(params: UnfreezeParams) {
     const access = await this.userAccessRepository.findById(params.accessId)
@@ -19,44 +23,47 @@ export class UnfreezeUserAccessService {
       throw new Error('Доступ не найден')
     }
 
-    const existingFreezes = access.freezes ?? []
-    const target = existingFreezes.find(freeze => freeze.id === params.freezeId)
-
-    if (!target) {
+    const target = await this.userFreezeRepository.findById(params.freezeId)
+    if (!target || target.userId !== access.userId) {
       throw new Error('Период заморозки не найден')
     }
 
-    const remainingFreezes = existingFreezes.filter(
-      freeze => freeze.id !== params.freezeId
-    )
+    if (target.canceledAt) {
+      throw new Error('Период заморозки уже отменён')
+    }
 
     const freezeDays = differenceInCalendarDays(target.end, target.start) + 1
 
-    const expiresAt =
-      access.expiresAt == null ? null : subDays(access.expiresAt, freezeDays)
-
-    const freezeDaysUsed = Math.max(
-      (access.freezeDaysUsed ?? 0) - freezeDays,
-      0
+    const canceledFreeze = await this.userFreezeRepository.cancel(
+      params.freezeId,
+      params.adminId
     )
 
-    await this.userAccessRepository.save(
-      {
-        ...access,
-        freezes: remainingFreezes,
-        expiresAt,
-        freezeDaysUsed,
-      },
-      {
-        action: 'freeze_cancel',
-        payload: {
-          freezeId: target.id,
-          removedStart: target.start,
-          removedEnd: target.end,
-          removedDays: freezeDays,
-          newExpiresAt: expiresAt,
-        },
-      }
+    const userFreeze = canceledFreeze ?? target
+
+    const activeAccesses =
+      await this.userAccessRepository.findActiveAccesses(userFreeze.userId)
+    await Promise.all(
+      activeAccesses.map(userAccess => {
+        const expiresAt =
+          userAccess.expiresAt == null
+            ? null
+            : subDays(userAccess.expiresAt, freezeDays)
+
+        return this.userAccessRepository.save(
+          { ...userAccess, expiresAt },
+          {
+            action: 'freeze_cancel',
+            payload: {
+              freezeId: userFreeze.id,
+              removedStart: userFreeze.start,
+              removedEnd: userFreeze.end,
+              removedDays: freezeDays,
+              newExpiresAt: expiresAt,
+            },
+          }
+        )
+      })
     )
   }
 }

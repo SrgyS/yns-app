@@ -8,11 +8,16 @@ export function useDailyPlan() {
   const getUserDailyPlan = workoutApi.getUserDailyPlan.useQuery
 
   const getDailyPlan = useCallback(
-    (courseId: string, dayNumberInCourse: number, enabled: boolean) => {
+    (
+      enrollmentId: string,
+      courseId: string,
+      dayNumberInCourse: number,
+      enabled: boolean
+    ) => {
       const userId = session?.user?.id || ''
       const isEnabled = enabled && Boolean(session?.user?.id)
       return getUserDailyPlan(
-        { userId, courseId, dayNumberInCourse },
+        { userId, enrollmentId, courseId, dayNumberInCourse },
         { ...CACHE_SETTINGS.FREQUENT_UPDATE, enabled: isEnabled }
       )
     },

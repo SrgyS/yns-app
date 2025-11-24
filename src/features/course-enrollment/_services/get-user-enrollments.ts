@@ -15,9 +15,10 @@ export class GetUserEnrollmentsService {
     try {
       const accesses =
         await this.userAccessRepository.findActiveAccesses(userId)
+
       const enrollmentIds = accesses
         .map(access => access.enrollmentId)
-        .filter((id): id is string => Boolean(id))
+        .filter(Boolean) as string[]
 
       if (enrollmentIds.length === 0) {
         logger.info({
@@ -38,9 +39,7 @@ export class GetUserEnrollmentsService {
 
       const enrollments = enrollmentIds
         .map(id => enrollmentMap.get(id))
-        .filter((enrollment): enrollment is UserCourseEnrollment =>
-          Boolean(enrollment)
-        )
+        .filter(Boolean) as UserCourseEnrollment[]
 
       logger.info({
         msg: 'Successfully retrieved user enrollments',
