@@ -19,8 +19,8 @@ const listInputSchema = z.object({
 @injectable()
 export class WorkoutCatalogController extends Controller {
   constructor(
-    private listWorkoutsService: ListWorkoutsService,
-    private getAccessibleEnrollmentsService: GetAccessibleEnrollmentsService
+    private readonly listWorkoutsService: ListWorkoutsService,
+    private readonly getAccessibleEnrollmentsService: GetAccessibleEnrollmentsService
   ) {
     super()
   }

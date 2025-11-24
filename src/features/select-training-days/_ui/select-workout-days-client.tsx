@@ -25,7 +25,7 @@ export function SelectWorkoutDaysClient({
   courseContentType,
   initialSelectedDays,
   allowedDayOptions,
-}: SelectWorkoutDaysClientProps) {
+}: Readonly<SelectWorkoutDaysClientProps>) {
   const dayOptions =
     allowedDayOptions && allowedDayOptions.length > 0
       ? Array.from(new Set(allowedDayOptions)).sort((a, b) => a - b)
@@ -39,11 +39,8 @@ export function SelectWorkoutDaysClient({
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
-  const {
-    createEnrollment,
-    updateWorkoutDays,
-    getAccessibleEnrollments,
-  } = useCourseEnrollment()
+  const { createEnrollment, updateWorkoutDays, getAccessibleEnrollments } =
+    useCourseEnrollment()
 
   const accessibleQuery = getAccessibleEnrollments({
     staleTime: 5_000,
@@ -69,10 +66,10 @@ export function SelectWorkoutDaysClient({
     try {
       let existingEnrollment =
         accessible && 'accessibleCourses' in accessible
-          ? accessible.accessibleCourses.find(
+          ? (accessible.accessibleCourses.find(
               (entry: PaidAccessState['accessibleCourses'][number]) =>
                 entry.enrollment.courseId === courseId
-            ) ?? null
+            ) ?? null)
           : null
 
       if (!existingEnrollment) {

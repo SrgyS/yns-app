@@ -16,6 +16,8 @@ export const createAdminAbility = (
     isAdmin ? true : canVisitAdminPanel && permissions[flag]
 
   return {
+    isAdmin,
+    isStaff,
     canVisitAdminPanel,
     canManageUsers: resolvePermission('canManageUsers'),
     canGrantAccess: resolvePermission('canGrantAccess'),

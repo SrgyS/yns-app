@@ -65,6 +65,7 @@ export class WorkoutController extends Controller {
       .input(
         z.object({
           userId: z.string(),
+          enrollmentId: z.string(),
           courseId: z.string(),
           dayNumberInCourse: z.number(),
         })
@@ -73,6 +74,7 @@ export class WorkoutController extends Controller {
         const plan = await logTiming('getUserDailyPlanService.exec', () =>
           this.getUserDailyPlanService.exec({
             userId: input.userId,
+            enrollmentId: input.enrollmentId,
             courseId: input.courseId,
             dayNumberInCourse: input.dayNumberInCourse,
           })

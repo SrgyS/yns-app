@@ -16,7 +16,7 @@ export function AdminUsersPage() {
 
   if (!data) {
     return (
-      <div className="absolute inset-0 flex items-center justify-center z-10">
+      <div className="flex min-h-80 items-center justify-center mx-auto text-sm text-muted-foreground">
         {isLoading ? (
           <FullPageSpinner isLoading />
         ) : (

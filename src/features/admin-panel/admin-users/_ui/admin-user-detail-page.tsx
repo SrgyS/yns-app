@@ -99,7 +99,11 @@ export function AdminUserDetailPage({ userId }: Readonly<{ userId: string }>) {
       </Button>
       <div className="grid gap-8 md:grid-cols-[300px_1fr]">
         <aside className="space-y-4 min-w-0">
-          <AdminUserProfile profile={profile} viewerAbility={viewerAbility} />
+          <AdminUserProfile
+            userId={userId}
+            profile={profile}
+            viewerAbility={viewerAbility}
+          />
         </aside>
         <section className="space-y-6 min-w-0">
           <div className="flex flex-wrap items-center gap-6">

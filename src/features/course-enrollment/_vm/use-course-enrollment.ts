@@ -156,7 +156,7 @@ export function useCourseEnrollment() {
         { userId, courseSlug },
         {
           ...CACHE_SETTINGS.FREQUENT_UPDATE,
-          ...(options ?? {}),
+          ...options,
         }
       )
     },
@@ -167,6 +167,16 @@ export function useCourseEnrollment() {
     courseEnrollmentApi.course.getAvailableWeeks.useQuery
   const getAccessibleEnrollmentsQuery =
     courseEnrollmentApi.course.getAccessibleEnrollments.useQuery
+  const updateWorkoutDaysMutation =
+    courseEnrollmentApi.course.updateWorkoutDays.useMutation({
+      async onSuccess() {
+        await Promise.all([
+          utils.course.getUserEnrollments.invalidate(),
+          utils.course.getActiveEnrollment.invalidate(),
+          utils.course.getAccessibleEnrollments.invalidate(),
+        ])
+      },
+    })
 
   const getAvailableWeeks = useCallback(
     (userId: string, courseSlug: string) => {
@@ -182,10 +192,26 @@ export function useCourseEnrollment() {
     (options?: Parameters<typeof getAccessibleEnrollmentsQuery>[1]) => {
       return getAccessibleEnrollmentsQuery(undefined, {
         ...CACHE_SETTINGS.FREQUENT_UPDATE,
-        ...(options ?? {}),
+        ...options,
       })
     },
     [getAccessibleEnrollmentsQuery]
+  )
+
+  const updateWorkoutDays = useCallback(
+    async (params: {
+      enrollmentId: string
+      selectedWorkoutDays: DayOfWeek[]
+      keepProgress?: boolean
+    }) => {
+      try {
+        await updateWorkoutDaysMutation.mutateAsync(params)
+      } catch (error) {
+        console.error('Error updating workout days:', error)
+        throw error
+      }
+    },
+    [updateWorkoutDaysMutation]
   )
   return {
     createEnrollment,
@@ -198,6 +224,7 @@ export function useCourseEnrollment() {
     checkAccessByCourseSlug,
     getAvailableWeeks,
     getAccessibleEnrollments,
+    updateWorkoutDays,
     isCreating: createEnrollmentMutation.isPending,
     isActivating,
   }
