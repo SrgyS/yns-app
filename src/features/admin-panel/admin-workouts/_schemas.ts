@@ -1,0 +1,53 @@
+import { z } from 'zod'
+import {
+  MuscleGroup,
+  WorkoutDifficulty,
+  WorkoutSection,
+  WorkoutSubsection,
+  WorkoutType,
+} from '@prisma/client'
+
+export const workoutUpsertInputSchema = z.object({
+  id: z.string().optional(),
+  slug: z.string().min(1),
+  title: z.string().min(1),
+  description: z.string().optional().nullable(),
+  videoId: z.string().min(1),
+  type: z.nativeEnum(WorkoutType),
+  section: z.nativeEnum(WorkoutSection),
+  subsections: z.array(z.nativeEnum(WorkoutSubsection)).default([]),
+  muscles: z.array(z.nativeEnum(MuscleGroup)).default([]),
+  equipment: z.array(z.string().trim()).default([]),
+  difficulty: z.nativeEnum(WorkoutDifficulty),
+})
+
+export const workoutIdSchema = z
+  .object({
+    id: z.string().min(1).optional(),
+    slug: z.string().min(1).optional(),
+  })
+  .refine(val => Boolean(val.id || val.slug), {
+    message: 'Нужно передать id или slug тренировки',
+  })
+
+export const workoutLookupQuerySchema = z.object({
+  search: z.string().trim().optional().default(''),
+  take: z.number().int().min(1).max(50).default(20),
+})
+
+export const syncInputSchema = z.object({
+  folderId: z.string().optional(),
+  overwriteManuallyEdited: z.boolean().default(false),
+})
+
+export const workoutListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  cursor: z.coerce.number().int().min(1).optional(),
+})
+
+export type WorkoutUpsertInput = z.infer<typeof workoutUpsertInputSchema>
+export type WorkoutIdInput = z.infer<typeof workoutIdSchema>
+export type WorkoutLookupInput = z.infer<typeof workoutLookupQuerySchema>
+export type SyncInput = z.infer<typeof syncInputSchema>
+export type WorkoutListQuery = z.infer<typeof workoutListQuerySchema>
