@@ -37,6 +37,7 @@ export class StaffPermissionService {
       canManageUsers: stored.canManageUsers,
       canGrantAccess: stored.canGrantAccess,
       canLoginAsUser: stored.canLoginAsUser,
+      canManageCourses: stored.canManageCourses,
     }
   }
 }

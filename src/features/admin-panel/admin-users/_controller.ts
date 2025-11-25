@@ -72,6 +72,7 @@ const updateUserInput = z.object({
       canManageUsers: z.boolean().optional(),
       canGrantAccess: z.boolean().optional(),
       canLoginAsUser: z.boolean().optional(),
+      canManageCourses: z.boolean().optional(),
     })
     .optional(),
 })

@@ -1,4 +1,5 @@
 import { CourseContentType, UserAccessReason } from '@prisma/client'
+import { StaffPermissionFlags } from './staff-permission'
 
 export type AdminUserProfile = {
   id: string
@@ -9,13 +10,7 @@ export type AdminUserProfile = {
   role: string
   createdAt: string
   lastActivityAt: string | null
-  staffPermissions: {
-    canViewPayments: boolean
-    canEditAccess: boolean
-    canManageUsers: boolean
-    canGrantAccess: boolean
-    canLoginAsUser: boolean
-  }
+  staffPermissions: StaffPermissionFlags
 }
 
 export type AdminUserAccess = {

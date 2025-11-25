@@ -6,6 +6,7 @@ export type StaffPermissionFlags = {
   canManageUsers: boolean
   canGrantAccess: boolean
   canLoginAsUser: boolean
+  canManageCourses: boolean
 }
 
 export type StaffPermissionRecord = StaffPermissionFlags & {
@@ -18,6 +19,7 @@ export const defaultAdminPermissions: StaffPermissionFlags = {
   canManageUsers: true,
   canGrantAccess: true,
   canLoginAsUser: true,
+  canManageCourses: true,
 }
 
 export const defaultStaffPermissions: StaffPermissionFlags = {
@@ -26,6 +28,7 @@ export const defaultStaffPermissions: StaffPermissionFlags = {
   canManageUsers: false,
   canGrantAccess: false,
   canLoginAsUser: false,
+  canManageCourses: false,
 }
 
 export const defaultPermissionsByRole: Record<ROLE, StaffPermissionFlags> = {
@@ -37,5 +40,6 @@ export const defaultPermissionsByRole: Record<ROLE, StaffPermissionFlags> = {
     canManageUsers: false,
     canGrantAccess: false,
     canLoginAsUser: false,
+    canManageCourses: false,
   },
 }

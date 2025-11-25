@@ -33,13 +33,6 @@ export class UpdateAdminUserService {
 
     const nextRole = input.role ?? user.role
 
-    if (nextRole !== 'ADMIN' && nextRole !== 'STAFF') {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Роль должна быть ADMIN или STAFF',
-      })
-    }
-
     if (input.role && input.role !== user.role) {
       await dbClient.user.update({
         where: { id: input.userId },
@@ -47,6 +40,10 @@ export class UpdateAdminUserService {
       })
 
       if (input.role === 'ADMIN') {
+        await this.staffPermissionRepository.deleteByUserId(input.userId)
+      }
+
+      if (input.role === 'USER') {
         await this.staffPermissionRepository.deleteByUserId(input.userId)
       }
     }
@@ -70,9 +67,14 @@ export class UpdateAdminUserService {
       canViewPayments:
         input.permissions.canViewPayments ?? current.canViewPayments,
       canEditAccess: input.permissions.canEditAccess ?? current.canEditAccess,
-      canManageUsers: input.permissions.canManageUsers ?? current.canManageUsers,
-      canGrantAccess: input.permissions.canGrantAccess ?? current.canGrantAccess,
-      canLoginAsUser: input.permissions.canLoginAsUser ?? current.canLoginAsUser,
+      canManageUsers:
+        input.permissions.canManageUsers ?? current.canManageUsers,
+      canGrantAccess:
+        input.permissions.canGrantAccess ?? current.canGrantAccess,
+      canLoginAsUser:
+        input.permissions.canLoginAsUser ?? current.canLoginAsUser,
+      canManageCourses:
+        input.permissions.canManageCourses ?? current.canManageCourses,
     }
 
     await this.staffPermissionRepository.upsert(input.userId, merged)

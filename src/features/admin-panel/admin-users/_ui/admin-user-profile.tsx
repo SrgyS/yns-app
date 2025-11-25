@@ -62,6 +62,7 @@ export function AdminUserProfile({
       { key: 'canManageUsers', label: 'Управление пользователями' },
       { key: 'canGrantAccess', label: 'Выдача доступов' },
       { key: 'canLoginAsUser', label: 'Войти под пользователем' },
+      { key: 'canManageCourses', label: 'Управление курсами' },
     ] as const,
     []
   )
@@ -115,12 +116,13 @@ export function AdminUserProfile({
                 onValueChange={value => handleRoleChange(value as ROLE)}
                 disabled={!canEditRole || isSaving}
               >
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Выбрать роль" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ADMIN">Администратор</SelectItem>
                   <SelectItem value="STAFF">Сотрудник</SelectItem>
+                  <SelectItem value="USER">Пользователь</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -133,7 +135,9 @@ export function AdminUserProfile({
                       key={toggle.key}
                       className="flex items-center justify-between gap-3 text-sm"
                     >
-                      <span className="text-muted-foreground">{toggle.label}</span>
+                      <span className="text-muted-foreground">
+                        {toggle.label}
+                      </span>
                       <Switch
                         checked={profile.staffPermissions[toggle.key]}
                         onCheckedChange={checked =>

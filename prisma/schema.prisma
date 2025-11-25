@@ -400,6 +400,7 @@ model StaffPermission {
   canManageUsers  Boolean  @default(false)
   canGrantAccess  Boolean  @default(false)
   canLoginAsUser  Boolean  @default(false)
+  canManageCourses  Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
