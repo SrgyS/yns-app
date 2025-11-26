@@ -249,8 +249,8 @@ export class AdminCoursesController extends Controller {
         },
         dailyPlans: {
           include: {
-            warmup: { select: { id: true, title: true, slug: true } },
-            mainWorkout: { select: { id: true, title: true, slug: true } },
+            warmup: { select: { id: true, title: true } },
+            mainWorkout: { select: { id: true, title: true } },
             mealPlan: { select: { id: true, slug: true, title: true } },
             contentBlocks: true,
           },
@@ -274,7 +274,6 @@ export class AdminCoursesController extends Controller {
             {
               title: { contains: search, mode: Prisma.QueryMode.insensitive },
             },
-            { slug: { contains: search, mode: Prisma.QueryMode.insensitive } },
           ],
         }
       : {}

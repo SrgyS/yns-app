@@ -3,7 +3,6 @@ import { createContext, useContext } from 'react'
 export type AdminWorkoutRow = {
   id: string
   videoId: string
-  slug: string
   title: string
   durationSec: number
   section: string

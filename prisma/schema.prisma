@@ -248,7 +248,6 @@ model Workout {
   muscles               MuscleGroup[]
   section               WorkoutSection
   subsections           WorkoutSubsection[]
-  slug                  String              @unique
   mainWorkoutDailyPlans DailyPlan[]         @relation("MainWorkoutDailyPlan")
   warmupDailyPlans      DailyPlan[]         @relation("WarmupDailyPlan")
 

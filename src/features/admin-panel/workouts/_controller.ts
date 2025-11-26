@@ -24,7 +24,6 @@ import { dbClient } from '@/shared/lib/db'
 
 type AdminWorkoutSummary = {
   id: string
-  slug: string
   title: string
   videoId: string
   durationSec: number
@@ -70,13 +69,6 @@ type KinescopeVideo = {
   created_at?: string
 }
 
-const toSlug = (value: string) =>
-  value
-    .trim()
-    .toLowerCase()
-    .replaceAll(/[^a-z0-9]+/g, '-')
-    .replaceAll(/(?:^-+)|(?:-+$)/g, '') || 'video'
-
 @injectable()
 export class AdminWorkoutsController extends Controller {
   constructor(private readonly staffPermissionService: StaffPermissionService) {
@@ -107,7 +99,6 @@ export class AdminWorkoutsController extends Controller {
 
   private readonly mapSummary = (workout: any): AdminWorkoutSummary => ({
     id: workout.id,
-    slug: workout.slug,
     title: workout.title,
     videoId: workout.videoId ?? '',
     durationSec: workout.durationSec ?? 0,
@@ -131,12 +122,7 @@ export class AdminWorkoutsController extends Controller {
 
   private async getWorkout(input: WorkoutIdInput) {
     const workout = await dbClient.workout.findFirst({
-      where: {
-        OR: [
-          input.id ? { id: input.id } : undefined,
-          input.slug ? { slug: input.slug } : undefined,
-        ].filter(Boolean) as any,
-      },
+      where: { id: input.id },
     })
 
     if (!workout) {
@@ -223,12 +209,10 @@ export class AdminWorkoutsController extends Controller {
     }
 
     for (const video of videos) {
-      const slug = toSlug(`${video.title || 'video'}-${video.id}`)
+      const workoutId = video.id
       try {
         const existing = await dbClient.workout.findFirst({
-          where: {
-            OR: [{ videoId: video.id }, { slug }],
-          },
+          where: { videoId: video.id },
         })
 
         const posterValue: Prisma.InputJsonValue | typeof Prisma.JsonNull =
@@ -237,7 +221,7 @@ export class AdminWorkoutsController extends Controller {
             : Prisma.JsonNull
 
         const mediaData = {
-          title: video.title || slug,
+          title: video.title || workoutId,
           description: video.description ?? null,
           videoId: video.id,
           durationSec:
@@ -260,9 +244,8 @@ export class AdminWorkoutsController extends Controller {
         if (!existing) {
           await dbClient.workout.create({
             data: {
-              slug,
               section: 'FUNCTIONAL',
-              subsections: [],
+              subsections: ['FULL_BODY'],
               muscles: [],
               equipment: [],
               difficulty: 'MEDIUM',
@@ -284,6 +267,11 @@ export class AdminWorkoutsController extends Controller {
           where: { id: existing.id },
           data: {
             ...mediaData,
+            section: existing.section ?? 'FUNCTIONAL',
+            difficulty: existing.difficulty ?? 'MEDIUM',
+            subsections: existing.subsections ?? [],
+            muscles: existing.muscles ?? [],
+            equipment: existing.equipment ?? [],
             needsReview: existing.needsReview,
             manuallyEdited: existing.manuallyEdited,
           },
@@ -291,9 +279,19 @@ export class AdminWorkoutsController extends Controller {
         result.updated += 1
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : 'Неизвестная ошибка синка'
+          error instanceof Error
+            ? error.message
+            : 'Неизвестная ошибка загрузки видео'
         result.errors.push(`Video ${video.id}: ${message}`)
+        console.error('[Kinescope sync] error', { videoId: video.id, message })
       }
+    }
+
+    if (result.errors.length > 0) {
+      console.warn('[Kinescope sync] completed with errors', {
+        errors: result.errors.slice(0, 5),
+        totalErrors: result.errors.length,
+      })
     }
 
     return result
@@ -325,7 +323,6 @@ export class AdminWorkoutsController extends Controller {
         distinct: ['videoId'],
         select: {
           id: true,
-          slug: true,
           title: true,
           videoId: true,
           durationSec: true,
@@ -354,7 +351,6 @@ export class AdminWorkoutsController extends Controller {
     input: WorkoutUpsertInput
   ): Promise<AdminWorkoutDetail> {
     const data = {
-      slug: input.slug,
       title: input.title,
       description: input.description ?? null,
       videoId: input.videoId,
@@ -367,16 +363,27 @@ export class AdminWorkoutsController extends Controller {
       manuallyEdited: true,
     }
 
-    const workout = input.id
-      ? await dbClient.workout.update({
-          where: { id: input.id },
+    let workout
+    if (input.id) {
+      workout = await dbClient.workout.update({
+        where: { id: input.id },
+        data,
+      })
+    } else {
+      const existing = await dbClient.workout.findFirst({
+        where: { videoId: input.videoId },
+      })
+      if (existing) {
+        workout = await dbClient.workout.update({
+          where: { id: existing.id },
           data,
         })
-      : await dbClient.workout.upsert({
-          where: { slug: input.slug },
-          update: data,
-          create: data,
+      } else {
+        workout = await dbClient.workout.create({
+          data,
         })
+      }
+    }
 
     return this.mapDetail(workout)
   }

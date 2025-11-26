@@ -7,7 +7,6 @@ import {
 
 export type Workout = {
   id: string
-  slug: string
   title: string
   durationSec: number
   difficulty: WorkoutDifficulty

@@ -20,7 +20,7 @@ const statusBadge = (workout: AdminWorkoutRow) => {
     return <Badge variant="destructive">Заполнить карточку</Badge>
   }
   if (workout.manuallyEdited) {
-    return <Badge variant="secondary">Данные заполнены</Badge>
+    return <Badge>Данные заполнены</Badge>
   }
   return <Badge variant="outline">Готово</Badge>
 }
@@ -59,17 +59,8 @@ export const workoutColumns: ColumnDef<AdminWorkoutRow>[] = [
     },
   },
   {
-    accessorKey: 'slug',
-    header: 'Slug',
-    cell: ({ row }) => (
-      <span className="text-xs text-muted-foreground max-w-24">
-        {row.original.slug}
-      </span>
-    ),
-  },
-  {
     accessorKey: 'section',
-    header: 'Секция',
+    header: 'Категория',
     cell: ({ row }) => row.original.section,
   },
   {

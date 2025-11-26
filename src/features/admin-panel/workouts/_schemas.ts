@@ -8,7 +8,6 @@ import {
 
 export const workoutUpsertInputSchema = z.object({
   id: z.string().optional(),
-  slug: z.string().min(1),
   title: z.string().min(1),
   description: z.string().optional().nullable(),
   videoId: z.string().min(1),
@@ -21,11 +20,7 @@ export const workoutUpsertInputSchema = z.object({
 
 export const workoutIdSchema = z
   .object({
-    id: z.string().min(1).optional(),
-    slug: z.string().min(1).optional(),
-  })
-  .refine(val => Boolean(val.id || val.slug), {
-    message: 'Нужно передать id или slug тренировки',
+    id: z.string().min(1),
   })
 
 export const workoutLookupQuerySchema = z.object({

@@ -31,7 +31,6 @@ export class WorkoutRepository {
     const p: any = prismaWorkout
     return {
       id: prismaWorkout.id,
-      slug: prismaWorkout.slug,
       title: prismaWorkout.title,
       durationSec: (p?.durationSec ?? 0) as number,
       difficulty: prismaWorkout.difficulty,

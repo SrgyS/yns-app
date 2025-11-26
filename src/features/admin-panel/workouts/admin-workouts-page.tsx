@@ -75,7 +75,6 @@ const subsectionLabels = PRACTICE_TYPES.reduce<
 
 type EditState = {
   id?: string
-  slug: string
   title: string
   description: string
   videoId: string
@@ -89,6 +88,7 @@ type EditState = {
 export function AdminWorkoutsPage() {
   const [editState, setEditState] = useState<EditState | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [selectedWorkoutId, setSelectedWorkoutId] = useState<string | null>(null)
   const utils = adminWorkoutsApi.useUtils() as any
   const api = adminWorkoutsApi as any
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
@@ -112,7 +112,7 @@ export function AdminWorkoutsPage() {
     const result: any[] = []
     ;(data?.pages ?? []).forEach((page: any) => {
       ;(page.items ?? []).forEach((w: any) => {
-        const key = w?.videoId || w?.slug || w?.id
+        const key = w?.videoId || w?.id
         if (key && !seen.has(key)) {
           seen.add(key)
           result.push(w)
@@ -122,6 +122,11 @@ export function AdminWorkoutsPage() {
     return result
   }, [data])
   const total = data?.pages?.[0]?.total ?? 0
+
+  const workoutDetailQuery = api.adminWorkouts.workouts.get.useQuery(
+    selectedWorkoutId ? { id: selectedWorkoutId } : undefined,
+    { enabled: Boolean(selectedWorkoutId) }
+  )
 
   const syncMutation = api.adminWorkouts.workouts.sync.useMutation({
     onSuccess: (result: {
@@ -151,6 +156,14 @@ export function AdminWorkoutsPage() {
   })
 
   const startEdit = (workout: any) => {
+    setSelectedWorkoutId(workout.id)
+    setDialogOpen(true)
+  }
+
+  useEffect(() => {
+    const workout = workoutDetailQuery.data
+    if (!workout) return
+
     const section = workout.section as WorkoutSection
     const allowedSubsections = subsectionsBySection[section] ?? []
     const workoutSubsections = Array.isArray(workout.subsections)
@@ -159,7 +172,6 @@ export function AdminWorkoutsPage() {
 
     setEditState({
       id: workout.id,
-      slug: workout.slug,
       title: workout.title,
       description: workout.description ?? '',
       videoId: workout.videoId,
@@ -173,7 +185,14 @@ export function AdminWorkoutsPage() {
         : workoutSubsections,
       equipment: (workout.equipment ?? []).join(', '),
     })
-    setDialogOpen(true)
+  }, [workoutDetailQuery.data])
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setDialogOpen(open)
+    if (!open) {
+      setSelectedWorkoutId(null)
+      setEditState(null)
+    }
   }
 
   const handleSave = () => {
@@ -181,7 +200,6 @@ export function AdminWorkoutsPage() {
 
     upsertMutation.mutate({
       id: editState.id,
-      slug: editState.slug,
       title: editState.title,
       description: editState.description || null,
       videoId: editState.videoId,
@@ -200,8 +218,7 @@ export function AdminWorkoutsPage() {
   }
 
   const selectedTitle = useMemo(
-    () =>
-      editState ? `Редактирование: ${editState.title || editState.videoId}` : '',
+    () => (editState ? `Редактирование: ${editState.title}` : ''),
     [editState]
   )
 
@@ -259,7 +276,7 @@ export function AdminWorkoutsPage() {
         onEdit={startEdit}
       />
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>
@@ -271,7 +288,11 @@ export function AdminWorkoutsPage() {
               </p>
             ) : null}
           </DialogHeader>
-          {editState ? (
+          {workoutDetailQuery.isLoading ? (
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              Загрузка данных...
+            </div>
+          ) : editState ? (
             <div className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2 md:col-span-2">
