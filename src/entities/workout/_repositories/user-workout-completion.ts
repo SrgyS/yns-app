@@ -2,7 +2,7 @@ import { injectable } from 'inversify'
 import { dbClient } from '@/shared/lib/db'
 import type { DbClient } from '@/shared/lib/db'
 import { logger } from '@/shared/lib/logger'
-import { DailyContentType, WorkoutType } from '@prisma/client'
+import { DailyContentType } from '@prisma/client'
 import type { UserDailyPlan } from '@/entities/course'
 
 export interface UserWorkoutCompletion {
@@ -11,7 +11,6 @@ export interface UserWorkoutCompletion {
   workoutId: string
   enrollmentId: string
   completedAt: Date
-  workoutType: WorkoutType
   contentType: DailyContentType
   stepIndex: number
 }
@@ -24,7 +23,6 @@ export class UserWorkoutCompletionRepository {
     userId: string,
     workoutId: string,
     enrollmentId: string,
-    workoutType: WorkoutType,
     contentType: DailyContentType,
     stepIndex: number,
     db: DbClient = this.defaultDb
@@ -41,14 +39,12 @@ export class UserWorkoutCompletionRepository {
         },
         update: {
           workoutId,
-          workoutType,
           completedAt: new Date(),
         },
         create: {
           userId,
           workoutId,
           enrollmentId,
-          workoutType,
           contentType,
           stepIndex,
           completedAt: new Date(),
@@ -61,7 +57,6 @@ export class UserWorkoutCompletionRepository {
         workoutId: completion.workoutId,
         enrollmentId: completion.enrollmentId,
         completedAt: completion.completedAt,
-        workoutType: completion.workoutType,
         contentType: completion.contentType,
         stepIndex: completion.stepIndex,
       }
@@ -71,7 +66,6 @@ export class UserWorkoutCompletionRepository {
         userId,
         workoutId,
         enrollmentId,
-        workoutType,
         contentType,
         stepIndex,
         error,
@@ -161,7 +155,6 @@ export class UserWorkoutCompletionRepository {
         workoutId: completion.workoutId,
         enrollmentId: completion.enrollmentId,
         completedAt: completion.completedAt,
-        workoutType: completion.workoutType,
         contentType: completion.contentType,
         stepIndex: completion.stepIndex,
       }))

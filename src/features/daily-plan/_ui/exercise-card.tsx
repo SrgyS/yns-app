@@ -130,7 +130,7 @@ export function ExerciseCard({
   // Убираем неиспользуемые обработчики
 
   const toggleCompleted = async () => {
-    if (!session?.user?.id || !workout?.type) return
+    if (!session?.user?.id) return
 
     const newCompletedState = !isCompleted
     // Не обновляем состояние сразу, а только после успешного запроса
@@ -140,7 +140,6 @@ export function ExerciseCard({
         userId: session.user.id,
         workoutId,
         enrollmentId,
-        workoutType: workout.type,
         contentType,
         stepIndex,
         isCompleted: newCompletedState,

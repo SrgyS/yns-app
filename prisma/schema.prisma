@@ -51,14 +51,6 @@ enum RecipeDifficulty {
   HARD
 }
 
-enum WorkoutType {
-  WARMUP // Зарядка
-  POSTURE // Осанка
-  STRENGTH // Силовая
-  MOBILITY // Мобильность
-  CARDIO
-}
-
 enum WorkoutSection {
   STRENGTH // Силовые
   CORRECTION // Коррекция осанки
@@ -249,7 +241,6 @@ model UserDailyPlan {
 model Workout {
   id                    String              @id @default(cuid())
   title                 String
-  type                  WorkoutType
   difficulty            WorkoutDifficulty
   equipment             String[]
   description           String?
@@ -282,7 +273,6 @@ model UserWorkoutCompletion {
   workoutId    String
   enrollmentId String
   completedAt  DateTime             @default(now())
-  workoutType  WorkoutType
   contentType  DailyContentType
   stepIndex    Int
   enrollment   UserCourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)

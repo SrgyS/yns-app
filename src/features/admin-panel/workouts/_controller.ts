@@ -38,7 +38,6 @@ type AdminWorkoutSummary = {
 
 type AdminWorkoutDetail = AdminWorkoutSummary & {
   description: string | null
-  type: string
   subsections: string[]
   muscles: string[]
   equipment: string[]
@@ -123,7 +122,6 @@ export class AdminWorkoutsController extends Controller {
   private readonly mapDetail = (workout: any): AdminWorkoutDetail => ({
     ...this.mapSummary(workout),
     description: workout.description ?? null,
-    type: workout.type,
     subsections: workout.subsections ?? [],
     muscles: workout.muscles ?? [],
     equipment: workout.equipment ?? [],
@@ -263,7 +261,6 @@ export class AdminWorkoutsController extends Controller {
           await dbClient.workout.create({
             data: {
               slug,
-              type: 'CARDIO',
               section: 'FUNCTIONAL',
               subsections: [],
               muscles: [],
@@ -361,7 +358,6 @@ export class AdminWorkoutsController extends Controller {
       title: input.title,
       description: input.description ?? null,
       videoId: input.videoId,
-      type: input.type,
       section: input.section,
       subsections: input.subsections ?? [],
       muscles: input.muscles ?? [],

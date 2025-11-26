@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { DailyContentType, WorkoutType } from '@prisma/client'
+import { DailyContentType } from '@prisma/client'
 import { workoutApi } from '../_api'
 import {
   useWorkoutCompletionStore,
@@ -101,7 +101,6 @@ export function useWorkoutCompletions() {
       userId: string
       workoutId: string
       enrollmentId: string
-      workoutType: WorkoutType
       contentType: DailyContentType
       stepIndex: number
       isCompleted: boolean

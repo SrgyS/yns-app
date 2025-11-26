@@ -7,7 +7,7 @@ import { injectable } from 'inversify'
 import { z } from 'zod'
 import { GetWorkoutService } from '@/entities/workout/module'
 import { UpdateWorkoutCompletionService } from '@/entities/workout/_services/update-workout-completion'
-import { DailyContentType, WorkoutType } from '@prisma/client'
+import { DailyContentType } from '@prisma/client'
 import { GetWorkoutCompletionStatusService } from '@/entities/workout/_services/get-workout-completion-status'
 import { GetUserDailyPlanService } from './_services/get-user-daily-plan'
 import { logger } from '@/shared/lib/logger'
@@ -98,7 +98,6 @@ export class WorkoutController extends Controller {
           userId: z.string(),
           workoutId: z.string(),
           enrollmentId: z.string(),
-          workoutType: z.nativeEnum(WorkoutType),
           isCompleted: z.boolean(),
           contentType: z.nativeEnum(DailyContentType),
           stepIndex: z.number().int().nonnegative(),

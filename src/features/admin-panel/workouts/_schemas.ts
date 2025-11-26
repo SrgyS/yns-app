@@ -4,7 +4,6 @@ import {
   WorkoutDifficulty,
   WorkoutSection,
   WorkoutSubsection,
-  WorkoutType,
 } from '@prisma/client'
 
 export const workoutUpsertInputSchema = z.object({
@@ -13,7 +12,6 @@ export const workoutUpsertInputSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional().nullable(),
   videoId: z.string().min(1),
-  type: z.nativeEnum(WorkoutType),
   section: z.nativeEnum(WorkoutSection),
   subsections: z.array(z.nativeEnum(WorkoutSubsection)).default([]),
   muscles: z.array(z.nativeEnum(MuscleGroup)).default([]),
