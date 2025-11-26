@@ -40,7 +40,7 @@ export function ExerciseCard({
   userDailyPlanId,
   contentType,
   stepIndex,
-}: ExerciseCardProps) {
+}: Readonly<ExerciseCardProps>) {
   const [isCompleted, setIsCompleted] = useState(initialCompleted)
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
   const { data: session } = useAppSession()

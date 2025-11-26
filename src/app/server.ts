@@ -15,9 +15,9 @@ import { PaymentEntityModule } from '@/entities/payment/module'
 import { CourseOrderModule } from '@/features/course-order/module'
 import { UserAccessModule } from '@/entities/user-access/module'
 import { UserCoursesModule } from '@/features/user-courses/module'
-import { AdminUsersModule } from '@/features/admin-panel/admin-users/module'
-import { AdminCoursesModule } from '@/features/admin-panel/admin-courses/module'
-import { AdminWorkoutsModule } from '@/features/admin-panel/admin-workouts/module'
+import { AdminUsersModule } from '@/features/admin-panel/users/module'
+import { AdminCoursesModule } from '@/features/admin-panel/courses/module'
+import { AdminWorkoutsModule } from '@/features/admin-panel/workouts/module'
 
 export function createServer() {
   const container = new Container()
