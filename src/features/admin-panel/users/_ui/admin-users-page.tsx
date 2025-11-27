@@ -2,7 +2,6 @@
 
 import { useAdminUsers } from '../_hooks/use-admin-users'
 import {
-  AdminUsersTableProvider,
   adminUsersColumns,
   UsersTable,
 } from './tables/users'
@@ -45,14 +44,12 @@ export function AdminUsersPage() {
           {isFetching && <FullPageSpinner isLoading={isFetching} />}
         </div>
       </div>
-      <AdminUsersTableProvider
-        value={{
-          filters,
-          onFilterChange: (key, value) => setFilter(key, value),
-        }}
-      >
-        <UsersTable columns={adminUsersColumns} data={data.items} />
-      </AdminUsersTableProvider>
+      <UsersTable
+        columns={adminUsersColumns}
+        data={data.items}
+        filters={filters}
+        onFilterChange={(key, value) => setFilter(key, value)}
+      />
       <AdminUsersPagination
         page={data.page}
         pageCount={data.pageCount}

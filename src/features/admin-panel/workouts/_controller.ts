@@ -306,6 +306,22 @@ export class AdminWorkoutsController extends Controller {
     const page = input.cursor ?? input.page ?? 1
     const pageSize = input.pageSize ?? 20
     const skip = (page - 1) * pageSize
+    const search = input.search?.trim()
+
+    const where: Prisma.WorkoutWhereInput = {
+      needsReview:
+        input.status === 'needsReview'
+          ? true
+          : input.status === 'ready'
+            ? false
+            : undefined,
+      section: input.section,
+      difficulty: input.difficulty,
+    }
+
+    if (search) {
+      where.title = { contains: search, mode: Prisma.QueryMode.insensitive }
+    }
 
     // Prisma версии, используемой здесь, не поддерживает distinct в count,
     // поэтому считаем total через findMany + distinct, а затем paginated выборку отдельно.
@@ -313,13 +329,13 @@ export class AdminWorkoutsController extends Controller {
       dbClient.workout.findMany({
         select: { videoId: true },
         distinct: ['videoId'],
+        where,
       }),
       dbClient.workout.findMany({
-        orderBy: [
-          { needsReview: 'desc' },
-          { manuallyEdited: 'desc' },
-          { title: 'asc' },
-        ],
+        orderBy:
+          input.sortDir === 'asc'
+            ? [{ lastSyncedAt: 'asc' }, { title: 'asc' }]
+            : [{ lastSyncedAt: 'desc' }, { title: 'asc' }],
         distinct: ['videoId'],
         select: {
           id: true,
@@ -333,6 +349,7 @@ export class AdminWorkoutsController extends Controller {
           posterUrl: true,
           lastSyncedAt: true,
         },
+        where,
         skip,
         take: pageSize,
       }),

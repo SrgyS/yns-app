@@ -37,6 +37,11 @@ export const workoutListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
   cursor: z.coerce.number().int().min(1).optional(),
+  search: z.string().trim().optional().default(''),
+  status: z.enum(['all', 'needsReview', 'ready']).default('all'),
+  section: z.nativeEnum(WorkoutSection).optional(),
+  difficulty: z.nativeEnum(WorkoutDifficulty).optional(),
+  sortDir: z.enum(['desc', 'asc']).default('desc'),
 })
 
 export type WorkoutUpsertInput = z.infer<typeof workoutUpsertInputSchema>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import {
   MuscleGroup,
   WorkoutDifficulty,
@@ -23,6 +23,8 @@ import {
   DialogTitle,
 } from '@/shared/ui/dialog'
 import { AdminWorkoutsTable } from './_ui/table'
+import { AdminWorkoutsFilters } from './_ui/admin-workouts-filters'
+import debounce from 'lodash-es/debounce'
 
 const enumOptions = {
   difficulty: Object.values(WorkoutDifficulty),
@@ -67,9 +69,9 @@ const subsectionsBySection = PRACTICE_TYPES.reduce<
 const subsectionLabels = PRACTICE_TYPES.reduce<
   Partial<Record<WorkoutSubsection, string>>
 >((acc, practice) => {
-  practice.subcategories.forEach(subcategory => {
+  for (const subcategory of practice.subcategories) {
     acc[subcategory.value] = subcategory.title
-  })
+  }
   return acc
 }, {})
 
@@ -88,7 +90,18 @@ type EditState = {
 export function AdminWorkoutsPage() {
   const [editState, setEditState] = useState<EditState | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [selectedWorkoutId, setSelectedWorkoutId] = useState<string | null>(null)
+  const [selectedWorkoutId, setSelectedWorkoutId] = useState<string | null>(
+    null
+  )
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState<'all' | 'needsReview' | 'ready'>('all')
+  const [sectionFilter, setSectionFilter] = useState<WorkoutSection | 'all'>(
+    'all'
+  )
+  const [difficultyFilter, setDifficultyFilter] = useState<
+    WorkoutDifficulty | 'all'
+  >('all')
+  const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc')
   const utils = adminWorkoutsApi.useUtils() as any
   const api = adminWorkoutsApi as any
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
@@ -97,6 +110,11 @@ export function AdminWorkoutsPage() {
     api.adminWorkouts.workouts.list.useInfiniteQuery(
       {
         pageSize: 20,
+        search,
+        status,
+        section: sectionFilter === 'all' ? undefined : sectionFilter,
+        difficulty: difficultyFilter === 'all' ? undefined : difficultyFilter,
+        sortDir,
       },
       {
         initialCursor: 1,
@@ -110,15 +128,15 @@ export function AdminWorkoutsPage() {
   const workouts = useMemo(() => {
     const seen = new Set<string>()
     const result: any[] = []
-    ;(data?.pages ?? []).forEach((page: any) => {
-      ;(page.items ?? []).forEach((w: any) => {
+    for (const page of data?.pages ?? []) {
+      for (const w of page.items ?? []) {
         const key = w?.videoId || w?.id
         if (key && !seen.has(key)) {
           seen.add(key)
           result.push(w)
         }
-      })
-    })
+      }
+    }
     return result
   }, [data])
   const total = data?.pages?.[0]?.total ?? 0
@@ -127,6 +145,26 @@ export function AdminWorkoutsPage() {
     selectedWorkoutId ? { id: selectedWorkoutId } : undefined,
     { enabled: Boolean(selectedWorkoutId) }
   )
+
+  const debouncedInvalidate = useMemo(
+    () =>
+      debounce(() => {
+        utils.adminWorkouts.workouts.list.invalidate()
+      }, 300),
+    [utils.adminWorkouts.workouts.list]
+  )
+
+  useEffect(() => {
+    debouncedInvalidate()
+    return () => debouncedInvalidate.cancel()
+  }, [
+    debouncedInvalidate,
+    search,
+    status,
+    sectionFilter,
+    difficultyFilter,
+    sortDir,
+  ])
 
   const syncMutation = api.adminWorkouts.workouts.sync.useMutation({
     onSuccess: (result: {
@@ -148,7 +186,6 @@ export function AdminWorkoutsPage() {
     onSuccess: () => {
       toast('Тренировка сохранена')
       utils.adminWorkouts.workouts.list.invalidate()
-      setEditState(null)
     },
     onError: (error: any) => {
       toast('Ошибка сохранения', { description: error?.message })
@@ -156,6 +193,19 @@ export function AdminWorkoutsPage() {
   })
 
   const startEdit = (workout: any) => {
+    setEditState({
+      id: workout.id,
+      title: workout.title ?? '',
+      description: workout.description ?? '',
+      videoId: workout.videoId,
+      section: workout.section as WorkoutSection,
+      difficulty: workout.difficulty as WorkoutDifficulty,
+      muscles: workout.muscles ?? [],
+      subsections: workout.subsections ?? [],
+      equipment: Array.isArray(workout.equipment)
+        ? workout.equipment.join(', ')
+        : workout.equipment ?? '',
+    })
     setSelectedWorkoutId(workout.id)
     setDialogOpen(true)
   }
@@ -227,16 +277,194 @@ export function AdminWorkoutsPage() {
     return subsectionsBySection[editState.section] ?? []
   }, [editState])
 
+  let dialogBody: ReactNode = (
+    <div className="py-6 text-center text-sm text-muted-foreground">
+      Загрузка данных...
+    </div>
+  )
+  if (!workoutDetailQuery.isLoading && editState) {
+    dialogBody = (
+      <div className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2 md:col-span-2">
+            <Label>Название</Label>
+            <Input
+              value={editState.title}
+              onChange={e =>
+                setEditState(prev => prev && { ...prev, title: e.target.value })
+              }
+            />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label>Описание</Label>
+            <Textarea
+              value={editState.description}
+              onChange={e =>
+                setEditState(
+                  prev => prev && { ...prev, description: e.target.value }
+                )
+              }
+            />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label>Категория</Label>
+            <select
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              value={editState.section}
+              onChange={e =>
+                setEditState(prev => {
+                  if (!prev) return prev
+
+                  const nextSection = e.target.value as WorkoutSection
+                  const allowedSubsections = subsectionsBySection[nextSection] ?? []
+
+                  return {
+                    ...prev,
+                    section: nextSection,
+                    subsections: prev.subsections.filter(subsection =>
+                      allowedSubsections.includes(subsection)
+                    ),
+                  }
+                })
+              }
+            >
+              {practiceSections.map(option => (
+                <option key={option} value={option}>
+                  {sectionLabels[option] ?? option}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label>Подкатегории</Label>
+            {availableSubsections.length ? (
+              <div className="flex flex-wrap gap-2">
+                {availableSubsections.map(option => {
+                  const checked = editState.subsections.includes(option)
+                  return (
+                    <label
+                      key={option}
+                      className="flex items-center gap-1 rounded border px-2 py-1 text-xs"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={e => {
+                          setEditState(prev => {
+                            if (!prev) return prev
+                            const next = new Set(prev.subsections)
+                            if (e.target.checked) {
+                              next.add(option)
+                            } else {
+                              next.delete(option)
+                            }
+                            return {
+                              ...prev,
+                              subsections: Array.from(next),
+                            }
+                          })
+                        }}
+                      />
+                      {subsectionLabels[option] ?? option}
+                    </label>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Для этой категории нет подкатегорий.
+              </p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label>Сложность</Label>
+            <select
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              value={editState.difficulty}
+              onChange={e =>
+                setEditState(
+                  prev =>
+                    prev && {
+                      ...prev,
+                      difficulty: e.target.value as WorkoutDifficulty,
+                    }
+                )
+              }
+            >
+              {enumOptions.difficulty.map(option => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label>Мышечные группы</Label>
+            <div className="flex flex-wrap gap-2">
+              {enumOptions.muscles.map(option => {
+                const checked = editState.muscles.includes(option)
+                return (
+                  <label
+                    key={option}
+                    className="flex items-center gap-1 rounded border px-2 py-1 text-xs"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={e => {
+                        setEditState(prev => {
+                          if (!prev) return prev
+                          const next = new Set(prev.muscles)
+                          if (e.target.checked) {
+                            next.add(option)
+                          } else {
+                            next.delete(option)
+                          }
+                          return { ...prev, muscles: Array.from(next) }
+                        })
+                      }}
+                    />
+                    {muscleLabels[option] ?? option}
+                  </label>
+                )
+              })}
+            </div>
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label>Инвентарь (через запятую)</Label>
+            <Input
+              value={editState.equipment}
+              onChange={e =>
+                setEditState(
+                  prev => prev && { ...prev, equipment: e.target.value }
+                )
+              }
+              placeholder="коврик, резинка"
+            />
+          </div>
+        </div>
+        <DialogFooter className="justify-start space-x-2">
+          <Button onClick={handleSave} disabled={upsertMutation.isLoading}>
+            {upsertMutation.isLoading ? 'Сохранение...' : 'Сохранить'}
+          </Button>
+          <Button variant="outline" onClick={() => setDialogOpen(false)}>
+            Отмена
+          </Button>
+        </DialogFooter>
+      </div>
+    )
+  }
+
   useEffect(() => {
     const target = loadMoreRef.current
     if (!target) return
 
     const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
+      for (const entry of entries) {
         if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
           fetchNextPage()
         }
-      })
+      }
     })
 
     observer.observe(target)
@@ -267,6 +495,30 @@ export function AdminWorkoutsPage() {
         </Button>
       </div>
 
+      <AdminWorkoutsFilters
+        filters={{
+          search,
+          status,
+          section: sectionFilter,
+          difficulty: difficultyFilter,
+          sortDir,
+        }}
+        onChange={(key, value) => {
+          if (key === 'search') setSearch(value)
+          if (key === 'status') setStatus(value)
+          if (key === 'section') setSectionFilter(value)
+          if (key === 'difficulty') setDifficultyFilter(value)
+          if (key === 'sortDir') setSortDir(value)
+        }}
+        onReset={() => {
+          setSearch('')
+          setStatus('all')
+          setSectionFilter('all')
+          setDifficultyFilter('all')
+          setSortDir('desc')
+        }}
+      />
+
       <AdminWorkoutsTable
         data={workouts}
         total={total}
@@ -288,186 +540,7 @@ export function AdminWorkoutsPage() {
               </p>
             ) : null}
           </DialogHeader>
-          {workoutDetailQuery.isLoading ? (
-            <div className="py-6 text-center text-sm text-muted-foreground">
-              Загрузка данных...
-            </div>
-          ) : editState ? (
-            <div className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2 md:col-span-2">
-                  <Label>Название</Label>
-                  <Input
-                    value={editState.title}
-                    onChange={e =>
-                      setEditState(
-                        prev => prev && { ...prev, title: e.target.value }
-                      )
-                    }
-                  />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label>Описание</Label>
-                  <Textarea
-                    value={editState.description}
-                    onChange={e =>
-                      setEditState(
-                        prev => prev && { ...prev, description: e.target.value }
-                      )
-                    }
-                  />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label>Категория</Label>
-                  <select
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                    value={editState.section}
-                    onChange={e =>
-                      setEditState(prev => {
-                        if (!prev) return prev
-
-                        const nextSection = e.target.value as WorkoutSection
-                        const allowedSubsections =
-                          subsectionsBySection[nextSection] ?? []
-
-                        return {
-                          ...prev,
-                          section: nextSection,
-                          subsections: prev.subsections.filter(subsection =>
-                            allowedSubsections.includes(subsection)
-                          ),
-                        }
-                      })
-                    }
-                  >
-                    {practiceSections.map(option => (
-                      <option key={option} value={option}>
-                        {sectionLabels[option] ?? option}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label>Подкатегории</Label>
-                  {availableSubsections.length ? (
-                    <div className="flex flex-wrap gap-2">
-                      {availableSubsections.map(option => {
-                        const checked = editState.subsections.includes(option)
-                        return (
-                          <label
-                            key={option}
-                            className="flex items-center gap-1 rounded border px-2 py-1 text-xs"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={e => {
-                                setEditState(prev => {
-                                  if (!prev) return prev
-                                  const next = new Set(prev.subsections)
-                                  if (e.target.checked) {
-                                    next.add(option)
-                                  } else {
-                                    next.delete(option)
-                                  }
-                                  return {
-                                    ...prev,
-                                    subsections: Array.from(next),
-                                  }
-                                })
-                              }}
-                            />
-                            {subsectionLabels[option] ?? option}
-                          </label>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Для этой категории нет подкатегорий.
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label>Сложность</Label>
-                  <select
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                    value={editState.difficulty}
-                    onChange={e =>
-                      setEditState(
-                        prev =>
-                          prev && {
-                            ...prev,
-                            difficulty: e.target.value as WorkoutDifficulty,
-                          }
-                      )
-                    }
-                  >
-                    {enumOptions.difficulty.map(option => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Мышечные группы</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {enumOptions.muscles.map(option => {
-                      const checked = editState.muscles.includes(option)
-                      return (
-                        <label
-                          key={option}
-                          className="flex items-center gap-1 rounded border px-2 py-1 text-xs"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={e => {
-                              setEditState(prev => {
-                                if (!prev) return prev
-                                const next = new Set(prev.muscles)
-                                if (e.target.checked) {
-                                  next.add(option)
-                                } else {
-                                  next.delete(option)
-                                }
-                                return { ...prev, muscles: Array.from(next) }
-                              })
-                            }}
-                          />
-                          {muscleLabels[option] ?? option}
-                        </label>
-                      )
-                    })}
-                  </div>
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label>Инвентарь (через запятую)</Label>
-                  <Input
-                    value={editState.equipment}
-                    onChange={e =>
-                      setEditState(
-                        prev => prev && { ...prev, equipment: e.target.value }
-                      )
-                    }
-                    placeholder="коврик, резинка"
-                  />
-                </div>
-              </div>
-              <DialogFooter className="justify-start space-x-2">
-                <Button
-                  onClick={handleSave}
-                  disabled={upsertMutation.isLoading}
-                >
-                  {upsertMutation.isLoading ? 'Сохранение...' : 'Сохранить'}
-                </Button>
-                <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                  Отмена
-                </Button>
-              </DialogFooter>
-            </div>
-          ) : null}
+          {dialogBody}
         </DialogContent>
       </Dialog>
     </div>

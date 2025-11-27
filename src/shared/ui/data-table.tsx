@@ -22,6 +22,7 @@ export type DataTableProps<TData, TValue> = {
   emptyPlaceholder?: React.ReactNode
   className?: string
   isLoading?: boolean
+  meta?: Record<string, any>
 }
 
 export function AdminDataTable<TData, TValue>({
@@ -30,11 +31,13 @@ export function AdminDataTable<TData, TValue>({
   emptyPlaceholder,
   className,
   isLoading,
+  meta,
 }: Readonly<DataTableProps<TData, TValue>>) {
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    meta,
   })
 
   const renderEmptyState = () => {

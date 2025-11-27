@@ -6,7 +6,7 @@ import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { Button } from '@/shared/ui/button'
 import { Badge } from '@/shared/ui/badge'
-import { AdminWorkoutRow, useWorkoutTableContext } from './context'
+import { AdminWorkoutRow } from './table'
 
 const formatDuration = (seconds: number) => {
   const mins = Math.floor(seconds / 60)
@@ -17,12 +17,11 @@ const formatDuration = (seconds: number) => {
 
 const statusBadge = (workout: AdminWorkoutRow) => {
   if (workout.needsReview) {
-    return <Badge variant="destructive">Заполнить карточку</Badge>
+    return <Badge variant="destructive">Заполнить</Badge>
   }
   if (workout.manuallyEdited) {
-    return <Badge>Данные заполнены</Badge>
+    return <Badge>Готово</Badge>
   }
-  return <Badge variant="outline">Готово</Badge>
 }
 
 export const workoutColumns: ColumnDef<AdminWorkoutRow>[] = [
@@ -88,15 +87,22 @@ export const workoutColumns: ColumnDef<AdminWorkoutRow>[] = [
   {
     id: 'actions',
     header: '',
-    cell: ({ row }) => <ActionsCell workout={row.original} />,
+    cell: ({ row, table }) => (
+      <ActionsCell workout={row.original} table={table} />
+    ),
   },
 ]
 
-function ActionsCell({ workout }: Readonly<{ workout: AdminWorkoutRow }>) {
-  const { onEdit } = useWorkoutTableContext()
+function ActionsCell({
+  workout,
+  table,
+}: Readonly<{ workout: AdminWorkoutRow; table: any }>) {
+  const meta = table.options.meta as {
+    onEdit: (workout: AdminWorkoutRow) => void
+  }
   return (
     <div className="flex justify-end">
-      <Button size="sm" variant="outline" onClick={() => onEdit(workout)}>
+      <Button size="sm" variant="outline" onClick={() => meta?.onEdit(workout)}>
         Редактировать
       </Button>
     </div>

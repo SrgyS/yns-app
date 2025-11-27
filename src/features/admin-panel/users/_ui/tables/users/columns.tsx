@@ -16,9 +16,9 @@ import {
 } from '@/shared/ui/select'
 import { cn } from '@/shared/ui/utils'
 
-import { AdminUserListItem } from '../../../_domain/types'
+import { AdminUserListItem, AdminUserListFilters } from '../../../_domain/types'
+import { AdminUsersFilterKey } from '../../../_hooks/use-admin-users'
 import { Button } from '@/shared/ui/button'
-import { useAdminUsersTableContext } from './context'
 
 const roleLabels: Record<AdminUserListItem['role'], string> = {
   ADMIN: 'Админ',
@@ -81,8 +81,11 @@ const FilterInput = ({
   </div>
 )
 
-const IdHeader = () => {
-  const { filters, onFilterChange } = useAdminUsersTableContext()
+const IdHeader = ({ table }: { table: any }) => {
+  const { filters, onFilterChange } = table.options.meta as {
+    filters: AdminUserListFilters
+    onFilterChange: (key: AdminUsersFilterKey, value: string) => void
+  }
   return (
     <ColumnHeader label="ID">
       <FilterInput
@@ -95,8 +98,11 @@ const IdHeader = () => {
   )
 }
 
-const AvatarHeader = () => {
-  const { filters, onFilterChange } = useAdminUsersTableContext()
+const AvatarHeader = ({ table }: { table: any }) => {
+  const { filters, onFilterChange } = table.options.meta as {
+    filters: AdminUserListFilters
+    onFilterChange: (key: AdminUsersFilterKey, value: string) => void
+  }
   return (
     <ColumnHeader label="Аватар">
       <Select
@@ -116,8 +122,11 @@ const AvatarHeader = () => {
   )
 }
 
-const EmailHeader = () => {
-  const { filters, onFilterChange } = useAdminUsersTableContext()
+const EmailHeader = ({ table }: { table: any }) => {
+  const { filters, onFilterChange } = table.options.meta as {
+    filters: AdminUserListFilters
+    onFilterChange: (key: AdminUsersFilterKey, value: string) => void
+  }
   return (
     <ColumnHeader label="E-mail">
       <FilterInput
@@ -129,8 +138,11 @@ const EmailHeader = () => {
   )
 }
 
-const PhoneHeader = () => {
-  const { filters, onFilterChange } = useAdminUsersTableContext()
+const PhoneHeader = ({ table }: { table: any }) => {
+  const { filters, onFilterChange } = table.options.meta as {
+    filters: AdminUserListFilters
+    onFilterChange: (key: AdminUsersFilterKey, value: string) => void
+  }
   return (
     <ColumnHeader label="Телефон">
       <FilterInput
@@ -142,8 +154,11 @@ const PhoneHeader = () => {
   )
 }
 
-const RoleHeader = () => {
-  const { filters, onFilterChange } = useAdminUsersTableContext()
+const RoleHeader = ({ table }: { table: any }) => {
+  const { filters, onFilterChange } = table.options.meta as {
+    filters: AdminUserListFilters
+    onFilterChange: (key: AdminUsersFilterKey, value: string) => void
+  }
   return (
     <ColumnHeader label="Тип">
       <Select
@@ -164,8 +179,11 @@ const RoleHeader = () => {
   )
 }
 
-const AccessHeader = () => {
-  const { filters, onFilterChange } = useAdminUsersTableContext()
+const AccessHeader = ({ table }: { table: any }) => {
+  const { filters, onFilterChange } = table.options.meta as {
+    filters: AdminUserListFilters
+    onFilterChange: (key: AdminUsersFilterKey, value: string) => void
+  }
   return (
     <ColumnHeader label="Активный доступ">
       <Select
@@ -185,8 +203,11 @@ const AccessHeader = () => {
   )
 }
 
-const NameHeader = () => {
-  const { filters, onFilterChange } = useAdminUsersTableContext()
+const NameHeader = ({ table }: { table: any }) => {
+  const { filters, onFilterChange } = table.options.meta as {
+    filters: AdminUserListFilters
+    onFilterChange: (key: AdminUsersFilterKey, value: string) => void
+  }
   return (
     <ColumnHeader label="Имя">
       <FilterInput
@@ -201,7 +222,7 @@ const NameHeader = () => {
 export const adminUsersColumns: ColumnDef<AdminUserListItem>[] = [
   {
     accessorKey: 'id',
-    header: () => <IdHeader />,
+    header: ({ table }) => <IdHeader table={table} />,
     cell: ({ row }) => (
       <Link
         href={`/admin/users/${row.original.id}`}
@@ -215,7 +236,7 @@ export const adminUsersColumns: ColumnDef<AdminUserListItem>[] = [
   {
     accessorKey: 'image',
     enableSorting: false,
-    header: () => <AvatarHeader />,
+    header: ({ table }) => <AvatarHeader table={table} />,
     cell: ({ row }) => {
       const profile = {
         email: row.original.email,
@@ -235,7 +256,7 @@ export const adminUsersColumns: ColumnDef<AdminUserListItem>[] = [
   },
   {
     accessorKey: 'email',
-    header: () => <EmailHeader />,
+    header: ({ table }) => <EmailHeader table={table} />,
     cell: ({ row }) => (
       <div className="flex flex-col">
         <Link
@@ -252,7 +273,7 @@ export const adminUsersColumns: ColumnDef<AdminUserListItem>[] = [
   },
   {
     accessorKey: 'name',
-    header: () => <NameHeader />,
+    header: ({ table }) => <NameHeader table={table} />,
     cell: ({ row }) => (
       <Link
         href={`/admin/users/${row.original.id}`}
@@ -264,7 +285,7 @@ export const adminUsersColumns: ColumnDef<AdminUserListItem>[] = [
   },
   {
     accessorKey: 'phone',
-    header: () => <PhoneHeader />,
+    header: ({ table }) => <PhoneHeader table={table} />,
     cell: ({ row }) => (
       <span className="text-sm text-muted-foreground">
         {row.original.phone ?? '—'}
@@ -273,7 +294,7 @@ export const adminUsersColumns: ColumnDef<AdminUserListItem>[] = [
   },
   {
     accessorKey: 'role',
-    header: () => <RoleHeader />,
+    header: ({ table }) => <RoleHeader table={table} />,
     cell: ({ row }) => (
       <Badge variant={roleVariants[row.original.role]}>
         {roleLabels[row.original.role]}
@@ -282,7 +303,7 @@ export const adminUsersColumns: ColumnDef<AdminUserListItem>[] = [
   },
   {
     accessorKey: 'hasActiveAccess',
-    header: () => <AccessHeader />,
+    header: ({ table }) => <AccessHeader table={table} />,
     cell: ({ row }) => (
       <Badge
         variant={row.original.hasActiveAccess ? 'default' : 'outline'}
