@@ -10,15 +10,19 @@ type AdminCoursesPageProps = {
   courses: Course[]
 }
 
-export function AdminCoursesPage({ courses }: AdminCoursesPageProps) {
+export function AdminCoursesPage({ courses }: Readonly<AdminCoursesPageProps>) {
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Курсы</h1>
-        <p className="text-muted-foreground">
-          Все доступные курсы платформы. Выберите курс, чтобы открыть
-          управление.
-        </p>
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight">Курсы</h1>
+          <p className="text-muted-foreground">
+            Все доступные курсы платформы. Выберите курс, для редактирования.
+          </p>
+        </div>
+        <Button asChild>
+          <Link href="/admin/courses/new">Создать курс</Link>
+        </Button>
       </div>
 
       {courses.length === 0 ? (

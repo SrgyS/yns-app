@@ -5,68 +5,37 @@ import { CourseId, CourseProduct, CourseSlug } from '@/kernel/domain/course'
 import { dbClient } from '@/shared/lib/db'
 import { compileMDX } from '@/shared/lib/mdx/server'
 import { logger } from '@/shared/lib/logger'
+import { CreateCourseInput } from '../_domain/types'
 
 @injectable()
 export class CoursesRepository {
-  private async safeCompileMDX(
-    source: string | null | undefined
-  ): Promise<string> {
-    if (!source) return ''
-    try {
-      const result = await compileMDX(source)
-      return result.code
-    } catch (error) {
-      logger.warn({ err: error }, 'Ошибка компиляции MDX')
-      return ''
-    }
-  }
-  private async mapPrismaToDomain(
-    course: PrismaCourse & {
-      product: {
-        access: string
-        price: number | null
-        accessDurationDays: number | null
-      } | null
-      dependencies: { id: string }[]
-    }
-  ): Promise<Course> {
-    const compiledDescription = await this.safeCompileMDX(course.description)
-    const compiledShortDescription = await this.safeCompileMDX(
-      course.shortDescription
-    )
 
-    const product: CourseProduct =
-      course.product?.access === 'paid'
-        ? {
-            access: 'paid',
-            price: course.product.price ?? 0,
-            accessDurationDays: course.product.accessDurationDays ?? 0,
-          }
-        : { access: 'free' }
-
-    return {
-      id: course.id,
-      title: course.title,
-      slug: course.slug,
-      description: compiledDescription,
-      shortDescription: compiledShortDescription || undefined,
-      image: course.image,
-      thumbnail: course.thumbnail,
-      dependencies: course.dependencies?.map(dep => dep.id) ?? [],
-      product,
-      draft: course.draft,
-      durationWeeks: course.durationWeeks,
-      allowedWorkoutDaysPerWeek:
-        course.allowedWorkoutDaysPerWeek &&
-        course.allowedWorkoutDaysPerWeek.length > 0
-          ? course.allowedWorkoutDaysPerWeek
-          : [5],
-      contentType: course.contentType,
-    }
+  async create(data: CreateCourseInput) {
+    return dbClient.course.create({
+      data: {
+        title: data.title,
+        slug: data.slug,
+        description: data.description,
+        shortDescription: data.shortDescription,
+        thumbnail: data.thumbnail,
+        image: data.image,
+        durationWeeks: data.durationWeeks,
+        contentType: data.contentType,
+        draft: true,
+        product: {
+          create: {
+            access: data.product.access === 'paid' ? 'paid' : 'free',
+            price: data.product.price,
+          },
+        },
+      },
+    })
   }
-  async coursesList(): Promise<Course[]> {
+
+  async coursesList(options: { includeDrafts?: boolean } = {}): Promise<Course[]> {
+    const { includeDrafts = false } = options
     const courses = await dbClient.course.findMany({
-      where: { draft: false },
+      where: includeDrafts ? undefined : { draft: false },
       include: { product: true, dependencies: true },
     })
 
@@ -131,5 +100,61 @@ export class CoursesRepository {
             }
           : { access: 'free' },
     }))
+  }
+  private async safeCompileMDX(
+    source: string | null | undefined
+  ): Promise<string> {
+    if (!source) return ''
+    try {
+      const result = await compileMDX(source)
+      return result.code
+    } catch (error) {
+      logger.warn({ err: error }, 'Ошибка компиляции MDX')
+      return ''
+    }
+  }
+  private async mapPrismaToDomain(
+    course: PrismaCourse & {
+      product: {
+        access: string
+        price: number | null
+        accessDurationDays: number | null
+      } | null
+      dependencies: { id: string }[]
+    }
+  ): Promise<Course> {
+    const compiledDescription = await this.safeCompileMDX(course.description)
+    const compiledShortDescription = await this.safeCompileMDX(
+      course.shortDescription
+    )
+
+    const product: CourseProduct =
+      course.product?.access === 'paid'
+        ? {
+            access: 'paid',
+            price: course.product.price ?? 0,
+            accessDurationDays: course.product.accessDurationDays ?? 0,
+          }
+        : { access: 'free' }
+
+    return {
+      id: course.id,
+      title: course.title,
+      slug: course.slug,
+      description: compiledDescription,
+      shortDescription: compiledShortDescription || undefined,
+      image: course.image,
+      thumbnail: course.thumbnail,
+      dependencies: course.dependencies?.map(dep => dep.id) ?? [],
+      product,
+      draft: course.draft,
+      durationWeeks: course.durationWeeks,
+      allowedWorkoutDaysPerWeek:
+        course.allowedWorkoutDaysPerWeek &&
+        course.allowedWorkoutDaysPerWeek.length > 0
+          ? course.allowedWorkoutDaysPerWeek
+          : [5],
+      contentType: course.contentType,
+    }
   }
 }

@@ -8,6 +8,7 @@ import {
 } from '@/kernel/domain/course'
 
 import { ImageSrc } from '@/shared/api/content/_lib/image'
+import { CourseContentType } from '@/entities/payment/_domain/types'
 
 export type Course = CourseFullInfo & {
   id: CourseId
@@ -124,4 +125,19 @@ export type GetUserDailyPlanParams = {
 export type GetUserDailyPlanByEnrollmentParams = {
   enrollmentId: string
   dayNumberInCourse: number
+}
+
+export type CreateCourseInput = {
+  title: string
+  slug: string
+  description: string
+  shortDescription?: string
+  thumbnail: string
+  image: string
+  durationWeeks: number
+  contentType: CourseContentType
+  product: {
+    access: string
+    price: number
+  }
 }

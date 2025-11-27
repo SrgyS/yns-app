@@ -15,17 +15,17 @@ export class MinioStorage {
     },
   })
 
-  async uploadImage(file: File, tag: string) {
-    return this.upload(file, privateConfig.S3_IMAGES_BUCKET, tag)
+  async uploadImage(file: File, tag: string, userId: string) {
+    return this.upload(file, privateConfig.S3_IMAGES_BUCKET, tag, userId)
   }
 
-  async upload(file: File, bucket: string, tag: string): Promise<StoredFile> {
+  async upload(file: File, bucket: string, tag: string, userId: string): Promise<StoredFile> {
     const res = await new Upload({
       client: this.s3Client,
       params: {
         ACL: 'public-read',
         Bucket: bucket,
-        Key: `${tag}-${Date.now().toString()}-${file.name}`,
+        Key: `${userId}/${tag}-${Date.now().toString()}-${file.name}`,
         Body: file,
       },
       queueSize: 4, // optional concurrency configuration
