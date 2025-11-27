@@ -1,4 +1,4 @@
-import { AdminUserDetailPage } from '@/features/admin-panel/admin-users/_ui/admin-user-detail-page'
+import { AdminUserDetailPage } from '@/features/admin-panel/users/_ui/admin-user-detail-page'
 
 export default async function AdminUserPage({
   params,

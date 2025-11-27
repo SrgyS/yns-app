@@ -18,6 +18,11 @@ const nextConfig: NextConfig = {
         hostname: 'oaxqithvqwzlervyjulo.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'kinescopecdn.net',
+        pathname: '/**',
+      },
     ],
   },
   rewrites: async () => [

@@ -3,14 +3,11 @@ import {
   WorkoutDifficulty,
   WorkoutSection,
   WorkoutSubsection,
-  WorkoutType,
 } from '@prisma/client'
 
 export type Workout = {
   id: string
-  slug: string
   title: string
-  type: WorkoutType
   durationSec: number
   difficulty: WorkoutDifficulty
   equipment: string[]

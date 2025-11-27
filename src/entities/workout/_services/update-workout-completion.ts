@@ -1,13 +1,12 @@
 import { injectable } from 'inversify'
 import { UserWorkoutCompletionRepository } from '../_repositories/user-workout-completion'
-import { DailyContentType, WorkoutType } from '@prisma/client'
+import { DailyContentType } from '@prisma/client'
 import { logger } from '@/shared/lib/logger'
 
 export interface UpdateWorkoutCompletionParams {
   userId: string
   workoutId: string
   enrollmentId: string
-  workoutType: WorkoutType
   isCompleted: boolean
   contentType: DailyContentType
   stepIndex: number
@@ -23,7 +22,6 @@ export class UpdateWorkoutCompletionService {
     userId,
     workoutId,
     enrollmentId,
-    workoutType,
     isCompleted,
     contentType,
     stepIndex,
@@ -34,7 +32,6 @@ export class UpdateWorkoutCompletionService {
           userId,
           workoutId,
           enrollmentId,
-          workoutType,
           contentType,
           stepIndex
         )
@@ -52,7 +49,6 @@ export class UpdateWorkoutCompletionService {
         userId,
         workoutId,
         enrollmentId,
-        workoutType,
         contentType,
         stepIndex,
       })
@@ -62,7 +58,6 @@ export class UpdateWorkoutCompletionService {
         userId,
         workoutId,
         enrollmentId,
-        workoutType,
         contentType,
         stepIndex,
         error,

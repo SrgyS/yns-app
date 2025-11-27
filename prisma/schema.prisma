@@ -51,14 +51,6 @@ enum RecipeDifficulty {
   HARD
 }
 
-enum WorkoutType {
-  WARMUP // Зарядка
-  POSTURE // Осанка
-  STRENGTH // Силовая
-  MOBILITY // Мобильность
-  CARDIO
-}
-
 enum WorkoutSection {
   STRENGTH // Силовые
   CORRECTION // Коррекция осанки
@@ -249,7 +241,6 @@ model UserDailyPlan {
 model Workout {
   id                    String              @id @default(cuid())
   title                 String
-  type                  WorkoutType
   difficulty            WorkoutDifficulty
   equipment             String[]
   description           String?
@@ -257,7 +248,6 @@ model Workout {
   muscles               MuscleGroup[]
   section               WorkoutSection
   subsections           WorkoutSubsection[]
-  slug                  String              @unique
   mainWorkoutDailyPlans DailyPlan[]         @relation("MainWorkoutDailyPlan")
   warmupDailyPlans      DailyPlan[]         @relation("WarmupDailyPlan")
 
@@ -271,6 +261,9 @@ model Workout {
   poster      Json?
   posterUrl   String?
   progress    Int?
+  needsReview     Boolean   @default(true)
+  manuallyEdited  Boolean   @default(false)
+  lastSyncedAt    DateTime?
 }
 
 model UserWorkoutCompletion {
@@ -279,7 +272,6 @@ model UserWorkoutCompletion {
   workoutId    String
   enrollmentId String
   completedAt  DateTime             @default(now())
-  workoutType  WorkoutType
   contentType  DailyContentType
   stepIndex    Int
   enrollment   UserCourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
@@ -400,6 +392,7 @@ model StaffPermission {
   canManageUsers  Boolean  @default(false)
   canGrantAccess  Boolean  @default(false)
   canLoginAsUser  Boolean  @default(false)
+  canManageCourses  Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Workout" ALTER COLUMN "lastSyncedAt" SET DATA TYPE TIMESTAMP(3);

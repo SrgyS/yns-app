@@ -1,4 +1,4 @@
-import { GraduationCap, LineChart, Users } from 'lucide-react'
+import { GraduationCap, LineChart, Users, Dumbbell } from 'lucide-react'
 
 export const adminNavItems = [
   {
@@ -10,6 +10,11 @@ export const adminNavItems = [
     title: 'Курсы',
     url: '/admin/courses',
     icon: GraduationCap,
+  },
+  {
+    title: 'Тренировки',
+    url: '/admin/workouts',
+    icon: Dumbbell,
   },
   {
     title: 'Аналитика',

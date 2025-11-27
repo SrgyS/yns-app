@@ -7,7 +7,6 @@ import {
   Workout as PrismaWorkout,
   WorkoutSection,
   WorkoutSubsection,
-  WorkoutType,
 } from '@prisma/client'
 import { PosterSchema } from '../_domain/schema'
 
@@ -32,9 +31,7 @@ export class WorkoutRepository {
     const p: any = prismaWorkout
     return {
       id: prismaWorkout.id,
-      slug: prismaWorkout.slug,
       title: prismaWorkout.title,
-      type: prismaWorkout.type,
       durationSec: (p?.durationSec ?? 0) as number,
       difficulty: prismaWorkout.difficulty,
       equipment: prismaWorkout.equipment,
@@ -63,41 +60,6 @@ export class WorkoutRepository {
         error,
       })
       throw new Error('Failed to get workout')
-    }
-  }
-
-  async getWorkoutBySlug(slug: string): Promise<Workout | null> {
-    try {
-      const workout = await dbClient.workout.findUnique({
-        where: { slug },
-      })
-
-      return workout ? this.mapPrismaWorkoutToDomain(workout) : null
-    } catch (error) {
-      logger.error({
-        msg: 'Error getting workout by slug',
-        slug,
-        error,
-      })
-      throw new Error('Failed to get workout')
-    }
-  }
-
-  async getWorkoutTypeById(id: string): Promise<WorkoutType | undefined> {
-    try {
-      const workout = await dbClient.workout.findUnique({
-        where: { id },
-        select: { type: true },
-      })
-
-      return workout ? workout.type : undefined
-    } catch (error) {
-      logger.error({
-        msg: 'Error getting workout type by id',
-        id,
-        error,
-      })
-      return undefined
     }
   }
 

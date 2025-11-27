@@ -29,27 +29,4 @@ export class GetWorkoutService {
       throw new Error('Failed to get workout')
     }
   }
-
-  async getBySlug(slug: string): Promise<Workout | null> {
-    try {
-      const workout = await this.workoutRepository.getWorkoutBySlug(slug)
-
-      if (workout) {
-        logger.info({
-          msg: 'Successfully retrieved workout by slug',
-          slug,
-          workoutId: workout.id,
-        })
-      }
-
-      return workout
-    } catch (error) {
-      logger.error({
-        msg: 'Error getting workout by slug',
-        slug,
-        error,
-      })
-      throw new Error('Failed to get workout')
-    }
-  }
 }
