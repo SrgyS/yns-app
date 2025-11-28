@@ -4,8 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
-import Image from 'next/image'
+import { useTransition } from 'react'
 import { CourseContentType, AccessType } from '@prisma/client'
 
 import { Button } from '@/shared/ui/button'
@@ -29,30 +28,75 @@ import {
 } from '@/shared/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { toast } from 'sonner'
-import { createCourseAction } from '../_actions/create-course'
-import { uploadCourseImageAction } from '../_actions/upload-course-image'
 import { Spinner } from '@/shared/ui/spinner'
+import { adminCoursesApi } from '../_api'
+import { CourseImgField } from './course-img-field'
 
-const courseFormSchema = z.object({
-  title: z.string().min(1, 'Название обязательно'),
-  slug: z.string().min(1, 'Slug обязателен').regex(/^[a-z0-9-]+$/, 'Только латинские буквы, цифры и дефис'),
-  description: z.string().min(1, 'Описание обязательно'),
-  shortDescription: z.string().optional(),
-  contentType: z.nativeEnum(CourseContentType),
-  access: z.nativeEnum(AccessType),
-  price: z.coerce.number().min(0).optional(),
-  durationWeeks: z.coerce.number().min(1, 'Минимум 1 неделя'),
-  thumbnail: z.any().optional(), // File object
-  image: z.any().optional(), // File object
-})
+const courseFormSchema = z
+  .object({
+    title: z.string().min(1, 'Название обязательно'),
+    slug: z
+      .string()
+      .min(1, 'Slug обязателен')
+      .regex(/^[a-z0-9-]+$/, 'Только латинские буквы, цифры и дефис'),
+    description: z.string().min(1, 'Описание обязательно'),
+    shortDescription: z.string().optional(),
+    contentType: z.nativeEnum(CourseContentType),
+    access: z.nativeEnum(AccessType),
+    price: z.coerce
+      .number()
+      .positive('Цена должна быть больше нуля')
+      .optional(),
+    accessDurationDays: z.coerce
+      .number()
+      .int()
+      .min(1, 'Укажите длительность доступа (в днях)')
+      .optional(),
+    durationWeeks: z.coerce.number().min(1, 'Минимум 1 неделя'),
+    thumbnail: z.string().optional(),
+    image: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const isPaid = data.access === AccessType.paid
+    const hasValidPrice =
+      typeof data.price === 'number' &&
+      Number.isFinite(data.price) &&
+      data.price > 0
+    const hasAccessDuration =
+      typeof data.accessDurationDays === 'number' &&
+      Number.isFinite(data.accessDurationDays) &&
+      data.accessDurationDays > 0
+    if (isPaid && !hasValidPrice) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['price'],
+        message: 'Укажите цену для платного курса',
+      })
+    }
+    if (isPaid && !hasAccessDuration) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['accessDurationDays'],
+        message: 'Укажите длительность доступа в днях',
+      })
+    }
+  })
 
 type CourseFormValues = z.infer<typeof courseFormSchema>
 
 export function CreateCourseForm() {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const upsertCourse = adminCoursesApi.adminCourses.course.upsert.useMutation({
+    onSuccess: () => {
+      toast.success('Курс успешно создан')
+      router.push('/admin/courses')
+    },
+    onError: () => {
+      toast.error('Ошибка при создании курса')
+    },
+  })
+  const isSubmitting = isPending || upsertCourse.isPending
 
   const form = useForm<CourseFormValues>({
     resolver: zodResolver(courseFormSchema),
@@ -63,54 +107,46 @@ export function CreateCourseForm() {
       shortDescription: '',
       contentType: CourseContentType.FIXED_COURSE,
       access: AccessType.paid,
-      price: 0,
+      price: undefined,
+      accessDurationDays: undefined,
       durationWeeks: 4,
+      thumbnail: '',
+      image: '',
     },
   })
 
-  const handleFileChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    field: any,
-    setPreview: (url: string | null) => void
-  ) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      field.onChange(file)
-      const url = URL.createObjectURL(file)
-      setPreview(url)
-    }
-  }
-
-  const onSubmit = (data: CourseFormValues) => {
+  const handleSubmit = (data: CourseFormValues) => {
     startTransition(async () => {
       try {
-        let thumbnailPath = ''
-        let imagePath = ''
+        const thumbnailPath = data.thumbnail ?? ''
+        const imagePath = data.image ?? ''
 
-        if (data.thumbnail instanceof File) {
-            const formData = new FormData()
-            formData.append('file', data.thumbnail)
-            formData.append('tag', 'course-thumbnail')
-            const res = await uploadCourseImageAction(formData)
-            thumbnailPath = res.path
-        }
+        const product =
+          data.access === AccessType.paid
+            ? {
+                access: 'paid' as const,
+                price: data.price as number,
+                accessDurationDays: data.accessDurationDays as number,
+              }
+            : { access: 'free' as const }
 
-        if (data.image instanceof File) {
-            const formData = new FormData()
-            formData.append('file', data.image)
-            formData.append('tag', 'course-image')
-            const res = await uploadCourseImageAction(formData)
-            imagePath = res.path
-        }
-
-        await createCourseAction({
-            ...data,
-            thumbnail: thumbnailPath,
-            image: imagePath,
+        await upsertCourse.mutateAsync({
+          slug: data.slug,
+          title: data.title,
+          description: data.description,
+          shortDescription: data.shortDescription ?? null,
+          thumbnail: thumbnailPath || '/logo-yns.png',
+          image: imagePath || '/logo-yns.png',
+          draft: true,
+          durationWeeks: data.durationWeeks,
+          allowedWorkoutDaysPerWeek: [5],
+          contentType: data.contentType,
+          product,
+          dependencies: [],
+          weeks: [],
+          mealPlans: [],
+          dailyPlans: [],
         })
-        
-        toast.success('Курс успешно создан')
-        router.push('/admin/courses')
       } catch (error) {
         console.error(error)
         toast.error('Ошибка при создании курса')
@@ -127,7 +163,7 @@ export function CreateCourseForm() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
               <FormField
                 control={form.control}
@@ -139,7 +175,8 @@ export function CreateCourseForm() {
                       <Input {...field} />
                     </FormControl>
                     <FormDescription className="min-h-10">
-                      Заголовок, который увидят пользователи в карточках и на странице курса.
+                      Заголовок, который увидят пользователи в карточках и на
+                      странице курса.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -156,7 +193,8 @@ export function CreateCourseForm() {
                       <Input {...field} />
                     </FormControl>
                     <FormDescription className="min-h-10">
-                      Уникальный идентификатор курса в URL. Только латиница, цифры и дефис.
+                      Уникальный идентификатор курса в URL. Только латиница,
+                      цифры и дефис.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -200,49 +238,33 @@ export function CreateCourseForm() {
             />
 
             <div className="grid gap-6 md:grid-cols-2">
-                <FormField
-                    control={form.control}
-                    name="thumbnail"
-                    render={({ field: { onChange, ...field } }) => (
-                    <FormItem>
-                        <FormLabel>Миниатюра (Thumbnail)</FormLabel>
-                        <FormControl>
-                        <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleFileChange(e, { onChange }, setThumbnailPreview)}
-                            {...field}
-                        />
-                        </FormControl>
-                        {thumbnailPreview && (
-                            <Image src={thumbnailPreview} alt="Preview" className="h-20 w-20 object-cover rounded-md mt-2" />
-                        )}
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
+              <FormField
+                control={form.control}
+                name="thumbnail"
+                render={({ field }) => (
+                  <CourseImgField
+                    label="Миниатюра (Thumbnail)"
+                    tag="course-thumbnail"
+                    value={field.value ?? null}
+                    onChange={path => field.onChange(path ?? '')}
+                    disabled={isSubmitting}
+                  />
+                )}
+              />
 
-                <FormField
-                    control={form.control}
-                    name="image"
-                    render={({ field: { onChange, ...field } }) => (
-                    <FormItem>
-                        <FormLabel>Основное изображение</FormLabel>
-                        <FormControl>
-                        <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleFileChange(e, { onChange }, setImagePreview)}
-                            {...field}
-                        />
-                        </FormControl>
-                        {imagePreview && (
-                            <Image src={imagePreview} alt="Preview" className="h-20 w-20 object-cover rounded-md mt-2" />
-                        )}
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
+              <FormField
+                control={form.control}
+                name="image"
+                render={({ field }) => (
+                  <CourseImgField
+                    label="Основное изображение"
+                    tag="course-image"
+                    value={field.value ?? null}
+                    onChange={path => field.onChange(path ?? '')}
+                    disabled={isSubmitting}
+                  />
+                )}
+              />
             </div>
 
             <div className="grid gap-6 md:grid-cols-3">
@@ -252,15 +274,22 @@ export function CreateCourseForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Тип курса</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Выберите тип" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value={CourseContentType.SUBSCRIPTION}>Подписка</SelectItem>
-                        <SelectItem value={CourseContentType.FIXED_COURSE}>Фиксированный курс</SelectItem>
+                        <SelectItem value={CourseContentType.SUBSCRIPTION}>
+                          Подписка
+                        </SelectItem>
+                        <SelectItem value={CourseContentType.FIXED_COURSE}>
+                          Фиксированный курс
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -288,7 +317,10 @@ export function CreateCourseForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Доступ</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Выберите доступ" />
@@ -296,7 +328,9 @@ export function CreateCourseForm() {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value={AccessType.paid}>Платный</SelectItem>
-                        <SelectItem value={AccessType.free}>Бесплатный</SelectItem>
+                        <SelectItem value={AccessType.free}>
+                          Бесплатный
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -326,12 +360,12 @@ export function CreateCourseForm() {
                 type="button"
                 variant="outline"
                 onClick={() => router.back()}
-                disabled={isPending}
+                disabled={isSubmitting}
               >
                 Отмена
               </Button>
-              <Button type="submit" disabled={isPending}>
-                {isPending && <Spinner className="mr-2 h-4 w-4" />}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Spinner className="mr-2 h-4 w-4" />}
                 Создать курс
               </Button>
             </div>

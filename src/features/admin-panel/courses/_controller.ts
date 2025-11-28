@@ -10,6 +10,7 @@ import {
 } from '@/kernel/lib/trpc/module'
 import { createAdminAbility } from '../users/_domain/ability'
 import { StaffPermissionService } from '../users/_services/staff-permissions'
+import { DeleteCourseService } from '@/entities/course/_services/delete-course'
 import {
   CourseQueryInput,
   courseQuerySchema,
@@ -55,7 +56,10 @@ type VideoMeta = {
 
 @injectable()
 export class AdminCoursesController extends Controller {
-  constructor(private readonly staffPermissionService: StaffPermissionService) {
+  constructor(
+    private readonly staffPermissionService: StaffPermissionService,
+    private readonly deleteCourseService: DeleteCourseService
+  ) {
     super()
   }
 
@@ -675,6 +679,18 @@ export class AdminCoursesController extends Controller {
           .mutation(async ({ input }) => {
             const result = await this.upsertCourse(input)
             return result
+          }),
+        delete: checkAbilityProcedure({
+          create: this.createAbility,
+          check: ability => ability.canManageCourses,
+        })
+          .input(z.object({ id: z.string().min(1) }))
+          .mutation(async ({ ctx, input }) => {
+            await this.deleteCourseService.exec(
+              { id: input.id },
+              ctx.ability
+            )
+            return { success: true }
           }),
         lookup: router({
           workouts: checkAbilityProcedure({

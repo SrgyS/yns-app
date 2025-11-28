@@ -101,6 +101,10 @@ export class CoursesRepository {
           : { access: 'free' },
     }))
   }
+
+  async deleteById(courseId: string) {
+    return dbClient.course.delete({ where: { id: courseId } })
+  }
   private async safeCompileMDX(
     source: string | null | undefined
   ): Promise<string> {

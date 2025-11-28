@@ -23,9 +23,9 @@ export function createServer() {
   const container = new Container()
 
   container.load(
+    CourseEntityModule,
     NextAuthModule,
     CoursesListModule,
-    CourseEntityModule,
     UserEntityModule,
     UpdateProfileModule,
     TrpcModule,
