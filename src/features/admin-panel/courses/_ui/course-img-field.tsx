@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
-import { Button } from '@/shared/ui/button'
-import { FormControl, FormItem, FormLabel, FormMessage } from '@/shared/ui/form'
+import { Upload } from 'lucide-react'
+import { FormItem, FormLabel, FormMessage } from '@/shared/ui/form'
 import { toast } from 'sonner'
 
 import { useUploadCourseImage } from '../_vm/use-upload-course-image'
@@ -13,6 +13,7 @@ type Props = {
   onChange: (path: string | null) => void
   tag: 'course-image' | 'course-thumbnail'
   disabled?: boolean
+  aspect?: string
 }
 
 export function CourseImgField({
@@ -21,6 +22,7 @@ export function CourseImgField({
   onChange,
   tag,
   disabled,
+  aspect = '4 / 3',
 }: Readonly<Props>) {
   const upload = useUploadCourseImage()
   const isPending = upload.isPending || disabled
@@ -49,37 +51,39 @@ export function CourseImgField({
   return (
     <FormItem>
       <FormLabel>{label}</FormLabel>
-      <FormControl>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={isPending}
-          onClick={handleUpload}
-        >
-          {upload.isPending && 'Загрузка...'}
-          {value ? 'Заменить' : 'Загрузить'}
-        </Button>
-      </FormControl>
-      {preview ? (
-        preview.startsWith('blob:') || preview.startsWith('data:') ? (
-          <Image
-            src={preview}
-            alt="Preview"
-            width={100}
-            height={100}
-            unoptimized
-            className="h-20 w-20 object-cover rounded-md mt-2"
-          />
+      <div
+        className="mt-3 w-full max-w-xl overflow-hidden rounded-md border border-dashed bg-muted/50 cursor-pointer transition hover:border-primary/70 focus:outline-none focus:ring-2 focus:ring-primary"
+        style={{ aspectRatio: aspect }}
+        onClick={handleUpload}
+        role="button"
+        tabIndex={0}
+      >
+        {preview ? (
+          <div className="relative h-full w-full">
+            {preview.startsWith('blob:') || preview.startsWith('data:') ? (
+              <Image
+                src={preview}
+                alt="Preview"
+                fill
+                unoptimized
+                className="object-contain"
+              />
+            ) : (
+              <OptimizedImage
+                src={preview}
+                alt="Preview"
+                fill
+                className="object-contain"
+              />
+            )}
+          </div>
         ) : (
-          <OptimizedImage
-            src={preview}
-            alt="Preview"
-            width={100}
-            height={100}
-            className="h-20 w-20 object-cover rounded-md mt-2"
-          />
-        )
-      ) : null}
+          <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
+            <Upload className="h-6 w-6" />
+            {isPending ? 'Загрузка...' : 'Добавить изображение'}
+          </div>
+        )}
+      </div>
       <FormMessage />
     </FormItem>
   )

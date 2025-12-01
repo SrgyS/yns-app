@@ -76,19 +76,30 @@ export function AdminCoursesPage({ courses }: Readonly<AdminCoursesPageProps>) {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {courses.map(course => {
-            const imageSrc = course.thumbnail || '/logo-yns.png'
+            const thumbnailImgSrc = course.thumbnail
+            const mainImgSrc = course.image
+            const hasThumb =
+              Boolean(thumbnailImgSrc) && !thumbnailImgSrc.includes('/logo-yns')
+            const hasMain =
+              Boolean(mainImgSrc) && !mainImgSrc.includes('/logo-yns')
 
             return (
               <Card key={course.id} className="flex flex-col overflow-hidden">
-                <div className="relative h-40 w-full bg-muted">
-                  <OptimizedImage
-                    src={imageSrc}
-                    alt={course.title}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    priority
-                  />
+                <div className="relative h-40 w-full bg-muted flex items-center justify-center">
+                  {hasThumb ? (
+                    <OptimizedImage
+                      src={thumbnailImgSrc}
+                      alt={course.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      priority
+                    />
+                  ) : (
+                    <span className="text-sm text-muted-foreground">
+                      Миниатюра не загружена
+                    </span>
+                  )}
                 </div>
                 <CardHeader className="space-y-2">
                   <CardTitle className="line-clamp-2">
@@ -98,7 +109,41 @@ export function AdminCoursesPage({ courses }: Readonly<AdminCoursesPageProps>) {
                     ) : null}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="mt-auto space-y-4">
+                <CardContent className="mt-auto space-y-3">
+                  <div className="rounded-md border bg-muted/50 p-2 text-xs leading-tight space-y-1">
+                    <div>
+                      <span className="text-muted-foreground">Миниатюра: </span>
+                      {hasThumb ? (
+                        <span className="break-all text-foreground">
+                          {thumbnailImgSrc}
+                        </span>
+                      ) : (
+                        <span className="text-destructive">не загружено</span>
+                      )}
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">
+                        Основное изображение:{' '}
+                      </span>
+                      {hasMain ? (
+                        <span className="break-all text-foreground">
+                          {mainImgSrc}
+                        </span>
+                      ) : (
+                        <span className="text-destructive">не загружено</span>
+                      )}
+                    </div>
+                    {hasMain && (
+                      <div className="mt-2 relative w-full aspect-4/3 max-h-40 overflow-hidden rounded bg-background">
+                        <OptimizedImage
+                          src={mainImgSrc}
+                          alt={`${course.title} основное изображение`}
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+                    )}
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     <Badge
                       variant={

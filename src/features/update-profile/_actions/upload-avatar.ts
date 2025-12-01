@@ -2,13 +2,16 @@
 
 import { server } from '@/app/server'
 import { z } from 'zod'
-import { AVATAR_FILE_KEY, AVATAR_MAX_SIZE } from '../_constants'
+import { AVATAR_FILE_KEY } from '../_constants'
 import { BadRequest } from '@/shared/lib/errors'
 
 import { redirect } from 'next/navigation'
 import { fileStorage } from '@/shared/lib/file-storage/file-storage'
 import { SessionService } from '@/kernel/lib/next-auth/module'
-import { ALLOWED_IMAGE_TYPES, AVATAR_IMAGE_MAX_SIZE_MB } from '@/shared/lib/upload-constants'
+import {
+  ALLOWED_IMAGE_TYPES,
+  AVATAR_IMAGE_MAX_SIZE_MB,
+} from '@/shared/lib/upload-constants'
 
 const resultSchema = z.object({
   path: z.string(),
@@ -17,7 +20,7 @@ const resultSchema = z.object({
 const MAX_SIZE_BYTES = AVATAR_IMAGE_MAX_SIZE_MB * 1024 * 1024
 
 const sanitizeFileName = (name: string) =>
-  name.replace(/[^\w.-]+/g, '_').slice(-200)
+  name.replaceAll(/[^\w.-]+/g, '_').slice(-200)
 
 export const uploadAvatarAction = async (formData: FormData) => {
   const file = formData.get(AVATAR_FILE_KEY)

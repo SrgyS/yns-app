@@ -45,39 +45,26 @@ const courseFormSchema = z
     access: z.nativeEnum(AccessType),
     price: z.coerce
       .number()
-      .positive('Цена должна быть больше нуля')
+      .min(0, 'Цена должна быть неотрицательной')
       .optional(),
+    durationWeeks: z.coerce.number().min(1, 'Минимум 1 неделя'),
     accessDurationDays: z.coerce
       .number()
       .int()
       .min(1, 'Укажите длительность доступа (в днях)')
       .optional(),
-    durationWeeks: z.coerce.number().min(1, 'Минимум 1 неделя'),
     thumbnail: z.string().optional(),
     image: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     const isPaid = data.access === AccessType.paid
-    const hasValidPrice =
-      typeof data.price === 'number' &&
-      Number.isFinite(data.price) &&
-      data.price > 0
-    const hasAccessDuration =
-      typeof data.accessDurationDays === 'number' &&
-      Number.isFinite(data.accessDurationDays) &&
-      data.accessDurationDays > 0
-    if (isPaid && !hasValidPrice) {
+    const hasPrice =
+      typeof data.price === 'number' && Number.isFinite(data.price)
+    if (isPaid && !hasPrice) {
       ctx.addIssue({
         code: 'custom',
         path: ['price'],
         message: 'Укажите цену для платного курса',
-      })
-    }
-    if (isPaid && !hasAccessDuration) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['accessDurationDays'],
-        message: 'Укажите длительность доступа в днях',
       })
     }
   })
@@ -107,36 +94,39 @@ export function CreateCourseForm() {
       shortDescription: '',
       contentType: CourseContentType.FIXED_COURSE,
       access: AccessType.paid,
-      price: undefined,
-      accessDurationDays: undefined,
+      price: 0,
       durationWeeks: 4,
       thumbnail: '',
       image: '',
     },
   })
 
-  const handleSubmit = (data: CourseFormValues) => {
+  const onSubmit = (data: CourseFormValues) => {
     startTransition(async () => {
       try {
         const thumbnailPath = data.thumbnail ?? ''
         const imagePath = data.image ?? ''
 
-        const product =
-          data.access === AccessType.paid
-            ? {
-                access: 'paid' as const,
-                price: data.price as number,
-                accessDurationDays: data.accessDurationDays as number,
-              }
-            : { access: 'free' as const }
+        let product
 
+        if (data.access === AccessType.paid) {
+          product = {
+            access: 'paid' as const,
+            price: Number(data.price),
+            accessDurationDays: data.accessDurationDays!,
+          }
+        } else {
+          product = {
+            access: 'free' as const,
+          }
+        }
         await upsertCourse.mutateAsync({
           slug: data.slug,
           title: data.title,
           description: data.description,
           shortDescription: data.shortDescription ?? null,
-          thumbnail: thumbnailPath || '/logo-yns.png',
-          image: imagePath || '/logo-yns.png',
+          thumbnail: thumbnailPath,
+          image: imagePath,
           draft: true,
           durationWeeks: data.durationWeeks,
           allowedWorkoutDaysPerWeek: [5],
@@ -163,7 +153,7 @@ export function CreateCourseForm() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
               <FormField
                 control={form.control}
@@ -172,7 +162,7 @@ export function CreateCourseForm() {
                   <FormItem>
                     <FormLabel>Название курса</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} className="h-11 text-base" />
                     </FormControl>
                     <FormDescription className="min-h-10">
                       Заголовок, который увидят пользователи в карточках и на
@@ -190,7 +180,7 @@ export function CreateCourseForm() {
                   <FormItem>
                     <FormLabel>Slug (URL адрес)</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} className="h-11 text-base" />
                     </FormControl>
                     <FormDescription className="min-h-10">
                       Уникальный идентификатор курса в URL. Только латиница,
@@ -211,7 +201,7 @@ export function CreateCourseForm() {
                   <FormControl>
                     <Textarea
                       placeholder="Подробное описание курса..."
-                      className="min-h-[120px]"
+                      className="min-h-30"
                       {...field}
                     />
                   </FormControl>
@@ -229,6 +219,7 @@ export function CreateCourseForm() {
                   <FormControl>
                     <Textarea
                       placeholder="Краткое описание для карточки..."
+                      className="min-h-30"
                       {...field}
                     />
                   </FormControl>
