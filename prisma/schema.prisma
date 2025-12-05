@@ -188,6 +188,7 @@ model DailyPlan {
   weekNumber      Int
   description     String?
   contentBlocks   ContentBlock[] // Если нужны дополнительные текстовые блоки в дне
+  mainWorkouts    DailyPlanMainWorkout[]
 
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -199,9 +200,6 @@ model DailyPlan {
   warmupId String
   warmup   Workout @relation("WarmupDailyPlan", fields: [warmupId], references: [id])
 
-  mainWorkoutId String?
-  mainWorkout   Workout? @relation("MainWorkoutDailyPlan", fields: [mainWorkoutId], references: [id])
-
   mealPlanId String?
   mealPlan   MealPlan? @relation(fields: [mealPlanId], references: [id], onDelete: SetNull)
 
@@ -209,6 +207,19 @@ model DailyPlan {
 
   @@unique([courseId, slug])
   @@unique([courseId, weekNumber, dayNumberInWeek])
+}
+
+model DailyPlanMainWorkout {
+  id          String    @id @default(cuid())
+  dailyPlanId String
+  workoutId   String
+  order       Int       // Позиция основной тренировки в дне (0,1,2...)
+
+  dailyPlan DailyPlan @relation(fields: [dailyPlanId], references: [id], onDelete: Cascade)
+  workout   Workout   @relation(fields: [workoutId], references: [id])
+
+  @@unique([dailyPlanId, order])
+  @@index([workoutId])
 }
 
 model UserDailyPlan {
@@ -219,23 +230,36 @@ model UserDailyPlan {
   dayNumberInCourse    Int
   isWorkoutDay         Boolean
   warmupId             String
-  mainWorkoutId        String?
   mealPlanId           String?
   dayOfWeek            DayOfWeek
   weekNumber           Int
   warmupStepIndex      Int
-  mainWorkoutStepIndex Int?
   enrollment           UserCourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  mainWorkout          Workout?             @relation("UserDailyMainWorkout", fields: [mainWorkoutId], references: [id])
   mealPlan             MealPlan?            @relation("UserDailyMealPlan", fields: [mealPlanId], references: [id], onDelete: SetNull)
   user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   warmup               Workout              @relation("UserDailyWarmup", fields: [warmupId], references: [id])
   originalDailyPlanId  String
   originalDailyPlan    DailyPlan            @relation("OriginalDailyPlan", fields: [originalDailyPlanId], references: [id])
+  mainWorkouts         UserDailyMainWorkout[]
 
   @@unique([enrollmentId, dayNumberInCourse]) // Один план на день для каждого enrollment
   @@index([enrollmentId])
   @@index([userId, date])
+}
+
+model UserDailyMainWorkout {
+  id              String         @id @default(cuid())
+  userDailyPlanId String
+  workoutId       String
+  order           Int            // Позиция основной тренировки в дне (0,1,2...)
+  stepIndex       Int            // Соответствующий шаг прогресса
+
+  userDailyPlan UserDailyPlan @relation(fields: [userDailyPlanId], references: [id], onDelete: Cascade)
+  workout       Workout       @relation(fields: [workoutId], references: [id])
+
+  @@unique([userDailyPlanId, order])
+  @@index([userDailyPlanId])
+  @@index([workoutId])
 }
 
 model Workout {
@@ -278,9 +302,10 @@ model UserWorkoutCompletion {
   user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   workout      Workout              @relation(fields: [workoutId], references: [id])
 
-  @@unique([userId, enrollmentId, contentType, stepIndex])
+  @@unique([userId, enrollmentId, contentType, workoutId, stepIndex])
   @@index([userId])
   @@index([enrollmentId])
+  @@index([workoutId])
 }
 
 model MealPlan {
