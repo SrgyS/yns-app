@@ -18,9 +18,11 @@ import {
   courseUpsertInputSchema,
   LookupQueryInput,
   lookupQuerySchema,
+  dailyPlanUpdateSchema,
 } from './_schemas'
 import { SharedSession } from '@/kernel/domain/user'
 import { dbClient } from '@/shared/lib/db'
+import { PlanValidationService } from '@/entities/planning/_services/plan-validation'
 
 type AdminCourseSummary = {
   id: string
@@ -34,8 +36,20 @@ type AdminCourseSummary = {
     accessDurationDays?: number | null
   } | null
 }
+//TODO: переделать после добавления массива основных тренировок в день
+type AdminDailyPlan = CourseUpsertInput['dailyPlans'][number] & {
+  warmupTitle?: string | null
+  warmupDurationSec?: number | null
+  warmupSection?: string | null
+  mainWorkoutTitle?: string | null
+  mainWorkoutDurationSec?: number | null
+  mainWorkoutSection?: string | null
+}
 
-type AdminCourseDetail = CourseUpsertInput & { id: string }
+type AdminCourseDetail = Omit<CourseUpsertInput, 'dailyPlans'> & {
+  id: string
+  dailyPlans: AdminDailyPlan[]
+}
 
 type WorkoutLookupItem = {
   id: string
@@ -53,6 +67,9 @@ type VideoMeta = {
   progress?: number | null
   posterUrl?: string | null
 }
+
+const generateDaySlug = (weekNumber: number, dayNumber: number) =>
+  `week-${weekNumber}-day-${dayNumber}`
 
 @injectable()
 export class AdminCoursesController extends Controller {
@@ -154,7 +171,13 @@ export class AdminCoursesController extends Controller {
           dayNumberInWeek: plan.dayNumberInWeek,
           description: plan.description,
           warmupId: plan.warmup.id,
+          warmupTitle: plan.warmup.title ?? null,
+          warmupDurationSec: plan.warmup.durationSec ?? null,
+          warmupSection: plan.warmup.section ?? null,
           mainWorkoutId: plan.mainWorkout?.id ?? null,
+          mainWorkoutTitle: plan.mainWorkout?.title ?? null,
+          mainWorkoutDurationSec: plan.mainWorkout?.durationSec ?? null,
+          mainWorkoutSection: plan.mainWorkout?.section ?? null,
           mealPlanId: plan.mealPlan?.slug ?? null,
           contentBlocks:
             plan.contentBlocks?.map((block: any) => ({
@@ -222,8 +245,22 @@ export class AdminCoursesController extends Controller {
           },
           dailyPlans: {
             include: {
-              warmup: { select: { id: true, title: true } },
-              mainWorkout: { select: { id: true, title: true } },
+              warmup: {
+                select: {
+                  id: true,
+                  title: true,
+                  durationSec: true,
+                  section: true,
+                },
+              },
+              mainWorkout: {
+                select: {
+                  id: true,
+                  title: true,
+                  durationSec: true,
+                  section: true,
+                },
+              },
               mealPlan: { select: { id: true, slug: true, title: true } },
               contentBlocks: true,
             },
@@ -253,8 +290,22 @@ export class AdminCoursesController extends Controller {
         },
         dailyPlans: {
           include: {
-            warmup: { select: { id: true, title: true } },
-            mainWorkout: { select: { id: true, title: true } },
+            warmup: {
+              select: {
+                id: true,
+                title: true,
+                durationSec: true,
+                section: true,
+              },
+            },
+            mainWorkout: {
+              select: {
+                id: true,
+                title: true,
+                durationSec: true,
+                section: true,
+              },
+            },
             mealPlan: { select: { id: true, slug: true, title: true } },
             contentBlocks: true,
           },
@@ -395,236 +446,455 @@ export class AdminCoursesController extends Controller {
     return mealPlan
   }
 
+  private buildProductData(input: CourseUpsertInput) {
+    return input.product.access === 'paid'
+      ? {
+          access: 'paid' as const,
+          price: input.product.price,
+          accessDurationDays: input.product.accessDurationDays,
+        }
+      : {
+          access: 'free' as const,
+          price: null,
+          accessDurationDays: null,
+        }
+  }
+
+  private async preparePlanInputs(
+    tx: Prisma.TransactionClient,
+    input: CourseUpsertInput,
+    hasManualWeeks: boolean,
+    hasManualDailyPlans: boolean
+  ) {
+    const defaultWarmup =
+      input.dailyPlans?.[0]?.warmupId ||
+      (
+        await tx.workout.findFirst({
+          where: { needsReview: false },
+          select: { id: true },
+          orderBy: { title: 'asc' },
+        })
+      )?.id
+
+    const generatedWeeks =
+      !hasManualWeeks && input.durationWeeks
+        ? Array.from({ length: input.durationWeeks }).map((_v, idx) => ({
+            weekNumber: idx + 1,
+            releaseAt: new Date().toISOString(),
+          }))
+        : []
+
+    const weeksInput = hasManualWeeks ? input.weeks : generatedWeeks
+
+    const generatedDailyPlans =
+      !input.id &&
+      !hasManualDailyPlans &&
+      weeksInput.length > 0 &&
+      defaultWarmup
+        ? weeksInput.flatMap(week =>
+            Array.from({ length: 7 }).map((_v, idx) => ({
+              slug: generateDaySlug(week.weekNumber, idx + 1),
+              weekNumber: week.weekNumber,
+              dayNumberInWeek: idx + 1,
+              description: null,
+              warmupId: defaultWarmup,
+              mainWorkoutId: null,
+              mealPlanId: null,
+              contentBlocks: [],
+            }))
+          )
+        : []
+
+    const dailyPlansInput = hasManualDailyPlans
+      ? input.dailyPlans
+      : generatedDailyPlans
+
+    const shouldPruneAutoPlans =
+      !hasManualDailyPlans &&
+      Boolean(input.id) &&
+      generatedDailyPlans.length === 0
+
+    return { weeksInput, dailyPlansInput, shouldPruneAutoPlans }
+  }
+
+  private async upsertCourseRecord(
+    tx: Prisma.TransactionClient,
+    input: CourseUpsertInput,
+    baseCourseData: {
+      slug: string
+      title: string
+      description: string
+      shortDescription: string | null
+      thumbnail: string
+      image: string
+      draft: boolean
+      durationWeeks: number
+      allowedWorkoutDaysPerWeek: number[]
+      contentType: CourseUpsertInput['contentType']
+    },
+    productData: ReturnType<typeof this.buildProductData>
+  ) {
+    return input.id
+      ? tx.course.update({
+          where: { id: input.id },
+          data: {
+            ...baseCourseData,
+            product: {
+              upsert: {
+                update: productData,
+                create: productData,
+              },
+            },
+          },
+          include: { product: true },
+        })
+      : tx.course.upsert({
+          where: { slug: input.slug },
+          update: {
+            ...baseCourseData,
+            product: {
+              upsert: {
+                update: productData,
+                create: productData,
+              },
+            },
+          },
+          create: {
+            ...baseCourseData,
+            product: { create: productData },
+          },
+          include: { product: true },
+        })
+  }
+
+  private async syncDependencies(
+    tx: Prisma.TransactionClient,
+    courseId: string,
+    dependencyIds: string[]
+  ) {
+    await tx.courseDependency.deleteMany({
+      where: {
+        courseId,
+        dependsOnId: { notIn: dependencyIds },
+      },
+    })
+
+    if (dependencyIds.length === 0) return
+
+    const existingDeps = await tx.courseDependency.findMany({
+      where: {
+        courseId,
+        dependsOnId: { in: dependencyIds },
+      },
+      select: { dependsOnId: true },
+    })
+    const existingIds = new Set(existingDeps.map(dep => dep.dependsOnId))
+    const toCreate = dependencyIds.filter(id => !existingIds.has(id))
+
+    if (toCreate.length > 0) {
+      await tx.courseDependency.createMany({
+        data: toCreate.map(dependsOnId => ({
+          courseId,
+          dependsOnId,
+        })),
+      })
+    }
+  }
+
+  private async syncWeeks(
+    tx: Prisma.TransactionClient,
+    courseId: string,
+    weeksInput: CourseUpsertInput['weeks']
+  ) {
+    const weekNumbers = weeksInput.map(week => week.weekNumber)
+    if (weekNumbers.length > 0) {
+      await tx.dailyPlan.deleteMany({
+        where: {
+          courseId,
+          weekNumber: { notIn: weekNumbers },
+        },
+      })
+    } else {
+      await tx.dailyPlan.deleteMany({ where: { courseId } })
+    }
+
+    await tx.week.deleteMany({
+      where: {
+        courseId,
+        weekNumber: { notIn: weekNumbers },
+      },
+    })
+
+    for (const week of weeksInput) {
+      await tx.week.upsert({
+        where: {
+          courseId_weekNumber: {
+            courseId,
+            weekNumber: week.weekNumber,
+          },
+        },
+        update: {
+          releaseAt: week.releaseAt ? new Date(week.releaseAt) : new Date(),
+        },
+        create: {
+          courseId,
+          weekNumber: week.weekNumber,
+          releaseAt: week.releaseAt ? new Date(week.releaseAt) : new Date(),
+        },
+      })
+    }
+  }
+
+  private async syncMealPlans(
+    tx: Prisma.TransactionClient,
+    courseId: string,
+    mealPlans: CourseUpsertInput['mealPlans']
+  ) {
+    const mealPlanSlugs = mealPlans.map(plan => plan.slug)
+    await tx.mealPlan.deleteMany({
+      where: {
+        courseId,
+        slug: { notIn: mealPlanSlugs },
+      },
+    })
+
+    for (const plan of mealPlans) {
+      const breakfast = await this.resolveRecipeBySlug(
+        plan.breakfastRecipeId,
+        tx
+      )
+      const lunch = await this.resolveRecipeBySlug(plan.lunchRecipeId, tx)
+      const dinner = await this.resolveRecipeBySlug(plan.dinnerRecipeId, tx)
+
+      await tx.mealPlan.upsert({
+        where: {
+          courseId_slug: { courseId, slug: plan.slug },
+        },
+        update: {
+          title: plan.title,
+          description: plan.description ?? null,
+          breakfastRecipeId: breakfast.id,
+          lunchRecipeId: lunch.id,
+          dinnerRecipeId: dinner.id,
+        },
+        create: {
+          slug: plan.slug,
+          title: plan.title,
+          description: plan.description ?? null,
+          courseId,
+          breakfastRecipeId: breakfast.id,
+          lunchRecipeId: lunch.id,
+          dinnerRecipeId: dinner.id,
+        },
+      })
+    }
+  }
+
+  private async pruneDailyPlans(
+    tx: Prisma.TransactionClient,
+    courseId: string,
+    dailyPlanSlugs: string[],
+    shouldPruneAutoPlans: boolean,
+    durationWeeks: number
+  ) {
+    if (dailyPlanSlugs.length > 0) {
+      await tx.dailyPlan.deleteMany({
+        where: {
+          courseId,
+          slug: { notIn: dailyPlanSlugs },
+        },
+      })
+      return
+    }
+
+    if (shouldPruneAutoPlans) {
+      await tx.dailyPlan.deleteMany({
+        where: {
+          courseId,
+          weekNumber: { gt: durationWeeks },
+        },
+      })
+    }
+  }
+
+  private async upsertDailyPlan(
+    tx: Prisma.TransactionClient,
+    courseId: string,
+    plan: CourseUpsertInput['dailyPlans'][number]
+  ) {
+    const warmup = await this.resolveWorkoutById(plan.warmupId, tx)
+    const mainWorkout = plan.mainWorkoutId
+      ? await this.resolveWorkoutById(plan.mainWorkoutId, tx)
+      : null
+    const mealPlan = plan.mealPlanId
+      ? await this.resolveMealPlanBySlug(courseId, plan.mealPlanId, tx)
+      : null
+
+    return tx.dailyPlan.upsert({
+      where: {
+        courseId_slug: {
+          courseId,
+          slug: plan.slug,
+        },
+      },
+      update: {
+        weekNumber: plan.weekNumber,
+        dayNumberInWeek: plan.dayNumberInWeek,
+        description: plan.description ?? null,
+        warmupId: warmup.id,
+        mainWorkoutId: mainWorkout ? mainWorkout.id : null,
+        mealPlanId: mealPlan ? mealPlan.id : null,
+      },
+      create: {
+        slug: plan.slug,
+        courseId,
+        weekNumber: plan.weekNumber,
+        dayNumberInWeek: plan.dayNumberInWeek,
+        description: plan.description ?? null,
+        warmupId: warmup.id,
+        mainWorkoutId: mainWorkout ? mainWorkout.id : null,
+        mealPlanId: mealPlan ? mealPlan.id : null,
+      },
+    })
+  }
+
+  private async syncContentBlocks(
+    tx: Prisma.TransactionClient,
+    dailyPlanId: string,
+    contentBlocks: CourseUpsertInput['dailyPlans'][number]['contentBlocks']
+  ) {
+    await tx.contentBlock.deleteMany({
+      where: { dailyPlanId },
+    })
+
+    if (contentBlocks && contentBlocks.length > 0) {
+      await tx.contentBlock.createMany({
+        data: contentBlocks.map(block => ({
+          type: block.type,
+          text: block.text ?? null,
+          dailyPlanId,
+        })),
+      })
+    }
+  }
+
+  private async syncDailyPlans(
+    tx: Prisma.TransactionClient,
+    courseId: string,
+    dailyPlans: CourseUpsertInput['dailyPlans'],
+    shouldPruneAutoPlans: boolean,
+    durationWeeks: number
+  ) {
+    const dailyPlanSlugs = dailyPlans.map(plan => plan.slug)
+    await this.pruneDailyPlans(
+      tx,
+      courseId,
+      dailyPlanSlugs,
+      shouldPruneAutoPlans,
+      durationWeeks
+    )
+
+    for (const plan of dailyPlans) {
+      const upsertedPlan = await this.upsertDailyPlan(tx, courseId, plan)
+      await this.syncContentBlocks(tx, upsertedPlan.id, plan.contentBlocks)
+    }
+  }
+
+  private normalizeDailyPlans(
+    dailyPlans: CourseUpsertInput['dailyPlans'],
+    weeksInput: CourseUpsertInput['weeks'],
+    durationWeeks: number
+  ): CourseUpsertInput['dailyPlans'] {
+    const allowedWeekNumbers =
+      weeksInput.length > 0
+        ? new Set(weeksInput.map(week => week.weekNumber))
+        : new Set(Array.from({ length: durationWeeks }, (_v, idx) => idx + 1))
+
+    const seen = new Set<string>()
+
+    return dailyPlans
+      .filter(plan => {
+        const validWeek =
+          allowedWeekNumbers.has(plan.weekNumber) &&
+          plan.weekNumber <= durationWeeks
+        const validDay =
+          typeof plan.dayNumberInWeek === 'number' &&
+          plan.dayNumberInWeek >= 1 &&
+          plan.dayNumberInWeek <= 7
+        return validWeek && validDay
+      })
+      .filter(plan => {
+        const key = `${plan.weekNumber}-${plan.dayNumberInWeek}`
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
+      .sort((a, b) => {
+        if (a.weekNumber === b.weekNumber) {
+          return a.dayNumberInWeek - b.dayNumberInWeek
+        }
+        return a.weekNumber - b.weekNumber
+      })
+  }
+
   private async upsertCourse(
     input: CourseUpsertInput
   ): Promise<AdminCourseDetail> {
     this.validateProduct(input)
     const allowedWorkoutDays = this.normalizeAllowedWorkoutDays(input)
+    const hasManualWeeks = input.weeks.length > 0
+    const hasManualDailyPlans = input.dailyPlans.length > 0
 
     const course = await dbClient.$transaction(
       async (tx: Prisma.TransactionClient) => {
-        const productData =
-          input.product.access === 'paid'
-            ? {
-                access: 'paid' as const,
-                price: input.product.price,
-                accessDurationDays: input.product.accessDurationDays,
-              }
-            : {
-                access: 'free' as const,
-                price: null,
-                accessDurationDays: null,
-              }
+        const { weeksInput, dailyPlansInput, shouldPruneAutoPlans } =
+          await this.preparePlanInputs(
+            tx,
+            input,
+            hasManualWeeks,
+            hasManualDailyPlans
+          )
+
+        const normalizedDailyPlans = this.normalizeDailyPlans(
+          dailyPlansInput,
+          weeksInput,
+          input.durationWeeks
+        )
+
+        const productData = this.buildProductData(input)
 
         const baseCourseData = {
           slug: input.slug,
           title: input.title,
-          description: input.description,
+          description: input.description ?? '',
           shortDescription: input.shortDescription ?? null,
-          thumbnail: input.thumbnail,
-          image: input.image,
+          thumbnail: input.thumbnail ?? '',
+          image: input.image ?? '',
           draft: input.draft,
           durationWeeks: input.durationWeeks,
           allowedWorkoutDaysPerWeek: allowedWorkoutDays,
           contentType: input.contentType,
         }
 
-        const upsertedCourse = input.id
-          ? await tx.course.update({
-              where: { id: input.id },
-              data: {
-                ...baseCourseData,
-                product: {
-                  upsert: {
-                    update: productData,
-                    create: productData,
-                  },
-                },
-              },
-              include: { product: true },
-            })
-          : await tx.course.upsert({
-              where: { slug: input.slug },
-              update: {
-                ...baseCourseData,
-                product: {
-                  upsert: {
-                    update: productData,
-                    create: productData,
-                  },
-                },
-              },
-              create: {
-                ...baseCourseData,
-                product: { create: productData },
-              },
-              include: { product: true },
-            })
+        const upsertedCourse = await this.upsertCourseRecord(
+          tx,
+          input,
+          baseCourseData,
+          productData
+        )
 
-        // Синхронизация зависимостей курсов
         const dependencyIds = input.dependencies ?? []
-        await tx.courseDependency.deleteMany({
-          where: {
-            courseId: upsertedCourse.id,
-            dependsOnId: { notIn: dependencyIds },
-          },
-        })
-        if (dependencyIds.length > 0) {
-          const existingDeps = await tx.courseDependency.findMany({
-            where: {
-              courseId: upsertedCourse.id,
-              dependsOnId: { in: dependencyIds },
-            },
-            select: { dependsOnId: true },
-          })
-          const existingIds = new Set(existingDeps.map(dep => dep.dependsOnId))
-          const toCreate = dependencyIds.filter(id => !existingIds.has(id))
+        await this.syncDependencies(tx, upsertedCourse.id, dependencyIds)
 
-          if (toCreate.length > 0) {
-            await tx.courseDependency.createMany({
-              data: toCreate.map(dependsOnId => ({
-                courseId: upsertedCourse.id,
-                dependsOnId,
-              })),
-            })
-          }
-        }
-
-        // НЕДЕЛИ
-        if (upsertedCourse.contentType === 'SUBSCRIPTION') {
-          const weekNumbers = input.weeks.map(week => week.weekNumber)
-          await tx.week.deleteMany({
-            where: {
-              courseId: upsertedCourse.id,
-              weekNumber: { notIn: weekNumbers },
-            },
-          })
-
-          for (const week of input.weeks) {
-            await tx.week.upsert({
-              where: {
-                courseId_weekNumber: {
-                  courseId: upsertedCourse.id,
-                  weekNumber: week.weekNumber,
-                },
-              },
-              update: {
-                releaseAt: new Date(week.releaseAt),
-              },
-              create: {
-                courseId: upsertedCourse.id,
-                weekNumber: week.weekNumber,
-                releaseAt: new Date(week.releaseAt),
-              },
-            })
-          }
-        } else {
-          await tx.week.deleteMany({ where: { courseId: upsertedCourse.id } })
-        }
-
-        // ПЛАНЫ ПИТАНИЯ
-        const mealPlanSlugs = input.mealPlans.map(plan => plan.slug)
-        await tx.mealPlan.deleteMany({
-          where: {
-            courseId: upsertedCourse.id,
-            slug: { notIn: mealPlanSlugs },
-          },
-        })
-
-        for (const plan of input.mealPlans) {
-          const breakfast = await this.resolveRecipeBySlug(
-            plan.breakfastRecipeId,
-            tx
-          )
-          const lunch = await this.resolveRecipeBySlug(plan.lunchRecipeId, tx)
-          const dinner = await this.resolveRecipeBySlug(plan.dinnerRecipeId, tx)
-
-          await tx.mealPlan.upsert({
-            where: {
-              courseId_slug: { courseId: upsertedCourse.id, slug: plan.slug },
-            },
-            update: {
-              title: plan.title,
-              description: plan.description ?? null,
-              breakfastRecipeId: breakfast.id,
-              lunchRecipeId: lunch.id,
-              dinnerRecipeId: dinner.id,
-            },
-            create: {
-              slug: plan.slug,
-              title: plan.title,
-              description: plan.description ?? null,
-              courseId: upsertedCourse.id,
-              breakfastRecipeId: breakfast.id,
-              lunchRecipeId: lunch.id,
-              dinnerRecipeId: dinner.id,
-            },
-          })
-        }
-
-        // ДНЕВНЫЕ ПЛАНЫ
-        const dailyPlanSlugs = input.dailyPlans.map(plan => plan.slug)
-        await tx.dailyPlan.deleteMany({
-          where: {
-            courseId: upsertedCourse.id,
-            slug: { notIn: dailyPlanSlugs },
-          },
-        })
-
-        for (const plan of input.dailyPlans) {
-          const warmup = await this.resolveWorkoutById(plan.warmupId, tx)
-          const mainWorkout = plan.mainWorkoutId
-            ? await this.resolveWorkoutById(plan.mainWorkoutId, tx)
-            : null
-          const mealPlan = plan.mealPlanId
-            ? await this.resolveMealPlanBySlug(
-                upsertedCourse.id,
-                plan.mealPlanId,
-                tx
-              )
-            : null
-
-          const upsertedPlan = await tx.dailyPlan.upsert({
-            where: {
-              courseId_slug: {
-                courseId: upsertedCourse.id,
-                slug: plan.slug,
-              },
-            },
-            update: {
-              weekNumber: plan.weekNumber,
-              dayNumberInWeek: plan.dayNumberInWeek,
-              description: plan.description ?? null,
-              warmupId: warmup.id,
-              mainWorkoutId: mainWorkout ? mainWorkout.id : null,
-              mealPlanId: mealPlan ? mealPlan.id : null,
-            },
-            create: {
-              slug: plan.slug,
-              courseId: upsertedCourse.id,
-              weekNumber: plan.weekNumber,
-              dayNumberInWeek: plan.dayNumberInWeek,
-              description: plan.description ?? null,
-              warmupId: warmup.id,
-              mainWorkoutId: mainWorkout ? mainWorkout.id : null,
-              mealPlanId: mealPlan ? mealPlan.id : null,
-            },
-          })
-
-          await tx.contentBlock.deleteMany({
-            where: { dailyPlanId: upsertedPlan.id },
-          })
-
-          if (plan.contentBlocks && plan.contentBlocks.length > 0) {
-            await tx.contentBlock.createMany({
-              data: plan.contentBlocks.map(block => ({
-                type: block.type,
-                text: block.text ?? null,
-                dailyPlanId: upsertedPlan.id,
-              })),
-            })
-          }
-        }
+        await this.syncWeeks(tx, upsertedCourse.id, weeksInput)
+        await this.syncMealPlans(tx, upsertedCourse.id, input.mealPlans)
+        await this.syncDailyPlans(
+          tx,
+          upsertedCourse.id,
+          normalizedDailyPlans,
+          shouldPruneAutoPlans,
+          input.durationWeeks
+        )
 
         return upsertedCourse
       }
@@ -680,16 +950,63 @@ export class AdminCoursesController extends Controller {
             const result = await this.upsertCourse(input)
             return result
           }),
+        setDraft: checkAbilityProcedure({
+          create: this.createAbility,
+          check: ability => ability.canManageCourses,
+        })
+          .input(z.object({ id: z.string().min(1), draft: z.boolean() }))
+          .mutation(async ({ input }) => {
+            if (!input.draft) {
+              const course = await dbClient.course.findUnique({
+                where: { id: input.id },
+                include: { dailyPlans: true },
+              })
+
+              if (!course) {
+                throw new TRPCError({
+                  code: 'NOT_FOUND',
+                  message: 'Курс не найден',
+                })
+              }
+
+              const totalDays = course.durationWeeks * 7
+              const relevantPlans = course.dailyPlans.filter(
+                plan => plan.weekNumber <= course.durationWeeks
+              )
+              if (relevantPlans.length !== totalDays) {
+                throw new TRPCError({
+                  code: 'BAD_REQUEST',
+                  message: `Для публикации требуется заполнить ${totalDays} дней. Сейчас: ${relevantPlans.length}.`,
+                })
+              }
+
+              const validator = new PlanValidationService()
+              const validation = validator.validateCoursePlans(
+                course,
+                relevantPlans
+              )
+              if (!validation.isValid) {
+                throw new TRPCError({
+                  code: 'BAD_REQUEST',
+                  message: validation.errors.join('; '),
+                })
+              }
+            }
+
+            const updated = await dbClient.course.update({
+              where: { id: input.id },
+              data: { draft: input.draft },
+              select: { id: true, draft: true },
+            })
+            return updated
+          }),
         delete: checkAbilityProcedure({
           create: this.createAbility,
           check: ability => ability.canManageCourses,
         })
           .input(z.object({ id: z.string().min(1) }))
           .mutation(async ({ ctx, input }) => {
-            await this.deleteCourseService.exec(
-              { id: input.id },
-              ctx.ability
-            )
+            await this.deleteCourseService.exec({ id: input.id }, ctx.ability)
             return { success: true }
           }),
         lookup: router({
@@ -698,13 +1015,36 @@ export class AdminCoursesController extends Controller {
             check: ability => ability.canManageCourses,
           })
             .input(lookupQuerySchema)
-            .query(({ input }) => this.lookupWorkouts(input)),
+            .query(async ({ input }) => ({
+              items: await this.lookupWorkouts(input),
+            })),
           recipes: checkAbilityProcedure({
             create: this.createAbility,
             check: ability => ability.canManageCourses,
           })
             .input(lookupQuerySchema)
-            .query(({ input }) => this.lookupRecipes(input)),
+            .query(async ({ input }) => ({
+              items: await this.lookupRecipes(input),
+            })),
+          mealPlans: checkAbilityProcedure({
+            create: this.createAbility,
+            check: ability => ability.canManageCourses,
+          })
+            .input(lookupQuerySchema)
+            .query(async ({ input }) => {
+              const items = await dbClient.mealPlan.findMany({
+                where: {
+                  OR: [
+                    { title: { contains: input.search, mode: 'insensitive' } },
+                    { slug: { contains: input.search, mode: 'insensitive' } },
+                  ],
+                },
+                select: { id: true, slug: true, title: true },
+                take: input.take ?? 20,
+                orderBy: { slug: 'asc' },
+              })
+              return { items }
+            }),
         }),
         videoMeta: checkAbilityProcedure({
           create: this.createAbility,
@@ -715,6 +1055,101 @@ export class AdminCoursesController extends Controller {
             const meta = await this.getVideoMeta(input.videoId)
             return meta
           }),
+        dailyPlan: router({
+          update: checkAbilityProcedure({
+            create: this.createAbility,
+            check: ability => ability.canManageCourses,
+          })
+            .input(dailyPlanUpdateSchema)
+            .mutation(async ({ input }) => {
+              const existing = await dbClient.dailyPlan.findUnique({
+                where: { id: input.id },
+                select: { id: true },
+              })
+
+              if (!existing) {
+                throw new TRPCError({
+                  code: 'NOT_FOUND',
+                  message: 'День плана не найден',
+                })
+              }
+
+              const warmup = await dbClient.workout.findUnique({
+                where: { id: input.warmupId },
+                select: { id: true },
+              })
+              if (!warmup) {
+                throw new TRPCError({
+                  code: 'BAD_REQUEST',
+                  message: 'Указанная разминка не найдена',
+                })
+              }
+
+              if (input.mainWorkoutId) {
+                const main = await dbClient.workout.findUnique({
+                  where: { id: input.mainWorkoutId },
+                  select: { id: true },
+                })
+                if (!main) {
+                  throw new TRPCError({
+                    code: 'BAD_REQUEST',
+                    message: 'Указанная основная тренировка не найдена',
+                  })
+                }
+              }
+
+              if (input.mealPlanId) {
+                const dailyPlan = await dbClient.dailyPlan.findUnique({
+                  where: { id: input.id },
+                  select: { courseId: true },
+                })
+
+                if (!dailyPlan) {
+                  throw new TRPCError({
+                    code: 'NOT_FOUND',
+                    message: 'День плана не найден',
+                  })
+                }
+
+                const mealPlan = await dbClient.mealPlan.findUnique({
+                  where: {
+                    courseId_slug: {
+                      courseId: dailyPlan.courseId,
+                      slug: input.mealPlanId,
+                    },
+                  },
+                  select: { id: true },
+                })
+                if (!mealPlan) {
+                  throw new TRPCError({
+                    code: 'BAD_REQUEST',
+                    message: 'План питания не найден',
+                  })
+                }
+              }
+
+              const updated = await dbClient.dailyPlan.update({
+                where: { id: input.id },
+                data: {
+                  description: input.description ?? null,
+                  warmupId: input.warmupId,
+                  mainWorkoutId: input.mainWorkoutId ?? null,
+                  mealPlanId: input.mealPlanId ?? null,
+                },
+                select: {
+                  id: true,
+                  warmupId: true,
+                  mainWorkoutId: true,
+                  mealPlanId: true,
+                  description: true,
+                  weekNumber: true,
+                  dayNumberInWeek: true,
+                },
+              })
+
+              return updated
+            }),
+        }),
       }),
     }),
   })

@@ -95,28 +95,43 @@ export class PlanGenerationService {
       const requirements = this.validationService.calculatePlanRequirements(
         context.course
       )
-      const selectedWorkoutDaysCount =
-        context.enrollment.selectedWorkoutDays.length
       const { mainWorkoutDays } = this.validationService.categorizePlans(
         context.course.dailyPlans
       )
-
-      const extraWeeks = Math.max(
-        requirements.maxWorkoutDaysPerWeek - selectedWorkoutDaysCount,
-        0
+      const requiredMain = mainWorkoutDays.length
+      const selectedWorkoutDaysCount = Math.max(
+        context.enrollment.selectedWorkoutDays.length,
+        1
       )
 
-      const workoutsPerWeek = Math.max(selectedWorkoutDaysCount, 1)
-      const weeksToCoverWorkouts =
-        mainWorkoutDays.length > 0
-          ? Math.ceil(mainWorkoutDays.length / workoutsPerWeek)
+      // Считаем, сколько выбранных тренировочных дней осталось в первой неделе,
+      // начиная с даты старта (чтобы старт в середине недели не обрезал доступность тренировок).
+      const dayOrder: DayOfWeek[] = [
+        'MONDAY',
+        'TUESDAY',
+        'WEDNESDAY',
+        'THURSDAY',
+        'FRIDAY',
+        'SATURDAY',
+        'SUNDAY',
+      ]
+      const startDayIndex = dayOrder.indexOf(
+        this.dateService.getDayOfWeek(context.enrollment.startDate)
+      )
+      const slotsInFirstWeek =
+        context.enrollment.selectedWorkoutDays.filter(
+          day => dayOrder.indexOf(day) >= startDayIndex
+        ).length
+
+      const remainingWorkouts = Math.max(requiredMain - slotsInFirstWeek, 0)
+      const additionalWeeks =
+        remainingWorkouts > 0
+          ? Math.ceil(remainingWorkouts / selectedWorkoutDaysCount)
           : 0
 
-      const baseWeeks = requirements.durationWeeks + extraWeeks
       const totalWeeks = Math.max(
-        baseWeeks,
-        weeksToCoverWorkouts,
-        requirements.durationWeeks
+        requirements.durationWeeks,
+        1 + additionalWeeks
       )
 
       return {
@@ -224,10 +239,7 @@ export class PlanGenerationService {
       const dayOfWeek = this.dateService.getDayOfWeek(date)
       const isWorkoutDay =
         context.enrollment.selectedWorkoutDays.includes(dayOfWeek)
-      const weekNumber = this.dateService.calculateWeekNumber(
-        dayIndex,
-        context.enrollment.startDate
-      )
+      const weekNumber = this.dateService.calculateWeekNumber(dayIndex)
 
       const {
         plan: selectedPlan,

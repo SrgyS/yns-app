@@ -26,6 +26,24 @@ export function AdminCoursesPage({ courses }: Readonly<AdminCoursesPageProps>) {
   const router = useRouter()
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [pendingDraftId, setPendingDraftId] = useState<string | null>(null)
+  const toggleDraft = adminCoursesApi.adminCourses.course.setDraft.useMutation({
+    onSuccess: updated => {
+      toast.success(
+        updated.draft ? 'Курс переведён в черновик' : 'Курс опубликован'
+      )
+      router.refresh()
+    },
+    onError: (error: any) => {
+      toast.error(error?.message ?? 'Не удалось изменить статус')
+    },
+    onMutate: variables => {
+      setPendingDraftId(variables.id)
+    },
+    onSettled: () => {
+      setPendingDraftId(null)
+    },
+  })
   const deleteMutation = adminCoursesApi.adminCourses.course.delete.useMutation(
     {
       onSuccess: () => {
@@ -82,6 +100,16 @@ export function AdminCoursesPage({ courses }: Readonly<AdminCoursesPageProps>) {
               Boolean(thumbnailImgSrc) && !thumbnailImgSrc.includes('/logo-yns')
             const hasMain =
               Boolean(mainImgSrc) && !mainImgSrc.includes('/logo-yns')
+            const isDraftMutating =
+              toggleDraft.isPending && pendingDraftId === course.id
+            let publishLabel: string
+            if (isDraftMutating) {
+              publishLabel = 'Сохранение...'
+            } else if (course.draft) {
+              publishLabel = 'Разместить'
+            } else {
+              publishLabel = 'Сделать черновиком'
+            }
 
             return (
               <Card key={course.id} className="flex flex-col overflow-hidden">
@@ -161,9 +189,31 @@ export function AdminCoursesPage({ courses }: Readonly<AdminCoursesPageProps>) {
                     </Badge>
                     <Badge variant="outline">{course.durationWeeks} нед.</Badge>
                   </div>
-                  <Button asChild className="w-full" variant="outline">
-                    <Link href={`/admin/courses/${course.slug}`}>Открыть</Link>
-                  </Button>
+                  <div className="flex flex-col gap-2">
+                    <Button asChild className="w-full" variant="outline">
+                      <Link href={`/admin/courses/${course.slug}`}>
+                        Открыть (инфо)
+                      </Link>
+                    </Button>
+                    <Button asChild className="w-full" variant="secondary">
+                      <Link href={`/admin/courses/${course.slug}/daily-plan`}>
+                        План
+                      </Link>
+                    </Button>
+                    <Button
+                      className="w-full"
+                      variant={course.draft ? 'default' : 'outline'}
+                      disabled={toggleDraft.isPending}
+                      onClick={() =>
+                        toggleDraft.mutate({
+                          id: course.id,
+                          draft: !course.draft,
+                        })
+                      }
+                    >
+                      {publishLabel}
+                    </Button>
+                  </div>
                   <Button
                     variant="destructive"
                     className="w-full"

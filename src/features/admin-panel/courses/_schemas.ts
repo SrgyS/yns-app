@@ -49,13 +49,13 @@ const courseBaseSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   shortDescription: z.string().optional().nullable(),
-  thumbnail: z.string().min(1),
-  image: z.string().min(1),
+  thumbnail: z.string().min(1).optional().nullable(),
+  image: z.string().min(1).optional().nullable(),
   draft: z.boolean().default(true),
   durationWeeks: z.number().int().min(1),
   allowedWorkoutDaysPerWeek: z
     .array(z.number().int().min(1).max(7))
-    .nonempty(),
+    .min(1),
   contentType: z.enum(['FIXED_COURSE', 'SUBSCRIPTION']),
   product: accessProductSchema,
   dependencies: z.array(z.string().min(1)).default([]),
@@ -65,6 +65,14 @@ export const courseUpsertInputSchema = courseBaseSchema.extend({
   weeks: z.array(weekSchema).default([]),
   mealPlans: z.array(mealPlanSchema).default([]),
   dailyPlans: z.array(dailyPlanSchema).default([]),
+})
+
+export const dailyPlanUpdateSchema = z.object({
+  id: z.string().min(1),
+  description: z.string().optional().nullable(),
+  warmupId: z.string().min(1),
+  mainWorkoutId: z.string().optional().nullable(),
+  mealPlanId: z.string().optional().nullable(),
 })
 
 export const courseQuerySchema = z
@@ -85,3 +93,4 @@ export const lookupQuerySchema = z.object({
 export type CourseUpsertInput = z.infer<typeof courseUpsertInputSchema>
 export type CourseQueryInput = z.infer<typeof courseQuerySchema>
 export type LookupQueryInput = z.infer<typeof lookupQuerySchema>
+export type DailyPlanUpdateInput = z.infer<typeof dailyPlanUpdateSchema>

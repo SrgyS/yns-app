@@ -31,3 +31,17 @@
 ## Coding Rule
 - Avoid negated conditions when an else clause is present (typescript:S7735)
 Use positive condition checks instead of negated ones if the statement contains an else block. This improves readability, reduces cognitive load, and prevents logical ambiguity.
+- Do not nest ternary operators (typescript:S3358)
+Avoid using nested ternary operators. If a condition requires more than one ternary, refactor into an explicit if/else structure or split the logic into multiple statements. Nested ternaries reduce readability, complicate reasoning about execution order, and make future changes error-prone.
+
+Bad example:
+job.isRunning() ? "Running" : job.hasErrors() ? "Failed" : "Succeeded"
+
+Good example:
+if (job.isRunning()) {
+  return "Running";
+}
+return job.hasErrors() ? "Failed" : "Succeeded";
+
+Exception:
+This rule does not apply in JSX when ternary expressions are used for conditional rendering and are not nested inside a single expression block. Each condition must be placed in a separate JSX expression container.

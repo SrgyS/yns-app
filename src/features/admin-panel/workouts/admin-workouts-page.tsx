@@ -24,7 +24,8 @@ import {
 } from '@/shared/ui/dialog'
 import { AdminWorkoutsTable } from './_ui/table'
 import { AdminWorkoutsFilters } from './_ui/admin-workouts-filters'
-import debounce from 'lodash-es/debounce'
+
+import { useDebounce } from '@/shared/hooks/use-debounce'
 
 const enumOptions = {
   difficulty: Object.values(WorkoutDifficulty),
@@ -102,6 +103,7 @@ export function AdminWorkoutsPage() {
     WorkoutDifficulty | 'all'
   >('all')
   const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc')
+  const debouncedSearch = useDebounce(search, 300)
   const utils = adminWorkoutsApi.useUtils() as any
   const api = adminWorkoutsApi as any
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
@@ -110,7 +112,7 @@ export function AdminWorkoutsPage() {
     api.adminWorkouts.workouts.list.useInfiniteQuery(
       {
         pageSize: 20,
-        search,
+        search: debouncedSearch,
         status,
         section: sectionFilter === 'all' ? undefined : sectionFilter,
         difficulty: difficultyFilter === 'all' ? undefined : difficultyFilter,
@@ -145,26 +147,6 @@ export function AdminWorkoutsPage() {
     selectedWorkoutId ? { id: selectedWorkoutId } : undefined,
     { enabled: Boolean(selectedWorkoutId) }
   )
-
-  const debouncedInvalidate = useMemo(
-    () =>
-      debounce(() => {
-        utils.adminWorkouts.workouts.list.invalidate()
-      }, 300),
-    [utils.adminWorkouts.workouts.list]
-  )
-
-  useEffect(() => {
-    debouncedInvalidate()
-    return () => debouncedInvalidate.cancel()
-  }, [
-    debouncedInvalidate,
-    search,
-    status,
-    sectionFilter,
-    difficultyFilter,
-    sortDir,
-  ])
 
   const syncMutation = api.adminWorkouts.workouts.sync.useMutation({
     onSuccess: (result: {
@@ -204,7 +186,7 @@ export function AdminWorkoutsPage() {
       subsections: workout.subsections ?? [],
       equipment: Array.isArray(workout.equipment)
         ? workout.equipment.join(', ')
-        : workout.equipment ?? '',
+        : (workout.equipment ?? ''),
     })
     setSelectedWorkoutId(workout.id)
     setDialogOpen(true)
@@ -316,7 +298,8 @@ export function AdminWorkoutsPage() {
                   if (!prev) return prev
 
                   const nextSection = e.target.value as WorkoutSection
-                  const allowedSubsections = subsectionsBySection[nextSection] ?? []
+                  const allowedSubsections =
+                    subsectionsBySection[nextSection] ?? []
 
                   return {
                     ...prev,
@@ -524,6 +507,7 @@ export function AdminWorkoutsPage() {
         total={total}
         isLoading={isLoading}
         isFetchingNextPage={isFetchingNextPage}
+        hasNextPage={!!hasNextPage}
         loadMoreRef={loadMoreRef}
         onEdit={startEdit}
       />

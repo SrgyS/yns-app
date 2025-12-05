@@ -277,10 +277,7 @@ export class PlanningRepository {
           enrollmentId: enrollment.id,
           date: this.dateService.calculateDateForDay(effectiveStartDate, i),
           dayNumberInCourse,
-          weekNumber: this.dateService.calculateWeekNumber(
-            i,
-            effectiveStartDate
-          ),
+          weekNumber: this.dateService.calculateWeekNumber(i),
           dayOfWeek: this.dateService.getDayOfWeek(
             this.dateService.calculateDateForDay(effectiveStartDate, i)
           ),
