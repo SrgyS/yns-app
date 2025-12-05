@@ -341,7 +341,8 @@ export function CreateCourseForm({
                     label="Миниатюра (Thumbnail)"
                     tag="course-thumbnail"
                     value={field.value ?? null}
-                    onChange={path => field.onChange(path ?? '')}
+                    initialValue={courseQuery.data?.thumbnail ?? null}
+                    onChange={path => field.onChange(path)}
                     disabled={isSubmitting || isLoadingPrefill}
                   />
                 )}
@@ -355,7 +356,8 @@ export function CreateCourseForm({
                     label="Основное изображение"
                     tag="course-image"
                     value={field.value ?? null}
-                    onChange={path => field.onChange(path ?? '')}
+                    initialValue={courseQuery.data?.image ?? null}
+                    onChange={path => field.onChange(path)}
                     disabled={isSubmitting || isLoadingPrefill}
                   />
                 )}

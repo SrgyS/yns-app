@@ -11,6 +11,7 @@ import { Button } from '@/shared/ui/button'
 type Props = {
   label: string
   value?: string | null
+  initialValue?: string | null
   onChange: (path: string | null) => void
   tag: 'course-image' | 'course-thumbnail'
   disabled?: boolean
@@ -20,6 +21,7 @@ type Props = {
 export function CourseImgField({
   label,
   value,
+  initialValue,
   onChange,
   tag,
   disabled,
@@ -28,6 +30,9 @@ export function CourseImgField({
   const upload = useUploadCourseImage()
   const isPending = upload.isPending || disabled
   const [preview, setPreview] = useState<string | null>(value ?? null)
+  const [baseValue, setBaseValue] = useState<string | null>(
+    initialValue ?? null
+  )
 
   const isLocalPreview =
     preview && (preview.startsWith('blob:') || preview.startsWith('data:'))
@@ -35,6 +40,10 @@ export function CourseImgField({
   useEffect(() => {
     setPreview(value ?? null)
   }, [value])
+
+  useEffect(() => {
+    setBaseValue(initialValue ?? null)
+  }, [initialValue])
 
   const handleUpload = async () => {
     await upload.upload({
@@ -51,6 +60,19 @@ export function CourseImgField({
       },
     })
   }
+
+  const handleRemove = () => {
+    setPreview(null)
+    onChange(null)
+  }
+
+  const handleReset = () => {
+    setPreview(baseValue)
+    onChange(baseValue)
+  }
+
+  const canReset = Boolean(baseValue) && preview !== baseValue
+  const hasPreview = Boolean(preview)
 
   return (
     <FormItem>
@@ -90,6 +112,26 @@ export function CourseImgField({
           )}
         </div>
       </Button>
+      <div className="mt-2 flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!hasPreview || isPending}
+          onClick={handleRemove}
+        >
+          Удалить
+        </Button>
+        {canReset ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={isPending}
+            onClick={handleReset}
+          >
+            Отменить
+          </Button>
+        ) : null}
+      </div>
       <FormMessage />
     </FormItem>
   )
