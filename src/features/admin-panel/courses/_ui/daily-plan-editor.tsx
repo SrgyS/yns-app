@@ -310,6 +310,12 @@ export function DailyPlanEditor({ slug }: Readonly<{ slug: string }>) {
       }
     }
 
+    const daysWithoutWarmup = activeWeekDays.filter(day => !day.warmup?.id)
+    if (daysWithoutWarmup.length > 0) {
+      toast.error('Для сохранения заполните зарядку во всех днях недели')
+      return
+    }
+
     const changedDays = activeWeekDays.filter(
       day => day.id && dirtyIds.has(day.id)
     )

@@ -16,7 +16,8 @@
     "upload-content": "ts-node --project tsconfig.script.json -r tsconfig-paths/register ./scripts/upload-content",
     "prune-subscription-content": "ts-node --project tsconfig.script.json -r tsconfig-paths/register ./scripts/prune-subscription-content",
     "check-course-data": "ts-node --project tsconfig.script.json -r tsconfig-paths/register ./scripts/check-course-data",
-    "check-workout-data": "ts-node --project tsconfig.script.json -r tsconfig-paths/register ./scripts/check-workout-data"
+    "check-workout-data": "ts-node --project tsconfig.script.json -r tsconfig-paths/register ./scripts/check-workout-data",
+    "cron:release-weeks": "ts-node --project tsconfig.script.json -r tsconfig-paths/register ./scripts/release-weeks"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.9.1",

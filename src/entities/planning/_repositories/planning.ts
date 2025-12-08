@@ -22,6 +22,7 @@ type EnrollmentWithCourse = PrismaUserCourseEnrollment & {
     dailyPlans: (PrismaDailyPlan & {
       mainWorkouts: { workoutId: string; order: number }[]
     })[]
+    weeks: { weekNumber: number; releaseAt: Date }[]
   }
 }
 
@@ -87,6 +88,9 @@ export class PlanningRepository {
       include: {
         course: {
           include: {
+            weeks: {
+              select: { weekNumber: true, releaseAt: true },
+            },
             dailyPlans: {
               orderBy: [{ weekNumber: 'asc' }, { dayNumberInWeek: 'asc' }],
               include: {
@@ -119,6 +123,19 @@ export class PlanningRepository {
       const enrollment = await this.getEnrollmentWithCourse(enrollmentId, tx)
       const { course, selectedWorkoutDays, startDate } = enrollment
 
+      const releasedWeeks =
+        course.contentType === 'SUBSCRIPTION'
+          ? new Set(
+              course.weeks
+                .filter(week => week.releaseAt <= new Date())
+                .map(week => week.weekNumber)
+            )
+          : null
+      const releasedDailyPlans =
+        releasedWeeks === null
+          ? course.dailyPlans
+          : course.dailyPlans.filter(dp => releasedWeeks.has(dp.weekNumber))
+
       // Для подписки нормализуем старт на понедельник календарной недели покупки
       const effectiveStartDate =
         course.contentType === 'SUBSCRIPTION'
@@ -128,7 +145,7 @@ export class PlanningRepository {
       // Валидация планов курса
       const validation = this.validationService.validateCoursePlans(
         course,
-        course.dailyPlans
+        releasedDailyPlans
       )
 
       if (!validation.isValid) {
@@ -153,7 +170,7 @@ export class PlanningRepository {
               course.allowedWorkoutDaysPerWeek.length > 0
                 ? course.allowedWorkoutDaysPerWeek
                 : [5],
-            dailyPlans: course.dailyPlans.map(dp => ({
+            dailyPlans: releasedDailyPlans.map(dp => ({
               ...dp,
               mainWorkouts: dp.mainWorkouts ?? [],
             })),
@@ -252,6 +269,19 @@ export class PlanningRepository {
       const { course, startDate } = enrollment
       const { selectedWorkoutDays } = options
 
+      const releasedWeeks =
+        course.contentType === 'SUBSCRIPTION'
+          ? new Set(
+              course.weeks
+                .filter(week => week.releaseAt <= new Date())
+                .map(week => week.weekNumber)
+            )
+          : null
+      const releasedDailyPlans =
+        releasedWeeks === null
+          ? course.dailyPlans
+          : course.dailyPlans.filter(dp => releasedWeeks.has(dp.weekNumber))
+
       // Для подписки нормализуем старт на понедельник
       const effectiveStartDate =
         course.contentType === 'SUBSCRIPTION'
@@ -261,7 +291,7 @@ export class PlanningRepository {
       // Валидация планов курса
       const validation = this.validationService.validateCoursePlans(
         course,
-        course.dailyPlans
+        releasedDailyPlans
       )
 
       if (!validation.isValid) {
@@ -286,7 +316,7 @@ export class PlanningRepository {
               course.allowedWorkoutDaysPerWeek.length > 0
                 ? course.allowedWorkoutDaysPerWeek
                 : [5],
-            dailyPlans: course.dailyPlans.map(dp => ({
+            dailyPlans: releasedDailyPlans.map(dp => ({
               ...dp,
               mainWorkouts: dp.mainWorkouts ?? [],
             })),

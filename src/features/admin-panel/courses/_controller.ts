@@ -647,7 +647,65 @@ export class AdminCoursesController extends Controller {
     courseId: string,
     weeksInput: CourseUpsertInput['weeks']
   ) {
+    const existingWeeks = await tx.week.findMany({
+      where: { courseId },
+      select: { weekNumber: true },
+    })
+    const existingWeekNumbers = existingWeeks.map(week => week.weekNumber)
     const weekNumbers = weeksInput.map(week => week.weekNumber)
+
+    const removedWeeks = this.collectRemovedWeeks(
+      existingWeekNumbers,
+      weekNumbers,
+      weeksInput
+    )
+
+    await this.pruneUserPlansByWeeks(tx, courseId, removedWeeks)
+    await this.pruneDailyPlansAndWeeks(tx, courseId, weekNumbers)
+
+    for (const week of weeksInput) {
+      await this.upsertWeekWithDays(tx, courseId, week)
+    }
+  }
+
+  private collectRemovedWeeks(
+    existingWeekNumbers: number[],
+    weekNumbers: number[],
+    weeksInput: CourseUpsertInput['weeks']
+  ): Set<number> {
+    const removed = new Set(
+      weekNumbers.length > 0
+        ? existingWeekNumbers.filter(week => !weekNumbers.includes(week))
+        : existingWeekNumbers
+    )
+    const unpublishedWeeks = weeksInput
+      .filter(week => week.releaseAt && new Date(week.releaseAt) > new Date())
+      .map(week => week.weekNumber)
+    for (const week of unpublishedWeeks) {
+      removed.add(week)
+    }
+    return removed
+  }
+
+  private async pruneUserPlansByWeeks(
+    tx: Prisma.TransactionClient,
+    courseId: string,
+    weeks: Set<number>
+  ) {
+    if (weeks.size === 0) return
+    await tx.userDailyPlan.deleteMany({
+      where: {
+        weekNumber: { in: Array.from(weeks) },
+        enrollment: { courseId },
+      },
+    })
+  }
+
+  private async pruneDailyPlansAndWeeks(
+    tx: Prisma.TransactionClient,
+    courseId: string,
+    weekNumbers: number[]
+  ) {
     if (weekNumbers.length > 0) {
       await tx.dailyPlan.deleteMany({
         where: {
@@ -655,33 +713,68 @@ export class AdminCoursesController extends Controller {
           weekNumber: { notIn: weekNumbers },
         },
       })
-    } else {
-      await tx.dailyPlan.deleteMany({ where: { courseId } })
+      await tx.week.deleteMany({
+        where: {
+          courseId,
+          weekNumber: { notIn: weekNumbers },
+        },
+      })
+      return
     }
 
-    await tx.week.deleteMany({
+    await tx.dailyPlan.deleteMany({ where: { courseId } })
+    await tx.week.deleteMany({ where: { courseId } })
+  }
+
+  private async upsertWeekWithDays(
+    tx: Prisma.TransactionClient,
+    courseId: string,
+    week: CourseUpsertInput['weeks'][number]
+  ) {
+    await tx.week.upsert({
       where: {
+        courseId_weekNumber: {
+          courseId,
+          weekNumber: week.weekNumber,
+        },
+      },
+      update: {
+        releaseAt: week.releaseAt ? new Date(week.releaseAt) : new Date(),
+      },
+      create: {
         courseId,
-        weekNumber: { notIn: weekNumbers },
+        weekNumber: week.weekNumber,
+        releaseAt: week.releaseAt ? new Date(week.releaseAt) : new Date(),
       },
     })
 
-    for (const week of weeksInput) {
-      await tx.week.upsert({
-        where: {
-          courseId_weekNumber: {
-            courseId,
-            weekNumber: week.weekNumber,
-          },
-        },
-        update: {
-          releaseAt: week.releaseAt ? new Date(week.releaseAt) : new Date(),
-        },
-        create: {
+    const existingPlans = await tx.dailyPlan.findMany({
+      where: { courseId, weekNumber: week.weekNumber },
+      select: { dayNumberInWeek: true },
+    })
+    const existingDayNumbers = new Set(
+      existingPlans.map(plan => plan.dayNumberInWeek)
+    )
+    const toCreate: { dayNumberInWeek: number; slug: string }[] = []
+    for (let day = 1; day <= 7; day += 1) {
+      if (!existingDayNumbers.has(day)) {
+        toCreate.push({
+          dayNumberInWeek: day,
+          slug: generateDaySlug(week.weekNumber, day),
+        })
+      }
+    }
+    if (toCreate.length > 0) {
+      await tx.dailyPlan.createMany({
+        data: toCreate.map(day => ({
           courseId,
           weekNumber: week.weekNumber,
-          releaseAt: week.releaseAt ? new Date(week.releaseAt) : new Date(),
-        },
+          dayNumberInWeek: day.dayNumberInWeek,
+          slug: day.slug,
+          description: null,
+          warmupId: null,
+          mealPlanId: null,
+        })),
       })
     }
   }
@@ -822,13 +915,20 @@ export class AdminCoursesController extends Controller {
     courseId: string,
     dailyPlans: CourseUpsertInput['dailyPlans'],
     shouldPruneAutoPlans: boolean,
-    durationWeeks: number
+    durationWeeks: number,
+    weeksInput: CourseUpsertInput['weeks']
   ) {
-    const dailyPlanSlugs = dailyPlans.map(plan => plan.slug)
+    const dailyPlanSlugs = new Set(dailyPlans.map(plan => plan.slug))
+    for (const week of weeksInput) {
+      for (const day of [1, 2, 3, 4, 5, 6, 7]) {
+        dailyPlanSlugs.add(generateDaySlug(week.weekNumber, day))
+      }
+    }
+    const slugsArray = Array.from(dailyPlanSlugs)
     await this.pruneDailyPlans(
       tx,
       courseId,
-      dailyPlanSlugs,
+      slugsArray,
       shouldPruneAutoPlans,
       durationWeeks
     )
@@ -954,7 +1054,8 @@ export class AdminCoursesController extends Controller {
           upsertedCourse.id,
           normalizedDailyPlans,
           shouldPruneAutoPlans,
-          input.durationWeeks
+          input.durationWeeks,
+          weeksInput
         )
 
         return upsertedCourse
