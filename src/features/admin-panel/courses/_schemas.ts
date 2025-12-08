@@ -31,14 +31,19 @@ const contentBlockSchema = z.object({
   text: z.string().optional().nullable(),
 })
 
+const mainWorkoutSchema = z.object({
+  workoutId: z.string().min(1),
+  order: z.number().int().min(0),
+})
+
 const dailyPlanSchema = z.object({
   id: z.string().min(1).optional(),
   slug: z.string().min(1),
   weekNumber: z.number().int().min(1),
   dayNumberInWeek: z.number().int().min(1).max(7),
   description: z.string().optional().nullable(),
-  warmupId: z.string().min(1),
-  mainWorkoutId: z.string().optional().nullable(),
+  warmupId: z.string().min(1).optional().nullable(),
+  mainWorkouts: z.array(mainWorkoutSchema).default([]),
   mealPlanId: z.string().optional().nullable(),
   contentBlocks: z.array(contentBlockSchema).default([]),
 })
@@ -71,7 +76,7 @@ export const dailyPlanUpdateSchema = z.object({
   id: z.string().min(1),
   description: z.string().optional().nullable(),
   warmupId: z.string().min(1),
-  mainWorkoutId: z.string().optional().nullable(),
+  mainWorkouts: z.array(mainWorkoutSchema).default([]),
   mealPlanId: z.string().optional().nullable(),
 })
 

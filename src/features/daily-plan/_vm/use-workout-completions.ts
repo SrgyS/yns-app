@@ -14,12 +14,13 @@ export function useWorkoutCompletions() {
   const getWorkoutCompletionStatus = useCallback(
     async (
       userId: string,
+      workoutId: string,
       enrollmentId: string,
       contentType: DailyContentType,
       stepIndex: number
     ): Promise<boolean> => {
       // Если какой-то из параметров отсутствует, возвращаем false
-      if (!userId || !enrollmentId) {
+      if (!userId || !enrollmentId || !workoutId) {
         return false
       }
 
@@ -28,7 +29,8 @@ export function useWorkoutCompletions() {
         userId,
         enrollmentId,
         contentType,
-        stepIndex
+        stepIndex,
+        workoutId
       )
 
       // Проверяем, есть ли значение в сторе
@@ -43,6 +45,7 @@ export function useWorkoutCompletions() {
         // Создаем ключ запроса
         const queryKey = {
           userId,
+          workoutId,
           enrollmentId,
           contentType,
           stepIndex,
@@ -73,13 +76,15 @@ export function useWorkoutCompletions() {
       onSuccess: (_, variables) => {
         const { userId, enrollmentId, contentType, stepIndex, isCompleted } =
           variables
+        const workoutId = variables.workoutId
 
         // Создаем ключ для хранения в сторе
         const key = createCompletionKey(
           userId,
           enrollmentId,
           contentType,
-          stepIndex
+          stepIndex,
+          workoutId
         )
 
         // Обновляем значение в сторе
@@ -88,6 +93,7 @@ export function useWorkoutCompletions() {
         // Инвалидируем конкретный запрос в React Query
         utils.getWorkoutCompletionStatus.invalidate({
           userId,
+          workoutId,
           enrollmentId,
           contentType,
           stepIndex,

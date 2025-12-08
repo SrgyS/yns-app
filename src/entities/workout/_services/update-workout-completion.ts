@@ -38,6 +38,7 @@ export class UpdateWorkoutCompletionService {
       } else {
         await this.userWorkoutCompletionRepository.removeWorkoutCompletion(
           userId,
+          workoutId,
           enrollmentId,
           contentType,
           stepIndex

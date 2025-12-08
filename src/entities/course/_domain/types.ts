@@ -35,12 +35,6 @@ export type CourseFullInfo = CourseBaseInfo & {
   durationWeeks: number
 }
 
-export interface Lesson {
-  courseId: CourseId
-  title: string
-  shortDescription?: string
-  blocks: ContentBlock[]
-}
 
 export type ContentBlock = TextBlock
 
@@ -90,6 +84,12 @@ export type CourseAccessInfo = {
   product: CourseProduct
 }
 
+export type MainWorkoutEntry = {
+  workoutId: string
+  order: number
+  stepIndex: number
+}
+
 export type UserDailyPlan = {
   id: string
   userId: string
@@ -98,12 +98,11 @@ export type UserDailyPlan = {
   dayNumberInCourse: number
   isWorkoutDay: boolean
   warmupId: string
-  mainWorkoutId: string | null
+  mainWorkouts: MainWorkoutEntry[]
   mealPlanId: string | null
   weekNumber: number
   originalDailyPlanId: string
   warmupStepIndex: number
-  mainWorkoutStepIndex: number | null
 }
 
 export type CreateUserCourseEnrollmentParams = {

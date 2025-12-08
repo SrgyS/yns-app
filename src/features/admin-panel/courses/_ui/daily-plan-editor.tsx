@@ -178,26 +178,27 @@ export function DailyPlanEditor({ slug }: Readonly<{ slug: string }>) {
               dp.weekNumber === weekNumber &&
               dp.dayNumberInWeek === dayNumberInWeek
           ) ?? null
+        const firstMain = plan?.mainWorkoutsMeta?.[0]
 
         return {
-          id: plan?.id ?? `${weekNumber}-${dayNumberInWeek}`,
+          id: plan?.id ?? '',
           slug: plan?.slug ?? '',
           weekNumber,
           dayNumberInWeek,
           description: plan?.description ?? null,
-          onlyWarmup: !plan?.mainWorkoutId,
+          onlyWarmup: !(plan?.mainWorkouts?.length),
           warmup: {
             id: plan?.warmupId ?? '',
             title: plan?.warmupTitle ?? 'Не выбрано',
             durationSec: plan?.warmupDurationSec ?? undefined,
             section: plan?.warmupSection ?? undefined,
           },
-          mainWorkout: plan?.mainWorkoutId
+          mainWorkout: firstMain
             ? {
-                id: plan.mainWorkoutId,
-                title: plan.mainWorkoutTitle ?? 'Тренировка',
-                durationSec: plan.mainWorkoutDurationSec ?? undefined,
-                section: plan.mainWorkoutSection ?? undefined,
+                id: firstMain.workoutId,
+                title: firstMain.title ?? 'Тренировка',
+                durationSec: firstMain.durationSec ?? undefined,
+                section: firstMain.section ?? undefined,
               }
             : null,
           mealPlanId: plan?.mealPlanId ?? null,
@@ -325,7 +326,9 @@ export function DailyPlanEditor({ slug }: Readonly<{ slug: string }>) {
             id: day.id,
             description: day.description ?? null,
             warmupId: day.warmup.id,
-            mainWorkoutId: day.mainWorkout?.id ?? null,
+            mainWorkouts: day.mainWorkout
+              ? [{ workoutId: day.mainWorkout.id, order: 0 }]
+              : [],
             mealPlanId: day.mealPlanId ?? null,
           })
         )

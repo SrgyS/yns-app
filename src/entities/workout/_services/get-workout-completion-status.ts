@@ -6,11 +6,12 @@ import { logger } from '@/shared/lib/logger'
 @injectable()
 export class GetWorkoutCompletionStatusService {
   constructor(
-    private userWorkoutCompletionRepository: UserWorkoutCompletionRepository
+    private readonly userWorkoutCompletionRepository: UserWorkoutCompletionRepository
   ) {}
 
   async exec(
     userId: string,
+    workoutId: string,
     enrollmentId: string,
     contentType: DailyContentType,
     stepIndex: number
@@ -18,6 +19,7 @@ export class GetWorkoutCompletionStatusService {
     try {
       return await this.userWorkoutCompletionRepository.getWorkoutCompletionStatus(
         userId,
+        workoutId,
         enrollmentId,
         contentType,
         stepIndex
@@ -26,6 +28,7 @@ export class GetWorkoutCompletionStatusService {
       logger.error({
         msg: 'Error getting workout completion status in service',
         userId,
+        workoutId,
         enrollmentId,
         contentType,
         stepIndex,
@@ -34,21 +37,21 @@ export class GetWorkoutCompletionStatusService {
       return false // В случае ошибки возвращаем false (тренировка не выполнена)
     }
   }
-
-  async getUserCompletedWorkouts(userId: string, enrollmentId: string) {
-    try {
-      return await this.userWorkoutCompletionRepository.getUserCompletedWorkouts(
-        userId,
-        enrollmentId
-      )
-    } catch (error) {
-      logger.error({
-        msg: 'Error getting user completed workouts',
-        userId,
-        enrollmentId,
-        error,
-      })
-      return [] // В случае ошибки возвращаем пустой массив
-    }
-  }
+//TODO удалить закомментированный код если не понадобится
+  // async getUserCompletedWorkouts(userId: string, enrollmentId: string) {
+  //   try {
+  //     return await this.userWorkoutCompletionRepository.getUserCompletedWorkouts(
+  //       userId,
+  //       enrollmentId
+  //     )
+  //   } catch (error) {
+  //     logger.error({
+  //       msg: 'Error getting user completed workouts',
+  //       userId,
+  //       enrollmentId,
+  //       error,
+  //     })
+  //     return [] // В случае ошибки возвращаем пустой массив
+  //   }
+  // }
 }

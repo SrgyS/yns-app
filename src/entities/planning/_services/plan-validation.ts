@@ -12,8 +12,6 @@ export interface PlanRequirements {
   maxWorkoutDaysPerWeek: number
   durationWeeks: number
   totalDays: number
-  requiredMainWorkoutDays: number
-  requiredWarmupOnlyDays: number
 }
 
 /**
@@ -33,24 +31,26 @@ export class PlanValidationService {
         ? course.allowedWorkoutDaysPerWeek
         : [5]
     const maxWorkoutDaysPerWeek = Math.max(...allowed)
-    const requiredMainWorkoutDays = maxWorkoutDaysPerWeek * course.durationWeeks
-    const requiredWarmupOnlyDays = totalDays - requiredMainWorkoutDays
 
     return {
       maxWorkoutDaysPerWeek,
       durationWeeks: course.durationWeeks,
       totalDays,
-      requiredMainWorkoutDays,
-      requiredWarmupOnlyDays,
     }
   }
 
   /**
    * Разделить планы на тренировочные и разминочные
    */
-  categorizePlans(dailyPlans: PrismaDailyPlan[]) {
-    const mainWorkoutDays = dailyPlans.filter(dp => dp.mainWorkoutId !== null)
-    const warmupOnlyDays = dailyPlans.filter(dp => dp.mainWorkoutId === null)
+  categorizePlans<T extends PrismaDailyPlan & { mainWorkouts?: any[] }>(
+    dailyPlans: T[]
+  ) {
+    const mainWorkoutDays = dailyPlans.filter(
+      dp => Array.isArray(dp.mainWorkouts) && dp.mainWorkouts.length > 0
+    )
+    const warmupOnlyDays = dailyPlans.filter(
+      dp => !Array.isArray(dp.mainWorkouts) || dp.mainWorkouts.length === 0
+    )
 
     return {
       mainWorkoutDays,
@@ -63,23 +63,43 @@ export class PlanValidationService {
    */
   validateCoursePlans(
     course: PrismaCourse,
-    dailyPlans: PrismaDailyPlan[]
+    dailyPlans: (PrismaDailyPlan & { mainWorkouts?: any[] })[]
   ): ValidationResult {
     const errors: string[] = []
     const requirements = this.calculatePlanRequirements(course)
-    const { mainWorkoutDays, warmupOnlyDays } = this.categorizePlans(dailyPlans)
+    const { mainWorkoutDays } = this.categorizePlans(dailyPlans)
 
-    if (mainWorkoutDays.length < requirements.requiredMainWorkoutDays) {
+    const plansMissingWarmup = dailyPlans.filter(dp => !dp.warmupId)
+    if (plansMissingWarmup.length > 0) {
       errors.push(
-        `Not enough main workout days: required ${requirements.requiredMainWorkoutDays}, got ${mainWorkoutDays.length} for a ${course.durationWeeks}-week course`
+        `Missing warmup in ${plansMissingWarmup.length} day(s); fill warmups before publish`
       )
     }
 
-    // Проверка достаточности разминочных дней
-    if (warmupOnlyDays.length < requirements.requiredWarmupOnlyDays) {
-      errors.push(
-        `Not enough warmup-only days: required ${requirements.requiredWarmupOnlyDays}, got ${warmupOnlyDays.length} for a ${course.durationWeeks}-week course`
+    const weeklyMainCounts = new Map<number, number>()
+    for (const plan of mainWorkoutDays) {
+      weeklyMainCounts.set(
+        plan.weekNumber,
+        (weeklyMainCounts.get(plan.weekNumber) ?? 0) + 1
       )
+    }
+
+    for (let week = 1; week <= requirements.durationWeeks; week++) {
+      const count = weeklyMainCounts.get(week) ?? 0
+      if (count > requirements.maxWorkoutDaysPerWeek) {
+        errors.push(
+          `В неделе ${week} больше тренировочных дней (${count}), чем допускается (${requirements.maxWorkoutDaysPerWeek}).`
+        )
+      }
+      if (count < requirements.maxWorkoutDaysPerWeek) {
+        errors.push(
+          `В неделе ${week} меньше тренировочных дней (${count}), чем требуется (${requirements.maxWorkoutDaysPerWeek}).`
+        )
+      }
+    }
+
+    if (mainWorkoutDays.length === 0) {
+      errors.push('Нет ни одного дня с основной тренировкой')
     }
 
     return {

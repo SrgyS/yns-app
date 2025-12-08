@@ -5,6 +5,7 @@ import {
 } from '@prisma/client'
 import { DateCalculationService } from './date-calculation'
 import { PlanValidationService } from './plan-validation'
+import type { MainWorkoutEntry } from '@/entities/course'
 
 export interface GenerationContext {
   enrollment: {
@@ -14,8 +15,12 @@ export interface GenerationContext {
     selectedWorkoutDays: DayOfWeek[]
   }
   course: Pick<PrismaCourse, 'durationWeeks' | 'allowedWorkoutDaysPerWeek'> & {
-    dailyPlans: PrismaDailyPlan[]
+    dailyPlans: DailyPlanWithMain[]
   }
+}
+
+type DailyPlanWithMain = PrismaDailyPlan & {
+  mainWorkouts: { workoutId: string; order: number }[]
 }
 
 export interface UserDailyPlanCreateData {
@@ -27,11 +32,10 @@ export interface UserDailyPlanCreateData {
   dayOfWeek: DayOfWeek
   isWorkoutDay: boolean
   warmupId: string
-  mainWorkoutId: string | null
+  mainWorkouts: MainWorkoutEntry[]
   mealPlanId: string | null
   originalDailyPlanId: string
   warmupStepIndex: number
-  mainWorkoutStepIndex: number | null
 }
 
 export interface UserDailyPlanUpdateData {
@@ -39,11 +43,10 @@ export interface UserDailyPlanUpdateData {
   dayOfWeek: DayOfWeek
   weekNumber: number
   warmupId: string
-  mainWorkoutId: string | null
+  mainWorkouts: MainWorkoutEntry[]
   mealPlanId: string | null
   originalDailyPlanId: string
   warmupStepIndex: number
-  mainWorkoutStepIndex: number | null
 }
 
 export interface GenerationRange {
@@ -58,7 +61,6 @@ interface DayIterationMeta {
   isWorkoutDay: boolean
   weekNumber: number
   warmupStepIndex: number
-  mainWorkoutStepIndex: number | null
 }
 
 /**
@@ -152,9 +154,17 @@ export class PlanGenerationService {
    */
   createUserDailyPlanData(
     context: GenerationContext,
-    plan: PrismaDailyPlan,
-    meta: DayIterationMeta
+    plan: DailyPlanWithMain,
+    meta: DayIterationMeta,
+    mainStepBase: number
   ): UserDailyPlanCreateData {
+    if (!plan.warmupId) {
+      throw new Error('Warmup is required for user daily plan generation')
+    }
+    const sortedMain = [...(plan.mainWorkouts ?? [])].sort(
+      (a, b) => a.order - b.order
+    )
+    let localStepIndex = mainStepBase
     return {
       userId: context.enrollment.userId,
       enrollmentId: context.enrollment.id,
@@ -164,11 +174,17 @@ export class PlanGenerationService {
       dayOfWeek: meta.dayOfWeek,
       isWorkoutDay: meta.isWorkoutDay,
       warmupId: plan.warmupId,
-      mainWorkoutId: meta.isWorkoutDay ? plan.mainWorkoutId : null,
+      mainWorkouts:
+        meta.isWorkoutDay && sortedMain.length
+          ? sortedMain.map(mw => ({
+              workoutId: mw.workoutId,
+              order: mw.order,
+              stepIndex: ++localStepIndex,
+            }))
+          : [],
       mealPlanId: plan.mealPlanId ?? null,
       originalDailyPlanId: plan.id,
       warmupStepIndex: meta.warmupStepIndex,
-      mainWorkoutStepIndex: meta.mainWorkoutStepIndex,
     }
   }
 
@@ -177,19 +193,33 @@ export class PlanGenerationService {
    */
   createUserDailyPlanUpdateData(
     context: GenerationContext,
-    plan: PrismaDailyPlan,
-    meta: DayIterationMeta
+    plan: DailyPlanWithMain,
+    meta: DayIterationMeta,
+    mainStepBase: number
   ): UserDailyPlanUpdateData {
+    if (!plan.warmupId) {
+      throw new Error('Warmup is required for user daily plan generation')
+    }
+    const sortedMain = [...(plan.mainWorkouts ?? [])].sort(
+      (a, b) => a.order - b.order
+    )
+    let localStepIndex = mainStepBase
     return {
       isWorkoutDay: meta.isWorkoutDay,
       dayOfWeek: meta.dayOfWeek,
       weekNumber: meta.weekNumber,
       warmupId: plan.warmupId,
-      mainWorkoutId: meta.isWorkoutDay ? plan.mainWorkoutId : null,
+      mainWorkouts:
+        meta.isWorkoutDay && sortedMain.length
+          ? sortedMain.map(mw => ({
+              workoutId: mw.workoutId,
+              order: mw.order,
+              stepIndex: ++localStepIndex,
+            }))
+          : [],
       mealPlanId: plan.mealPlanId ?? null,
       originalDailyPlanId: plan.id,
       warmupStepIndex: meta.warmupStepIndex,
-      mainWorkoutStepIndex: meta.mainWorkoutStepIndex,
     }
   }
 
@@ -200,8 +230,8 @@ export class PlanGenerationService {
     context: GenerationContext,
     range: GenerationRange
   ): UserDailyPlanCreateData[] {
-    return this.mapPlansForRange(context, range, (plan, meta) =>
-      this.createUserDailyPlanData(context, plan, meta)
+    return this.mapPlansForRange(context, range, (plan, meta, mainStepBase) =>
+      this.createUserDailyPlanData(context, plan, meta, mainStepBase)
     )
   }
 
@@ -212,15 +242,15 @@ export class PlanGenerationService {
     context: GenerationContext,
     range: GenerationRange
   ): UserDailyPlanUpdateData[] {
-    return this.mapPlansForRange(context, range, (plan, meta) =>
-      this.createUserDailyPlanUpdateData(context, plan, meta)
+    return this.mapPlansForRange(context, range, (plan, meta, mainStepBase) =>
+      this.createUserDailyPlanUpdateData(context, plan, meta, mainStepBase)
     )
   }
 
   private mapPlansForRange<T>(
     context: GenerationContext,
     range: GenerationRange,
-    mapFn: (plan: PrismaDailyPlan, meta: DayIterationMeta) => T
+    mapFn: (plan: DailyPlanWithMain, meta: DayIterationMeta, mainStepBase: number) => T
   ): T[] {
     const { mainWorkoutDays, warmupOnlyDays } =
       this.validationService.categorizePlans(context.course.dailyPlans)
@@ -257,22 +287,23 @@ export class PlanGenerationService {
       warmupOnlyIndex = newWarmupOnlyIndex
       warmupStepIndex += 1
 
-      let currentMainWorkoutStep: number | null = null
-      if (selectedPlan.mainWorkoutId) {
-        mainWorkoutStepIndex += 1
-        currentMainWorkoutStep = mainWorkoutStepIndex
-      }
+      const mainCount =
+        Array.isArray((selectedPlan as any).mainWorkouts) &&
+        (selectedPlan as any).mainWorkouts.length > 0
+          ? (selectedPlan as any).mainWorkouts.length
+          : 0
+      const mainStepBase = mainWorkoutStepIndex
+      mainWorkoutStepIndex += mainCount
 
       result.push(
-        mapFn(selectedPlan, {
+        mapFn(selectedPlan as DailyPlanWithMain, {
           dayIndex,
           date,
           dayOfWeek,
           isWorkoutDay,
           weekNumber,
           warmupStepIndex,
-          mainWorkoutStepIndex: currentMainWorkoutStep,
-        })
+        }, mainStepBase)
       )
     }
 

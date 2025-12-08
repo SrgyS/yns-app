@@ -197,8 +197,8 @@ model DailyPlan {
   weekId String?
   week   Week?   @relation(fields: [weekId], references: [id], onDelete: Cascade)
 
-  warmupId String
-  warmup   Workout @relation("WarmupDailyPlan", fields: [warmupId], references: [id])
+  warmupId String?
+  warmup   Workout? @relation("WarmupDailyPlan", fields: [warmupId], references: [id])
 
   mealPlanId String?
   mealPlan   MealPlan? @relation(fields: [mealPlanId], references: [id], onDelete: SetNull)
@@ -216,7 +216,7 @@ model DailyPlanMainWorkout {
   order       Int       // Позиция основной тренировки в дне (0,1,2...)
 
   dailyPlan DailyPlan @relation(fields: [dailyPlanId], references: [id], onDelete: Cascade)
-  workout   Workout   @relation(fields: [workoutId], references: [id])
+  workout   Workout   @relation("WorkoutDailyPlanMainWorkouts", fields: [workoutId], references: [id])
 
   @@unique([dailyPlanId, order])
   @@index([workoutId])
@@ -255,7 +255,7 @@ model UserDailyMainWorkout {
   stepIndex       Int            // Соответствующий шаг прогресса
 
   userDailyPlan UserDailyPlan @relation(fields: [userDailyPlanId], references: [id], onDelete: Cascade)
-  workout       Workout       @relation(fields: [workoutId], references: [id])
+  workout       Workout       @relation("WorkoutUserDailyMainWorkouts", fields: [workoutId], references: [id])
 
   @@unique([userDailyPlanId, order])
   @@index([userDailyPlanId])
@@ -272,10 +272,10 @@ model Workout {
   muscles               MuscleGroup[]
   section               WorkoutSection
   subsections           WorkoutSubsection[]
-  mainWorkoutDailyPlans DailyPlan[]         @relation("MainWorkoutDailyPlan")
+  mainPlanWorkouts      DailyPlanMainWorkout[] @relation("WorkoutDailyPlanMainWorkouts")
   warmupDailyPlans      DailyPlan[]         @relation("WarmupDailyPlan")
 
-  userDailyMainWorkouts UserDailyPlan[]         @relation("UserDailyMainWorkout")
+  userDailyMainWorkouts UserDailyMainWorkout[] @relation("WorkoutUserDailyMainWorkouts")
   userDailyWarmups      UserDailyPlan[]         @relation("UserDailyWarmup")
   favoriteWorkouts      UserFavoriteWorkout[]
   userCompletions       UserWorkoutCompletion[]

@@ -27,12 +27,10 @@ export const WorkoutEntityModule = new ContainerModule(context => {
   bind(Controller).to(WorkoutCatalogController)
 })
 
-export {
-  GetWorkoutService,
-  ListWorkoutsService,
-  GetWorkoutCompletionStatusService,
-  UpdateWorkoutCompletionService,
-  ToggleFavoriteWorkoutService,
-  ListFavoriteWorkoutsService,
-  ListWorkoutsByIdsService,
-}
+export { GetWorkoutService } from './_services/get-workout'
+export { ListWorkoutsService } from './_services/list-workouts'
+export { GetWorkoutCompletionStatusService } from './_services/get-workout-completion-status'
+export { UpdateWorkoutCompletionService } from './_services/update-workout-completion'
+export { ToggleFavoriteWorkoutService } from './_services/toggle-favorite-workout'
+export { ListFavoriteWorkoutsService } from './_services/list-favorite-workouts'
+export { ListWorkoutsByIdsService } from './_services/list-workouts-by-ids'

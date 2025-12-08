@@ -36,14 +36,17 @@ type AdminCourseSummary = {
     accessDurationDays?: number | null
   } | null
 }
-//TODO: переделать после добавления массива основных тренировок в день
 type AdminDailyPlan = CourseUpsertInput['dailyPlans'][number] & {
   warmupTitle?: string | null
   warmupDurationSec?: number | null
   warmupSection?: string | null
-  mainWorkoutTitle?: string | null
-  mainWorkoutDurationSec?: number | null
-  mainWorkoutSection?: string | null
+  mainWorkoutsMeta?: {
+    workoutId: string
+    title?: string | null
+    durationSec?: number | null
+    section?: string | null
+    order: number
+  }[]
 }
 
 type AdminCourseDetail = Omit<CourseUpsertInput, 'dailyPlans'> & {
@@ -89,7 +92,19 @@ export class AdminCoursesController extends Controller {
   }
 
   private readonly createAbility = async (session: SharedSession) => {
-    const role = session.user.role as ROLE
+    const userRecord = await dbClient.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true },
+    })
+
+    if (!userRecord) {
+      throw new TRPCError({
+        code: 'UNAUTHORIZED',
+        message: 'Пользователь не найден',
+      })
+    }
+
+    const role = userRecord.role
     this.ensureAdmin(role)
 
     const permissions = await this.staffPermissionService.getPermissionsForUser(
@@ -170,15 +185,24 @@ export class AdminCoursesController extends Controller {
           weekNumber: plan.weekNumber,
           dayNumberInWeek: plan.dayNumberInWeek,
           description: plan.description,
-          warmupId: plan.warmup.id,
-          warmupTitle: plan.warmup.title ?? null,
-          warmupDurationSec: plan.warmup.durationSec ?? null,
-          warmupSection: plan.warmup.section ?? null,
-          mainWorkoutId: plan.mainWorkout?.id ?? null,
-          mainWorkoutTitle: plan.mainWorkout?.title ?? null,
-          mainWorkoutDurationSec: plan.mainWorkout?.durationSec ?? null,
-          mainWorkoutSection: plan.mainWorkout?.section ?? null,
+          warmupId: plan.warmup?.id ?? '',
+          warmupTitle: plan.warmup?.title ?? null,
+          warmupDurationSec: plan.warmup?.durationSec ?? null,
+          warmupSection: plan.warmup?.section ?? null,
           mealPlanId: plan.mealPlan?.slug ?? null,
+          mainWorkouts:
+            plan.mainWorkouts?.map((mw: any) => ({
+              workoutId: mw.workout.id,
+              order: mw.order,
+            })) ?? [],
+          mainWorkoutsMeta:
+            plan.mainWorkouts?.map((mw: any) => ({
+              workoutId: mw.workout.id,
+              title: mw.workout.title ?? null,
+              durationSec: mw.workout.durationSec ?? null,
+              section: mw.workout.section ?? null,
+              order: mw.order,
+            })) ?? [],
           contentBlocks:
             plan.contentBlocks?.map((block: any) => ({
               id: block.id,
@@ -253,12 +277,17 @@ export class AdminCoursesController extends Controller {
                   section: true,
                 },
               },
-              mainWorkout: {
-                select: {
-                  id: true,
-                  title: true,
-                  durationSec: true,
-                  section: true,
+              mainWorkouts: {
+                orderBy: { order: 'asc' },
+                include: {
+                  workout: {
+                    select: {
+                      id: true,
+                      title: true,
+                      durationSec: true,
+                      section: true,
+                    },
+                  },
                 },
               },
               mealPlan: { select: { id: true, slug: true, title: true } },
@@ -298,12 +327,17 @@ export class AdminCoursesController extends Controller {
                 section: true,
               },
             },
-            mainWorkout: {
-              select: {
-                id: true,
-                title: true,
-                durationSec: true,
-                section: true,
+            mainWorkouts: {
+              orderBy: { order: 'asc' },
+              include: {
+                workout: {
+                  select: {
+                    id: true,
+                    title: true,
+                    durationSec: true,
+                    section: true,
+                  },
+                },
               },
             },
             mealPlan: { select: { id: true, slug: true, title: true } },
@@ -466,15 +500,7 @@ export class AdminCoursesController extends Controller {
     hasManualWeeks: boolean,
     hasManualDailyPlans: boolean
   ) {
-    const defaultWarmup =
-      input.dailyPlans?.[0]?.warmupId ||
-      (
-        await tx.workout.findFirst({
-          where: { needsReview: false },
-          select: { id: true },
-          orderBy: { title: 'asc' },
-        })
-      )?.id
+    const defaultWarmup = input.dailyPlans?.[0]?.warmupId ?? null
 
     const generatedWeeks =
       !hasManualWeeks && input.durationWeeks
@@ -489,8 +515,7 @@ export class AdminCoursesController extends Controller {
     const generatedDailyPlans =
       !input.id &&
       !hasManualDailyPlans &&
-      weeksInput.length > 0 &&
-      defaultWarmup
+      weeksInput.length > 0
         ? weeksInput.flatMap(week =>
             Array.from({ length: 7 }).map((_v, idx) => ({
               slug: generateDaySlug(week.weekNumber, idx + 1),
@@ -498,16 +523,32 @@ export class AdminCoursesController extends Controller {
               dayNumberInWeek: idx + 1,
               description: null,
               warmupId: defaultWarmup,
-              mainWorkoutId: null,
+              mainWorkouts: [],
               mealPlanId: null,
               contentBlocks: [],
             }))
           )
         : []
 
-    const dailyPlansInput = hasManualDailyPlans
-      ? input.dailyPlans
-      : generatedDailyPlans
+    const normalizeMainWorkouts = (
+      plans: CourseUpsertInput['dailyPlans']
+    ): CourseUpsertInput['dailyPlans'] => {
+      return plans.map(plan => {
+        const mainWorkouts =
+          plan.mainWorkouts && plan.mainWorkouts.length > 0
+            ? plan.mainWorkouts
+            : []
+        return {
+          ...plan,
+          mainWorkouts,
+          warmupId: plan.warmupId ?? defaultWarmup ?? null,
+        }
+      })
+    }
+
+    const dailyPlansInput = normalizeMainWorkouts(
+      hasManualDailyPlans ? input.dailyPlans : generatedDailyPlans
+    )
 
     const shouldPruneAutoPlans =
       !hasManualDailyPlans &&
@@ -722,9 +763,9 @@ export class AdminCoursesController extends Controller {
     courseId: string,
     plan: CourseUpsertInput['dailyPlans'][number]
   ) {
-    const warmup = await this.resolveWorkoutById(plan.warmupId, tx)
-    const mainWorkout = plan.mainWorkoutId
-      ? await this.resolveWorkoutById(plan.mainWorkoutId, tx)
+    const warmupId = plan.warmupId
+    const warmup = warmupId
+      ? await this.resolveWorkoutById(warmupId, tx)
       : null
     const mealPlan = plan.mealPlanId
       ? await this.resolveMealPlanBySlug(courseId, plan.mealPlanId, tx)
@@ -741,8 +782,7 @@ export class AdminCoursesController extends Controller {
         weekNumber: plan.weekNumber,
         dayNumberInWeek: plan.dayNumberInWeek,
         description: plan.description ?? null,
-        warmupId: warmup.id,
-        mainWorkoutId: mainWorkout ? mainWorkout.id : null,
+        warmupId: warmup ? warmup.id : null,
         mealPlanId: mealPlan ? mealPlan.id : null,
       },
       create: {
@@ -751,8 +791,7 @@ export class AdminCoursesController extends Controller {
         weekNumber: plan.weekNumber,
         dayNumberInWeek: plan.dayNumberInWeek,
         description: plan.description ?? null,
-        warmupId: warmup.id,
-        mainWorkoutId: mainWorkout ? mainWorkout.id : null,
+        warmupId: warmup ? warmup.id : null,
         mealPlanId: mealPlan ? mealPlan.id : null,
       },
     })
@@ -796,6 +835,21 @@ export class AdminCoursesController extends Controller {
 
     for (const plan of dailyPlans) {
       const upsertedPlan = await this.upsertDailyPlan(tx, courseId, plan)
+      const mainWorkouts = (plan.mainWorkouts ?? []).sort(
+        (a, b) => a.order - b.order
+      )
+      await tx.dailyPlanMainWorkout.deleteMany({
+        where: { dailyPlanId: upsertedPlan.id },
+      })
+      if (mainWorkouts.length) {
+        await tx.dailyPlanMainWorkout.createMany({
+          data: mainWorkouts.map(mw => ({
+            dailyPlanId: upsertedPlan.id,
+            workoutId: mw.workoutId,
+            order: mw.order,
+          })),
+        })
+      }
       await this.syncContentBlocks(tx, upsertedPlan.id, plan.contentBlocks)
     }
   }
@@ -835,6 +889,13 @@ export class AdminCoursesController extends Controller {
         }
         return a.weekNumber - b.weekNumber
       })
+      .map(plan => ({
+        ...plan,
+        mainWorkouts:
+          plan.mainWorkouts && plan.mainWorkouts.length > 0
+            ? plan.mainWorkouts
+            : [],
+      }))
   }
 
   private async upsertCourse(
@@ -959,7 +1020,11 @@ export class AdminCoursesController extends Controller {
             if (!input.draft) {
               const course = await dbClient.course.findUnique({
                 where: { id: input.id },
-                include: { dailyPlans: true },
+                include: {
+                  dailyPlans: {
+                    include: { mainWorkouts: true },
+                  },
+                },
               })
 
               if (!course) {
@@ -1085,18 +1150,21 @@ export class AdminCoursesController extends Controller {
                 })
               }
 
-              if (input.mainWorkoutId) {
-                const main = await dbClient.workout.findUnique({
-                  where: { id: input.mainWorkoutId },
-                  select: { id: true },
+          // mainWorkouts валидируются ниже при сохранении
+          if (input.mainWorkouts?.length) {
+            for (const mw of input.mainWorkouts) {
+              const main = await dbClient.workout.findUnique({
+                where: { id: mw.workoutId },
+                select: { id: true },
+              })
+              if (!main) {
+                throw new TRPCError({
+                  code: 'BAD_REQUEST',
+                  message: 'Указанная основная тренировка не найдена',
                 })
-                if (!main) {
-                  throw new TRPCError({
-                    code: 'BAD_REQUEST',
-                    message: 'Указанная основная тренировка не найдена',
-                  })
-                }
               }
+            }
+          }
 
               if (input.mealPlanId) {
                 const dailyPlan = await dbClient.dailyPlan.findUnique({
@@ -1133,19 +1201,29 @@ export class AdminCoursesController extends Controller {
                 data: {
                   description: input.description ?? null,
                   warmupId: input.warmupId,
-                  mainWorkoutId: input.mainWorkoutId ?? null,
                   mealPlanId: input.mealPlanId ?? null,
                 },
                 select: {
                   id: true,
                   warmupId: true,
-                  mainWorkoutId: true,
                   mealPlanId: true,
                   description: true,
                   weekNumber: true,
                   dayNumberInWeek: true,
                 },
               })
+              await dbClient.dailyPlanMainWorkout.deleteMany({
+                where: { dailyPlanId: updated.id },
+              })
+              if (input.mainWorkouts?.length) {
+                await dbClient.dailyPlanMainWorkout.createMany({
+                  data: input.mainWorkouts.map(mw => ({
+                    dailyPlanId: updated.id,
+                    workoutId: mw.workoutId,
+                    order: mw.order,
+                  })),
+                })
+              }
 
               return updated
             }),

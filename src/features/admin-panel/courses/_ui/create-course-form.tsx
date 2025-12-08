@@ -122,6 +122,7 @@ export function CreateCourseForm({
       toast.error('Ошибка при создании курса')
     },
   })
+
   const isSubmitting = isPending || upsertCourse.isPending
 
   const form = useForm<CourseFormValues>({
@@ -177,7 +178,11 @@ export function CreateCourseForm({
         const preservedDependencies = courseQuery.data?.dependencies ?? []
         const preservedWeeks = courseQuery.data?.weeks ?? []
         const preservedMealPlans = courseQuery.data?.mealPlans ?? []
-        const preservedDailyPlans = courseQuery.data?.dailyPlans ?? []
+        const preservedDailyPlans =
+          courseQuery.data?.dailyPlans?.map(plan => ({
+            ...plan,
+            warmupId: plan.warmupId || null,
+          })) ?? []
 
         let product
 
@@ -212,7 +217,6 @@ export function CreateCourseForm({
         })
       } catch (error) {
         console.error(error)
-        toast.error('Ошибка при создании курса')
       }
     })
   }
