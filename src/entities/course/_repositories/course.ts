@@ -103,7 +103,12 @@ export class CoursesRepository {
   }
 
   async deleteById(courseId: string) {
-    return dbClient.course.delete({ where: { id: courseId } })
+    return dbClient.$transaction(async tx => {
+      await tx.userCourseEnrollment.deleteMany({
+        where: { courseId },
+      })
+      return tx.course.delete({ where: { id: courseId } })
+    })
   }
   private async safeCompileMDX(
     source: string | null | undefined

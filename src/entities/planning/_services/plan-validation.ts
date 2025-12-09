@@ -63,7 +63,8 @@ export class PlanValidationService {
    */
   validateCoursePlans(
     course: PrismaCourse,
-    dailyPlans: (PrismaDailyPlan & { mainWorkouts?: any[] })[]
+    dailyPlans: (PrismaDailyPlan & { mainWorkouts?: any[] })[],
+    weeksToValidate?: Set<number> | null
   ): ValidationResult {
     const errors: string[] = []
     const requirements = this.calculatePlanRequirements(course)
@@ -85,6 +86,10 @@ export class PlanValidationService {
     }
 
     for (let week = 1; week <= requirements.durationWeeks; week++) {
+      if (weeksToValidate && !weeksToValidate.has(week)) {
+        continue
+      }
+
       const count = weeklyMainCounts.get(week) ?? 0
       if (count > requirements.maxWorkoutDaysPerWeek) {
         errors.push(

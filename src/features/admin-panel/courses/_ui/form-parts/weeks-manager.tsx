@@ -49,7 +49,7 @@ export function WeeksManager({
       const newWeeks = fields.slice(0, durationWeeks)
       replace(newWeeks)
     }
-  }, [durationWeeks, append, replace, fields.length])
+  }, [durationWeeks, append, replace, fields.length, fields])
 
   if (!isSubscription) return null
 

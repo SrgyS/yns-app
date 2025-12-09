@@ -298,7 +298,7 @@ export class UserDailyPlanRepository {
         enrollmentId,
         error,
       })
-      throw new Error('Failed to update user daily plans')
+      throw new Error(`Failed to update user daily plans: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 }

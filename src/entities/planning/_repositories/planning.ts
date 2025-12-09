@@ -145,7 +145,8 @@ export class PlanningRepository {
       // Валидация планов курса
       const validation = this.validationService.validateCoursePlans(
         course,
-        releasedDailyPlans
+        releasedDailyPlans,
+        releasedWeeks
       )
 
       if (!validation.isValid) {
@@ -291,7 +292,8 @@ export class PlanningRepository {
       // Валидация планов курса
       const validation = this.validationService.validateCoursePlans(
         course,
-        releasedDailyPlans
+        releasedDailyPlans,
+        releasedWeeks
       )
 
       if (!validation.isValid) {
