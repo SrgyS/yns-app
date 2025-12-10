@@ -144,6 +144,42 @@ model Course {
 
   dependencies CourseDependency[] @relation("CourseDependencies")
   dependents   CourseDependency[] @relation("CourseDependents")
+
+  knowledgeCategories KnowledgeCategory[]
+}
+
+model KnowledgeCategory {
+  id          String @id @default(cuid())
+  slug        String
+  title       String
+  description String?
+  order       Int    @default(0)
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  articles KnowledgeArticle[]
+
+  @@unique([courseId, slug])
+  @@index([courseId])
+}
+
+model KnowledgeArticle {
+  id          String @id @default(cuid())
+  title       String
+  description String?
+  content     String? // Rich text content if needed
+  videoId     String? // Kinescope ID
+  attachments Json? // Array of { name: string, url: string }
+  order       Int     @default(0)
+
+  categoryId String
+  category   KnowledgeCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
 }
 
 model UserCourseEnrollment {

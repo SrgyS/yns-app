@@ -19,6 +19,11 @@ export class MinioStorage {
     return this.upload(file, privateConfig.S3_IMAGES_BUCKET, tag, userId)
   }
 
+  async uploadFile(file: File, tag: string, userId: string) {
+    // Reusing the same bucket for now, but potentially different tag/prefix
+    return this.upload(file, privateConfig.S3_IMAGES_BUCKET, tag, userId)
+  }
+
   async upload(file: File, bucket: string, tag: string, userId: string): Promise<StoredFile> {
     const res = await new Upload({
       client: this.s3Client,

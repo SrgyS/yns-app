@@ -196,9 +196,14 @@ export function AdminCoursesPage({ courses }: Readonly<AdminCoursesPageProps>) {
                       </Link>
                     </Button>
                     <Button asChild className="w-full" variant="secondary">
+                       <Link href={`/admin/knowledge?courseId=${course.id}`}>
+                         Заполнить знания
+                       </Link>
+                    </Button>
+                      <Button asChild className="w-full" variant="secondary">
                       <Link href={`/admin/courses/${course.slug}/daily-plan`}>
-                        План
-                      </Link>
+                        Заполнить план тренировок
+                       </Link>
                     </Button>
                     <Button
                       className="w-full"
