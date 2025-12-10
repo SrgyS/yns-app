@@ -13,13 +13,13 @@ export class UpdateKnowledgeCategoryService {
       description?: string
       slug?: string
       order?: number
+      courseId?: string // Added courseId to allow updating order in context of a course
     }
   ) {
     if (input.slug) {
       const category = await this.knowledgeRepository.getCategoryById(id)
       if (category) {
         const existing = await this.knowledgeRepository.findCategoryBySlug(
-          category.courseId,
           input.slug
         )
 
@@ -27,12 +27,22 @@ export class UpdateKnowledgeCategoryService {
         if (existing && existing.id !== id) {
           throw new TRPCError({
             code: 'CONFLICT',
-            message: 'Категория с таким slug уже существует в этом курсе',
+            message: 'Категория с таким slug уже существует',
           })
         }
       }
     }
 
-    return this.knowledgeRepository.updateCategory(id, input)
+    const { order, courseId, ...categoryData } = input
+    
+    // Update global properties
+    const updatedCategory = await this.knowledgeRepository.updateCategory(id, categoryData)
+
+    // Update order if provided AND courseId is provided
+    if (order !== undefined && courseId) {
+        await this.knowledgeRepository.updateCategoryOrder(courseId, id, order)
+    }
+
+    return { ...updatedCategory, order: order } // Return combined for UI consistency
   }
 }

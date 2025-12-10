@@ -17,6 +17,10 @@ import { DeleteKnowledgeCategoryService } from '@/entities/knowledge/_services/d
 import { CreateKnowledgeArticleService } from '@/entities/knowledge/_services/create-knowledge-article'
 import { UpdateKnowledgeArticleService } from '@/entities/knowledge/_services/update-knowledge-article'
 import { DeleteKnowledgeArticleService } from '@/entities/knowledge/_services/delete-knowledge-article'
+import { LinkKnowledgeCategoryService } from '@/entities/knowledge/_services/link-knowledge-category-to-course'
+import { UnlinkKnowledgeCategoryService } from '@/entities/knowledge/_services/unlink-knowledge-category-from-course'
+import { ReorderCourseKnowledgeCategoriesService } from '@/entities/knowledge/_services/reorder-course-knowledge-categories'
+import { ReorderKnowledgeArticlesService } from '@/entities/knowledge/_services/reorder-knowledge-articles'
 import { KnowledgeRepository } from '@/entities/knowledge/_repositories/knowledge'
 
 @injectable()
@@ -38,6 +42,14 @@ export class AdminKnowledgeController extends Controller {
     private readonly updateArticleService: UpdateKnowledgeArticleService,
     @inject(DeleteKnowledgeArticleService)
     private readonly deleteArticleService: DeleteKnowledgeArticleService,
+    @inject(LinkKnowledgeCategoryService)
+    private readonly linkCategoryService: LinkKnowledgeCategoryService,
+    @inject(UnlinkKnowledgeCategoryService)
+    private readonly unlinkCategoryService: UnlinkKnowledgeCategoryService,
+    @inject(ReorderCourseKnowledgeCategoriesService)
+    private readonly reorderCategoriesService: ReorderCourseKnowledgeCategoriesService,
+    @inject(ReorderKnowledgeArticlesService)
+    private readonly reorderArticlesService: ReorderKnowledgeArticlesService,
     @inject(KnowledgeRepository)
     private readonly knowledgeRepository: KnowledgeRepository
   ) {
@@ -90,6 +102,23 @@ export class AdminKnowledgeController extends Controller {
             return this.getKnowledgeListService.getCategories(input.courseId)
           }),
 
+        listForCourse: checkAbilityProcedure({
+          create: this.createAbility,
+          check: ability => ability.canManageCourses,
+        })
+          .input(z.object({ courseId: z.string() }))
+          .query(async ({ input }) => {
+            return this.getKnowledgeListService.getCategoriesWithCourseLink(input.courseId)
+          }),
+
+        listGlobal: checkAbilityProcedure({
+          create: this.createAbility,
+          check: ability => ability.canManageCourses,
+        })
+          .query(async () => {
+            return this.getKnowledgeListService.getGlobalCategories()
+          }),
+
         create: checkAbilityProcedure({
           create: this.createAbility,
           check: ability => ability.canManageCourses,
@@ -99,7 +128,7 @@ export class AdminKnowledgeController extends Controller {
               title: z.string().min(1),
               description: z.string().optional(),
               slug: z.string().min(1),
-              courseId: z.string(),
+              courseId: z.string().optional(),
               order: z.number().optional(),
             })
           )
@@ -118,6 +147,7 @@ export class AdminKnowledgeController extends Controller {
               description: z.string().optional(),
               slug: z.string().min(1).optional(),
               order: z.number().optional(),
+              courseId: z.string().optional(),
             })
           )
           .mutation(async ({ input }) => {
@@ -132,6 +162,54 @@ export class AdminKnowledgeController extends Controller {
           .input(z.object({ id: z.string() }))
           .mutation(async ({ input }) => {
             return this.deleteCategoryService.exec(input.id)
+          }),
+        
+        link: checkAbilityProcedure({
+          create: this.createAbility,
+          check: ability => ability.canManageCourses,
+        })
+          .input(
+            z.object({
+              courseId: z.string(),
+              categoryId: z.string(),
+              order: z.number().optional(),
+            })
+          )
+          .mutation(async ({ input }) => {
+            return this.linkCategoryService.exec(input)
+          }),
+
+        unlink: checkAbilityProcedure({
+          create: this.createAbility,
+          check: ability => ability.canManageCourses,
+        })
+          .input(
+            z.object({
+              courseId: z.string(),
+              categoryId: z.string(),
+            })
+          )
+          .mutation(async ({ input }) => {
+            return this.unlinkCategoryService.exec(input)
+          }),
+
+        reorder: checkAbilityProcedure({
+          create: this.createAbility,
+          check: ability => ability.canManageCourses,
+        })
+          .input(
+            z.object({
+              courseId: z.string(),
+              items: z.array(
+                z.object({
+                  categoryId: z.string(),
+                  order: z.number(),
+                })
+              ),
+            })
+          )
+          .mutation(async ({ input }) => {
+            return this.reorderCategoriesService.exec(input)
           }),
       }),
 
@@ -258,6 +336,25 @@ export class AdminKnowledgeController extends Controller {
           .input(z.object({ id: z.string() }))
           .mutation(async ({ input }) => {
             return this.deleteArticleService.exec(input.id)
+          }),
+
+        reorder: checkAbilityProcedure({
+          create: this.createAbility,
+          check: ability => ability.canManageCourses,
+        })
+          .input(
+            z.object({
+              categoryId: z.string(),
+              items: z.array(
+                z.object({
+                  articleId: z.string(),
+                  order: z.number(),
+                })
+              ),
+            })
+          )
+          .mutation(async ({ input }) => {
+            return this.reorderArticlesService.exec(input)
           }),
       }),
     }),

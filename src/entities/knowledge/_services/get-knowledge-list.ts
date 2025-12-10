@@ -9,6 +9,14 @@ export class GetKnowledgeListService {
     return this.knowledgeRepository.getCategoriesByCourse(courseId)
   }
 
+  async getGlobalCategories() {
+    return this.knowledgeRepository.getAllCategories()
+  }
+
+  async getCategoriesWithCourseLink(courseId: string) {
+    return this.knowledgeRepository.getAllCategoriesWithCourseLink(courseId)
+  }
+
   async getArticles(categoryId: string) {
     return this.knowledgeRepository.getArticlesByCategory(categoryId)
   }

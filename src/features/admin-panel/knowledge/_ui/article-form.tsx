@@ -64,7 +64,7 @@ export function ArticleForm({
       description: '',
       content: '',
       videoId: '',
-      order: 0,
+      order: undefined,
       attachments: [],
     },
   })
@@ -93,7 +93,7 @@ export function ArticleForm({
         description: '',
         content: '',
         videoId: '',
-        order: 0,
+        order: undefined,
         attachments: [],
       })
     }
@@ -187,19 +187,23 @@ export function ArticleForm({
               <FormField
                 control={form.control}
                 name="order"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Порядок</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={e => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Порядок</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      {...field}
+                      value={field.value ?? ''}
+                      onChange={e => {
+                        const val = e.target.value
+                        field.onChange(val === '' ? undefined : Number(val))
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
               />
               <FormField
                 control={form.control}

@@ -2,18 +2,13 @@ import { injectable } from 'inversify'
 import { KnowledgeRepository } from '../_repositories/knowledge'
 
 @injectable()
-export class CreateKnowledgeArticleService {
+export class ReorderKnowledgeArticlesService {
   constructor(private readonly knowledgeRepository: KnowledgeRepository) {}
 
   async exec(input: {
-    title: string
-    description?: string
-    content?: string
-    videoId?: string
-    attachments?: any
     categoryId: string
-    order?: number
+    items: Array<{ articleId: string; order: number }>
   }) {
-    return this.knowledgeRepository.createArticle(input)
+    return this.knowledgeRepository.reorderArticles(input.categoryId, input.items)
   }
 }

@@ -35,8 +35,9 @@ const categorySchema = z.object({
 type CategoryFormProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  courseId: string
+  courseId?: string
   category?: any
+  linked?: boolean
   onSuccess: () => void
 }
 
@@ -45,6 +46,7 @@ export function CategoryForm({
   onOpenChange,
   courseId,
   category,
+  linked,
   onSuccess,
 }: CategoryFormProps) {
   const form = useForm<z.infer<typeof categorySchema>>({
@@ -63,7 +65,7 @@ export function CategoryForm({
         title: category.title,
         slug: category.slug,
         description: category.description || '',
-        order: category.order,
+        order: category.order ?? 0,
       })
     } else {
       form.reset({
@@ -92,15 +94,17 @@ export function CategoryForm({
   })
 
   const onSubmit = (values: z.infer<typeof categorySchema>) => {
+    const payload = linked ? values : { ...values, order: undefined }
     if (category) {
       updateMutation.mutate({
         id: category.id,
-        ...values,
+        ...(linked && courseId ? { courseId } : {}),
+        ...payload,
       })
     } else {
       createMutation.mutate({
         courseId,
-        ...values,
+        ...payload,
       })
     }
   }
@@ -153,23 +157,25 @@ export function CategoryForm({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="order"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Порядок сортировки</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      {...field}
-                      onChange={e => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {linked ? (
+              <FormField
+                control={form.control}
+                name="order"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Порядок сортировки</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={e => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : null}
             <DialogFooter>
               <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
                 Сохранить

@@ -145,23 +145,30 @@ model Course {
   dependencies CourseDependency[] @relation("CourseDependencies")
   dependents   CourseDependency[] @relation("CourseDependents")
 
-  knowledgeCategories KnowledgeCategory[]
+  knowledgeCategories CourseKnowledgeCategory[]
 }
 
 model KnowledgeCategory {
   id          String @id @default(cuid())
-  slug        String
+  slug        String @unique
   title       String
   description String?
-  order       Int    @default(0)
-
-  courseId String
-  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   articles KnowledgeArticle[]
+  courses  CourseKnowledgeCategory[]
+}
 
-  @@unique([courseId, slug])
+model CourseKnowledgeCategory {
+  courseId   String
+  categoryId String
+  order      Int    @default(0)
+
+  course   Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  category KnowledgeCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([courseId, categoryId])
   @@index([courseId])
+  @@index([categoryId])
 }
 
 model KnowledgeArticle {
