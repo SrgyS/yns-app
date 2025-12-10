@@ -24,7 +24,19 @@ export class MinioStorage {
     return this.upload(file, privateConfig.S3_IMAGES_BUCKET, tag, userId)
   }
 
-  async upload(file: File, bucket: string, tag: string, userId: string): Promise<StoredFile> {
+  async upload(
+    file: File,
+    bucket: string,
+    tag: string,
+    userId: string
+  ): Promise<StoredFile> {
+    const contentType =
+      file.type && file.type !== 'application/octet-stream'
+        ? file.type
+        : file.name.toLowerCase().endsWith('.pdf')
+          ? 'application/pdf'
+          : 'application/octet-stream'
+
     const res = await new Upload({
       client: this.s3Client,
       params: {
@@ -32,6 +44,7 @@ export class MinioStorage {
         Bucket: bucket,
         Key: `${userId}/${tag}-${Date.now().toString()}-${file.name}`,
         Body: file,
+        ContentType: contentType,
       },
       queueSize: 4, // optional concurrency configuration
       partSize: 1024 * 1024 * 5, // optional size of each part, in bytes, at least 5MB

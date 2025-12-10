@@ -20,6 +20,7 @@ import { AdminCoursesModule } from '@/features/admin-panel/courses/module'
 import { AdminWorkoutsModule } from '@/features/admin-panel/workouts/module'
 import { KnowledgeModule } from '@/entities/knowledge/module'
 import { AdminKnowledgeModule } from '@/features/admin-panel/knowledge/module'
+import { UserKnowledgeModule } from '@/features/knowledge/module'
 
 
 export function createServer() {
@@ -44,7 +45,8 @@ export function createServer() {
     AdminCoursesModule,
     AdminWorkoutsModule,
     AdminKnowledgeModule,
-    KnowledgeModule
+    KnowledgeModule,
+    UserKnowledgeModule
   )
 
   return container

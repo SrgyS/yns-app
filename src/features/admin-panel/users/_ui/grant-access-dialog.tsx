@@ -57,7 +57,7 @@ export function GrantAccessDialog({
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen)
     if (nextOpen) {
-      coursesListApi.coursesList.get.invalidate().catch(() => undefined)
+      coursesQuery.refetch().catch(() => undefined)
     }
   }
 

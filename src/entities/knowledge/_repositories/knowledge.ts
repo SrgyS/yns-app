@@ -49,6 +49,7 @@ export class KnowledgeRepository {
             _count: {
               select: { articles: true },
             },
+            articles: false,
           },
         },
       },
@@ -58,6 +59,28 @@ export class KnowledgeRepository {
     return links.map(link => ({
       ...link.category,
       order: link.order,
+    }))
+  }
+
+  async getCategoriesWithArticles(courseId: string) {
+    const links = await dbClient.courseKnowledgeCategory.findMany({
+      where: { courseId },
+      include: {
+        category: {
+          include: {
+            articles: {
+              orderBy: { order: 'asc' },
+            },
+          },
+        },
+      },
+      orderBy: { order: 'asc' },
+    })
+
+    return links.map(link => ({
+      ...link.category,
+      order: link.order,
+      articles: link.category.articles,
     }))
   }
 
