@@ -176,7 +176,10 @@ model KnowledgeArticle {
   title       String
   description String?
   content     String? // Rich text content if needed
+  contentMdx  String?
   videoId     String? // Kinescope ID
+  videoTitle  String?
+  videoDurationSec Int?
   attachments Json? // Array of { name: string, url: string }
   order       Int     @default(0)
 

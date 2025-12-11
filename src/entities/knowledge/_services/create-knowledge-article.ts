@@ -1,5 +1,6 @@
 import { injectable } from 'inversify'
 import { KnowledgeRepository } from '../_repositories/knowledge'
+import { compileMDX } from '@/shared/lib/mdx/server'
 
 @injectable()
 export class CreateKnowledgeArticleService {
@@ -10,10 +11,17 @@ export class CreateKnowledgeArticleService {
     description?: string
     content?: string
     videoId?: string
+    videoTitle?: string
+    videoDurationSec?: number | null
     attachments?: any
     categoryId: string
     order?: number
   }) {
-    return this.knowledgeRepository.createArticle(input)
+    const compiled = input.content ? await compileMDX(input.content) : null
+
+    return this.knowledgeRepository.createArticle({
+      ...input,
+      contentMdx: compiled?.code ?? null,
+    })
   }
 }

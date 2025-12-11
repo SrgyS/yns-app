@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -27,6 +27,7 @@ import { adminKnowledgeApi } from '../_api'
 import { toast } from 'sonner'
 import { useUploadKnowledgeFile } from '../_vm/use-upload-knowledge-file'
 import { Loader2, Trash2, Upload } from 'lucide-react'
+import Image from 'next/image'
 
 const attachmentSchema = z.object({
   name: z.string(),
@@ -38,6 +39,8 @@ const articleSchema = z.object({
   description: z.string().optional(),
   content: z.string().optional(),
   videoId: z.string().optional(),
+  videoTitle: z.string().optional(),
+  videoDurationSec: z.number().optional(),
   order: z.number().optional(),
   attachments: z.array(attachmentSchema).optional(),
 })
@@ -56,7 +59,24 @@ export function ArticleForm({
   categoryId,
   article,
   onSuccess,
-}: ArticleFormProps) {
+}: Readonly<ArticleFormProps>) {
+  const [videoPickerOpen, setVideoPickerOpen] = useState(false)
+  const [videoOptions, setVideoOptions] = useState<
+    {
+      id: string
+      title: string
+      duration: number | null
+      posterUrl: string | null
+    }[]
+  >([])
+  const videoQuery = adminKnowledgeApi.adminKnowledge.videos.list.useQuery(
+    undefined,
+    {
+      enabled: false,
+    }
+  )
+  const isLoadingVideos = videoQuery.isFetching || videoQuery.isLoading
+
   const form = useForm<z.infer<typeof articleSchema>>({
     resolver: zodResolver(articleSchema),
     defaultValues: {
@@ -64,6 +84,8 @@ export function ArticleForm({
       description: '',
       content: '',
       videoId: '',
+      videoTitle: '',
+      videoDurationSec: undefined,
       order: undefined,
       attachments: [],
     },
@@ -83,9 +105,13 @@ export function ArticleForm({
         description: article.description || '',
         content: article.content || '',
         videoId: article.videoId || '',
+        videoTitle: article.videoTitle || '',
+        videoDurationSec: article.videoDurationSec ?? undefined,
         order: article.order,
         // Ensure attachments is treated as an array, Prisma Json defaults to any
-        attachments: Array.isArray(article.attachments) ? article.attachments : [],
+        attachments: Array.isArray(article.attachments)
+          ? article.attachments
+          : [],
       })
     } else {
       form.reset({
@@ -93,27 +119,31 @@ export function ArticleForm({
         description: '',
         content: '',
         videoId: '',
+        videoTitle: '',
+        videoDurationSec: undefined,
         order: undefined,
         attachments: [],
       })
     }
   }, [article, form, open])
 
-  const createMutation = adminKnowledgeApi.adminKnowledge.articles.create.useMutation({
-    onSuccess: () => {
-      toast.success('Статья создана')
-      onSuccess()
-    },
-    onError: (err) => toast.error(err.message),
-  })
+  const createMutation =
+    adminKnowledgeApi.adminKnowledge.articles.create.useMutation({
+      onSuccess: () => {
+        toast.success('Статья создана')
+        onSuccess()
+      },
+      onError: err => toast.error(err.message),
+    })
 
-  const updateMutation = adminKnowledgeApi.adminKnowledge.articles.update.useMutation({
-    onSuccess: () => {
-      toast.success('Статья обновлена')
-      onSuccess()
-    },
-    onError: (err) => toast.error(err.message),
-  })
+  const updateMutation =
+    adminKnowledgeApi.adminKnowledge.articles.update.useMutation({
+      onSuccess: () => {
+        toast.success('Статья обновлена')
+        onSuccess()
+      },
+      onError: err => toast.error(err.message),
+    })
 
   const onSubmit = (values: z.infer<typeof articleSchema>) => {
     if (article) {
@@ -135,24 +165,55 @@ export function ArticleForm({
 
     upload({
       file,
-      onSuccess: (result) => {
+      onSuccess: result => {
         append({ name: result.name, url: result.path })
         toast.success('Файл загружен')
         // Clear input
         e.target.value = ''
       },
-      onError: (err) => {
+      onError: err => {
         toast.error('Ошибка загрузки: ' + err)
         e.target.value = ''
-      }
+      },
     })
+  }
+
+  const openVideoPicker = () => {
+    setVideoPickerOpen(true)
+    videoQuery
+      .refetch()
+      .then(res => {
+        if (res.data?.length === 0) {
+          console.warn(
+            '[knowledge:videos] Kinescope вернул пустой список для knowledge-папки'
+          )
+        }
+        setVideoOptions(res.data ?? [])
+      })
+      .catch(error => {
+        console.error(error)
+        toast.error('Не удалось загрузить список видео из Kinescope')
+      })
+  }
+
+  const handleSelectVideo = (videoId: string) => {
+    form.setValue('videoId', videoId)
+    const meta = videoOptions.find(v => v.id === videoId)
+    if (meta) {
+      form.setValue('videoTitle', meta.title)
+      form.setValue('videoDurationSec', meta.duration ?? undefined)
+    }
+    setVideoPickerOpen(false)
+    toast.success('Видео выбрано')
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-           <DialogTitle>{article ? 'Редактировать статью' : 'Новая статья'}</DialogTitle>
+          <DialogTitle>
+            {article ? 'Редактировать статью' : 'Новая статья'}
+          </DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -176,10 +237,24 @@ export function ArticleForm({
                 name="videoId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Kinescope Video ID</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="ID видео" />
-                    </FormControl>
+                    <FormLabel>Видео Kinescope</FormLabel>
+                    <div className="flex gap-2">
+                      <FormControl>
+                        <Input {...field} placeholder="ID видео" />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={openVideoPicker}
+                        disabled={isLoadingVideos}
+                      >
+                        {isLoadingVideos ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          'Выбрать'
+                        )}
+                      </Button>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -187,23 +262,23 @@ export function ArticleForm({
               <FormField
                 control={form.control}
                 name="order"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Порядок</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      {...field}
-                      value={field.value ?? ''}
-                      onChange={e => {
-                        const val = e.target.value
-                        field.onChange(val === '' ? undefined : Number(val))
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Порядок</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={e => {
+                          const val = e.target.value
+                          field.onChange(val === '' ? undefined : Number(val))
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
               <FormField
                 control={form.control}
@@ -238,8 +313,13 @@ export function ArticleForm({
               <FormLabel>Вложения (PDF)</FormLabel>
               <div className="flex flex-col gap-2">
                 {fields.map((field, index) => (
-                  <div key={field.id} className="flex items-center gap-2 rounded border p-2">
-                    <span className="flex-1 text-sm truncate" title={field.url}>{field.name}</span>
+                  <div
+                    key={field.id}
+                    className="flex items-center gap-2 rounded border p-2"
+                  >
+                    <span className="flex-1 text-sm truncate" title={field.url}>
+                      {field.name}
+                    </span>
                     <Button
                       type="button"
                       variant="ghost"
@@ -252,36 +332,107 @@ export function ArticleForm({
                   </div>
                 ))}
               </div>
-              
+
               <div className="flex items-center gap-2">
-                 <Button
-                    type="button"
-                    variant="outline"
-                    className="relative"
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="relative"
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="mr-2 h-4 w-4" />
+                  )}
+
+                  {isUploading ? 'Загрузка...' : 'Загрузить PDF'}
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    className="absolute inset-0 cursor-pointer opacity-0"
+                    onChange={handleFileUpload}
                     disabled={isUploading}
-                 >
-                    {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                    
-                    {isUploading ? 'Загрузка...' : 'Загрузить PDF'}
-                    <input
-                      type="file"
-                      accept=".pdf"
-                      className="absolute inset-0 cursor-pointer opacity-0"
-                      onChange={handleFileUpload}
-                      disabled={isUploading}
-                    />
-                 </Button>
+                  />
+                </Button>
               </div>
             </div>
 
             <DialogFooter>
-               <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending || isUploading}>
+              <Button
+                type="submit"
+                disabled={
+                  createMutation.isPending ||
+                  updateMutation.isPending ||
+                  isUploading
+                }
+              >
                 Сохранить
               </Button>
             </DialogFooter>
           </form>
         </Form>
       </DialogContent>
+
+      <Dialog open={videoPickerOpen} onOpenChange={setVideoPickerOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Выбрать видео для статьи</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {isLoadingVideos && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Загрузка списка видео...
+              </div>
+            )}
+            {!isLoadingVideos && videoOptions.length === 0 && (
+              <div className="text-sm text-muted-foreground">
+                Нет доступных видео в Knowledge-папке Kinescope.
+              </div>
+            )}
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {videoOptions.map(video => (
+                <button
+                  key={video.id}
+                  type="button"
+                  onClick={() => handleSelectVideo(video.id)}
+                  className="group flex flex-col gap-2 rounded-lg border p-3 text-left transition hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  <div className="relative aspect-video w-full overflow-hidden rounded bg-muted">
+                    {video.posterUrl ? (
+                      <Image
+                        src={video.posterUrl}
+                        alt={video.title}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                        Нет превью
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm font-semibold line-clamp-2">
+                      {video.title}
+                    </div>
+                    {video.duration ? (
+                      <div className="text-xs text-muted-foreground">
+                        Длительность: {video.duration} сек.
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="text-xs text-primary font-medium">
+                    Выбрать
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }

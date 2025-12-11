@@ -1,5 +1,6 @@
 import { injectable } from 'inversify'
 import { KnowledgeRepository } from '../_repositories/knowledge'
+import { compileMDX } from '@/shared/lib/mdx/server'
 
 @injectable()
 export class UpdateKnowledgeArticleService {
@@ -12,10 +13,21 @@ export class UpdateKnowledgeArticleService {
       description?: string
       content?: string
       videoId?: string
+      videoTitle?: string
+      videoDurationSec?: number | null
       attachments?: any
       order?: number
     }
   ) {
-    return this.knowledgeRepository.updateArticle(id, input)
+    const shouldUpdateContent = input.content !== undefined
+    const compiled =
+      shouldUpdateContent && input.content !== null
+        ? await compileMDX(input.content ?? '')
+        : null
+
+    return this.knowledgeRepository.updateArticle(id, {
+      ...input,
+      contentMdx: shouldUpdateContent ? compiled?.code ?? null : undefined,
+    })
   }
 }

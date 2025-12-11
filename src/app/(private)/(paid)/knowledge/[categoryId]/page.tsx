@@ -3,19 +3,25 @@ import { server } from '@/app/server'
 import { GetUserKnowledgeService } from '@/features/knowledge/module'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Button } from '@/shared/ui/button'
-import { ArrowLeft, ArrowRight, FileText, Play } from 'lucide-react'
+import { Badge } from '@/shared/ui/badge'
+import { ArrowLeft, FileText } from 'lucide-react'
+import { MdxCode } from '@/shared/lib/mdx'
+import { compileMDX } from '@/shared/lib/mdx/server'
+import { formatDuration } from '@/shared/lib/format-duration'
 
 type Props = {
-  params: { categoryId: string }
-  searchParams?: { courseId?: string }
+  params: Promise<{ categoryId: string }>
+  searchParams?: Promise<{ courseId?: string }>
 }
 
 export default async function KnowledgeCategoryPage({
   params,
   searchParams,
 }: Props) {
-  const courseId = (await Promise.resolve(searchParams?.courseId)) ?? undefined
-  const categoryId = (await Promise.resolve(params)).categoryId
+  const resolvedParams = await params
+  const resolvedSearchParams = searchParams ? await searchParams : undefined
+  const courseId = resolvedSearchParams?.courseId
+  const categoryId = resolvedParams.categoryId
   const knowledgeService = server.get(GetUserKnowledgeService)
 
   const categoryData =
@@ -26,7 +32,7 @@ export default async function KnowledgeCategoryPage({
   if (!categoryData) {
     return (
       <div className="space-y-4">
-        <Button asChild variant="ghost" className="gap-2">
+        <Button asChild variant="ghost" className="gap-2 max-w-fit">
           <Link href="/knowledge">
             <ArrowLeft className="h-4 w-4" />
             Назад
@@ -43,10 +49,22 @@ export default async function KnowledgeCategoryPage({
 
   const { category } = categoryData
 
+  const articlesWithMdx = await Promise.all(
+    category.articles.map(async article => {
+      if (article.contentMdx) {
+        return { ...article, compiledContent: article.contentMdx }
+      }
+      const compiled = article.content
+        ? await compileMDX(article.content)
+        : null
+      return { ...article, compiledContent: compiled?.code ?? null }
+    })
+  )
+
   return (
     <div className="container space-y-6">
       <div className="flex justify-start flex-col gap-3">
-        <Button asChild variant="ghost" className="gap-2">
+        <Button asChild variant="ghost" className="gap-2 max-w-fit">
           <Link href={`/knowledge?courseId=${categoryData.courseId}`}>
             <ArrowLeft className="h-4 w-4" />
             Назад
@@ -74,13 +92,14 @@ export default async function KnowledgeCategoryPage({
       ) : null}
 
       <div className=" grid gap-3">
-        {category.articles.map(article => (
+        {articlesWithMdx.map(article => (
           <Card key={article.id} className="border border-border/70 bg-card/80">
             <CardHeader className="flex flex-row items-start justify-between space-y-0">
               <div className="space-y-1">
                 <CardTitle className="text-base font-semibold">
                   {article.title}
                 </CardTitle>
+
                 {article.description ? (
                   <p className="text-sm text-muted-foreground">
                     {article.description}
@@ -89,26 +108,30 @@ export default async function KnowledgeCategoryPage({
               </div>
             </CardHeader>
             <CardContent className="space-y-4 text-sm leading-relaxed text-muted-foreground">
-              {article.content ? (
-                <p className="whitespace-pre-wrap text-foreground">
-                  {article.content}
-                </p>
-              ) : null}
-
               {article.videoId ? (
                 <div className="space-y-2">
-                  <div className="aspect-video overflow-hidden rounded-lg bg-muted flex items-center justify-center border">
-                    <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
-                      <Play className="h-6 w-6" />
-                      <span>Видео доступно</span>
-                      <span className="text-xs">ID: {article.videoId}</span>
-                    </div>
+                  <div
+                    className="relative w-full overflow-hidden rounded-lg border bg-muted"
+                    style={{ paddingTop: '56.25%' }}
+                  >
+                    {article.videoDurationSec !== null &&
+                    article.videoDurationSec !== undefined ? (
+                      <Badge className="absolute left-3 top-3 z-10">
+                        {formatDuration(article.videoDurationSec)}
+                      </Badge>
+                    ) : null}
+                    <iframe
+                      src={`https://kinescope.io/embed/${article.videoId}`}
+                      allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;"
+                      allowFullScreen
+                      className="absolute inset-0 h-full w-full"
+                      title={article.title}
+                    />
                   </div>
-                  <Button variant="secondary" className="gap-2">
-                    Смотреть
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
                 </div>
+              ) : null}
+              {article.compiledContent ? (
+                <MdxCode code={article.compiledContent} />
               ) : null}
 
               {Array.isArray(article.attachments) &&

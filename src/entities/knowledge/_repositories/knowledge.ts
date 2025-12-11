@@ -218,7 +218,10 @@ export class KnowledgeRepository {
     title: string
     description?: string
     content?: string
+    contentMdx?: string | null
     videoId?: string
+    videoTitle?: string
+    videoDurationSec?: number | null
     attachments?: any
     categoryId: string
     order?: number
@@ -242,7 +245,10 @@ export class KnowledgeRepository {
         title: data.title,
         description: data.description,
         content: data.content,
+        contentMdx: data.contentMdx ?? null,
         videoId: data.videoId,
+        videoTitle: data.videoTitle,
+        videoDurationSec: data.videoDurationSec ?? null,
         attachments: data.attachments,
         categoryId: data.categoryId,
         order: nextOrder,
@@ -256,7 +262,10 @@ export class KnowledgeRepository {
       title?: string
       description?: string
       content?: string
+      contentMdx?: string | null
       videoId?: string
+      videoTitle?: string
+      videoDurationSec?: number | null
       attachments?: any
       order?: number
     }

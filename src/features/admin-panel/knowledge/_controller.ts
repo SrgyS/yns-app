@@ -22,6 +22,8 @@ import { UnlinkKnowledgeCategoryService } from '@/entities/knowledge/_services/u
 import { ReorderCourseKnowledgeCategoriesService } from '@/entities/knowledge/_services/reorder-course-knowledge-categories'
 import { ReorderKnowledgeArticlesService } from '@/entities/knowledge/_services/reorder-knowledge-articles'
 import { KnowledgeRepository } from '@/entities/knowledge/_repositories/knowledge'
+import { kinescopeConfig } from '@/shared/config/kinescope'
+import { listKinescopeVideos, mapVideoToKnowledgeCard } from '@/shared/lib/kinescope/client'
 
 @injectable()
 export class AdminKnowledgeController extends Controller {
@@ -258,6 +260,8 @@ export class AdminKnowledgeController extends Controller {
               description: z.string().optional(),
               content: z.string().optional(),
               videoId: z.string().optional(),
+              videoTitle: z.string().optional(),
+              videoDurationSec: z.number().optional(),
               attachments: z
                 .array(
                   z.object({
@@ -299,6 +303,8 @@ export class AdminKnowledgeController extends Controller {
               description: z.string().optional(),
               content: z.string().optional(),
               videoId: z.string().optional(),
+              videoTitle: z.string().optional(),
+              videoDurationSec: z.number().optional(),
               attachments: z
                 .array(
                   z.object({
@@ -356,6 +362,27 @@ export class AdminKnowledgeController extends Controller {
           .mutation(async ({ input }) => {
             return this.reorderArticlesService.exec(input)
           }),
+      }),
+
+      videos: router({
+        list: checkAbilityProcedure({
+          create: this.createAbility,
+          check: ability => ability.canManageCourses,
+        }).query(async () => {
+          const { knowledgeFolderId } = kinescopeConfig
+          if (!knowledgeFolderId) {
+            throw new TRPCError({
+              code: 'SERVICE_UNAVAILABLE',
+              message: 'KINESCOPE_KNOWLEDGE_FOLDER_ID is not configured',
+            })
+          }
+
+          const videos = await listKinescopeVideos({
+            folderId: knowledgeFolderId,
+          })
+
+          return videos.map(mapVideoToKnowledgeCard)
+        }),
       }),
     }),
   })

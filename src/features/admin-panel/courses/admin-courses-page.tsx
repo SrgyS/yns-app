@@ -192,18 +192,18 @@ export function AdminCoursesPage({ courses }: Readonly<AdminCoursesPageProps>) {
                   <div className="flex flex-col gap-2">
                     <Button asChild className="w-full" variant="outline">
                       <Link href={`/admin/courses/${course.slug}`}>
-                        Открыть (инфо)
+                        Редактировать параметры курса
                       </Link>
                     </Button>
-                    <Button asChild className="w-full" variant="secondary">
-                       <Link href={`/admin/knowledge?courseId=${course.id}`}>
-                         Заполнить знания
-                       </Link>
+                    <Button asChild className="w-full" variant="outline">
+                      <Link href={`/admin/knowledge?courseId=${course.id}`}>
+                        Редактировать раздел знания
+                      </Link>
                     </Button>
-                      <Button asChild className="w-full" variant="secondary">
+                    <Button asChild className="w-full" variant="outline">
                       <Link href={`/admin/courses/${course.slug}/daily-plan`}>
-                        Заполнить план тренировок
-                       </Link>
+                        Редактировать план тренировок
+                      </Link>
                     </Button>
                     <Button
                       className="w-full"
