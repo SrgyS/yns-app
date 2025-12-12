@@ -10,7 +10,7 @@ import { Input } from '@/shared/ui/input'
 import { Card, CardContent } from '@/shared/ui/card'
 import { Skeleton } from '@/shared/ui/skeleton/skeleton'
 import { useWorkouts } from '@/entities/workout/_vm/use-workouts'
-// import { cn } from '@/shared/ui/utils'
+import { cn } from '@/shared/ui/utils'
 import { NoAccessCallout } from '@/features/course-enrollment/_ui/no-access-callout'
 import { useWorkoutFavorites } from '@/features/daily-plan/_vm/use-workout-favorites'
 
@@ -91,7 +91,7 @@ export function PracticeSubsectionScreen({
     content = <PracticeWorkoutsSkeleton />
   } else if (workouts.length) {
     content = (
-      <div className={`${className} grid gap-5`}>
+      <div className={cn(className, 'grid gap-5')}>
         {workouts.map(workout => (
           <PracticeWorkoutCard
             key={workout.id}

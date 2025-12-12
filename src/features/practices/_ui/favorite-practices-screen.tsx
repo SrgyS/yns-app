@@ -14,6 +14,7 @@ import { PracticeWorkoutCard } from './practice-workout-card'
 import { useFavoriteWorkoutDetails } from '../_vm/use-favorite-workouts'
 import { useWorkoutFavorites } from '@/features/daily-plan/_vm/use-workout-favorites'
 import { Button } from '@/shared/ui/button'
+import { Workout } from '@/entities/workout/_domain/types'
 
 export function FavoritePracticesScreen() {
   const router = useRouter()
@@ -81,9 +82,7 @@ function renderContent({
   isError: boolean
   error: unknown
   isLoading: boolean
-  workouts: typeof PracticeWorkoutCard extends (props: infer P) => any
-    ? P['workout'][]
-    : any[]
+  workouts: Workout[]
   favoriteControls: any
 }) {
   if (isError) {
