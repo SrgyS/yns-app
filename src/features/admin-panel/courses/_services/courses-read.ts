@@ -10,6 +10,7 @@ export type AdminCourseSummary = {
   title: string
   contentType: 'FIXED_COURSE' | 'SUBSCRIPTION'
   draft: boolean
+  showRecipes: boolean
   product: {
     access: 'free' | 'paid'
     price?: number | null
@@ -32,6 +33,7 @@ export type AdminDailyPlan = CourseUpsertInput['dailyPlans'][number] & {
 
 export type AdminCourseDetail = Omit<CourseUpsertInput, 'dailyPlans'> & {
   id: string
+  showRecipes?: boolean
   dailyPlans: AdminDailyPlan[]
 }
 
@@ -274,6 +276,7 @@ export class CoursesReadService {
       title: course.title,
       contentType: course.contentType,
       draft: course.draft,
+      showRecipes: course.showRecipes ?? false,
       product: course.product
         ? {
             access: course.product.access as 'free' | 'paid',
@@ -301,6 +304,7 @@ export class CoursesReadService {
       image: course.image,
       draft: course.draft,
       durationWeeks: course.durationWeeks,
+      showRecipes: course.showRecipes ?? false,
       allowedWorkoutDaysPerWeek: allowedWorkoutDays,
       contentType: course.contentType ?? 'FIXED_COURSE',
       product:

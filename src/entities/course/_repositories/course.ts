@@ -158,6 +158,7 @@ export class CoursesRepository {
       product,
       draft: course.draft,
       durationWeeks: course.durationWeeks,
+      showRecipes: course.showRecipes ?? false,
       allowedWorkoutDaysPerWeek:
         course.allowedWorkoutDaysPerWeek &&
         course.allowedWorkoutDaysPerWeek.length > 0

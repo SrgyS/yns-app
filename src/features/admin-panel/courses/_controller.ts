@@ -117,6 +117,14 @@ export class AdminCoursesController extends Controller {
           .mutation(async ({ input }) => {
             return this.coursesWriteService.setDraft(input.id, input.draft)
           }),
+        setShowRecipes: checkAbilityProcedure({
+          create: this.createAbility,
+          check: ability => ability.canManageCourses,
+        })
+          .input(z.object({ id: z.string().min(1), showRecipes: z.boolean() }))
+          .mutation(async ({ input }) => {
+            return this.coursesWriteService.setShowRecipes(input.id, input.showRecipes)
+          }),
         delete: checkAbilityProcedure({
           create: this.createAbility,
           check: ability => ability.canManageCourses,

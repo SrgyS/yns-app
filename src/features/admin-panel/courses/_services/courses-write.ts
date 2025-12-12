@@ -132,6 +132,14 @@ export class CoursesWriteService {
     })
   }
 
+  async setShowRecipes(id: string, showRecipes: boolean) {
+    return dbClient.course.update({
+      where: { id },
+      data: { showRecipes },
+      select: { id: true, showRecipes: true },
+    })
+  }
+
   async updateDailyPlan(input: DailyPlanUpdateInput) {
     return this.dailyPlanService.updateDailyPlan(input)
   }

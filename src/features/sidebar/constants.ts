@@ -1,4 +1,4 @@
-import { GraduationCap, LineChart, Users, Dumbbell, BookOpen } from 'lucide-react'
+import { GraduationCap, LineChart, Users, Dumbbell, BookOpen, ChefHat } from 'lucide-react'
 
 export const adminNavItems = [
   {
@@ -25,5 +25,10 @@ export const adminNavItems = [
     title: 'База знаний',
     url: '/admin/knowledge',
     icon: BookOpen,
+  },
+  {
+    title: 'Рецепты',
+    url: '/admin/recipes',
+    icon: ChefHat,
   },
 ]

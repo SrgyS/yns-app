@@ -17,6 +17,7 @@ export type Course = CourseFullInfo & {
   allowedWorkoutDaysPerWeek: number[]
   dependencies: CourseId[]
   contentType: ContentType
+  showRecipes: boolean
 }
 
 export type Product = CourseProduct
@@ -33,6 +34,7 @@ export type CourseFullInfo = CourseBaseInfo & {
   image: ImageSrc
   draft: boolean
   durationWeeks: number
+  showRecipes?: boolean
 }
 
 

@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from '@/shared/ui/dialog'
 import { adminCoursesApi } from './_api'
+import { Switch } from '@/shared/ui/switch'
 
 type AdminCoursesPageProps = {
   courses: Course[]
@@ -27,6 +28,9 @@ export function AdminCoursesPage({ courses }: Readonly<AdminCoursesPageProps>) {
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [pendingDraftId, setPendingDraftId] = useState<string | null>(null)
+  const [pendingShowRecipesId, setPendingShowRecipesId] = useState<
+    string | null
+  >(null)
   const toggleDraft = adminCoursesApi.adminCourses.course.setDraft.useMutation({
     onSuccess: updated => {
       toast.success(
@@ -57,6 +61,23 @@ export function AdminCoursesPage({ courses }: Readonly<AdminCoursesPageProps>) {
       },
     }
   )
+
+  const toggleShowRecipes =
+    adminCoursesApi.adminCourses.course.setShowRecipes.useMutation({
+      onSuccess: () => {
+        toast.success('Отображение рецептов обновлено')
+        router.refresh()
+      },
+      onError: (error: any) => {
+        toast.error(error?.message ?? 'Не удалось обновить флаг рецептов')
+      },
+      onMutate: variables => {
+        setPendingShowRecipesId(variables.id)
+      },
+      onSettled: () => {
+        setPendingShowRecipesId(null)
+      },
+    })
 
   const openConfirm = (courseId: string) => {
     setSelectedCourseId(courseId)
@@ -110,6 +131,8 @@ export function AdminCoursesPage({ courses }: Readonly<AdminCoursesPageProps>) {
             } else {
               publishLabel = 'Сделать черновиком'
             }
+            const isShowRecipesMutating =
+              toggleShowRecipes.isPending && pendingShowRecipesId === course.id
 
             return (
               <Card key={course.id} className="flex flex-col overflow-hidden">
@@ -218,6 +241,24 @@ export function AdminCoursesPage({ courses }: Readonly<AdminCoursesPageProps>) {
                     >
                       {publishLabel}
                     </Button>
+                    <div className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+                      <span className="text-muted-foreground">
+                        Показывать рецепты
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={course.showRecipes}
+                          onCheckedChange={checked =>
+                            toggleShowRecipes.mutate({
+                              id: course.id,
+                              showRecipes: Boolean(checked),
+                            })
+                          }
+                          disabled={isShowRecipesMutating}
+                          aria-label="Переключить отображение рецептов"
+                        />
+                      </div>
+                    </div>
                   </div>
                   <Button
                     variant="destructive"
