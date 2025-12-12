@@ -45,10 +45,39 @@ enum MealCategory {
   SOUP
 }
 
-enum RecipeDifficulty {
+enum RecipeDiet {
+  VEGETARIAN
+  HIGH_PROTEIN
+  LOW_CARB
+  GLUTEN_FREE
+  VEGAN
+  LOW_CALORIE
+  LACTOSE_FREE
+  SUGAR_FREE
+}
+
+enum CookingDifficulty {
   EASY
   MEDIUM
   HARD
+}
+
+enum RecipeIngredientTag {
+  FISH
+  SEAFOOD
+  NUTS
+  EGGS
+  DAIRY
+  PORK
+  BEEF
+  BREAD
+  PASTA
+  RICE
+  POTATO
+  AVOCADO
+  SALMON
+  BACON
+  SPINACH
 }
 
 enum WorkoutSection {
@@ -134,6 +163,7 @@ model Course {
   durationWeeks             Int
   allowedWorkoutDaysPerWeek Int[]             @default([])
   contentType               CourseContentType @default(FIXED_COURSE)
+  showRecipes               Boolean           @default(false)
   product                   CourseProduct?
 
   dailyPlans DailyPlan[] // Дни (планы) в фиксированном курсе
@@ -381,7 +411,11 @@ model Recipe {
   preparationTimeMinutes Int
   calories               Int?
   servings               Int
-  difficulty             RecipeDifficulty
+  cookingDifficulty      CookingDifficulty
+  shortDescription       String?
+  imageUrl               String?
+  diets                  RecipeDiet[]         @default([])
+  ingredientTags         RecipeIngredientTag[] @default([])
   isGlutenFree           Boolean              @default(false)
   isSugarFree            Boolean              @default(false)
   mealCategories         MealCategory[]
@@ -389,8 +423,20 @@ model Recipe {
   breakfastMealPlans     MealPlan[]           @relation("BreakfastMeal")
   dinnerMealPlans        MealPlan[]           @relation("DinnerMeal")
   lunchMealPlans         MealPlan[]           @relation("LunchMeal")
+  steps                  RecipeStep[]
   ingredients            RecipeIngredient[]
   favoriteRecipes        UserFavoriteRecipe[]
+}
+
+model RecipeStep {
+  id          String  @id @default(cuid())
+  stepNumber  Int
+  instruction String
+  recipeId    String
+  recipe      Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([recipeId, stepNumber])
+  @@index([recipeId])
 }
 
 model RecipeIngredient {
@@ -399,6 +445,8 @@ model RecipeIngredient {
   weightGrams Int?
   quantity    Float?
   unit        String?
+  description String?
+  order       Int     @default(0)
   recipeId    String
   recipe      Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
