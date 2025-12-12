@@ -99,7 +99,7 @@ export default async function Layout({
   return (
     <PaidAccessProviderClient initialState={paidAccessState}>
       <PaidActivityFlag />
-      <div className="pb-[72px] flex flex-col grow">{children}</div>
+      <div className="container pb-[72px] flex flex-col grow">{children}</div>
     </PaidAccessProviderClient>
   )
 }

@@ -11,7 +11,7 @@ export default async function Layout({
     <>
       <DesktopHeader variant="private" />
       <AuthorizedGuard>
-        <div className="pb-17 md:pb-0">{children}</div>
+        <div className="container pb-17 md:pb-0">{children}</div>
       </AuthorizedGuard>
       <MobileBottomNav variant="private" />
     </>

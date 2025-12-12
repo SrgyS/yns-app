@@ -42,7 +42,7 @@ export default async function ProfilePage({
       <div className="fixed top-4 right-4 md:hidden">
         <ToggleTheme variant={'outline'} />
       </div>
-      <main className="space-y-8 py-14 container max-w-[800px]">
+      <main className="space-y-8 py-14 max-w-[800px]">
         <div className="flex flex-col items-center space-y-4">
           <ProfileAvatar profile={user} className="w-24 h-24" />
           <div className="text-center">

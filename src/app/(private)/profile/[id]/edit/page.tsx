@@ -21,7 +21,7 @@ export default async function EditProfilePage({
   }
 
   return (
-    <main className="space-y-8 py-14 container max-w-[600px]">
+    <main className="space-y-8 py-14 max-w-[600px]">
       <div className="flex items-center">
         <Button variant="ghost" size="sm" asChild>
           <Link href={`/profile/${id}`} className="flex items-center gap-2">

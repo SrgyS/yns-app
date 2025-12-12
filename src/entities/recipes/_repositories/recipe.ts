@@ -273,6 +273,14 @@ export class RecipeRepository {
     return Boolean(favorite)
   }
 
+  async getFavoriteIds(userId: string) {
+    const favorites = await dbClient.userFavoriteRecipe.findMany({
+      where: { userId },
+      select: { recipeId: true },
+    })
+    return favorites.map(item => item.recipeId)
+  }
+
   private async getNextIngredientOrder(recipeId: string) {
     const last = await dbClient.recipeIngredient.findFirst({
       where: { recipeId },

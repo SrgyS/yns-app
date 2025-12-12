@@ -62,7 +62,7 @@ export default async function KnowledgeCategoryPage({
   )
 
   return (
-    <div className="container space-y-6">
+    <div className="space-y-6">
       <div className="flex justify-start flex-col gap-3">
         <Button asChild variant="ghost" className="gap-2 max-w-fit">
           <Link href={`/knowledge?courseId=${categoryData.courseId}`}>

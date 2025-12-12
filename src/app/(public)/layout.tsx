@@ -9,7 +9,7 @@ export default async function Layout({
   return (
     <>
       <DesktopHeader variant="public" />
-      <div className="pb-17 md:pb-0">{children}</div>
+      <div className="container pb-17 md:pb-0">{children}</div>
       <MobileBottomNav variant="public" />
     </>
   )

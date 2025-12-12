@@ -2,7 +2,6 @@ import { TRPCError } from '@trpc/server'
 import { injectable, inject } from 'inversify'
 import {
   authorizedProcedure,
-  publicProcedure,
   Controller,
   router,
 } from '@/kernel/lib/trpc/module'
@@ -17,6 +16,7 @@ import { z } from 'zod'
 import { GetRecipesWithFiltersService } from '@/entities/recipes/_services/get-recipes-with-filters'
 import { RecipeRepository } from '@/entities/recipes/_repositories/recipe'
 import { ToggleFavoriteRecipeService } from '@/entities/recipes/_services/toggle-favorite-recipe'
+import { GetUserCoursesListService } from '@/features/user-courses/module'
 
 @injectable()
 export class UserRecipesController extends Controller {
@@ -26,14 +26,34 @@ export class UserRecipesController extends Controller {
     @inject(RecipeRepository)
     private readonly recipeRepository: RecipeRepository,
     @inject(ToggleFavoriteRecipeService)
-    private readonly toggleFavoriteRecipeService: ToggleFavoriteRecipeService
+    private readonly toggleFavoriteRecipeService: ToggleFavoriteRecipeService,
+    @inject(GetUserCoursesListService)
+    private readonly getUserCoursesListService: GetUserCoursesListService
   ) {
     super()
   }
 
+  private async ensureRecipesAccess(userId?: string) {
+    if (!userId) {
+      throw new TRPCError({ code: 'UNAUTHORIZED' })
+    }
+
+    const courses = await this.getUserCoursesListService.exec(userId)
+    const allowed = courses.filter(item => item.course.showRecipes)
+
+    if (allowed.length === 0) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Нет доступа к рецептам',
+      })
+    }
+
+    return allowed
+  }
+
   public router = router({
     recipes: router({
-      list: publicProcedure
+      list: authorizedProcedure
         .input(
           z
             .object({
@@ -48,13 +68,11 @@ export class UserRecipesController extends Controller {
             .optional()
         )
         .query(async ({ ctx, input }) => {
+          const userId = ctx.session.user.id
+          await this.ensureRecipesAccess(userId)
           const payload = input ?? {}
 
-          if (payload.onlyFavorites && !ctx.session) {
-            throw new TRPCError({ code: 'UNAUTHORIZED' })
-          }
-
-          return this.getRecipesWithFiltersService.exec({
+          const recipes = await this.getRecipesWithFiltersService.exec({
             search: payload.search,
             mealCategories: payload.mealCategories,
             diets: payload.diets,
@@ -62,18 +80,32 @@ export class UserRecipesController extends Controller {
             fast: payload.fast,
             ingredientTags: payload.ingredientTags,
             onlyFavorites: payload.onlyFavorites,
-            userId: payload.onlyFavorites ? ctx.session?.user.id : undefined,
+            userId: userId,
           })
+
+          const favoriteIds = await this.recipeRepository.getFavoriteIds(userId)
+          const favoriteSet = new Set(favoriteIds)
+
+          return recipes.map(recipe => ({
+            ...recipe,
+            isFavorite: favoriteSet.has(recipe.id),
+          }))
         }),
 
-      getBySlug: publicProcedure
+      getBySlug: authorizedProcedure
         .input(z.object({ slug: z.string().min(1) }))
-        .query(async ({ input }) => {
+        .query(async ({ ctx, input }) => {
+          const userId = ctx.session.user.id
+          await this.ensureRecipesAccess(userId)
           const recipe = await this.recipeRepository.getRecipeBySlug(input.slug)
           if (!recipe) {
             throw new TRPCError({ code: 'NOT_FOUND' })
           }
-          return recipe
+          const isFavorite = await this.recipeRepository.isFavorite(
+            userId,
+            recipe.id
+          )
+          return { ...recipe, isFavorite }
         }),
 
       toggleFavorite: authorizedProcedure

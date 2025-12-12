@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 3600
 export default async function Home() {
   return (
-    <main className="container flex min-h-screen flex-col p-8">
+    <main className="flex min-h-screen flex-col p-8">
       <Card className="from-primary/20 to-background bg-linear-to-bl to-50%">
         <CardContent>
           <span className="text-xs sm:text-xl">ОНЛАЙН ФИТНЕС-КЛУБ</span>

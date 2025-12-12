@@ -100,7 +100,7 @@ export default async function PaymentPage({
   }
 
   return (
-    <main className="container max-w-3xl space-y-8 py-12">
+    <main className="max-w-3xl space-y-8 py-12">
       <Card className="space-y-6">
         <CardHeader>
           <CardTitle>Оплата заказа</CardTitle>

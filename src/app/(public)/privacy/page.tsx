@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader } from '@/shared/ui/card'
 
 export default function PrivacyPage() {
   return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl">
+    <div className="mx-auto py-8 px-4 max-w-4xl">
       <Card>
         <CardHeader>
           <h1 className="text-3xl font-bold text-center">

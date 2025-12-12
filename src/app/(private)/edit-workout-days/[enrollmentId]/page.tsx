@@ -52,7 +52,7 @@ export default async function EditWorkoutDays({
       : [5]
 
   return (
-    <main className="flex flex-col justify-center space-y-6 py-14 container max-w-[800px]">
+    <main className="flex flex-col justify-center space-y-6 py-14 max-w-[800px]">
       <EditWorkoutDaysClient
         enrollmentId={enrollmentId}
         initialSelectedDays={currentWorkoutDays}

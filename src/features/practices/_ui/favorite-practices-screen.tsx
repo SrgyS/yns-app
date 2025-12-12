@@ -28,7 +28,7 @@ export function FavoritePracticesScreen() {
   }
 
   return (
-    <div className="container max-w-[640px] space-y-6 py-10">
+    <div className="max-w-[640px] space-y-6 py-10">
       <div className="flex items-center gap-3">
         <Button
           type="button"
@@ -59,33 +59,67 @@ export function FavoritePracticesScreen() {
           </Badge>
         </div>
 
-        {isError ? (
-          <NoAccessCallout
-            title="Доступ ограничен"
-            description={
-              error instanceof Error
-                ? error.message
-                : 'Избранные тренировки доступны при активной подписке.'
-            }
-            ctaLabel="Выбрать курс"
-            ctaHref="/"
-          />
-        ) : (isLoading || isFetching) && workouts.length === 0 ? (
-          <PracticeWorkoutsSkeleton />
-        ) : workouts.length ? (
-          <div className="grid gap-5">
-            {workouts.map(workout => (
-              <PracticeWorkoutCard
-                key={workout.id}
-                workout={workout}
-                favoriteControls={favoriteControls}
-              />
-            ))}
-          </div>
-        ) : (
-          <PracticeEmptyState message="У вас пока нет избранных тренировок. Добавьте понравившиеся занятия из ежедневного плана." />
-        )}
+        {renderContent({
+          isError,
+          error,
+          isLoading: isLoading || isFetching,
+          workouts,
+          favoriteControls,
+        })}
       </div>
     </div>
+  )
+}
+
+function renderContent({
+  isError,
+  error,
+  isLoading,
+  workouts,
+  favoriteControls,
+}: {
+  isError: boolean
+  error: unknown
+  isLoading: boolean
+  workouts: typeof PracticeWorkoutCard extends (props: infer P) => any
+    ? P['workout'][]
+    : any[]
+  favoriteControls: any
+}) {
+  if (isError) {
+    return (
+      <NoAccessCallout
+        title="Доступ ограничен"
+        description={
+          error instanceof Error
+            ? error.message
+            : 'Избранные тренировки доступны при активной подписке.'
+        }
+        ctaLabel="Выбрать курс"
+        ctaHref="/"
+      />
+    )
+  }
+
+  if (isLoading && workouts.length === 0) {
+    return <PracticeWorkoutsSkeleton />
+  }
+
+  if (workouts.length > 0) {
+    return (
+      <div className="grid gap-5">
+        {workouts.map(workout => (
+          <PracticeWorkoutCard
+            key={workout.id}
+            workout={workout}
+            favoriteControls={favoriteControls}
+          />
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <PracticeEmptyState message="У вас пока нет избранных тренировок. Добавьте понравившиеся занятия из ежедневного плана." />
   )
 }
