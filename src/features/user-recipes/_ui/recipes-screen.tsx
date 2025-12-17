@@ -358,7 +358,7 @@ function renderRecipesState({
               ))}
             </div>
             <Button asChild variant="link" className="px-0 text-primary">
-              <Link href={`/recipes/${recipe.slug}`}>Подробнее</Link>
+              <Link href={`/platform/recipes/${recipe.slug}`}>Подробнее</Link>
             </Button>
           </CardContent>
         </Card>

@@ -22,11 +22,11 @@ export function useCourseAction(courseId: CourseId, courseSlug: CourseSlug) {
   }
 
   if (action.type === 'setup') {
-    return { ...action, href: `/select-workout-days/${courseId}` }
+    return { ...action, href: `/platform/select-workout-days/${courseId}` }
   }
 
   if (action.type === 'enter') {
-    return { ...action, href: `/day/${courseSlug}` }
+    return { ...action, href: `/platform/day/${courseSlug}` }
   }
 
   return action

@@ -4,12 +4,12 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import { LogIn } from 'lucide-react'
-import { NAV_ITEMS } from '@/features/navigation/nav-items'
+import { PLATFORM_NAV_ITEMS } from '@/features/navigation/nav-items'
 import { cn } from '@/shared/ui/utils'
 import { SignInButton } from '@/features/auth/_ui/sign-in-button'
 
 type MobileBottomNavClientProps = {
-  planUrl: string
+  planUrl?: string
   hasActiveCourse: boolean
   hasAnyCourses: boolean
   profileHref: string
@@ -24,7 +24,9 @@ export function MobileBottomNavClient({
   isAuthenticated,
 }: MobileBottomNavClientProps) {
   const pathname = usePathname() ?? '/'
-  const mobileItems = NAV_ITEMS.filter(item => item.targets.includes('mobile'))
+  const mobileItems = PLATFORM_NAV_ITEMS.filter(item =>
+    item.targets.includes('mobile')
+  )
 
   const [pendingHref, setPendingHref] = useState<string | null>(
     () => lastPendingHref
@@ -78,7 +80,7 @@ export function MobileBottomNavClient({
       >
         {mobileItems.map(item => {
           const href =
-            item.key === 'plan'
+            item.key === 'plan' && planUrl
               ? planUrl
               : item.key === 'profile'
                 ? profileHref

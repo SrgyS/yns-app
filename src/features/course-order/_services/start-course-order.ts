@@ -93,7 +93,7 @@ export class StartCourseOrderService {
 
     if (!isProdamusConfigured) {
       // TODO(prod-integr): remove fallback redirect once Prodamus integration is live
-      const fallbackUrl = `/order/temp-prodamus-order/${course.slug}?orderId=${encodeURIComponent(
+      const fallbackUrl = `/platform/order/temp-prodamus-order/${course.slug}?orderId=${encodeURIComponent(
         orderId
       )}&urlReturn=${encodeURIComponent(command.urlReturn)}`
       console.log('PRODAMUS IS NOT CONFIGURED, REDIRECT TO', fallbackUrl)

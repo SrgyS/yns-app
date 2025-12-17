@@ -16,7 +16,7 @@ export function CourseItem({ course }: Readonly<{ course: Course }>) {
       <CardFooter>
         <CourseAction courseId={course.id} courseSlug={course.slug} />
         {/* <Button>
-          <Link href={`/select-workout-days/${course.id}`}>Купить</Link>
+          <Link href={`/platform/select-workout-days/${course.id}`}>Купить</Link>
         </Button> */}
       </CardFooter>
     </Card>

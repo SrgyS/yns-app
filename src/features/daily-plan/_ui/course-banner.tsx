@@ -43,7 +43,7 @@ export function CourseBanner({
       : null
 
   const handleGoToProfile = () => {
-    router.push(`/profile/${session?.user?.id}`)
+    router.push(`/cabinet/profile/${session?.user?.id}`)
   }
 
   if (isLoading) {

@@ -7,14 +7,19 @@ import { Profile } from './_ui/profile'
 export function DesktopHeader({
   variant,
 }: Readonly<{
-  variant: 'auth' | 'private' | 'public'
+  variant: 'auth' | 'private' | 'public' | 'cabinet'
 }>) {
   const isProfile = variant !== 'auth'
 
   return (
     <Layout
       logo={<Logo />}
-      nav={isProfile && <MainNav />}
+      nav={
+        isProfile &&
+        variant !== 'cabinet' && (
+          <MainNav variant={variant === 'public' ? 'public' : 'private'} />
+        )
+      }
       profile={isProfile && <Profile />}
       actions={<ToggleTheme />}
     />

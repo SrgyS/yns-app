@@ -5,7 +5,7 @@ export const getCourseOrderPath = (
   urlReturn: string,
   baseUrl = ''
 ) => {
-  const url = `${baseUrl}/order?courseSlug=${courseSlug}&urlReturn=${encodeURIComponent(
+  const url = `${baseUrl}/platform/order?courseSlug=${courseSlug}&urlReturn=${encodeURIComponent(
     urlReturn
   )}`
 
@@ -13,18 +13,18 @@ export const getCourseOrderPath = (
 }
 
 export const getCourseOrderSucccessPath = (baseUrl = '') => {
-  const url = `${baseUrl}/order/success`
+  const url = `${baseUrl}/platform/order/success`
 
   return url
 }
 export const getCourseOrdereWebhookPath = (baseUrl = '') => {
-  const url = `${baseUrl}/order/webhook`
+  const url = `${baseUrl}/platform/order/webhook`
 
   return url
 }
 
 export const getCoursePath = (courseSlug: CourseSlug, baseUrl = '') => {
-  const url = `${baseUrl}/day/${courseSlug}`
+  const url = `${baseUrl}/platform/day/${courseSlug}`
 
   return url
 }

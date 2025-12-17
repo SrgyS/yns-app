@@ -116,7 +116,7 @@ function KnowledgeCategoryCard({
           size="sm"
           className="gap-2 justify-start"
         >
-          <Link href={`/knowledge/${category.id}?courseId=${courseId}`}>
+          <Link href={`/platform/knowledge/${category.id}?courseId=${courseId}`}>
             Открыть
             <ArrowRight className="h-4 w-4" />
           </Link>

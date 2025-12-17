@@ -25,7 +25,7 @@ export function FavoritePracticesScreen() {
   const favoriteControls = useWorkoutFavorites()
 
   const handleBack = () => {
-    router.push('/practices')
+    router.push('/platform/practices')
   }
 
   return (

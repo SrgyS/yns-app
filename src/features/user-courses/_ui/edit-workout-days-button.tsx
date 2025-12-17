@@ -20,7 +20,7 @@ export const EditWorkoutDaysButton = ({
 
   return (
     <Button asChild variant="outline">
-      <Link href={`/edit-workout-days/${enrollmentId}`}>
+      <Link href={`/platform/edit-workout-days/${enrollmentId}`}>
         <Edit className="mr-2 h-4 w-4" />
         Изменить дни
       </Link>

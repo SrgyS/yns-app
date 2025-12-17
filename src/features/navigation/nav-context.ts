@@ -21,7 +21,7 @@ export const getNavigationContext = cache(
 
     const session = await sessionService.get()
 
-    let planUrl = '/course-access'
+    let planUrl = '/platform/plan'
     let hasActiveCourse = false
     let hasAnyCourses = false
     const userId = session?.user?.id
@@ -34,7 +34,7 @@ export const getNavigationContext = cache(
         ])
 
         if (activeEnrollment?.course?.slug) {
-          planUrl = `/day/${activeEnrollment.course.slug}`
+          planUrl = `/platform/day/${activeEnrollment.course.slug}`
           hasActiveCourse = true
         }
 
@@ -44,7 +44,9 @@ export const getNavigationContext = cache(
       }
     }
 
-    const profileHref = userId ? `/profile/${userId}` : '/auth/sign-in'
+    const profileHref = userId
+      ? `/cabinet/profile/${userId}`
+      : '/auth/sign-in'
     const isAuthenticated = Boolean(userId)
 
     return {

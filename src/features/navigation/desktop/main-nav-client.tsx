@@ -2,27 +2,33 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { NAV_ITEMS } from '@/features/navigation/nav-items'
+import {
+  PLATFORM_NAV_ITEMS,
+  PUBLIC_NAV_ITEMS,
+  type NavigationItem,
+} from '@/features/navigation/nav-items'
 import { cn } from '@/shared/ui/utils'
 import { useCallback, useEffect, useState } from 'react'
 
 type MainNavClientProps = {
-  planUrl: string
-  hasActiveCourse: boolean
-  hasAnyCourses: boolean
+  variant: 'public' | 'private'
+  planUrl?: string
+  hasActiveCourse?: boolean
+  hasAnyCourses?: boolean
 }
 
 let lastPendingHref: string | null = null
 
 export function MainNavClient({
+  variant,
   planUrl,
   // hasActiveCourse,
   // hasAnyCourses,
 }: MainNavClientProps) {
+  const items: NavigationItem[] =
+    variant === 'public' ? PUBLIC_NAV_ITEMS : PLATFORM_NAV_ITEMS
   const pathname = usePathname() ?? ''
-  const desktopItems = NAV_ITEMS.filter(item =>
-    item.targets.includes('desktop')
-  )
+  const desktopItems = items.filter(item => item.targets.includes('desktop'))
   // const planStateClass = hasActiveCourse
   //   ? 'text-foreground/60'
   //   : hasAnyCourses
@@ -68,7 +74,8 @@ export function MainNavClient({
   return (
     <nav className="flex flex-row items-center gap-6 text-sm font-medium">
       {desktopItems.map(item => {
-        const href = item.key === 'plan' ? planUrl : item.href
+        const href =
+          item.key === 'plan' && planUrl ? planUrl : item.href
         const isCurrentRoute = isActive(href)
         const isPending = pendingHref === href
         const active = pendingHref ? isPending : isCurrentRoute

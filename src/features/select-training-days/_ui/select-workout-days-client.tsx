@@ -98,7 +98,7 @@ export function SelectWorkoutDaysClient({
       }
       setIsSubmitting(false)
       toast.success('План тренировок готов!')
-      router.push(`/day/${courseSlug}`)
+      router.push(`/platform/day/${courseSlug}`)
     } catch (error) {
       console.error('Error handling workout days:', error)
       // Проверяем, есть ли сообщение об ошибке

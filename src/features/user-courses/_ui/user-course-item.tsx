@@ -68,7 +68,7 @@ export function UserCourseItem({
     await courseEnrollmentUtils.course.getEnrollment.invalidate()
 
     // Переходим на страницу тренировок
-    router.push(`/day/${course.slug}`)
+    router.push(`/platform/day/${course.slug}`)
   }
 
   const startDateFormatted = format(

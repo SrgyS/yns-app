@@ -64,7 +64,7 @@ export function PracticeSubsectionScreen({
       return
     }
 
-    router.push('/practices')
+    router.push('/platform/practices')
   }
 
   // const containerClasses = cn(
