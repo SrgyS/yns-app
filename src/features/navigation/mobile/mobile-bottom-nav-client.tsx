@@ -22,7 +22,7 @@ export function MobileBottomNavClient({
   hasAnyCourses,
   profileHref,
   isAuthenticated,
-}: MobileBottomNavClientProps) {
+}: Readonly<MobileBottomNavClientProps>) {
   const pathname = usePathname() ?? '/'
   const mobileItems = PLATFORM_NAV_ITEMS.filter(item =>
     item.targets.includes('mobile')
@@ -57,11 +57,12 @@ export function MobileBottomNavClient({
     [pathname]
   )
 
-  const planStateClass = hasActiveCourse
-    ? ''
-    : hasAnyCourses
+  let planStateClass = ''
+  if (!hasActiveCourse) {
+    planStateClass = hasAnyCourses
       ? 'text-amber-500 font-semibold'
       : 'text-muted-foreground/50'
+  }
 
   useEffect(() => {
     if (pendingHref && isActive(pendingHref)) {
@@ -71,7 +72,7 @@ export function MobileBottomNavClient({
   }, [pathname, pendingHref, isActive])
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 md:hidden">
       <ul
         className="flex items-start justify-around px-2 pt-2 text-xs max-[370px]:px-1.5 max-[370px]:pt-1.5 max-[370px]:text-[10px]"
         style={{
@@ -79,12 +80,12 @@ export function MobileBottomNavClient({
         }}
       >
         {mobileItems.map(item => {
-          const href =
-            item.key === 'plan' && planUrl
-              ? planUrl
-              : item.key === 'profile'
-                ? profileHref
-                : item.href
+          let href = item.href
+          if (item.key === 'plan' && planUrl) {
+            href = planUrl
+          } else if (item.key === 'profile') {
+            href = profileHref
+          }
 
           const isCurrentRoute = isActive(href)
           const isPending = pendingHref === href

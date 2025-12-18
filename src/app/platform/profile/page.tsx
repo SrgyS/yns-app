@@ -52,12 +52,6 @@ export default async function ProfilePage({
             </h1>
             <p className="text-sm text-muted-foreground">{user.email}</p>
           </div>
-          <Button asChild size="sm" className="gap-2">
-            <Link href={`/cabinet/profile/${id}/edit`}>
-              <Edit className="h-4 w-4" />
-              Изменить профиль
-            </Link>
-          </Button>
           {canAccessAdmin ? (
             <Button asChild size="sm" className="gap-2">
               <Link href="/admin/courses">
@@ -75,7 +69,7 @@ export default async function ProfilePage({
               className="w-full justify-between"
               variant="outline"
             >
-              <Link href={`/cabinet/profile/${id}/edit`}>
+              <Link href={`/platform/profile/edit`}>
                 <div className="flex items-center gap-2">
                   <Edit className="h-5 w-5 text-primary" />
                   Изменить профиль

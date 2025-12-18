@@ -1,4 +1,4 @@
-import { DesktopHeader } from '@/features/desktop-header/desktop-header'
+import { TopBar } from '@/features/headers/top-bar/top-bar'
 
 export default async function Layout({
   children,
@@ -7,7 +7,7 @@ export default async function Layout({
 }) {
   return (
     <>
-      <DesktopHeader variant="auth" />
+      <TopBar variant="auth" />
       {children}
     </>
   )

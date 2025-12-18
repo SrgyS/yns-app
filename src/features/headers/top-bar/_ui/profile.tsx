@@ -23,7 +23,7 @@ export function Profile() {
   const user = session?.data?.user
 
   return (
-    <Link href={`/cabinet/profile/${user?.id}`}>
+    <Link href="/platform/profile">
       <ProfileAvatar profile={user} className="w-8 h-8" />
     </Link>
   )

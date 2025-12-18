@@ -9,7 +9,7 @@ import { PaidAccessProviderClient } from '@/features/course-enrollment/_vm/paid-
 import { NoAccessCallout } from '@/features/course-enrollment/_ui/no-access-callout'
 import { PaidActivityFlag } from '@/features/activity-tracker/paid-activity-flag'
 import { UserFreezeRepository } from '@/entities/user-access/_repository/user-freeze'
-import { DesktopHeader } from '@/features/desktop-header/desktop-header'
+import { PlatformHeader } from '@/features/headers/platform-header'
 import { MobileBottomNav } from '@/features/navigation/mobile/mobile-bottom-nav'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
@@ -81,7 +81,9 @@ export default async function PlatformLayout({
       <PaidAccessProviderClient initialState={paidAccessState}>
         <PaidActivityFlag />
         <div className="min-h-screen flex flex-col bg-background">
-          <DesktopHeader variant="private" />
+          <div className="hidden md:block">
+            <PlatformHeader />
+          </div>
           <main className="flex-1 flex items-start justify-center">
             <div className="w-full max-w-[720px] px-4 sm:px-6 py-10">
               <NoAccessCallout
@@ -102,7 +104,9 @@ export default async function PlatformLayout({
     <PaidAccessProviderClient initialState={paidAccessState}>
       <PaidActivityFlag />
       <div className="min-h-screen flex flex-col bg-background">
-        <DesktopHeader variant="private" />
+        <div className="hidden md:block">
+          <PlatformHeader />
+        </div>
         <main className="flex-1 container pb-17 md:pb-0 px-3 sm:px-6 py-6">
           {children}
         </main>

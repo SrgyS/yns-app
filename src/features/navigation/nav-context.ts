@@ -44,9 +44,7 @@ export const getNavigationContext = cache(
       }
     }
 
-    const profileHref = userId
-      ? `/cabinet/profile/${userId}`
-      : '/auth/sign-in'
+    const profileHref = userId ? '/platform/profile' : '/auth/sign-in'
     const isAuthenticated = Boolean(userId)
 
     return {

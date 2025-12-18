@@ -8,22 +8,22 @@ import { server } from '@/app/server'
 import { Button } from '@/shared/ui/button'
 
 export default async function EditProfilePage({
-  params,
   searchParams,
-}: {
+}: Readonly<{
   params: Promise<{ id: string }>
   searchParams?: Promise<{ returnTo?: string }>
-}) {
-  const { id } = await params
+}>) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined
-  const returnTo = resolvedSearchParams?.returnTo || '/cabinet/dashboard'
+  const returnTo = resolvedSearchParams?.returnTo || '/platform/profile'
 
   const sessionService = server.get(SessionService)
   const session = await sessionService.get()
 
-  if (!session) {
-    return redirect('/auth/sign-in')
+ if (!session?.user?.id) {
+    redirect('/auth/sign-in')
   }
+
+  const id = session.user.id
 
   return (
     <main className="space-y-8 py-14 max-w-[600px]">

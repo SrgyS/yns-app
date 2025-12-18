@@ -1,5 +1,4 @@
-import { DesktopHeader } from '@/features/desktop-header/desktop-header'
-import { MobileBottomNav } from '@/features/navigation/mobile/mobile-bottom-nav'
+import { SiteHeader } from '@/features/headers/site-header'
 
 export default async function Layout({
   children,
@@ -7,10 +6,9 @@ export default async function Layout({
   children: React.ReactNode
 }>) {
   return (
-    <>
-      <DesktopHeader variant="public" />
-      <div className="container pb-17 md:pb-0">{children}</div>
-      <MobileBottomNav variant="public" />
-    </>
+    <div className="min-h-screen flex flex-col bg-background">
+      <SiteHeader />
+      <div className="container pb-17 md:pb-0 flex-1">{children}</div>
+    </div>
   )
 }
