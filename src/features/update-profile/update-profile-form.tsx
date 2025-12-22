@@ -28,7 +28,7 @@ export function UpdateProfileForm({
   const router = useRouter()
   const handleSuccess = () => {
     if (callbackUrl) {
-      router.push(callbackUrl)
+      router.replace(callbackUrl)
     }
   }
 

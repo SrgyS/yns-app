@@ -18,14 +18,21 @@ import { UserCoursesModule } from '@/features/user-courses/module'
 import { AdminUsersModule } from '@/features/admin-panel/users/module'
 import { AdminCoursesModule } from '@/features/admin-panel/courses/module'
 import { AdminWorkoutsModule } from '@/features/admin-panel/workouts/module'
+import { KnowledgeModule } from '@/entities/knowledge/module'
+import { AdminKnowledgeModule } from '@/features/admin-panel/knowledge/module'
+import { UserKnowledgeModule } from '@/features/knowledge/module'
+import { RecipesModule } from '@/entities/recipes/module'
+import { AdminRecipesModule } from '@/features/admin-panel/recipes/module'
+import { UserRecipesModule } from '@/features/user-recipes/module'
+
 
 export function createServer() {
   const container = new Container()
 
   container.load(
+    CourseEntityModule,
     NextAuthModule,
     CoursesListModule,
-    CourseEntityModule,
     UserEntityModule,
     UpdateProfileModule,
     TrpcModule,
@@ -39,7 +46,13 @@ export function createServer() {
     UserCoursesModule,
     AdminUsersModule,
     AdminCoursesModule,
-    AdminWorkoutsModule
+    AdminWorkoutsModule,
+    AdminKnowledgeModule,
+    KnowledgeModule,
+    UserKnowledgeModule,
+    RecipesModule,
+    AdminRecipesModule,
+    UserRecipesModule
   )
 
   return container

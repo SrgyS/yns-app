@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Logo } from '@/features/desktop-header/_ui/logo'
+import { Logo } from '@/features/headers/top-bar/_ui/logo'
 import {
   SidebarMenu,
   SidebarMenuItem,

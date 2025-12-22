@@ -261,17 +261,20 @@ export function DayTabs({
                 stepIndex={dailyPlanQuery.data.warmupStepIndex}
               />
             )}
-            {dailyPlanQuery.data.isWorkoutDay &&
-              dailyPlanQuery.data.mainWorkoutId && (
-                <ExerciseCard
-                  title="Тренировка"
-                  workoutId={dailyPlanQuery.data.mainWorkoutId}
-                  enrollmentId={enrollment?.id || ''}
-                  userDailyPlanId={dailyPlanQuery.data.id}
-                  contentType={DailyContentType.MAIN}
-                  stepIndex={dailyPlanQuery.data.mainWorkoutStepIndex!}
-                />
-              )}
+            {dailyPlanQuery.data?.isWorkoutDay &&
+              dailyPlanQuery.data?.mainWorkouts?.length ? (
+                dailyPlanQuery.data.mainWorkouts.map(main => (
+                  <ExerciseCard
+                    key={`${dailyPlanQuery.data?.id ?? 'plan'}-${main.order}`}
+                    title="Тренировка"
+                    workoutId={main.workoutId}
+                    enrollmentId={enrollment?.id || ''}
+                    userDailyPlanId={dailyPlanQuery.data?.id ?? ''}
+                    contentType={DailyContentType.MAIN}
+                    stepIndex={main.stepIndex}
+                  />
+                ))
+              ) : null}
           </>
         ) : (
           <>Нет тренировки</>

@@ -30,10 +30,11 @@ export class UserWorkoutCompletionRepository {
     try {
       const completion = await db.userWorkoutCompletion.upsert({
         where: {
-          userId_enrollmentId_contentType_stepIndex: {
+          userId_enrollmentId_contentType_workoutId_stepIndex: {
             userId,
             enrollmentId,
             contentType,
+            workoutId,
             stepIndex,
           },
         },
@@ -76,6 +77,7 @@ export class UserWorkoutCompletionRepository {
 
   async removeWorkoutCompletion(
     userId: string,
+    workoutId: string,
     enrollmentId: string,
     contentType: DailyContentType,
     stepIndex: number,
@@ -87,6 +89,7 @@ export class UserWorkoutCompletionRepository {
           userId,
           enrollmentId,
           contentType,
+          workoutId,
           stepIndex,
         },
       })
@@ -105,6 +108,7 @@ export class UserWorkoutCompletionRepository {
 
   async getWorkoutCompletionStatus(
     userId: string,
+    workoutId: string,
     enrollmentId: string,
     contentType: DailyContentType,
     stepIndex: number,
@@ -113,10 +117,11 @@ export class UserWorkoutCompletionRepository {
     try {
       const completion = await db.userWorkoutCompletion.findUnique({
         where: {
-          userId_enrollmentId_contentType_stepIndex: {
+          userId_enrollmentId_contentType_workoutId_stepIndex: {
             userId,
             enrollmentId,
             contentType,
+            workoutId,
             stepIndex,
           },
         },
@@ -235,17 +240,17 @@ export class UserWorkoutCompletionRepository {
           const warmupOccurrenceKey = `${DailyContentType.WARMUP}:${plan.warmupId}:${warmupOccurrence}`
           byOccurrence.set(warmupOccurrenceKey, plan.warmupStepIndex)
 
-          if (plan.mainWorkoutId) {
+          for (const main of plan.mainWorkouts ?? []) {
             const mainOccurrence =
-              (mainCounters.get(plan.mainWorkoutId) ?? 0) + 1
-            mainCounters.set(plan.mainWorkoutId, mainOccurrence)
-            const mainKey = `${DailyContentType.MAIN}:${plan.mainWorkoutStepIndex ?? 0}`
+              (mainCounters.get(main.workoutId) ?? 0) + 1
+            mainCounters.set(main.workoutId, mainOccurrence)
+            const mainKey = `${DailyContentType.MAIN}:${main.stepIndex}`
             byKey.set(mainKey, {
-              workoutId: plan.mainWorkoutId,
+              workoutId: main.workoutId,
               occurrence: mainOccurrence,
             })
-            const mainOccurrenceKey = `${DailyContentType.MAIN}:${plan.mainWorkoutId}:${mainOccurrence}`
-            byOccurrence.set(mainOccurrenceKey, plan.mainWorkoutStepIndex ?? 0)
+            const mainOccurrenceKey = `${DailyContentType.MAIN}:${main.workoutId}:${mainOccurrence}`
+            byOccurrence.set(mainOccurrenceKey, main.stepIndex)
           }
         }
 

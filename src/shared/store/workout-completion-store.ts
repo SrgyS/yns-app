@@ -6,9 +6,10 @@ export const createCompletionKey = (
   userId: string,
   enrollmentId: string,
   contentType: DailyContentType,
-  stepIndex: number
+  stepIndex: number,
+  workoutId: string
 ): string => {
-  return `${userId}:${enrollmentId}:${contentType}:${stepIndex}`
+  return `${userId}:${enrollmentId}:${contentType}:${workoutId}:${stepIndex}`
 }
 
 type WorkoutCompletionState = {

@@ -45,10 +45,39 @@ enum MealCategory {
   SOUP
 }
 
-enum RecipeDifficulty {
+enum RecipeDiet {
+  VEGETARIAN
+  HIGH_PROTEIN
+  LOW_CARB
+  GLUTEN_FREE
+  VEGAN
+  LOW_CALORIE
+  LACTOSE_FREE
+  SUGAR_FREE
+}
+
+enum CookingDifficulty {
   EASY
   MEDIUM
   HARD
+}
+
+enum RecipeIngredientTag {
+  FISH
+  SEAFOOD
+  NUTS
+  EGGS
+  DAIRY
+  PORK
+  BEEF
+  BREAD
+  PASTA
+  RICE
+  POTATO
+  AVOCADO
+  SALMON
+  BACON
+  SPINACH
 }
 
 enum WorkoutSection {
@@ -134,6 +163,7 @@ model Course {
   durationWeeks             Int
   allowedWorkoutDaysPerWeek Int[]             @default([])
   contentType               CourseContentType @default(FIXED_COURSE)
+  showRecipes               Boolean           @default(false)
   product                   CourseProduct?
 
   dailyPlans DailyPlan[] // Дни (планы) в фиксированном курсе
@@ -144,6 +174,52 @@ model Course {
 
   dependencies CourseDependency[] @relation("CourseDependencies")
   dependents   CourseDependency[] @relation("CourseDependents")
+
+  knowledgeCategories CourseKnowledgeCategory[]
+}
+
+model KnowledgeCategory {
+  id          String @id @default(cuid())
+  slug        String @unique
+  title       String
+  description String?
+
+  articles KnowledgeArticle[]
+  courses  CourseKnowledgeCategory[]
+}
+
+model CourseKnowledgeCategory {
+  courseId   String
+  categoryId String
+  order      Int    @default(0)
+
+  course   Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  category KnowledgeCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([courseId, categoryId])
+  @@index([courseId])
+  @@index([categoryId])
+}
+
+model KnowledgeArticle {
+  id          String @id @default(cuid())
+  title       String
+  description String?
+  content     String? // Rich text content if needed
+  contentMdx  String?
+  videoId     String? // Kinescope ID
+  videoTitle  String?
+  videoDurationSec Int?
+  attachments Json? // Array of { name: string, url: string }
+  order       Int     @default(0)
+
+  categoryId String
+  category   KnowledgeCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
 }
 
 model UserCourseEnrollment {
@@ -188,6 +264,7 @@ model DailyPlan {
   weekNumber      Int
   description     String?
   contentBlocks   ContentBlock[] // Если нужны дополнительные текстовые блоки в дне
+  mainWorkouts    DailyPlanMainWorkout[]
 
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -196,11 +273,8 @@ model DailyPlan {
   weekId String?
   week   Week?   @relation(fields: [weekId], references: [id], onDelete: Cascade)
 
-  warmupId String
-  warmup   Workout @relation("WarmupDailyPlan", fields: [warmupId], references: [id])
-
-  mainWorkoutId String?
-  mainWorkout   Workout? @relation("MainWorkoutDailyPlan", fields: [mainWorkoutId], references: [id])
+  warmupId String?
+  warmup   Workout? @relation("WarmupDailyPlan", fields: [warmupId], references: [id])
 
   mealPlanId String?
   mealPlan   MealPlan? @relation(fields: [mealPlanId], references: [id], onDelete: SetNull)
@@ -211,6 +285,19 @@ model DailyPlan {
   @@unique([courseId, weekNumber, dayNumberInWeek])
 }
 
+model DailyPlanMainWorkout {
+  id          String    @id @default(cuid())
+  dailyPlanId String
+  workoutId   String
+  order       Int       // Позиция основной тренировки в дне (0,1,2...)
+
+  dailyPlan DailyPlan @relation(fields: [dailyPlanId], references: [id], onDelete: Cascade)
+  workout   Workout   @relation("WorkoutDailyPlanMainWorkouts", fields: [workoutId], references: [id])
+
+  @@unique([dailyPlanId, order])
+  @@index([workoutId])
+}
+
 model UserDailyPlan {
   id                   String               @id @default(cuid())
   userId               String
@@ -219,23 +306,36 @@ model UserDailyPlan {
   dayNumberInCourse    Int
   isWorkoutDay         Boolean
   warmupId             String
-  mainWorkoutId        String?
   mealPlanId           String?
   dayOfWeek            DayOfWeek
   weekNumber           Int
   warmupStepIndex      Int
-  mainWorkoutStepIndex Int?
   enrollment           UserCourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  mainWorkout          Workout?             @relation("UserDailyMainWorkout", fields: [mainWorkoutId], references: [id])
   mealPlan             MealPlan?            @relation("UserDailyMealPlan", fields: [mealPlanId], references: [id], onDelete: SetNull)
   user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   warmup               Workout              @relation("UserDailyWarmup", fields: [warmupId], references: [id])
   originalDailyPlanId  String
   originalDailyPlan    DailyPlan            @relation("OriginalDailyPlan", fields: [originalDailyPlanId], references: [id])
+  mainWorkouts         UserDailyMainWorkout[]
 
   @@unique([enrollmentId, dayNumberInCourse]) // Один план на день для каждого enrollment
   @@index([enrollmentId])
   @@index([userId, date])
+}
+
+model UserDailyMainWorkout {
+  id              String         @id @default(cuid())
+  userDailyPlanId String
+  workoutId       String
+  order           Int            // Позиция основной тренировки в дне (0,1,2...)
+  stepIndex       Int            // Соответствующий шаг прогресса
+
+  userDailyPlan UserDailyPlan @relation(fields: [userDailyPlanId], references: [id], onDelete: Cascade)
+  workout       Workout       @relation("WorkoutUserDailyMainWorkouts", fields: [workoutId], references: [id])
+
+  @@unique([userDailyPlanId, order])
+  @@index([userDailyPlanId])
+  @@index([workoutId])
 }
 
 model Workout {
@@ -248,10 +348,10 @@ model Workout {
   muscles               MuscleGroup[]
   section               WorkoutSection
   subsections           WorkoutSubsection[]
-  mainWorkoutDailyPlans DailyPlan[]         @relation("MainWorkoutDailyPlan")
+  mainPlanWorkouts      DailyPlanMainWorkout[] @relation("WorkoutDailyPlanMainWorkouts")
   warmupDailyPlans      DailyPlan[]         @relation("WarmupDailyPlan")
 
-  userDailyMainWorkouts UserDailyPlan[]         @relation("UserDailyMainWorkout")
+  userDailyMainWorkouts UserDailyMainWorkout[] @relation("WorkoutUserDailyMainWorkouts")
   userDailyWarmups      UserDailyPlan[]         @relation("UserDailyWarmup")
   favoriteWorkouts      UserFavoriteWorkout[]
   userCompletions       UserWorkoutCompletion[]
@@ -278,9 +378,10 @@ model UserWorkoutCompletion {
   user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   workout      Workout              @relation(fields: [workoutId], references: [id])
 
-  @@unique([userId, enrollmentId, contentType, stepIndex])
+  @@unique([userId, enrollmentId, contentType, workoutId, stepIndex])
   @@index([userId])
   @@index([enrollmentId])
+  @@index([workoutId])
 }
 
 model MealPlan {
@@ -310,7 +411,11 @@ model Recipe {
   preparationTimeMinutes Int
   calories               Int?
   servings               Int
-  difficulty             RecipeDifficulty
+  cookingDifficulty      CookingDifficulty
+  shortDescription       String?
+  imageUrl               String?
+  diets                  RecipeDiet[]         @default([])
+  ingredientTags         RecipeIngredientTag[] @default([])
   isGlutenFree           Boolean              @default(false)
   isSugarFree            Boolean              @default(false)
   mealCategories         MealCategory[]
@@ -318,8 +423,20 @@ model Recipe {
   breakfastMealPlans     MealPlan[]           @relation("BreakfastMeal")
   dinnerMealPlans        MealPlan[]           @relation("DinnerMeal")
   lunchMealPlans         MealPlan[]           @relation("LunchMeal")
+  steps                  RecipeStep[]
   ingredients            RecipeIngredient[]
   favoriteRecipes        UserFavoriteRecipe[]
+}
+
+model RecipeStep {
+  id          String  @id @default(cuid())
+  stepNumber  Int
+  instruction String
+  recipeId    String
+  recipe      Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([recipeId, stepNumber])
+  @@index([recipeId])
 }
 
 model RecipeIngredient {
@@ -328,6 +445,8 @@ model RecipeIngredient {
   weightGrams Int?
   quantity    Float?
   unit        String?
+  description String?
+  order       Int     @default(0)
   recipeId    String
   recipe      Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 

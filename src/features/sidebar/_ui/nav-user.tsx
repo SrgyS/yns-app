@@ -23,7 +23,7 @@ export function NavUser({ user }: { user: SharedUser }) {
           asChild
           className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
         >
-          <Link href={`/profile/${user.id}`}>
+          <Link href="/platform/profile">
             <ProfileAvatar profile={profile} className="h-8 w-8" />
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium">{user.name}</span>

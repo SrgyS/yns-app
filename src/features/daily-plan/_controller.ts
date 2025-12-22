@@ -112,6 +112,7 @@ export class WorkoutController extends Controller {
       .input(
         z.object({
           userId: z.string(),
+          workoutId: z.string(),
           enrollmentId: z.string(),
           contentType: z.nativeEnum(DailyContentType),
           stepIndex: z.number().int().nonnegative(),
@@ -120,6 +121,7 @@ export class WorkoutController extends Controller {
       .query(async ({ input }) => {
         const isCompleted = await this.getWorkoutCompletionStatusService.exec(
           input.userId,
+          input.workoutId,
           input.enrollmentId,
           input.contentType,
           input.stepIndex

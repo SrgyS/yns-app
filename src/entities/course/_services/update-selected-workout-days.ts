@@ -121,7 +121,7 @@ export class UpdateWorkoutDaysService {
         params,
         error,
       })
-      throw new Error('Failed to update workout days')
+      throw new Error(`Failed to update workout days: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 }

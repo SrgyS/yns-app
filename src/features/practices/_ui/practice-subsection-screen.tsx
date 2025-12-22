@@ -26,7 +26,7 @@ type PracticeSubsectionScreenProps = {
   backHref?: string
   onBack?: () => void
   className?: string
-  useContainer?: boolean
+  // useContainer?: boolean
 }
 
 export function PracticeSubsectionScreen({
@@ -38,7 +38,7 @@ export function PracticeSubsectionScreen({
   backHref,
   onBack,
   className,
-  useContainer = true,
+  // useContainer = true,
 }: Readonly<PracticeSubsectionScreenProps>) {
   const router = useRouter()
   const [search, setSearch] = useState('')
@@ -64,13 +64,13 @@ export function PracticeSubsectionScreen({
       return
     }
 
-    router.push('/practices')
+    router.push('/platform/practices')
   }
 
-  const containerClasses = cn(
-    useContainer ? 'container space-y-6 py-10 max-w-2xl' : 'space-y-6 py-10',
-    className
-  )
+  // const containerClasses = cn(
+  //   useContainer ? 'container space-y-6 py-10 max-w-2xl' : 'space-y-6 py-10',
+  //   className
+  // )
 
   let content: React.ReactNode
 
@@ -91,7 +91,7 @@ export function PracticeSubsectionScreen({
     content = <PracticeWorkoutsSkeleton />
   } else if (workouts.length) {
     content = (
-      <div className="grid gap-5">
+      <div className={cn(className, 'grid gap-5')}>
         {workouts.map(workout => (
           <PracticeWorkoutCard
             key={workout.id}
@@ -108,7 +108,7 @@ export function PracticeSubsectionScreen({
   }
 
   return (
-    <div className={containerClasses}>
+    <div className="space-y-6 py-10">
       <div className="flex items-center gap-3">
         <Button
           type="button"

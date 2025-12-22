@@ -96,6 +96,7 @@ export function ExerciseCard({
       const fetchCompletionStatus = async () => {
         const completionStatus = await getWorkoutCompletionStatus(
           session.user.id,
+          workoutId,
           enrollmentId,
           contentType,
           stepIndex
@@ -106,6 +107,7 @@ export function ExerciseCard({
     }
   }, [
     session,
+    workoutId,
     enrollmentId,
     getWorkoutCompletionStatus,
     contentType,

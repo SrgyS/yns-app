@@ -36,7 +36,8 @@ export function GrantAccessDialog({
   const utils = adminUsersApi.useUtils()
 
   const coursesQuery = coursesListApi.coursesList.get.useQuery(undefined, {
-    staleTime: 60 * 1000,
+    staleTime: 10_000,
+    refetchOnWindowFocus: true,
   })
 
   const grantMutation = adminUsersApi.admin.user.access.grant.useMutation({
@@ -53,6 +54,12 @@ export function GrantAccessDialog({
   })
 
   const courseOptions = coursesQuery.data ?? []
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen)
+    if (nextOpen) {
+      coursesQuery.refetch().catch(() => undefined)
+    }
+  }
 
   const handleChangeCourse = (value: string) => {
     setCourseId(value)
@@ -83,7 +90,7 @@ export function GrantAccessDialog({
   const isSubmitting = grantMutation.status === 'pending'
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button disabled={disabled}>Выдать доступ</Button>
       </DialogTrigger>

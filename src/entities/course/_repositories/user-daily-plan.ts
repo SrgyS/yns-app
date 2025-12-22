@@ -1,9 +1,14 @@
-import { DayOfWeek, UserDailyPlan as PrismaUserDailyPlan } from '@prisma/client'
+import {
+  DayOfWeek,
+  UserDailyPlan as PrismaUserDailyPlan,
+  UserDailyMainWorkout,
+} from '@prisma/client'
 import { dbClient } from '@/shared/lib/db'
 import type { DbClient } from '@/shared/lib/db'
 import {
   GetUserDailyPlanByEnrollmentParams,
   UserDailyPlan,
+  MainWorkoutEntry,
 } from '..'
 import { logger } from '@/shared/lib/logger'
 import { PlanningRepository } from '../../planning'
@@ -32,7 +37,11 @@ export class UserDailyPlanRepository {
   constructor(private readonly defaultDb: DbClient = dbClient) {
     this.planningRepository = new PlanningRepository(defaultDb)
   }
-  private toDomain(prismaUserDailyPlan: PrismaUserDailyPlan): UserDailyPlan {
+  private toDomain(
+    prismaUserDailyPlan: PrismaUserDailyPlan & {
+      mainWorkouts?: UserDailyMainWorkout[]
+    }
+  ): UserDailyPlan {
     return {
       id: prismaUserDailyPlan.id,
       userId: prismaUserDailyPlan.userId,
@@ -41,12 +50,16 @@ export class UserDailyPlanRepository {
       dayNumberInCourse: prismaUserDailyPlan.dayNumberInCourse,
       isWorkoutDay: prismaUserDailyPlan.isWorkoutDay,
       warmupId: prismaUserDailyPlan.warmupId,
-      mainWorkoutId: prismaUserDailyPlan.mainWorkoutId,
+      mainWorkouts:
+        prismaUserDailyPlan.mainWorkouts?.map<MainWorkoutEntry>(main => ({
+          workoutId: main.workoutId,
+          order: main.order,
+          stepIndex: main.stepIndex,
+        })) ?? [],
       mealPlanId: prismaUserDailyPlan.mealPlanId,
       weekNumber: prismaUserDailyPlan.weekNumber,
       originalDailyPlanId: prismaUserDailyPlan.originalDailyPlanId,
       warmupStepIndex: prismaUserDailyPlan.warmupStepIndex,
-      mainWorkoutStepIndex: prismaUserDailyPlan.mainWorkoutStepIndex,
     }
   }
 
@@ -125,6 +138,9 @@ export class UserDailyPlanRepository {
           enrollmentId: params.enrollmentId,
           dayNumberInCourse: params.dayNumberInCourse,
         },
+        include: {
+          mainWorkouts: true,
+        },
       })
 
       return userDailyPlan ? this.toDomain(userDailyPlan) : null
@@ -146,6 +162,9 @@ export class UserDailyPlanRepository {
       const userDailyPlans = await db.userDailyPlan.findMany({
         where: { enrollmentId },
         orderBy: { dayNumberInCourse: 'asc' },
+        include: {
+          mainWorkouts: true,
+        },
       })
 
       return userDailyPlans.map(this.toDomain.bind(this))
@@ -279,7 +298,7 @@ export class UserDailyPlanRepository {
         enrollmentId,
         error,
       })
-      throw new Error('Failed to update user daily plans')
+      throw new Error(`Failed to update user daily plans: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 }

@@ -4,7 +4,7 @@ import { AdminCoursesPage } from '@/features/admin-panel/courses/admin-courses-p
 
 export default async function AdminCoursesRoute() {
   const getCoursesListService = server.get(GetCoursesListService)
-  const courses = await getCoursesListService.exec()
+  const courses = await getCoursesListService.exec({ includeDrafts: true })
 
   return <AdminCoursesPage courses={courses} />
 }

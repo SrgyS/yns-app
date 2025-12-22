@@ -1,5 +1,4 @@
 import { DayOfWeek } from '@prisma/client'
-import { differenceInCalendarWeeks, startOfWeek } from 'date-fns'
 
 /**
  * Сервис для работы с датами и вычислениями в планировании
@@ -33,18 +32,7 @@ export class DateCalculationService {
   /**
    * Вычислить номер недели для дня курса
    */
-  calculateWeekNumber(dayIndex: number, startDate?: Date): number {
-    if (!startDate) {
-      return Math.floor(dayIndex / 7) + 1
-    }
-
-    const normalizedStart = startOfWeek(startDate, { weekStartsOn: 1 })
-    const currentDate = this.calculateDateForDay(startDate, dayIndex)
-
-    return (
-      differenceInCalendarWeeks(currentDate, normalizedStart, {
-        weekStartsOn: 1,
-      }) + 1
-    )
+  calculateWeekNumber(dayIndex: number): number {
+    return Math.floor(dayIndex / 7) + 1
   }
 }

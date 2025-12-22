@@ -1,5 +1,4 @@
 import { Button } from '@/shared/ui/button'
-//import { selectFile } from "@/shared/lib/file";
 import { Spinner } from '@/shared/ui/spinner'
 
 import { useUploadAvatar } from '../_vm/use-upload-avatar'

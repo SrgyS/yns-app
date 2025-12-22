@@ -11,6 +11,8 @@ import { GetUserWorkoutDaysService } from './_services/get-user-workout-days'
 import { UpdateWorkoutDaysService } from './_services/update-selected-workout-days'
 import { GetEnrollmentByIdService } from './_services/get-enrollment-by-id'
 import { ActivateEnrollmentService } from './_services/activate-enrollment'
+import { CreateCourseService } from './_services/create-course'
+import { DeleteCourseService } from './_services/delete-course'
 
 export const CourseEntityModule = new ContainerModule(context => {
   const { bind } = context
@@ -26,6 +28,8 @@ export const CourseEntityModule = new ContainerModule(context => {
   bind(GetEnrollmentByIdService).toSelf()
   bind(UpdateWorkoutDaysService).toSelf()
   bind(ActivateEnrollmentService).toSelf()
+  bind(CreateCourseService).toSelf()
+  bind(DeleteCourseService).toSelf()
 })
 
 export { GetCoursesListService } from './_services/get-courses-list'
@@ -37,3 +41,5 @@ export { GetUserWorkoutDaysService } from './_services/get-user-workout-days'
 export { GetEnrollmentByIdService } from './_services/get-enrollment-by-id'
 export { UpdateWorkoutDaysService } from './_services/update-selected-workout-days'
 export { ActivateEnrollmentService } from './_services/activate-enrollment'
+export { CreateCourseService } from './_services/create-course'
+export { DeleteCourseService } from './_services/delete-course'

@@ -1,11 +1,11 @@
 import { BackButton } from '@/features/auth/_ui/back-button'
-import { Card, CardContent, CardHeader } from '@/shared/ui/card'
+import { Card, CardContent, CardFooter, CardHeader } from '@/shared/ui/card'
 import { TriangleAlert } from 'lucide-react'
 
 export default function ErrorPage() {
   return (
     <div className="container relative flex-col items-center justify-center self-center pt-24">
-      <Card className="max-w-[350px] mx-auto">
+      <Card className="max-w-fit mx-auto">
         <CardHeader className="flex flex-col space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight self-center text-center">
             Ошибка входа
@@ -17,7 +17,13 @@ export default function ErrorPage() {
             Ошибка входа. Пожалуйста, попробуйте снова.
           </p>
         </CardContent>
-        <BackButton href="/auth/sign-in" label="Вернуться на страницу входа" />
+        <CardFooter>
+          <BackButton
+            href="/auth/sign-in"
+            label="Вернуться на страницу входа"
+          />
+          <BackButton href="/" label="Вернуться на главную" />
+        </CardFooter>
       </Card>
     </div>
   )

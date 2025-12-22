@@ -1,6 +1,5 @@
 import { courseDetailsApi } from '@/features/course-details/_api'
 import { Skeleton } from '@/shared/ui/skeleton/skeleton'
-import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { ChevronRight } from 'lucide-react'
 import { format, isValid } from 'date-fns'
 
@@ -22,20 +21,19 @@ type CourseBannerProps = {
 export function CourseBanner({
   courseSlug,
   accessExpiresAt,
-}: CourseBannerProps) {
+}: Readonly<CourseBannerProps>) {
   const router = useRouter()
-  const { data: session } = useAppSession()
   const { data: courseDetails, isLoading } =
     courseDetailsApi.courseDetails.get.useQuery({
       courseSlug,
     })
 
-  const expirationDate =
-    accessExpiresAt instanceof Date
-      ? accessExpiresAt
-      : accessExpiresAt
-        ? new Date(accessExpiresAt)
-        : null
+  let expirationDate: Date | null = null
+  if (accessExpiresAt instanceof Date) {
+    expirationDate = accessExpiresAt
+  } else if (accessExpiresAt) {
+    expirationDate = new Date(accessExpiresAt)
+  }
 
   const formattedExpiration =
     expirationDate && isValid(expirationDate)
@@ -43,7 +41,7 @@ export function CourseBanner({
       : null
 
   const handleGoToProfile = () => {
-    router.push(`/profile/${session?.user?.id}`)
+    router.push('/platform/profile')
   }
 
   if (isLoading) {

@@ -4,7 +4,7 @@ import { CoursesRepository } from '../_repositories/course'
 @injectable()
 export class GetCoursesListService {
   constructor(private coursesRepository: CoursesRepository) {}
-  async exec() {
-    return this.coursesRepository.coursesList()
+  async exec(options: { includeDrafts?: boolean } = {}) {
+    return this.coursesRepository.coursesList(options)
   }
 }

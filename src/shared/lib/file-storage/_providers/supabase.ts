@@ -13,6 +13,10 @@ export class SupabaseStorage {
     return this.upload(file, privateConfig.SUPABASE_IMAGE_BUCKET, tag, userId)
   }
 
+  async uploadFile(file: File, tag: string, userId: string) {
+    return this.upload(file, privateConfig.SUPABASE_IMAGE_BUCKET, tag, userId)
+  }
+
   async upload(
     file: File,
     bucket: string,

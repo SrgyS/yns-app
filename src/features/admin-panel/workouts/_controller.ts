@@ -1,6 +1,10 @@
 import { TRPCError } from '@trpc/server'
 import { Prisma, ROLE } from '@prisma/client'
 import { injectable } from 'inversify'
+import {
+  KinescopeVideo,
+  listKinescopeVideos,
+} from '@/shared/lib/kinescope/client'
 
 import {
   Controller,
@@ -57,16 +61,6 @@ type KinescopePoster = {
   sm?: string
   xs?: string
   [k: string]: unknown
-}
-
-type KinescopeVideo = {
-  id: string
-  title?: string
-  description?: string | null
-  duration?: number | null
-  progress?: number | null
-  poster?: KinescopePoster | null
-  created_at?: string
 }
 
 @injectable()
@@ -135,69 +129,67 @@ export class AdminWorkoutsController extends Controller {
     return workout
   }
 
-  private async fetchKinescopeVideos(
-    folderId?: string
-  ): Promise<KinescopeVideo[]> {
-    const apiKey = process.env.KINESCOPE_API_KEY
-    if (!apiKey) {
-      throw new TRPCError({
-        code: 'SERVICE_UNAVAILABLE',
-        message: 'отсутствует KINESCOPE_API_KEY',
-      })
+  private buildMediaData(video: KinescopeVideo, fallbackDate: Date) {
+    const posterValue: Prisma.InputJsonValue | typeof Prisma.JsonNull =
+      video.poster ? (video.poster as Prisma.InputJsonValue) : Prisma.JsonNull
+
+    return {
+      title: video.title || video.id,
+      description: video.description ?? null,
+      videoId: video.id,
+      durationSec:
+        typeof video.duration === 'number'
+          ? Math.max(0, Math.round(video.duration))
+          : 0,
+      progress:
+        typeof video.progress === 'number'
+          ? Math.max(0, Math.round(video.progress))
+          : null,
+      poster: posterValue,
+      posterUrl:
+        (video.poster as KinescopePoster | undefined)?.original ?? null,
+      lastSyncedAt:
+        typeof video.created_at === 'string'
+          ? new Date(video.created_at)
+          : fallbackDate,
     }
+  }
 
-    const perPage = 100
-    let page = 1
+  private async createWorkoutFromVideo(mediaData: any) {
+    await dbClient.workout.create({
+      data: {
+        section: 'FUNCTIONAL',
+        subsections: ['FULL_BODY'],
+        muscles: [],
+        equipment: [],
+        difficulty: 'MEDIUM',
+        needsReview: true,
+        manuallyEdited: false,
+        ...mediaData,
+      },
+    })
+  }
 
-    const all: KinescopeVideo[] = []
-
-    while (true) {
-      const searchParams = new URLSearchParams({
-        page: String(page),
-        per_page: String(perPage),
-        order: 'created_at.desc,title.asc',
-      })
-      const baseUrl = folderId
-        ? `https://api.kinescope.io/v1/folders/${folderId}/videos`
-        : 'https://api.kinescope.io/v1/videos'
-      const url = `${baseUrl}?${searchParams.toString()}`
-
-      const resp = await fetch(url, {
-        headers: { Authorization: `Bearer ${apiKey}` },
-        cache: 'no-store',
-      })
-
-      if (!resp.ok) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: `Не удалось получить список видео: ${resp.status} ${resp.statusText}`,
-        })
-      }
-
-      const payload = await resp.json()
-      const data: KinescopeVideo[] = payload.data ?? payload ?? []
-      all.push(...data)
-
-      const pagination =
-        payload.meta?.pagination ?? payload.pagination ?? payload.meta
-
-      const total = Number(pagination?.total ?? Number.NaN)
-      const perPageResp = Number(pagination?.per_page ?? perPage)
-
-      const hasMore =
-        Number.isFinite(total) && Number.isFinite(perPageResp)
-          ? page * perPageResp < total
-          : data.length === perPageResp
-
-      if (!hasMore) break
-      page += 1
-    }
-
-    return all
+  private async updateWorkoutFromVideo(existing: any, mediaData: any) {
+    await dbClient.workout.update({
+      where: { id: existing.id },
+      data: {
+        ...mediaData,
+        section: existing.section ?? 'FUNCTIONAL',
+        difficulty: existing.difficulty ?? 'MEDIUM',
+        subsections: existing.subsections ?? [],
+        muscles: existing.muscles ?? [],
+        equipment: existing.equipment ?? [],
+        needsReview: existing.needsReview,
+        manuallyEdited: existing.manuallyEdited,
+      },
+    })
   }
 
   private async syncFromKinescope(input: SyncInput): Promise<SyncResult> {
-    const videos = await this.fetchKinescopeVideos(input.folderId)
+    const videos = await listKinescopeVideos({
+      folderId: input.folderId,
+    })
 
     const now = new Date()
 
@@ -209,51 +201,15 @@ export class AdminWorkoutsController extends Controller {
     }
 
     for (const video of videos) {
-      const workoutId = video.id
       try {
         const existing = await dbClient.workout.findFirst({
           where: { videoId: video.id },
         })
 
-        const posterValue: Prisma.InputJsonValue | typeof Prisma.JsonNull =
-          video.poster
-            ? (video.poster as Prisma.InputJsonValue)
-            : Prisma.JsonNull
-
-        const mediaData = {
-          title: video.title || workoutId,
-          description: video.description ?? null,
-          videoId: video.id,
-          durationSec:
-            typeof video.duration === 'number'
-              ? Math.max(0, Math.round(video.duration))
-              : 0,
-          progress:
-            typeof video.progress === 'number'
-              ? Math.max(0, Math.round(video.progress))
-              : null,
-          poster: posterValue,
-          posterUrl:
-            (video.poster as KinescopePoster | undefined)?.original ?? null,
-          lastSyncedAt:
-            typeof video.created_at === 'string'
-              ? new Date(video.created_at)
-              : now,
-        }
+        const mediaData = this.buildMediaData(video, now)
 
         if (!existing) {
-          await dbClient.workout.create({
-            data: {
-              section: 'FUNCTIONAL',
-              subsections: ['FULL_BODY'],
-              muscles: [],
-              equipment: [],
-              difficulty: 'MEDIUM',
-              needsReview: true,
-              manuallyEdited: false,
-              ...mediaData,
-            },
-          })
+          await this.createWorkoutFromVideo(mediaData)
           result.created += 1
           continue
         }
@@ -263,19 +219,7 @@ export class AdminWorkoutsController extends Controller {
           continue
         }
 
-        await dbClient.workout.update({
-          where: { id: existing.id },
-          data: {
-            ...mediaData,
-            section: existing.section ?? 'FUNCTIONAL',
-            difficulty: existing.difficulty ?? 'MEDIUM',
-            subsections: existing.subsections ?? [],
-            muscles: existing.muscles ?? [],
-            equipment: existing.equipment ?? [],
-            needsReview: existing.needsReview,
-            manuallyEdited: existing.manuallyEdited,
-          },
-        })
+        await this.updateWorkoutFromVideo(existing, mediaData)
         result.updated += 1
       } catch (error) {
         const message =
@@ -308,13 +252,15 @@ export class AdminWorkoutsController extends Controller {
     const skip = (page - 1) * pageSize
     const search = input.search?.trim()
 
+    let needsReview: boolean | undefined
+    if (input.status === 'needsReview') {
+      needsReview = true
+    } else if (input.status === 'ready') {
+      needsReview = false
+    }
+
     const where: Prisma.WorkoutWhereInput = {
-      needsReview:
-        input.status === 'needsReview'
-          ? true
-          : input.status === 'ready'
-            ? false
-            : undefined,
+      needsReview,
       section: input.section,
       difficulty: input.difficulty,
     }

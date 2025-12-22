@@ -31,25 +31,22 @@ export const CardWrapper = ({
         <CardContent className="grid gap-4">
           {children}
           {showPolicy && (
-            <>
-              <p className="px-0 text-center text-sm text-muted-foreground">
-                Нажимая продолжить вы соглашаетесь с{' '}
-                <Link
-                  href="/terms"
-                  className="underline underline-offset-4 hover:text-primary"
-                >
-                  Пользовательским соглашением
-                </Link>{' '}
-                и{' '}
-                <Link
-                  href="/privacy"
-                  className="underline underline-offset-4 hover:text-primary"
-                >
-                  Политикой конфиденциальности
-                </Link>
-                .
-              </p>
-            </>
+            <p className="px-0 text-center text-sm text-muted-foreground">
+              Нажимая продолжить вы соглашаетесь с{' '}
+              <Link
+                href="/terms"
+                className="underline underline-offset-4 hover:text-primary"
+              >
+                Пользовательским соглашением
+              </Link>{' '}
+              и{' '}
+              <Link
+                href="/privacy"
+                className="underline underline-offset-4 hover:text-primary"
+              >
+                Политикой конфиденциальности
+              </Link>
+            </p>
           )}
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">

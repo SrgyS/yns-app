@@ -1,5 +1,6 @@
 import { getNavigationContext } from '@/features/navigation/nav-context'
 import { MobileBottomNavClient } from './mobile-bottom-nav-client'
+import { PublicMobileNavClient } from './public-mobile-nav-client'
 
 export async function MobileBottomNav({
   variant,
@@ -8,6 +9,10 @@ export async function MobileBottomNav({
 }) {
   if (variant === 'auth') {
     return null
+  }
+
+  if (variant === 'public') {
+    return <PublicMobileNavClient />
   }
 
   const navigationContext = await getNavigationContext()

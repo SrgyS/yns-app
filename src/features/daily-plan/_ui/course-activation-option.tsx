@@ -41,7 +41,7 @@ export function CourseActivationOption({
   const handleSelect = async () => {
     try {
       await activateEnrollment(enrollmentId)
-      router.push(`/day/${courseSlug}`)
+      router.push(`/platform/day/${courseSlug}`)
     } catch (error) {
       console.error('Ошибка при активации курса:', error)
     }

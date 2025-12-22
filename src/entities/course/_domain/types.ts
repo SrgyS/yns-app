@@ -8,6 +8,7 @@ import {
 } from '@/kernel/domain/course'
 
 import { ImageSrc } from '@/shared/api/content/_lib/image'
+import { CourseContentType } from '@/entities/payment/_domain/types'
 
 export type Course = CourseFullInfo & {
   id: CourseId
@@ -16,6 +17,7 @@ export type Course = CourseFullInfo & {
   allowedWorkoutDaysPerWeek: number[]
   dependencies: CourseId[]
   contentType: ContentType
+  showRecipes: boolean
 }
 
 export type Product = CourseProduct
@@ -32,14 +34,9 @@ export type CourseFullInfo = CourseBaseInfo & {
   image: ImageSrc
   draft: boolean
   durationWeeks: number
+  showRecipes?: boolean
 }
 
-export interface Lesson {
-  courseId: CourseId
-  title: string
-  shortDescription?: string
-  blocks: ContentBlock[]
-}
 
 export type ContentBlock = TextBlock
 
@@ -89,6 +86,12 @@ export type CourseAccessInfo = {
   product: CourseProduct
 }
 
+export type MainWorkoutEntry = {
+  workoutId: string
+  order: number
+  stepIndex: number
+}
+
 export type UserDailyPlan = {
   id: string
   userId: string
@@ -97,12 +100,11 @@ export type UserDailyPlan = {
   dayNumberInCourse: number
   isWorkoutDay: boolean
   warmupId: string
-  mainWorkoutId: string | null
+  mainWorkouts: MainWorkoutEntry[]
   mealPlanId: string | null
   weekNumber: number
   originalDailyPlanId: string
   warmupStepIndex: number
-  mainWorkoutStepIndex: number | null
 }
 
 export type CreateUserCourseEnrollmentParams = {
@@ -124,4 +126,19 @@ export type GetUserDailyPlanParams = {
 export type GetUserDailyPlanByEnrollmentParams = {
   enrollmentId: string
   dayNumberInCourse: number
+}
+
+export type CreateCourseInput = {
+  title: string
+  slug: string
+  description: string
+  shortDescription?: string
+  thumbnail: string
+  image: string
+  durationWeeks: number
+  contentType: CourseContentType
+  product: {
+    access: string
+    price: number
+  }
 }

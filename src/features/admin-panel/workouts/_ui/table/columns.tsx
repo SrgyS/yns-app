@@ -7,13 +7,7 @@ import { ru } from 'date-fns/locale'
 import { Button } from '@/shared/ui/button'
 import { Badge } from '@/shared/ui/badge'
 import { AdminWorkoutRow } from './table'
-
-const formatDuration = (seconds: number) => {
-  const mins = Math.floor(seconds / 60)
-  const secs = Math.floor(seconds % 60)
-  const padded = secs < 10 ? `0${secs}` : secs
-  return `${mins}:${padded}`
-}
+import { formatDuration } from '@/shared/lib/format-duration'
 
 const statusBadge = (workout: AdminWorkoutRow) => {
   if (workout.needsReview) {

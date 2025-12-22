@@ -14,16 +14,24 @@ import { PlanValidationService } from '../_services/plan-validation'
 import {
   PlanGenerationService,
   GenerationContext,
-  UserDailyPlanCreateData,
 } from '../_services/plan-generation'
 import { startOfWeek } from 'date-fns'
 
 type EnrollmentWithCourse = PrismaUserCourseEnrollment & {
-  course: PrismaCourse & { dailyPlans: PrismaDailyPlan[] }
+  course: PrismaCourse & {
+    dailyPlans: (PrismaDailyPlan & {
+      mainWorkouts: { workoutId: string; order: number }[]
+    })[]
+    weeks: { weekNumber: number; releaseAt: Date }[]
+  }
 }
 
 export interface GenerateUserDailyPlansOptions {
   scope: 'full' | { week: number }
+}
+
+const DEFAULT_GENERATION_OPTIONS: GenerateUserDailyPlansOptions = {
+  scope: 'full',
 }
 
 export interface UpdateUserDailyPlansOptions {
@@ -60,12 +68,11 @@ export class PlanningRepository {
       dayNumberInCourse: prismaUserDailyPlan.dayNumberInCourse,
       isWorkoutDay: prismaUserDailyPlan.isWorkoutDay,
       warmupId: prismaUserDailyPlan.warmupId,
-      mainWorkoutId: prismaUserDailyPlan.mainWorkoutId,
+      mainWorkouts: [],
       mealPlanId: prismaUserDailyPlan.mealPlanId,
       weekNumber: prismaUserDailyPlan.weekNumber,
       originalDailyPlanId: prismaUserDailyPlan.originalDailyPlanId,
       warmupStepIndex: prismaUserDailyPlan.warmupStepIndex,
-      mainWorkoutStepIndex: prismaUserDailyPlan.mainWorkoutStepIndex,
     }
   }
 
@@ -81,8 +88,14 @@ export class PlanningRepository {
       include: {
         course: {
           include: {
+            weeks: {
+              select: { weekNumber: true, releaseAt: true },
+            },
             dailyPlans: {
               orderBy: [{ weekNumber: 'asc' }, { dayNumberInWeek: 'asc' }],
+              include: {
+                mainWorkouts: { orderBy: { order: 'asc' } },
+              },
             },
           },
         },
@@ -101,14 +114,27 @@ export class PlanningRepository {
    */
   async generateUserDailyPlans(
     enrollmentId: string,
-    options: GenerateUserDailyPlansOptions = { scope: 'full' },
+    {
+      scope = 'full',
+    }: GenerateUserDailyPlansOptions = DEFAULT_GENERATION_OPTIONS,
     db: DbClient = this.defaultDb
   ): Promise<UserDailyPlan[]> {
-    const exec = async (
-      tx: Prisma.TransactionClient
-    ): Promise<UserDailyPlan[]> => {
+    const exec = async (tx: DbClient): Promise<UserDailyPlan[]> => {
       const enrollment = await this.getEnrollmentWithCourse(enrollmentId, tx)
       const { course, selectedWorkoutDays, startDate } = enrollment
+
+      const releasedWeeks =
+        course.contentType === 'SUBSCRIPTION'
+          ? new Set(
+              course.weeks
+                .filter(week => week.releaseAt <= new Date())
+                .map(week => week.weekNumber)
+            )
+          : null
+      const releasedDailyPlans =
+        releasedWeeks === null
+          ? course.dailyPlans
+          : course.dailyPlans.filter(dp => releasedWeeks.has(dp.weekNumber))
 
       // Для подписки нормализуем старт на понедельник календарной недели покупки
       const effectiveStartDate =
@@ -119,7 +145,8 @@ export class PlanningRepository {
       // Валидация планов курса
       const validation = this.validationService.validateCoursePlans(
         course,
-        course.dailyPlans
+        releasedDailyPlans,
+        releasedWeeks
       )
 
       if (!validation.isValid) {
@@ -144,20 +171,23 @@ export class PlanningRepository {
               course.allowedWorkoutDaysPerWeek.length > 0
                 ? course.allowedWorkoutDaysPerWeek
                 : [5],
-            dailyPlans: course.dailyPlans,
+            dailyPlans: releasedDailyPlans.map(dp => ({
+              ...dp,
+              mainWorkouts: dp.mainWorkouts ?? [],
+            })),
           }
         )
 
       // Вычисление диапазона генерации
       const range = this.generationService.calculateGenerationRange(
-        options.scope,
+        scope,
         context
       )
 
       // Удаление существующих планов для указанного диапазона
-      if (options.scope !== 'full' && 'week' in options.scope) {
+      if (scope !== 'full' && 'week' in scope) {
         await tx.userDailyPlan.deleteMany({
-          where: { enrollmentId, weekNumber: options.scope.week },
+          where: { enrollmentId, weekNumber: scope.week },
         })
       }
 
@@ -170,9 +200,36 @@ export class PlanningRepository {
       // Создание планов в базе данных
       const created: UserDailyPlan[] = []
       for (const planData of plansData) {
+        const { mainWorkouts } = planData
         const createdPlan = await tx.userDailyPlan.create({
-          data: planData,
+          data: {
+            user: { connect: { id: planData.userId } },
+            enrollment: { connect: { id: planData.enrollmentId } },
+            date: planData.date,
+            dayNumberInCourse: planData.dayNumberInCourse,
+            weekNumber: planData.weekNumber,
+            dayOfWeek: planData.dayOfWeek,
+            isWorkoutDay: planData.isWorkoutDay,
+            warmup: { connect: { id: planData.warmupId } },
+            mealPlan: planData.mealPlanId
+              ? { connect: { id: planData.mealPlanId } }
+              : undefined,
+            originalDailyPlan: {
+              connect: { id: planData.originalDailyPlanId },
+            },
+            warmupStepIndex: planData.warmupStepIndex,
+          },
         })
+        if (mainWorkouts.length) {
+          await tx.userDailyMainWorkout.createMany({
+            data: mainWorkouts.map(mw => ({
+              userDailyPlanId: createdPlan.id,
+              workoutId: mw.workoutId,
+              order: mw.order,
+              stepIndex: mw.stepIndex,
+            })),
+          })
+        }
         created.push(this.toDomain(createdPlan))
       }
 
@@ -182,7 +239,7 @@ export class PlanningRepository {
     if (isPrismaClient(db)) {
       return db.$transaction(async tx => exec(tx))
     }
-    return exec(db as Prisma.TransactionClient)
+    return exec(db)
   }
 
   /**
@@ -208,12 +265,23 @@ export class PlanningRepository {
     options: UpdateUserDailyPlansOptions,
     db: DbClient = this.defaultDb
   ): Promise<UserDailyPlan[]> {
-    const exec = async (
-      tx: Prisma.TransactionClient
-    ): Promise<UserDailyPlan[]> => {
+    const exec = async (tx: DbClient): Promise<UserDailyPlan[]> => {
       const enrollment = await this.getEnrollmentWithCourse(enrollmentId, tx)
       const { course, startDate } = enrollment
       const { selectedWorkoutDays } = options
+
+      const releasedWeeks =
+        course.contentType === 'SUBSCRIPTION'
+          ? new Set(
+              course.weeks
+                .filter(week => week.releaseAt <= new Date())
+                .map(week => week.weekNumber)
+            )
+          : null
+      const releasedDailyPlans =
+        releasedWeeks === null
+          ? course.dailyPlans
+          : course.dailyPlans.filter(dp => releasedWeeks.has(dp.weekNumber))
 
       // Для подписки нормализуем старт на понедельник
       const effectiveStartDate =
@@ -224,7 +292,8 @@ export class PlanningRepository {
       // Валидация планов курса
       const validation = this.validationService.validateCoursePlans(
         course,
-        course.dailyPlans
+        releasedDailyPlans,
+        releasedWeeks
       )
 
       if (!validation.isValid) {
@@ -249,7 +318,10 @@ export class PlanningRepository {
               course.allowedWorkoutDaysPerWeek.length > 0
                 ? course.allowedWorkoutDaysPerWeek
                 : [5],
-            dailyPlans: course.dailyPlans,
+            dailyPlans: releasedDailyPlans.map(dp => ({
+              ...dp,
+              mainWorkouts: dp.mainWorkouts ?? [],
+            })),
           }
         )
 
@@ -269,28 +341,28 @@ export class PlanningRepository {
       const updated: UserDailyPlan[] = []
       for (let i = 0; i < updateDataList.length; i++) {
         const updateData = updateDataList[i]
+        const { mainWorkouts } = updateData
         const dayNumberInCourse = i + 1
 
         // Создание данных для создания плана (если план не существует)
-        const createData: UserDailyPlanCreateData = {
-          userId: enrollment.userId,
-          enrollmentId: enrollment.id,
+        const createData: Prisma.UserDailyPlanCreateInput = {
+          user: { connect: { id: enrollment.userId } },
+          enrollment: { connect: { id: enrollment.id } },
           date: this.dateService.calculateDateForDay(effectiveStartDate, i),
           dayNumberInCourse,
-          weekNumber: this.dateService.calculateWeekNumber(
-            i,
-            effectiveStartDate
-          ),
+          weekNumber: this.dateService.calculateWeekNumber(i),
           dayOfWeek: this.dateService.getDayOfWeek(
             this.dateService.calculateDateForDay(effectiveStartDate, i)
           ),
           isWorkoutDay: updateData.isWorkoutDay,
-          warmupId: updateData.warmupId,
-          mainWorkoutId: updateData.mainWorkoutId,
-          mealPlanId: updateData.mealPlanId,
-          originalDailyPlanId: updateData.originalDailyPlanId,
+          warmup: { connect: { id: updateData.warmupId } },
+          mealPlan: updateData.mealPlanId
+            ? { connect: { id: updateData.mealPlanId } }
+            : undefined,
+          originalDailyPlan: {
+            connect: { id: updateData.originalDailyPlanId },
+          },
           warmupStepIndex: updateData.warmupStepIndex,
-          mainWorkoutStepIndex: updateData.mainWorkoutStepIndex,
         }
 
         const record = await tx.userDailyPlan.upsert({
@@ -300,9 +372,31 @@ export class PlanningRepository {
               dayNumberInCourse,
             },
           },
-          update: updateData,
+          update: {
+            isWorkoutDay: updateData.isWorkoutDay,
+            dayOfWeek: updateData.dayOfWeek,
+            weekNumber: updateData.weekNumber,
+            warmupId: updateData.warmupId,
+            mealPlanId: updateData.mealPlanId,
+            originalDailyPlanId: updateData.originalDailyPlanId,
+            warmupStepIndex: updateData.warmupStepIndex,
+          },
           create: createData,
         })
+
+        await tx.userDailyMainWorkout.deleteMany({
+          where: { userDailyPlanId: record.id },
+        })
+        if (mainWorkouts.length) {
+          await tx.userDailyMainWorkout.createMany({
+            data: mainWorkouts.map(mw => ({
+              userDailyPlanId: record.id,
+              workoutId: mw.workoutId,
+              order: mw.order,
+              stepIndex: mw.stepIndex,
+            })),
+          })
+        }
 
         updated.push(this.toDomain(record))
       }
@@ -320,6 +414,6 @@ export class PlanningRepository {
     if (isPrismaClient(db)) {
       return db.$transaction(async tx => exec(tx))
     }
-    return exec(db as Prisma.TransactionClient)
+    return exec(db)
   }
 }

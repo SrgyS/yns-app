@@ -2,6 +2,7 @@
 
 import { AdminDataTable } from '@/shared/ui/data-table'
 import { workoutColumns } from './columns'
+import { LoadMoreHint } from '@/shared/ui/load-more-hint'
 
 export type AdminWorkoutRow = {
   id: string
@@ -21,6 +22,7 @@ type AdminWorkoutsTableProps = Readonly<{
   total: number
   isLoading?: boolean
   isFetchingNextPage: boolean
+  hasNextPage: boolean
   loadMoreRef: React.RefObject<HTMLDivElement | null>
   onEdit: (workout: AdminWorkoutRow) => void
 }>
@@ -30,6 +32,7 @@ export function AdminWorkoutsTable({
   total,
   isLoading,
   isFetchingNextPage,
+  hasNextPage,
   loadMoreRef,
   onEdit,
 }: AdminWorkoutsTableProps) {
@@ -50,10 +53,11 @@ export function AdminWorkoutsTable({
       <div className="mt-2 text-sm text-muted-foreground">
         {total ? `${data.length} из ${total}` : null}
       </div>
-      {isFetchingNextPage ? (
-        <p className="text-sm text-muted-foreground">Загрузка...</p>
-      ) : null}
-      <div ref={loadMoreRef} className="h-4 w-full" />
+      <LoadMoreHint
+        ref={loadMoreRef}
+        isLoadingMore={isFetchingNextPage}
+        hasNextPage={hasNextPage}
+      />
     </>
   )
 }
