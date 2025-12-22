@@ -10,16 +10,16 @@ import { Button } from '@/shared/ui/button'
 export default async function EditProfilePage({
   searchParams,
 }: Readonly<{
-  params: Promise<{ id: string }>
   searchParams?: Promise<{ returnTo?: string }>
 }>) {
+  // TODO: Add admin flow for editing other users' profiles.
   const resolvedSearchParams = searchParams ? await searchParams : undefined
   const returnTo = resolvedSearchParams?.returnTo || '/platform/profile'
 
   const sessionService = server.get(SessionService)
   const session = await sessionService.get()
 
- if (!session?.user?.id) {
+  if (!session?.user?.id) {
     redirect('/auth/sign-in')
   }
 

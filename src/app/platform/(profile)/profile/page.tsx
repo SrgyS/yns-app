@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import {
-  BookOpen,
   ChevronRight,
   Dumbbell,
   Edit,
@@ -17,14 +16,9 @@ import { Button } from '@/shared/ui/button'
 import { LogoutButton } from '@/features/auth/_ui/logout-button'
 import { GetUserCoursesListService } from '@/features/user-courses/module'
 import { ToggleTheme } from '@/features/theme/toggle-theme'
+import { NoAccessCallout } from '@/features/course-enrollment/_ui/no-access-callout'
 
-export default async function ProfilePage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
-  const { id } = await params
-
+export default async function ProfilePage() {
   const sessionService = server.get(SessionService)
   const session = await sessionService.get()
 
@@ -36,7 +30,7 @@ export default async function ProfilePage({
   const canAccessAdmin = user.role === 'ADMIN' || user.role === 'STAFF'
 
   const getUserCoursesListService = server.get(GetUserCoursesListService)
-  const courses = await getUserCoursesListService.exec(id)
+  const courses = await getUserCoursesListService.exec(session.user.id)
 
   return (
     <>
@@ -85,18 +79,19 @@ export default async function ProfilePage({
               </div>
               <ChevronRight className="h-4 w-4" />
             </Button>
-
-            <Button variant="outline" className="w-full justify-between">
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-primary" />
-                Как проходить курс
-              </div>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
           </CardContent>
         </Card>
 
-        <UserCoursesSection courses={courses} />
+        {courses.length > 0 ? (
+          <UserCoursesSection courses={courses} />
+        ) : (
+          <NoAccessCallout
+            title="У вас нет доступных курсов"
+            description="Оформите подписку или приобретите курс, чтобы получить доступ к материалам."
+            ctaHref="/"
+            ctaLabel="Выбрать курс или оформить подписку"
+          />
+        )}
 
         <Card>
           <CardContent>
