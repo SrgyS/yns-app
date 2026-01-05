@@ -2,13 +2,13 @@ import { injectable } from 'inversify'
 import { UserAccessRepository } from '../_repository/user-access'
 import { UserFreezeRepository } from '../_repository/user-freeze'
 import { UserId } from '@/kernel/domain/user'
-import { ContentType, CourseId, CourseProduct } from '@/kernel/domain/course'
+import { ContentType, CourseId, CourseTariff } from '@/kernel/domain/course'
 
 export type Query = {
   userId: UserId
   course: {
     id: CourseId
-    product: CourseProduct
+    tariffs: CourseTariff[]
     contentType: ContentType
   }
 }
@@ -20,10 +20,6 @@ export class CheckCourseAccessService {
     private readonly userFreezeRepository: UserFreezeRepository
   ) {}
   async exec(query: Query) {
-    if (query.course.product.access === 'free') {
-      return true
-    }
-
     const activeFreeze = await this.userFreezeRepository.findActive(query.userId)
     if (activeFreeze) {
       return false

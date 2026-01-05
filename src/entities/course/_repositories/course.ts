@@ -1,7 +1,11 @@
 import { injectable } from 'inversify'
-import { Course as PrismaCourse } from '@prisma/client'
+import {
+  Course as PrismaCourse,
+  CourseTariff as PrismaCourseTariff,
+  AccessType,
+} from '@prisma/client'
 import { Course, CourseAccessInfo } from '@/entities/course'
-import { CourseId, CourseProduct, CourseSlug } from '@/kernel/domain/course'
+import { CourseId, CourseSlug, CourseTariff } from '@/kernel/domain/course'
 import { dbClient } from '@/shared/lib/db'
 import { compileMDX } from '@/shared/lib/mdx/server'
 import { logger } from '@/shared/lib/logger'
@@ -22,11 +26,13 @@ export class CoursesRepository {
         durationWeeks: data.durationWeeks,
         contentType: data.contentType,
         draft: true,
-        product: {
-          create: {
-            access: data.product.access === 'paid' ? 'paid' : 'free',
-            price: data.product.price,
-          },
+        tariffs: {
+          create: data.tariffs.map(tariff => ({
+            access: AccessType.paid,
+            price: tariff.price,
+            durationDays: tariff.durationDays,
+            feedback: tariff.feedback ?? false,
+          })),
         },
       },
     })
@@ -36,7 +42,7 @@ export class CoursesRepository {
     const { includeDrafts = false } = options
     const courses = await dbClient.course.findMany({
       where: includeDrafts ? undefined : { draft: false },
-      include: { product: true, dependencies: true },
+      include: { dependencies: true, tariffs: true },
     })
 
     return Promise.all(courses.map(course => this.mapPrismaToDomain(course)))
@@ -45,7 +51,7 @@ export class CoursesRepository {
   async courseById(courseId: CourseId): Promise<Course | undefined> {
     const course = await dbClient.course.findUnique({
       where: { id: courseId },
-      include: { product: true, dependencies: true },
+      include: { dependencies: true, tariffs: true },
     })
     return course ? this.mapPrismaToDomain(course) : undefined
   }
@@ -53,7 +59,7 @@ export class CoursesRepository {
   async courseBySlug(courseSlug: CourseSlug): Promise<Course | undefined> {
     const course = await dbClient.course.findUnique({
       where: { slug: courseSlug },
-      include: { product: true, dependencies: true },
+      include: { dependencies: true, tariffs: true },
     })
     return course ? this.mapPrismaToDomain(course) : undefined
   }
@@ -76,13 +82,7 @@ export class CoursesRepository {
         slug: true,
         title: true,
         contentType: true,
-        product: {
-          select: {
-            access: true,
-            price: true,
-            accessDurationDays: true,
-          },
-        },
+        tariffs: true,
       },
     })
 
@@ -91,14 +91,13 @@ export class CoursesRepository {
       slug: course.slug,
       title: course.title,
       contentType: course.contentType ?? 'FIXED_COURSE',
-      product:
-        course.product?.access === 'paid'
-          ? {
-              access: 'paid',
-              price: course.product.price ?? 0,
-              accessDurationDays: course.product.accessDurationDays ?? 0,
-            }
-          : { access: 'free' },
+      tariffs: course.tariffs.map(tariff => ({
+        id: tariff.id,
+        access: 'paid',
+        price: tariff.price ?? 0,
+        durationDays: tariff.durationDays ?? 0,
+        feedback: tariff.feedback,
+      })),
     }))
   }
 
@@ -124,12 +123,8 @@ export class CoursesRepository {
   }
   private async mapPrismaToDomain(
     course: PrismaCourse & {
-      product: {
-        access: string
-        price: number | null
-        accessDurationDays: number | null
-      } | null
       dependencies: { id: string }[]
+      tariffs: PrismaCourseTariff[]
     }
   ): Promise<Course> {
     const compiledDescription = await this.safeCompileMDX(course.description)
@@ -137,14 +132,13 @@ export class CoursesRepository {
       course.shortDescription
     )
 
-    const product: CourseProduct =
-      course.product?.access === 'paid'
-        ? {
-            access: 'paid',
-            price: course.product.price ?? 0,
-            accessDurationDays: course.product.accessDurationDays ?? 0,
-          }
-        : { access: 'free' }
+    const tariffs: CourseTariff[] = course.tariffs.map(tariff => ({
+      id: tariff.id,
+      access: 'paid',
+      price: tariff.price ?? 0,
+      durationDays: tariff.durationDays ?? 0,
+      feedback: tariff.feedback,
+    }))
 
     return {
       id: course.id,
@@ -155,7 +149,7 @@ export class CoursesRepository {
       image: course.image,
       thumbnail: course.thumbnail,
       dependencies: course.dependencies?.map(dep => dep.id) ?? [],
-      product,
+      tariffs,
       draft: course.draft,
       durationWeeks: course.durationWeeks,
       showRecipes: course.showRecipes ?? false,

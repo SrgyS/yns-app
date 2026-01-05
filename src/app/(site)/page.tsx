@@ -638,9 +638,9 @@ export default function Home() {
   return (
     <div className="min-h-dvh bg-background text-foreground">
       {/* Hero (keep same background idea: noise + 2 blobs) */}
-      <section className="relative rounded-b-2xl flex flex-col justify-between overflow-hidden">
-        <div className="pointer-events-none h-72 min-[375px]:h-53 w-full bg-[rgba(210,217,214)] sm:h-14" />
-        <div className="relative h-[35vh] w-full min-[375px]:h-[41vh] sm:h-[57vh] lg:h-[60vh] xl:h-[57vh] 2xl:h-[34vh]">
+      <section className="relative rounded-b-2xl flex flex-col justify-between overflow-hidden py-14">
+        <div className="pointer-events-none h-60 min-[375px]:h-50 min-[425px]:h-40 w-full bg-[rgba(210,217,214)] sm:h-0" />
+        <div className="relative h-[35vh] w-full min-[375px]:h-[36vh] sm:h-[57vh] lg:h-[60vh] xl:h-[57vh] 2xl:h-[38vh] rounded-b-2xl overflow-hidden">
           <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-32 bg-[linear-gradient(180deg,rgba(210,217,214,0.95)_0%,rgba(210,217,214,0.6)_80%,rgba(232,224,212,0)_100%)] sm:h-0" />
           <Image
             src={heroImageUrl}
@@ -695,7 +695,7 @@ export default function Home() {
       </section>
 
       {/* For who */}
-      <section className=" py-14">
+      <section className="py-14">
         <div className="mb-8 max-w-2xl">
           <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
             Если вы узнаете себя, значит вам нужна не мотивация, а{' '}
@@ -844,7 +844,7 @@ export default function Home() {
                           {x.d}
                         </p>
                       </div>
-                      <div className="h-56 w-full rounded-2xl bg-muted/50 relative overflow-hidden">
+                      <div className="h-56 xl:h-66 w-full rounded-2xl bg-muted/50 relative overflow-hidden">
                         {x.img ? (
                           <Image
                             src={x.img}

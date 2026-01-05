@@ -6,6 +6,7 @@ import { GetUserEnrollmentsService } from './get-user-enrollments'
 import { UserAccessRepository } from '@/entities/user-access/_repository/user-access'
 import { UserFreezeRepository } from '@/entities/user-access/_repository/user-freeze'
 import { logger } from '@/shared/lib/logger'
+import { selectDefaultCourseTariff } from '@/kernel/domain/course'
 
 export type AccessibleEnrollment = {
   enrollment: UserCourseEnrollment
@@ -66,7 +67,12 @@ export class GetAccessibleEnrollmentsService {
         const accessKey = `${course.id}:${course.contentType}`
         const access = accessMap.get(accessKey)
 
-        if (course.product.access === 'paid') {
+        const defaultTariff = selectDefaultCourseTariff(course.tariffs)
+        if (!defaultTariff) {
+          continue
+        }
+
+        if (defaultTariff.access === 'paid') {
           if (!access) {
             continue
           }

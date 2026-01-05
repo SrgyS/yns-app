@@ -4,15 +4,12 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type Product =
-  | {
-      access: 'free'
-    }
-  | {
-      access: 'paid'
-      price: number
-      accessDurationDays: number
-    }
+export type Tariff = {
+  access: 'paid'
+  price: number
+  durationDays: number
+  feedback?: boolean
+}
 
 /**
  * Схема для описания курса
@@ -68,7 +65,7 @@ export interface Course {
    * @minItems 1
    */
   allowedWorkoutDaysPerWeek: [number, ...number[]]
-  product: Product
+  tariffs: Tariff[]
   /**
    * Тип контента курса
    */

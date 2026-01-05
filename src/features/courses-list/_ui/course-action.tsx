@@ -22,7 +22,7 @@ export function CourseAction({
     return (
       <Button size={'lg'} asChild>
         <Link href={action.href}>
-          Купить за {new Intl.NumberFormat('ru-RU').format(action.price)}₽
+          от {new Intl.NumberFormat('ru-RU').format(action.price)}₽
         </Link>
       </Button>
     )

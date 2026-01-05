@@ -1,11 +1,8 @@
 import { CourseId, CourseSlug } from '@/kernel/domain/course'
 import { coursesListApi } from '../_api'
-import { usePathname } from 'next/navigation'
-import { getCourseOrderPath } from '@/kernel/lib/router'
+import { getCoursePublicPath } from '@/kernel/lib/router'
 
 export function useCourseAction(courseId: CourseId, courseSlug: CourseSlug) {
-  const pathname = usePathname()
-
   const { data: action, isPending } =
     coursesListApi.coursesList.getAction.useQuery({
       courseId: courseId,
@@ -18,7 +15,7 @@ export function useCourseAction(courseId: CourseId, courseSlug: CourseSlug) {
   }
 
   if (action.type === 'buy') {
-    return { ...action, href: getCourseOrderPath(courseSlug, pathname) }
+    return { ...action, href: getCoursePublicPath(courseSlug) }
   }
 
   if (action.type === 'setup') {

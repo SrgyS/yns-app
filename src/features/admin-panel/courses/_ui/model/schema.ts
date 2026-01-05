@@ -17,17 +17,21 @@ export const courseFormSchema = z
     description: z.string().min(1, 'Описание обязательно'),
     shortDescription: z.string().optional(),
     contentType: z.nativeEnum(CourseContentType),
-    access: z.nativeEnum(AccessType),
-    price: z.coerce
-      .number()
-      .min(0, 'Цена должна быть неотрицательной')
-      .optional(),
     durationWeeks: z.coerce.number().min(1, 'Минимум 1 неделя'),
-    accessDurationDays: z.coerce
-      .number()
-      .int()
-      .min(1, 'Укажите длительность доступа (в днях)')
-      .optional(),
+    tariffs: z
+      .array(
+        z
+          .object({
+            access: z.literal(AccessType.paid),
+            price: z.coerce.number().min(1, 'Укажите цену для тарифа'),
+            durationDays: z.coerce
+              .number()
+              .int()
+              .min(1, 'Укажите длительность доступа'),
+            feedback: z.boolean().optional(),
+          })
+      )
+      .min(1, 'Нужен хотя бы один тариф'),
     allowedWorkoutDaysPerWeek: z
       .array(
         z.coerce
@@ -42,33 +46,6 @@ export const courseFormSchema = z
     // Removed .default([]) to avoid Input/Output mismatch. 
     // We already provide defaultValues: { weeks: [] } in useForm.
     weeks: z.array(weekSchema),
-  })
-  .superRefine((data, ctx) => {
-    const isPaid = data.access === AccessType.paid
-
-    const hasPrice =
-      typeof data.price === 'number' && Number.isFinite(data.price)
-
-    const hasAccessDuration =
-      typeof data.accessDurationDays === 'number' &&
-      Number.isFinite(data.accessDurationDays) &&
-      data.accessDurationDays > 0
-
-    if (isPaid && !hasPrice) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['price'],
-        message: 'Укажите цену для платного курса',
-      })
-    }
-
-    if (isPaid && !hasAccessDuration) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['accessDurationDays'],
-        message: 'Укажите длительность доступа',
-      })
-    }
   })
 
 export type CourseFormValues = z.infer<typeof courseFormSchema>

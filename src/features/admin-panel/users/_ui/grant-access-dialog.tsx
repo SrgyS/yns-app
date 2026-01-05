@@ -25,6 +25,7 @@ import { Input } from '@/shared/ui/input'
 import { addDays, format } from 'date-fns'
 import { toast } from 'sonner'
 import { Spinner } from '@/shared/ui/spinner'
+import { selectDefaultCourseTariff } from '@/kernel/domain/course'
 
 export function GrantAccessDialog({
   userId,
@@ -64,12 +65,15 @@ export function GrantAccessDialog({
   const handleChangeCourse = (value: string) => {
     setCourseId(value)
     const course = courseOptions.find(option => option.id === value)
-    const duration =
-      course && course.product?.access === 'paid'
-        ? (course.product.accessDurationDays ?? 0)
+    const defaultTariff = course
+      ? selectDefaultCourseTariff(course.tariffs)
+      : null
+    const durationDays =
+      defaultTariff?.access === 'paid'
+        ? (defaultTariff.durationDays ?? 0)
         : 0
-    if (duration > 0) {
-      const endDate = addDays(new Date(), duration)
+    if (durationDays > 0) {
+      const endDate = addDays(new Date(), durationDays)
       setExpiresAt(format(endDate, 'yyyy-MM-dd'))
     }
   }

@@ -34,15 +34,15 @@ export class CreateUserCourseEnrollmentWithCourseAccessService {
       throw new Error('Курс не найден')
     }
 
-    if (!course.product) {
-      throw new Error('Некорректные данные курса: отсутствует продукт')
+    if (course.tariffs.length === 0) {
+      throw new Error('Некорректные данные курса: отсутствуют тарифы')
     }
 
     const hasAccess = await this.checkCourseAccess.exec({
       userId: params.userId,
       course: {
         id: course.id,
-        product: course.product,
+        tariffs: course.tariffs,
         contentType: course.contentType,
       },
     })

@@ -3,8 +3,8 @@ import {
   ContentBlockId,
   CourseId,
   CourseSlug,
-  CourseProduct,
   ContentType,
+  CourseTariff,
 } from '@/kernel/domain/course'
 
 import { ImageSrc } from '@/shared/api/content/_lib/image'
@@ -13,14 +13,12 @@ import { CourseContentType } from '@/entities/payment/_domain/types'
 export type Course = CourseFullInfo & {
   id: CourseId
   slug: CourseSlug
-  product: Product
+  tariffs: CourseTariff[]
   allowedWorkoutDaysPerWeek: number[]
   dependencies: CourseId[]
   contentType: ContentType
   showRecipes: boolean
 }
-
-export type Product = CourseProduct
 
 export type CourseBaseInfo = {
   title: string
@@ -83,7 +81,7 @@ export type CourseAccessInfo = {
   slug: CourseSlug
   title: string
   contentType: ContentType
-  product: CourseProduct
+  tariffs: CourseTariff[]
 }
 
 export type MainWorkoutEntry = {
@@ -137,8 +135,10 @@ export type CreateCourseInput = {
   image: string
   durationWeeks: number
   contentType: CourseContentType
-  product: {
-    access: string
+  tariffs: {
+    access: 'paid'
     price: number
-  }
+    durationDays: number
+    feedback?: boolean
+  }[]
 }

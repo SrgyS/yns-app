@@ -14,6 +14,7 @@ type CreateCourseCommand = {
   contentType: CourseContentType
   access: AccessType
   price?: number
+  durationDays: number
   durationWeeks: number
 }
 
@@ -30,6 +31,10 @@ export class CreateCourseService {
       throw new AuthorizatoinError('Недостаточно прав для создания курса')
     }
 
+    if (command.access !== AccessType.paid) {
+      throw new AuthorizatoinError('Бесплатные тарифы не поддерживаются')
+    }
+
     const {
       title,
       slug,
@@ -41,6 +46,7 @@ export class CreateCourseService {
       access,
       price,
       durationWeeks,
+      durationDays,
     } = command
 
     return this.coursesRepository.create({
@@ -52,10 +58,13 @@ export class CreateCourseService {
       image: image || '',
       contentType,
       durationWeeks,
-      product: {
-        access: access === AccessType.paid ? 'paid' : 'free',
-        price: access === AccessType.paid ? (price ?? 0) : 0,
-      },
+      tariffs: [
+        {
+          access: 'paid',
+          price: price ?? 0,
+          durationDays,
+        },
+      ],
     })
   }
 }

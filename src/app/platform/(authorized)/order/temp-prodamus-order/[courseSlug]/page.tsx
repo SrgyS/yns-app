@@ -1,7 +1,11 @@
 import { server } from '@/app/server'
 import { GetCourseService } from '@/entities/course/module'
 import { SessionService } from '@/kernel/lib/next-auth/module'
-import { CourseSlug } from '@/kernel/domain/course'
+import {
+  CourseSlug,
+  getMinPaidTariffPrice,
+  selectDefaultCourseTariff,
+} from '@/kernel/domain/course'
 import { Button } from '@/shared/ui/button'
 import {
   Card,
@@ -90,12 +94,14 @@ export default async function PaymentPage({
 
   const userName = session.user?.name ?? 'Без имени'
   const userEmail = session.user?.email ?? '—'
+  const defaultTariff = selectDefaultCourseTariff(course.tariffs)
+  const minPaidPrice = getMinPaidTariffPrice(course.tariffs)
   const coursePrice =
-    course.product.access === 'paid'
-      ? CURRENCY_FORMATTER.format(course.product.price)
+    defaultTariff?.access === 'paid' && minPaidPrice !== null
+      ? CURRENCY_FORMATTER.format(minPaidPrice)
       : 'Бесплатный курс'
 
-  if (course.product.access !== 'paid') {
+  if (defaultTariff?.access !== 'paid') {
     redirect(`/platform/day/${courseSlug}`)
   }
 

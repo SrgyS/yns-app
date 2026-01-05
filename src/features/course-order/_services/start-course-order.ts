@@ -1,7 +1,7 @@
 import { GetCourseService } from '@/entities/course/module'
 import { CreatePaymentService } from '@/entities/payment/module'
 import { CheckCourseAccessService } from '@/entities/user-access/module'
-import { CourseSlug } from '@/kernel/domain/course'
+import { CourseSlug, selectDefaultCourseTariff } from '@/kernel/domain/course'
 import { UserId } from '@/kernel/domain/user'
 import {
   getCourseOrderSucccessPath,
@@ -18,6 +18,7 @@ type Command = {
   userId: UserId
   userEmail: string
   urlReturn: string
+  tariffId?: string
 }
 
 @injectable()
@@ -47,22 +48,53 @@ export class StartCourseOrderService {
       })
     }
 
-    if (course.product.access === 'free') {
+    const selectedTariff = (() => {
+      if (command.tariffId) {
+        return (
+          course.tariffs.find(tariff => tariff.id === command.tariffId) ?? null
+        )
+      }
+
+      const paidTariffs = course.tariffs.filter(
+        tariff => tariff.access === 'paid' && typeof tariff.price === 'number'
+      )
+
+      if (paidTariffs.length === 0) {
+        return selectDefaultCourseTariff(course.tariffs)
+      }
+
+      return paidTariffs.reduce((min, tariff) =>
+        (tariff.price ?? 0) < (min.price ?? 0) ? tariff : min
+      )
+    })()
+
+    if (!selectedTariff) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: `Course ${command.courseSlug} is free`,
+        message: `Course ${command.courseSlug} has no tariffs`,
       })
     }
 
     if (
       await this.checkCourseAccessService.exec({
         userId: command.userId,
-        course: course,
+        course: {
+          id: course.id,
+          tariffs: course.tariffs,
+          contentType: course.contentType,
+        },
       })
     ) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
         message: `Course ${command.courseSlug} is already purchased`,
+      })
+    }
+
+    if (selectedTariff.price <= 0) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: `Course ${command.courseSlug} has no price`,
       })
     }
 
@@ -72,8 +104,8 @@ export class StartCourseOrderService {
       products: [
         {
           type: course.contentType,
-          sku: course.id,
-          price: course.product.price,
+          sku: `${course.id}:${selectedTariff.id}`,
+          price: selectedTariff.price,
           name: `Доступ к курсу: ${course.title}`,
           quantity: 1,
         },

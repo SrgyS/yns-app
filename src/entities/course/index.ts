@@ -1,7 +1,6 @@
 export type {
   CourseBaseInfo,
   CourseFullInfo,
-  Product,
   ContentBlock,
   Course,
   UserCourseEnrollment,

@@ -77,8 +77,13 @@
       "minItems": 1,
       "uniqueItems": true
     },
-    "product": {
-      "$ref": "#/definitions/product"
+    "tariffs": {
+      "type": "array",
+      "description": "Список тарифов курса",
+      "items": {
+        "$ref": "#/definitions/tariff"
+      },
+      "minItems": 1
     },
     "contentType": {
       "type": "string",
@@ -91,35 +96,24 @@
       "type": "string",
       "title": "cuid"
     },
-    "product": {
-      "oneOf": [
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["access"],
-          "properties": {
-            "access": {
-              "const": "free"
-            }
-          }
+    "tariff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["access", "price", "durationDays"],
+      "properties": {
+        "access": {
+          "const": "paid"
         },
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["access", "price", "accessDurationDays"],
-          "properties": {
-            "access": {
-              "const": "paid"
-            },
-            "price": {
-              "type": "number"
-            },
-            "accessDurationDays": {
-              "type": "number"
-            }
-          }
+        "price": {
+          "type": "number"
+        },
+        "durationDays": {
+          "type": "number"
+        },
+        "feedback": {
+          "type": "boolean"
         }
-      ]
+      }
     }
   },
   "required": [
@@ -131,7 +125,7 @@
     "durationWeeks",
     "allowedWorkoutDaysPerWeek",
     "contentType",
-    "product"
+    "tariffs"
   ],
   "additionalProperties": false
 }

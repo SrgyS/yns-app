@@ -11,11 +11,13 @@ export type AdminCourseSummary = {
   contentType: 'FIXED_COURSE' | 'SUBSCRIPTION'
   draft: boolean
   showRecipes: boolean
-  product: {
-    access: 'free' | 'paid'
-    price?: number | null
-    accessDurationDays?: number | null
-  } | null
+  tariffs: {
+    id: string
+    access: 'paid'
+    price: number | null
+    durationDays: number | null
+    feedback: boolean
+  }[]
 }
 
 export type AdminDailyPlan = CourseUpsertInput['dailyPlans'][number] & {
@@ -60,7 +62,7 @@ export type VideoMeta = {
 export class CoursesReadService {
   async listCourses(): Promise<AdminCourseSummary[]> {
     const courses = await dbClient.course.findMany({
-      include: { product: true },
+      include: { tariffs: true },
       orderBy: { title: 'asc' },
     })
 
@@ -72,7 +74,7 @@ export class CoursesReadService {
       return dbClient.course.findUnique({
         where: { id: input.id },
         include: {
-          product: true,
+          tariffs: true,
           dependencies: { select: { id: true } },
           weeks: { orderBy: { weekNumber: 'asc' } },
           mealPlans: {
@@ -124,7 +126,7 @@ export class CoursesReadService {
     return dbClient.course.findUnique({
       where: { slug: input.slug! },
       include: {
-        product: true,
+        tariffs: true,
         dependencies: { select: { id: true } },
         weeks: { orderBy: { weekNumber: 'asc' } },
         mealPlans: {
@@ -268,7 +270,7 @@ export class CoursesReadService {
   }
 
   mapCourseSummary(
-    course: Prisma.CourseGetPayload<{ include: { product: true } }>
+    course: Prisma.CourseGetPayload<{ include: { tariffs: true } }>
   ): AdminCourseSummary {
     return {
       id: course.id,
@@ -277,13 +279,13 @@ export class CoursesReadService {
       contentType: course.contentType,
       draft: course.draft,
       showRecipes: course.showRecipes ?? false,
-      product: course.product
-        ? {
-            access: course.product.access as 'free' | 'paid',
-            price: course.product.price,
-            accessDurationDays: course.product.accessDurationDays,
-          }
-        : null,
+      tariffs: course.tariffs.map(tariff => ({
+        id: tariff.id,
+        access: 'paid',
+        price: tariff.price,
+        durationDays: tariff.durationDays,
+        feedback: tariff.feedback,
+      })),
     }
   }
 
@@ -307,14 +309,13 @@ export class CoursesReadService {
       showRecipes: course.showRecipes ?? false,
       allowedWorkoutDaysPerWeek: allowedWorkoutDays,
       contentType: course.contentType ?? 'FIXED_COURSE',
-      product:
-        course.product?.access === 'paid'
-          ? {
-              access: 'paid',
-              price: course.product.price ?? 0,
-              accessDurationDays: course.product.accessDurationDays ?? 0,
-            }
-          : { access: 'free' },
+      tariffs: course.tariffs?.map((tariff: any) => ({
+        id: tariff.id,
+        access: 'paid',
+        price: tariff.price ?? undefined,
+        durationDays: tariff.durationDays ?? undefined,
+        feedback: tariff.feedback ?? false,
+      })),
       dependencies: course.dependencies?.map((dep: any) => dep.id) ?? [],
       weeks:
         course.weeks?.map((week: any) => ({

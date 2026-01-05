@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { Course } from '@/entities/course'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Badge } from '@/shared/ui/badge'
+import { selectDefaultCourseTariff } from '@/kernel/domain/course'
 import { Button } from '@/shared/ui/button'
 import { OptimizedImage } from '@/shared/ui/optimized-image'
 import {
@@ -198,10 +199,14 @@ export function AdminCoursesPage({ courses }: Readonly<AdminCoursesPageProps>) {
                   <div className="flex flex-wrap gap-2">
                     <Badge
                       variant={
-                        course.product.access === 'paid' ? 'default' : 'outline'
+                        selectDefaultCourseTariff(course.tariffs)?.access ===
+                        'paid'
+                          ? 'default'
+                          : 'outline'
                       }
                     >
-                      {course.product.access === 'paid'
+                      {selectDefaultCourseTariff(course.tariffs)?.access ===
+                      'paid'
                         ? 'Платный'
                         : 'Бесплатный'}
                     </Badge>
