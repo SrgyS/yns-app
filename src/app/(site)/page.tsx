@@ -18,6 +18,7 @@ import {
 import React from 'react'
 import Image from 'next/image'
 import { CoursesList } from '@/features/courses-list/courses-list'
+import { HeroSection } from './_components/hero-section'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 3600
@@ -629,7 +630,6 @@ function SectionTitle({
 //   )
 // }
 export default function Home() {
-  const heroImageUrl = getImageUrl('images', 'hero.jpeg')
   const trainingImageUrl = getImageUrl('images', 'training.jpeg')
   const relaxImageUrl = getImageUrl('images', 'relax.jpg')
   const nutritionImageUrl = getImageUrl('images', '932A0123.jpg')
@@ -637,62 +637,7 @@ export default function Home() {
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
-      {/* Hero (keep same background idea: noise + 2 blobs) */}
-      <section className="relative rounded-b-2xl flex flex-col justify-between overflow-hidden py-14">
-        <div className="pointer-events-none h-60 min-[375px]:h-50 min-[425px]:h-40 w-full bg-[rgba(210,217,214)] sm:h-0" />
-        <div className="relative h-[35vh] w-full min-[375px]:h-[36vh] sm:h-[57vh] lg:h-[60vh] xl:h-[57vh] 2xl:h-[38vh] rounded-b-2xl overflow-hidden">
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-32 bg-[linear-gradient(180deg,rgba(210,217,214,0.95)_0%,rgba(210,217,214,0.6)_80%,rgba(232,224,212,0)_100%)] sm:h-0" />
-          <Image
-            src={heroImageUrl}
-            alt="Фото блока"
-            fill
-            className="object-cover  object-[50%_34px] sm:object-[35%_0px] lg:object-center 2xl:object-[50%_-223px]
-"
-            sizes="100vw"
-            priority
-          />
-        </div>
-        <div className="container absolute top-16 z-20 pt-2 pb-10 md:pt-4">
-          <div className="sm:grid sm:grid-cols-12 gap-8 items-end">
-            <div className="sm:col-span-8 lg:col-span-6">
-              <div className="rounded-3xl border border-white/20  bg-background/50 p-6 shadow-[0_18px_40px_rgba(0,0,0,0.12)] backdrop-blur-md sm:p-8 md:mt-0 md:bg-background/25">
-                <Badge variant="outline" className="rounded-full bg-background">
-                  <span className="size-2 mr-2 shrink-0 rounded-full bg-primary" />
-                  <span className="text-[10px] md:text-sm font-medium text-wrap">
-                    Онлайн программы и сопровождение
-                  </span>
-                </Badge>
-
-                <h1 className="mt-5 text-xl  lg:text-2xl font-semibold sm:tracking-tight leading-tight ">
-                  Система питания и движения, которая возвращает телу легкость и
-                  форму
-                </h1>
-
-                <p className="mt-4 text-sm lg:text-sm text-foreground leading-tight sm:leading-relaxed max-w-xl">
-                  Без жестких диет и подвигов. С опорой на физиологию,
-                  регулярность и понятные шаги, которые можно встроить в
-                  реальную жизнь.
-                </p>
-
-                <div className="mt-7 flex flex-col sm:flex-row gap-3">
-                  <Button asChild className="h-8 lg:h-12 rounded-2xl shadow-sm">
-                    <a className="text-xs lg:text-base" href="#programs">
-                      Выбрать программу
-                    </a>
-                  </Button>
-                </div>
-
-                {/* <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <DotKPI label="Фокус" value="отеки" />
-                  <DotKPI label="Фокус" value="рыхлость" />
-                  <DotKPI label="Фокус" value="живот" />
-                  <DotKPI label="Фокус" value="осанка" />
-                </div> */}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <HeroSection />
 
       {/* For who */}
       <section className="py-14">
@@ -891,13 +836,7 @@ export default function Home() {
             title="Выберите точку входа"
             desc="Если сомневаетесь, начните с мягкого старта. Затем можно перейти в клуб и закрепить регулярность."
           />
-
           <CoursesList />
-
-          <div className="mt-6 text-xs text-muted-foreground">
-            Примечание: на продакшене каждая кнопка ведет на отдельный URL
-            /programs/...
-          </div>
         </div>
       </section>
 
@@ -1118,10 +1057,6 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              <p className="mt-4 text-sm text-muted-foreground max-w-md">
-                Макет для оценки визуала. Далее можно перенести в Next.js и
-                заменить заглушки на реальные фото и ссылки.
-              </p>
             </div>
 
             <div className="md:col-span-7">

@@ -8,6 +8,7 @@
 @utility container {
   margin-inline: auto;
   padding-inline: clamp(1rem, 4vw, 2rem);
+  max-width: 1440px;
 }
 
 /* Font utilities: default is Nunito via --font-sans; override locally when needed */
