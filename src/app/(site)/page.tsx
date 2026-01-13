@@ -5,15 +5,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/shared/ui/accordion'
-import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-} from '@/shared/ui/card'
+import { Card, CardContent, CardFooter } from '@/shared/ui/card'
 // import { Separator } from '@/shared/ui/separator'
 import React from 'react'
 import Image from 'next/image'
@@ -162,36 +155,6 @@ export const revalidate = 3600
 //   )
 // }
 
-function SectionTitle({
-  title,
-  desc,
-  right,
-  id,
-}: Readonly<{
-  title: string
-  desc?: string
-  right?: string
-  id?: string
-}>) {
-  return (
-    <div
-      id={id}
-      className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between"
-    >
-      <div className="max-w-2xl">
-        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
-          {title}
-        </h2>
-        {desc ? (
-          <p className="mt-3 text-sm text-muted-foreground">{desc}</p>
-        ) : null}
-      </div>
-      {right ? (
-        <div className="text-sm text-muted-foreground">{right}</div>
-      ) : null}
-    </div>
-  )
-}
 // function getRecommendation(input: RecommendationInput): Recommendation {
 //   const { q1, q2, q3 } = input
 
@@ -629,10 +592,50 @@ function SectionTitle({
 //     </main>
 //   )
 // }
+
+const accordionItems = [
+  {
+    title: 'Где проходит общение с Яной и участницами курса?',
+    content:
+      'Все общение и поддержка проходят в Telegram. На курсе «Красота и здоровье» чат доступен только на тарифе «Премиум».',
+  },
+  {
+    title: 'Можно ли заниматься дома или только в зале?',
+    content:
+      'Тренироваться можно как в зале, так и дома. Для домашних тренировок потребуется дополнительное оборудование.',
+  },
+  {
+    title: 'Если я живу в другом часовом поясе, будет ли это проблемой?',
+    content:
+      'Все тренировки уже записаны, поэтому вы можете заниматься в любое удобное для вас время, независимо от часового пояса.',
+  },
+  {
+    title: 'Можно ли участвовать в курсе во время беременности?',
+    content:
+      'Да, возможно. Для беременных предусмотрен отдельный курс с адаптированными тренировками. Перед началом занятий важно проконсультироваться с врачом, который ведет беременность.',
+  },
+  {
+    title: 'Какое оборудование нужно для занятий дома?',
+    content:
+      'Список необходимого оборудования и рекомендации по выбору доступны в отдельном блоке «Оборудование для курса» на странице программы.',
+  },
+  {
+    title: 'Есть ли ограничения по здоровью или травмам?',
+    content:
+      'При наличии хронических заболеваний или травм рекомендуется предварительно проконсультироваться с врачом. Для более безопасного и индивидуального подхода лучше выбрать тариф с обратной связью от Яны или формат персональной работы.',
+  },
+]
+
+const faqColumns = [
+  accordionItems.filter((_, index) => index % 2 === 0),
+  accordionItems.filter((_, index) => index % 2 === 1),
+]
+
 export default function Home() {
   const trainingImageUrl = getImageUrl('images', 'training.jpeg')
   const relaxImageUrl = getImageUrl('images', 'relax.jpg')
-  const nutritionImageUrl = getImageUrl('images', '932A0123.jpg')
+  const nutritionImageUrl = getImageUrl('images', 'yana-4-3-2.png')
+  const aboutImgeUrl = getImageUrl('images', 'about.webp')
   // const heroImageUrl = getImageUrl('images', '932A0174.jpg')
 
   return (
@@ -640,8 +643,8 @@ export default function Home() {
       <HeroSection />
 
       {/* For who */}
-      <section className="py-14">
-        <div className="mb-8 max-w-2xl">
+      <section className="py-7 sm:py-14">
+        <div className="mb-6 sm:mb-8 max-w-2xl">
           <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
             Если вы узнаете себя, значит вам нужна не мотивация, а{' '}
             <span className="text-primary font-bold">система</span>
@@ -691,65 +694,64 @@ export default function Home() {
       </section>
 
       {/* Why not works */}
-      <section>
-        <div className=" py-14">
-          <div className="grid md:grid-cols-12 gap-8 items-start">
-            <div className="md:col-span-5">
-              <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
-                Чаще всего мешает не сила воли, а{' '}
-                <span className="text-primary font-bold">
-                  неправильная точка приложения
-                </span>
-              </h2>
-              <p className="mt-3 text-sm text-muted-foreground">
-                Если вы усиливаете давление на себя, тело часто отвечает
-                отечностью, срывами и усталостью.
-              </p>
-            </div>
-            <div className="md:col-span-7">
-              <Card className="rounded-3xl shadow-sm">
-                <CardContent className="p-6">
-                  <ul className="space-y-3 text-sm">
-                    {[
-                      'Усиливают тренировки, когда телу нужно восстановление и базовые привычки.',
-                      'Урезают еду, когда проблема в регулярности, белке и стрессе.',
-                      'Прыгают между методиками, когда нужен план на недели и прогрессия.',
-                      'Лечат последствия, не меняя ежедневный ритм тела.',
-                    ].map(t => (
-                      <li key={t} className="flex gap-3">
-                        <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" />
-                        <span className="text-foreground/90">{t}</span>
-                      </li>
-                    ))}
-                  </ul>
+      <section className="py-7 sm:py-14">
+        <div className="grid md:grid-cols-12 gap-8 items-start">
+          <div className="md:col-span-5">
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
+              Чаще всего мешает не сила воли, а{' '}
+              <span className="text-primary font-bold">
+                неправильная точка приложения
+              </span>
+            </h2>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Если вы усиливаете давление на себя, тело часто отвечает
+              отечностью, срывами и усталостью.
+            </p>
+          </div>
+          <div className="md:col-span-7">
+            <Card className="rounded-3xl shadow-sm">
+              <CardContent className="p-6">
+                <ul className="space-y-3 text-sm">
+                  {[
+                    'Усиливают тренировки, когда телу нужно восстановление и базовые привычки.',
+                    'Урезают еду, когда проблема в регулярности, белке и стрессе.',
+                    'Прыгают между методиками, когда нужен план на недели и прогрессия.',
+                    'Лечат последствия, не меняя ежедневный ритм тела.',
+                  ].map(t => (
+                    <li key={t} className="flex gap-3">
+                      <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" />
+                      <span className="text-foreground/90">{t}</span>
+                    </li>
+                  ))}
+                </ul>
 
-                  <div className="mt-6 rounded-2xl bg-muted/35 p-5 border">
-                    <div className="mt-1 text-sm text-muted-foreground">
-                      Стабильные изменения начинаются с базовых действий,
-                      которые повторяются регулярно, как гигиена.
-                    </div>
+                <div className="mt-6 rounded-2xl bg-muted/35 p-5 border">
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    Стабильные изменения начинаются с базовых действий, которые
+                    повторяются регулярно, как гигиена.
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
 
       {/* System */}
-      <section id="system" className="py-14">
+      <section id="system" className="py-7 sm:py-14">
+        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight  mb-6 sm:mb-8">
+          Моя методика строится{' '}
+          <span className="text-primary font-bold">на трех опорах</span>
+        </h2>
         <Card className="rounded-4xl bg-muted/30 border-white/30 p-0">
           <CardContent className="p-0">
             <div className="grid gap-2 lg:grid-cols-[1fr_4fr]">
               <div className="flex flex-col justify-between p-6">
-                <h2 className="text-base font-semibold tracking-tight">
-                  Моя методика строится на трех опорах
-                </h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground mt-3">
                   Это не про держаться. Это про понять, как работает тело, и
                   дать ему инструменты.
                 </p>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground mt-3">
                   Формат: видео-тренировки + структура питания + восстановление
                 </div>
               </div>
@@ -820,7 +822,7 @@ export default function Home() {
                   asChild
                   className="h-12 rounded-2xl bg-background text-foreground hover:bg-background/90"
                 >
-                  <a href="#programs">Перейти к программам</a>
+                  <a href="#programs">Подобрать программу</a>
                 </Button>
               </CardContent>
             </Card>
@@ -830,14 +832,18 @@ export default function Home() {
       </section>
 
       {/* Programs */}
-      <section id="programs">
-        <div className="py-14">
-          <SectionTitle
-            title="Выберите точку входа"
-            desc="Если сомневаетесь, начните с мягкого старта. Затем можно перейти в клуб и закрепить регулярность."
-          />
-          <CoursesList />
+      <section id="programs" className="py-7 sm:py-14">
+        <div className="flex flex-col justify-between pb-6">
+          <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
+            Выберите <span className="text-primary font-bold">курс</span> под
+            свои цели
+          </h2>
+          <p className="text-sm text-muted-foreground mt-3">
+            Если сомневаетесь, начните с мягкого старта. Затем можно перейти в
+            клуб и закрепить регулярность.
+          </p>
         </div>
+        <CoursesList />
       </section>
 
       {/* Cases */}
@@ -845,7 +851,8 @@ export default function Home() {
         <div className="grid md:grid-cols-12 gap-8 items-start">
           <div className="md:col-span-4">
             <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
-              Результаты обычно выглядят так
+              <span className="text-primary font-bold">Результаты</span> обычно
+              выглядят так
             </h2>
             <p className="mt-3 text-sm text-muted-foreground">
               Вес может меняться небыстро, но меняются линии тела, лицо, живот,
@@ -887,113 +894,84 @@ export default function Home() {
       </section>
 
       {/* About */}
-      <section id="about" className="bg-muted/35">
-        <div className="container py-14">
-          <div className="grid md:grid-cols-12 gap-8 items-start">
-            <div className="md:col-span-5">
-              <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
-                Яна Степанова
-              </h2>
-              <p className="mt-3 text-sm text-muted-foreground">
-                Тренер и нутрициолог. Работаю онлайн. Специализация: системное
-                восстановление тела через питание, движение и физиологию. Цель:
-                дать структуру, которая держит результат.
-              </p>
+      <section id="about" className="scroll-mt-24">
+        <div className="container py-10 sm:py-16">
+          <h2 className="text-2xl md:text-3xl font-semibold tracking-tight mb-6">
+            О тренере и создателе ya·na·sporte{' '}
+            <span className="text-primary font-bold">online</span>
+          </h2>
 
-              <div className="mt-6 grid grid-cols-3 gap-3">
-                {[
-                  { k: 'Практика', v: '12 лет' },
-                  { k: 'Формат', v: 'онлайн' },
-                  { k: 'Фокус', v: 'система' },
-                ].map(x => (
-                  <Card key={x.k} className="rounded-2xl">
-                    <CardContent className="p-4">
-                      <div className="text-xs text-muted-foreground">{x.k}</div>
-                      <div className="mt-1 text-sm font-semibold">{x.v}</div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
+          <Card className="rounded-3xl bg-background/80 shadow-sm px-0 py-2">
+            <CardContent className="px-2 md:pl-6 ">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10">
+                {/* Текст */}
+                <div className="md:col-span-8 pt-4">
+                  <p className="text-lg font-semibold">Яна Степанова</p>
 
-            <div className="md:col-span-7">
-              <Card className="rounded-3xl shadow-sm overflow-hidden">
-                <CardHeader>
-                  <div className="text-xs text-muted-foreground">
-                    Фото или видео автора
+                  <p className="mt-3 text-sm sm:text-base text-muted-foreground leading-relaxed max-w-xl">
+                    Эксперт по работе с телом, питанием и восстановлением.
+                    Помогаю выстроить систему, которая даёт результат без
+                    крайностей, с учётом физиологии, образа жизни и реальных
+                    ограничений. Работаю не с симптомами, а с причинами, чтобы
+                    изменения были устойчивыми и долгосрочными.
+                  </p>
+
+                  <div className="mt-5">
+                    <Button asChild className="rounded-2xl">
+                      <a href="/about">Познакомиться</a>
+                    </Button>
                   </div>
-                  <CardDescription className="mt-2">
-                    Этот блок лучше работает как спокойный портрет без лишнего
-                    фона.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="h-64 bg-muted/50 bg-[linear-gradient(to_right,hsl(var(--foreground)/0.06)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--foreground)/0.06)_1px,transparent_1px)] bg-size-[44px_44px]" />
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+                </div>
+
+                {/* Картинка */}
+                <div className="md:col-span-4 flex md:justify-end">
+                  <div className="relative w-full md:max-w-[352px] overflow-hidden rounded-3xl bg-muted/40 aspect-4/3 md:aspect-3/4 lg:aspect-4/3">
+                    <Image
+                      src={aboutImgeUrl}
+                      alt="Яна Степанова"
+                      fill
+                      className="object-cover object-center"
+                      sizes="(max-width: 768px) 100vw, 280px"
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="container py-14">
-        <div className="grid md:grid-cols-12 gap-8">
-          <div className="md:col-span-4">
+      <section id="faq" className="container py-7 sm:py-14">
+        <div className="flex flex-col gap-6">
+          <div className="max-w-2xl">
             <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
-              FAQ
+              Ответы на вопросы
             </h2>
-            <p className="mt-3 text-sm text-muted-foreground">
-              Коротко и по делу.
-            </p>
           </div>
-          <div className="md:col-span-8">
-            <Card className="rounded-3xl">
-              <CardContent className="p-3 sm:p-4">
-                <Accordion type="single" collapsible className="w-full">
-                  <AccordionItem value="a1">
-                    <AccordionTrigger className="text-left">
-                      Если у меня мало времени, сколько занимает система
+          <div className="grid gap-6 md:grid-cols-2">
+            {faqColumns.map((items, columnIndex) => (
+              <Accordion
+                key={`faq-col-${columnIndex}`}
+                type="single"
+                collapsible
+                className="w-full"
+              >
+                {items.map((item, index) => (
+                  <AccordionItem
+                    key={item.title}
+                    value={`item-${columnIndex}-${index + 1}`}
+                  >
+                    <AccordionTrigger className="text-base">
+                      {item.title}
                     </AccordionTrigger>
-                    <AccordionContent className="text-sm text-muted-foreground">
-                      В большинстве программ тренировки занимают около 30 минут.
-                      Плюс короткие зарядки. Питание строится на простых
-                      решениях.
+                    <AccordionContent className="text-muted-foreground text-sm">
+                      {item.content}
                     </AccordionContent>
                   </AccordionItem>
-
-                  <AccordionItem value="a2">
-                    <AccordionTrigger className="text-left">
-                      Если я уже тренируюсь, мне подойдет
-                    </AccordionTrigger>
-                    <AccordionContent className="text-sm text-muted-foreground">
-                      Да. Если есть отеки, живот, рыхлость или вес стоит, чаще
-                      нужен не больший объем тренировок, а структура нагрузки и
-                      питания.
-                    </AccordionContent>
-                  </AccordionItem>
-
-                  <AccordionItem value="a3">
-                    <AccordionTrigger className="text-left">
-                      Если есть спина, колени, ограничения
-                    </AccordionTrigger>
-                    <AccordionContent className="text-sm text-muted-foreground">
-                      В программах предусмотрены адаптации и отдельные комплексы
-                      от боли.
-                    </AccordionContent>
-                  </AccordionItem>
-
-                  <AccordionItem value="a4">
-                    <AccordionTrigger className="text-left">
-                      Мне нужна поддержка или я хочу сама
-                    </AccordionTrigger>
-                    <AccordionContent className="text-sm text-muted-foreground">
-                      Есть форматы с сопровождением и самостоятельные.
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </CardContent>
-            </Card>
+                ))}
+              </Accordion>
+            ))}
           </div>
         </div>
       </section>

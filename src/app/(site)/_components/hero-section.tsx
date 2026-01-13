@@ -7,7 +7,7 @@ export function HeroSection() {
   const heroImageUrl = getImageUrl('images', 'hero.jpeg')
 
   return (
-    <section className="relative flex flex-col justify-between overflow-hidden rounded-b-2xl py-14">
+    <section className="relative flex flex-col justify-between overflow-hidden rounded-b-2xl pt-14 pb-7 sm:pb-14">
       {/* Background noise and top spacing for mobile */}
       <div className="pointer-events-none h-60 w-full bg-[rgba(210,217,214)] sm:h-0 min-[375px]:h-50 min-[425px]:h-40" />
 
@@ -44,8 +44,8 @@ export function HeroSection() {
 
               <p className="mt-4 max-w-xl text-xs leading-tight text-foreground sm:leading-relaxed lg:text-sm">
                 Без жестких диет и подвигов. С опорой на физиологию,
-                регулярность и понятные шаги, которые можно встроить в
-                реальную жизнь.
+                регулярность и понятные шаги, которые можно встроить в реальную
+                жизнь.
               </p>
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">

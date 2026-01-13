@@ -42,7 +42,7 @@ export function CourseItem({ course }: Readonly<{ course: Course }>) {
                 src={imageUrl}
                 alt={course.title}
                 fill
-                className="object-cover"
+                className="object-cover object-[50%_50%]"
                 sizes="(max-width: 768px) 100vw, 40vw"
               />
             ) : (
