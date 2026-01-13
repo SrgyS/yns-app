@@ -12,6 +12,7 @@ import React from 'react'
 import Image from 'next/image'
 import { CoursesList } from '@/features/courses-list/courses-list'
 import { HeroSection } from './_components/hero-section'
+import Footer from './_components/footer'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 3600
@@ -970,94 +971,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t">
-        <div className="container py-10">
-          <div className="grid md:grid-cols-12 gap-8">
-            <div className="md:col-span-5">
-              <div className="flex items-center gap-3">
-                <div className="grid h-9 w-9 place-items-center rounded-xl bg-foreground text-background text-xs tracking-widest">
-                  YS
-                </div>
-                <div className="leading-tight">
-                  <div className="text-sm font-semibold">ya•na•sporte</div>
-                  <div className="text-xs text-muted-foreground">
-                    система питания и движения
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="md:col-span-7">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 text-sm">
-                <div>
-                  <div className="font-medium">Навигация</div>
-                  <ul className="mt-3 space-y-2 text-muted-foreground">
-                    <li>
-                      <a className="hover:text-foreground" href="#system">
-                        Система
-                      </a>
-                    </li>
-                    <li>
-                      <a className="hover:text-foreground" href="#programs">
-                        Программы
-                      </a>
-                    </li>
-                    <li>
-                      <a className="hover:text-foreground" href="#cases">
-                        Результаты
-                      </a>
-                    </li>
-                    <li>
-                      <a className="hover:text-foreground" href="#faq">
-                        FAQ
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-                <div>
-                  <div className="font-medium">Страницы</div>
-                  <ul className="mt-3 space-y-2 text-muted-foreground">
-                    <li>
-                      <a className="hover:text-foreground" href="/programs">
-                        /programs
-                      </a>
-                    </li>
-                    <li>
-                      <a className="hover:text-foreground" href="/club">
-                        /club
-                      </a>
-                    </li>
-                    <li>
-                      <a className="hover:text-foreground" href="/privacy">
-                        /privacy
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-                <div>
-                  <div className="font-medium">Контакты</div>
-                  <ul className="mt-3 space-y-2 text-muted-foreground">
-                    <li>
-                      <a className="hover:text-foreground" href="#">
-                        Telegram
-                      </a>
-                    </li>
-                    <li>
-                      <a className="hover:text-foreground" href="#">
-                        Email
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              <div className="mt-8 text-xs text-muted-foreground">
-                © ya•na•sporte. Все права защищены.
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

@@ -17,10 +17,10 @@ export function CourseItem({ course }: Readonly<{ course: Course }>) {
   const imageUrl = course.thumbnail
 
   return (
-    <Card className="overflow-hidden py-2">
-      <CardContent className="pl-4 pr-2 h-full">
+    <Card className="overflow-hidden py-2 rounded-3xl">
+      <CardContent className="px-2 h-full">
         <div className="grid gap-6 md:grid-cols-[1.2fr_1fr] md:items-center h-full">
-          <div className="space-y-4">
+          <div className="space-y-4 pl-2 pb-2">
             <div className="space-y-3">
               <CardTitle className="pt-2 text-xl font-bold text-primary">
                 {course.title}
