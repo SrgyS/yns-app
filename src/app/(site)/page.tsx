@@ -6,7 +6,7 @@ import {
   AccordionTrigger,
 } from '@/shared/ui/accordion'
 import { Button } from '@/shared/ui/button'
-import { Card, CardContent, CardFooter } from '@/shared/ui/card'
+import { Card, CardContent } from '@/shared/ui/card'
 // import { Separator } from '@/shared/ui/separator'
 import React from 'react'
 import Image from 'next/image'
@@ -679,7 +679,10 @@ export default function Home() {
                   d: 'Чем жестче контроль, тем сильнее откат.',
                 },
               ].map(x => (
-                <Card key={x.t} className="rounded-2xl">
+                <Card
+                  key={x.t}
+                  className="rounded-2xl shadow-none bg-primary/10"
+                >
                   <CardContent className="px-4">
                     <div className="text-sm font-medium">{x.t}</div>
                     <div className="mt-1 text-sm text-muted-foreground">
@@ -740,10 +743,10 @@ export default function Home() {
       {/* System */}
       <section id="system" className="py-7 sm:py-14">
         <h2 className="text-2xl md:text-3xl font-semibold tracking-tight  mb-6 sm:mb-8">
-          Моя методика строится{' '}
-          <span className="text-primary font-bold">на трех опорах</span>
+          Моя методика строится <br /> на{' '}
+          <span className="text-primary font-bold">трех опорах</span>
         </h2>
-        <Card className="rounded-4xl bg-muted/30 border-white/30 p-0">
+        <Card className="rounded-4xl bg-card text-card-foreground flex-1 pb-2 px-0 pt-0 shadow-lg border-none">
           <CardContent className="p-0">
             <div className="grid gap-2 lg:grid-cols-[1fr_4fr]">
               <div className="flex flex-col justify-between p-6">
@@ -779,41 +782,39 @@ export default function Home() {
                 ].map(x => (
                   <Card
                     key={x.t}
-                    className="rounded-3xl bg-background/80 shadow-sm p-0 justify-between"
+                    className="rounded-3xl shadow-sm p-0 overflow-hidden"
                   >
-                    <CardContent className="p-5 flex flex-col gap-4 justify-between h-full">
-                      <div className="text-lg font-semibold text-muted-foreground flex align-center justify-start gap-4">
-                        <span>{x.k}</span>
-                        <span>{x.t}</span>
-                      </div>
-                      <div className="flex flex-1 gap-2">
-                        <p className="mt-2 text-sm text-muted-foreground">
-                          {x.d}
-                        </p>
-                      </div>
-                      <div className="h-56 xl:h-66 w-full rounded-2xl bg-muted/50 relative overflow-hidden">
+                    <CardContent className="p-0">
+                      <div className="relative min-h-60 md:min-h-72">
                         {x.img ? (
                           <Image
                             src={x.img}
                             alt="block image"
                             fill
                             className="object-cover"
-                            sizes="(max-width: 768px) 100vw, 240px"
+                            sizes="(max-width: 768px) 100vw, 360px"
                           />
                         ) : null}
+                        <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/85 via-black/50 to-transparent" />
+                        <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col gap-3 p-6 text-white">
+                          <div className="text-lg font-semibold flex items-center gap-3">
+                            <span>{x.t}</span>
+                          </div>
+                          <p className="text-sm text-white/90">{x.d}</p>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
                 ))}
               </div>
             </div>
-            <Card className="rounded-3xl bg-foreground text-background mx-2">
+            <Card className="rounded-3xl bg-primary/10 text-foreground mx-2 mt-8 md:mt-10">
               <CardContent className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                  <div className="text-sm font-medium">
+                  <div className="text-sm font-bold">
                     Почему это работает в долгую
                   </div>
-                  <div className="text-sm opacity-80 mt-1">
+                  <div className="text-sm mt-1">
                     В программах есть инструменты, которые помогают изменить
                     привычки, и та проблема, с которой пришёл человек, уходит.
                   </div>
@@ -827,7 +828,6 @@ export default function Home() {
               </CardContent>
             </Card>
           </CardContent>
-          <CardFooter></CardFooter>
         </Card>
       </section>
 
@@ -835,8 +835,8 @@ export default function Home() {
       <section id="programs" className="py-7 sm:py-14">
         <div className="flex flex-col justify-between pb-6">
           <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
-            Выберите <span className="text-primary font-bold">курс</span> под
-            свои цели
+            Выберите <span className="text-primary font-bold">курс</span> <br />{' '}
+            под свои цели
           </h2>
           <p className="text-sm text-muted-foreground mt-3">
             Если сомневаетесь, начните с мягкого старта. Затем можно перейти в
@@ -846,103 +846,54 @@ export default function Home() {
         <CoursesList />
       </section>
 
-      {/* Cases */}
-      <section id="cases" className="py-14">
-        <div className="grid md:grid-cols-12 gap-8 items-start">
-          <div className="md:col-span-4">
-            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
-              <span className="text-primary font-bold">Результаты</span> обычно
-              выглядят так
-            </h2>
-            <p className="mt-3 text-sm text-muted-foreground">
-              Вес может меняться небыстро, но меняются линии тела, лицо, живот,
-              отечность и ощущение контроля.
-            </p>
-          </div>
-          <div className="md:col-span-8">
-            <div className="grid sm:grid-cols-2 gap-4">
-              {['Кейс 1', 'Кейс 2', 'Кейс 3', 'Кейс 4'].map((t, i) => (
-                <Card key={t} className="rounded-3xl overflow-hidden">
-                  <div className="h-44 bg-muted/50 bg-[linear-gradient(to_right,hsl(var(--foreground)/0.06)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--foreground)/0.06)_1px,transparent_1px)] bg-size-[44px_44px]" />
-                  <CardContent className="p-5">
-                    <div className="text-sm font-medium">{t}</div>
-                    <div className="mt-1 text-sm text-muted-foreground">
-                      {
-                        [
-                          '6 недель. Линии тела стали собраннее. Меньше отечности.',
-                          'Живот и талия. Лучше сон. Уходит тяга к сладкому.',
-                          'Осанка, шея, легкость в теле. Регулярность без насилия.',
-                          'Рыхлость уходит через питание и прогрессию нагрузок.',
-                        ][i]
-                      }
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            <Card className="mt-6 rounded-3xl">
-              <CardContent className="p-6">
-                <div className="text-sm font-medium">Блок отзывов</div>
-                <div className="mt-2 text-sm text-muted-foreground">
-                  Здесь будут короткие цитаты из отзывов. Формат: 2-3 строки.
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
       {/* About */}
-      <section id="about" className="scroll-mt-24">
-        <div className="container py-10 sm:py-16">
-          <h2 className="text-2xl md:text-3xl font-semibold tracking-tight mb-6">
-            О тренере и создателе ya·na·sporte{' '}
-            <span className="text-primary font-bold">online</span>
-          </h2>
+      <section id="about" className="scroll-mt-24 py-7 sm:py-14">
+        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight mb-6">
+          О тренере и создателе <br /> ya·na·sporte{' '}
+          <span className="text-primary font-bold">online</span>
+        </h2>
 
-          <Card className="rounded-3xl bg-background/80 shadow-sm px-0 py-2">
-            <CardContent className="px-2 md:pl-6 ">
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10">
-                {/* Текст */}
-                <div className="md:col-span-8 pt-4">
-                  <p className="text-lg font-semibold">Яна Степанова</p>
+        <Card className="rounded-3xl bg-background/80 shadow-sm px-0 py-2">
+          <CardContent className="px-2 ">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10">
+              {/* Текст */}
+              <div className="md:col-span-8 py-2 pl-2">
+                <p className="text-lg font-semibold">Яна Степанова</p>
 
-                  <p className="mt-3 text-sm sm:text-base text-muted-foreground leading-relaxed max-w-xl">
-                    Эксперт по работе с телом, питанием и восстановлением.
-                    Помогаю выстроить систему, которая даёт результат без
-                    крайностей, с учётом физиологии, образа жизни и реальных
-                    ограничений. Работаю не с симптомами, а с причинами, чтобы
-                    изменения были устойчивыми и долгосрочными.
-                  </p>
+                <p className="mt-3 text-sm sm:text-base text-muted-foreground leading-relaxed max-w-xl">
+                  Эксперт по работе с телом, питанием и восстановлением. Помогаю
+                  выстроить систему, которая даёт результат без крайностей, с
+                  учётом физиологии, образа жизни и реальных ограничений.
+                  Работаю не с симптомами, а с причинами, чтобы изменения были
+                  устойчивыми и долгосрочными.
+                </p>
 
-                  <div className="mt-5">
-                    <Button asChild className="rounded-2xl">
-                      <a href="/about">Познакомиться</a>
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Картинка */}
-                <div className="md:col-span-4 flex md:justify-end">
-                  <div className="relative w-full md:max-w-[352px] overflow-hidden rounded-3xl bg-muted/40 aspect-4/3 md:aspect-3/4 lg:aspect-4/3">
-                    <Image
-                      src={aboutImgeUrl}
-                      alt="Яна Степанова"
-                      fill
-                      className="object-cover object-center"
-                      sizes="(max-width: 768px) 100vw, 280px"
-                    />
-                  </div>
+                <div className="mt-5">
+                  <Button asChild className="rounded-2xl">
+                    <a href="/about">Познакомиться</a>
+                  </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+
+              {/* Картинка */}
+              <div className="md:col-span-4 flex md:justify-end">
+                <div className="relative w-full md:max-w-[352px] overflow-hidden rounded-2xl bg-muted/40 aspect-4/3 md:aspect-3/4 lg:aspect-4/3 xl:aspect-6/6">
+                  <Image
+                    src={aboutImgeUrl}
+                    alt="Яна Степанова"
+                    fill
+                    className="object-cover object-center"
+                    sizes="(max-width: 768px) 100vw, 280px"
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="container py-7 sm:py-14">
+      <section id="faq" className="py-7 sm:py-14">
         <div className="flex flex-col gap-6">
           <div className="max-w-2xl">
             <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
@@ -959,6 +910,7 @@ export default function Home() {
               >
                 {items.map((item, index) => (
                   <AccordionItem
+                    className="border-b-primary/30"
                     key={item.title}
                     value={`item-${columnIndex}-${index + 1}`}
                   >
@@ -978,45 +930,43 @@ export default function Home() {
 
       {/* CTA + Quiz */}
       <section id="cta" className="pb-16">
-        <div className="container">
-          <Card className="rounded-3xl bg-foreground text-background shadow-sm overflow-hidden">
-            <CardContent className="p-8 md:p-10">
-              <div className="grid md:grid-cols-12 gap-8 items-start">
-                <div className="md:col-span-7">
-                  <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
-                    Начните с правильной точки входа
-                  </h2>
-                  <p className="mt-3 text-sm opacity-80 max-w-xl">
-                    Я помогу выбрать программу под вашу задачу и ограничения.
-                    Достаточно коротко описать ситуацию.
-                  </p>
+        <Card className="rounded-3xl bg-foreground text-background shadow-sm overflow-hidden">
+          <CardContent className="p-8 md:p-10">
+            <div className="grid md:grid-cols-12 gap-8 items-start">
+              <div className="md:col-span-7">
+                <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
+                  Начните с правильной точки входа
+                </h2>
+                <p className="mt-3 text-sm opacity-80 max-w-xl">
+                  Я помогу выбрать программу под вашу задачу и ограничения.
+                  Достаточно коротко описать ситуацию.
+                </p>
 
-                  <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                    <Button
-                      asChild
-                      className="h-12 rounded-2xl bg-background text-foreground hover:bg-background/90"
-                    >
-                      <a href="#programs">Выбрать программу</a>
-                    </Button>
-                    <Button
-                      asChild
-                      variant="outline"
-                      className="h-12 rounded-2xl border-white/20 bg-transparent text-background hover:bg-white/10"
-                    >
-                      <a href="#">Написать в Telegram</a>
-                    </Button>
-                  </div>
+                <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                  <Button
+                    asChild
+                    className="h-12 rounded-2xl bg-background text-foreground hover:bg-background/90"
+                  >
+                    <a href="#programs">Выбрать программу</a>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="h-12 rounded-2xl border-white/20 bg-transparent text-background hover:bg-white/10 hover:text-secondary"
+                  >
+                    <a href="#">Написать в Telegram</a>
+                  </Button>
                 </div>
+              </div>
 
-                {/* <div className="md:col-span-5">
+              {/* <div className="md:col-span-5">
                   <div className="rounded-3xl bg-white/8 border border-white/10 p-4 sm:p-5">
                     <QuizCard />
                   </div>
                 </div> */}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       </section>
 
       {/* Footer */}
