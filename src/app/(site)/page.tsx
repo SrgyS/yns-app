@@ -12,7 +12,7 @@ import React from 'react'
 import Image from 'next/image'
 import { CoursesList } from '@/features/courses-list/courses-list'
 import { HeroSection } from './_components/hero-section'
-import Footer from './_components/footer'
+import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 3600
@@ -633,7 +633,7 @@ const faqColumns = [
 ]
 
 export default function Home() {
-  const trainingImageUrl = getImageUrl('images', 'training.jpeg')
+  const trainingImageUrl = getImageUrl('images', 'move.webp')
   const relaxImageUrl = getImageUrl('images', 'relax.jpg')
   const nutritionImageUrl = getImageUrl('images', 'yana-4-3-2.png')
   const aboutImgeUrl = getImageUrl('images', 'about.webp')
@@ -871,7 +871,7 @@ export default function Home() {
 
                 <div className="mt-5">
                   <Button asChild className="rounded-2xl">
-                    <a href="/about">Познакомиться</a>
+                    <a href="/about">Подробнее о Яне</a>
                   </Button>
                 </div>
               </div>
@@ -930,7 +930,7 @@ export default function Home() {
       </section>
 
       {/* CTA + Quiz */}
-      <section id="cta" className="pb-16">
+      <section id="cta" className="pt-7 sm:pt-14">
         <Card className="rounded-3xl bg-foreground text-background shadow-sm overflow-hidden">
           <CardContent className="p-8 md:p-10">
             <div className="grid md:grid-cols-12 gap-8 items-start">
@@ -955,7 +955,9 @@ export default function Home() {
                     variant="outline"
                     className="h-12 rounded-2xl border-white/20 bg-transparent text-background hover:bg-white/10 hover:text-secondary"
                   >
-                    <a href="#">Написать в Telegram</a>
+                    <Link href="https://t.me/YanasporteOnline">
+                      Написать в Telegram
+                    </Link>
                   </Button>
                 </div>
               </div>
@@ -969,9 +971,6 @@ export default function Home() {
           </CardContent>
         </Card>
       </section>
-
-      {/* Footer */}
-      <Footer />
     </div>
   )
 }

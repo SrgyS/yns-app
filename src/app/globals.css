@@ -137,6 +137,7 @@
 @layer base {
   html {
     scrollbar-gutter: stable;
+    scroll-behavior: smooth;
   }
   * {
     @apply border-border outline-ring/50;

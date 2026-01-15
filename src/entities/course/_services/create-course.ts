@@ -43,7 +43,6 @@ export class CreateCourseService {
       thumbnail,
       image,
       contentType,
-      access,
       price,
       durationWeeks,
       durationDays,
