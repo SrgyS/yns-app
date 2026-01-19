@@ -1,21 +1,25 @@
 'use client'
 
-import { Course } from '@/entities/course'
-import { MdxCode } from '@/shared/lib/mdx'
-import { Card, CardContent, CardTitle } from '@/shared/ui/card'
 import { Button } from '@/shared/ui/button'
-import Link from 'next/link'
-import { getCoursePublicPath } from '@/kernel/lib/router'
-import { getMinPaidTariffPrice } from '@/kernel/domain/course'
+import { Card, CardContent, CardTitle } from '@/shared/ui/card'
 import Image from 'next/image'
+import Link from 'next/link'
 
-export function CourseItem({ course }: Readonly<{ course: Course }>) {
-  const minPrice = getMinPaidTariffPrice(course.tariffs)
-  if (minPrice === null) {
-    return null
-  }
-  const imageUrl = course.thumbnail
+type ServiceCardProps = {
+  title: string
+  description: string
+  priceTitle: string
+  imageUrl?: string
+  href: string
+}
 
+export function ServiceCard({
+  title,
+  description,
+  priceTitle,
+  imageUrl,
+  href,
+}: ServiceCardProps) {
   return (
     <Card className="overflow-hidden py-2 rounded-3xl">
       <CardContent className="px-2 h-full">
@@ -23,16 +27,15 @@ export function CourseItem({ course }: Readonly<{ course: Course }>) {
           <div className="space-y-4 pl-2 pb-2">
             <div className="space-y-3">
               <CardTitle className="pt-2 text-xl font-bold text-primary">
-                {course.title}
+                {title}
               </CardTitle>
-              {/* <MdxCode code={course.description} /> */}
-              {course.shortDescription && (
-                <MdxCode className="text-sm" code={course.shortDescription} />
-              )}
+              <div className="text-sm text-muted-foreground whitespace-pre-line">
+                {description}
+              </div>
             </div>
-            <Button size="lg" asChild className="rounded-2xl">
-              <Link href={getCoursePublicPath(course.slug)}>
-                от {new Intl.NumberFormat('ru-RU').format(minPrice)}₽
+            <Button size="lg" className='rounded-2xl' asChild>
+              <Link href={href}>
+                {priceTitle}
               </Link>
             </Button>
           </div>
@@ -40,7 +43,7 @@ export function CourseItem({ course }: Readonly<{ course: Course }>) {
             {imageUrl ? (
               <Image
                 src={imageUrl}
-                alt={course.title}
+                alt={title}
                 fill
                 className="object-cover object-bottom"
                 sizes="(max-width: 768px) 100vw, 40vw"

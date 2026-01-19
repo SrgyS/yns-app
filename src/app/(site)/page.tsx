@@ -6,13 +6,17 @@ import {
   AccordionTrigger,
 } from '@/shared/ui/accordion'
 import { Button } from '@/shared/ui/button'
-import { Card, CardContent } from '@/shared/ui/card'
+import { Card, CardContent, CardFooter, CardHeader } from '@/shared/ui/card'
 // import { Separator } from '@/shared/ui/separator'
 import React from 'react'
 import Image from 'next/image'
 import { CoursesList } from '@/features/courses-list/courses-list'
 import { HeroSection } from './_components/hero-section'
+// import { ServiceCard } from './_components/service-card'
 import Link from 'next/link'
+import { Badge } from '@/shared/ui/badge'
+import { Separator } from '@/shared/ui/separator'
+import { ClipboardCheck, MonitorSmartphone, UserRoundCheck } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 3600
@@ -638,6 +642,43 @@ export default function Home() {
   const nutritionImageUrl = getImageUrl('images', 'yana-4-3-2.png')
   const aboutImgeUrl = getImageUrl('images', 'about.webp')
   // const heroImageUrl = getImageUrl('images', '932A0174.jpg')
+  const individualSupportItems = [
+    {
+      key: 'consultation',
+      title: 'Консультация онлайн',
+      description:
+        'Комплексный разбор, который по факту заменяет несколько консультаций у разных специалистов: вы получаете целостную картину и план действий на 1–2 месяца.',
+      price: { currency: '₽', value: '20 000' },
+      icon: MonitorSmartphone,
+      bullets: [
+        'Онлайн-созвон 60–90 минут: понятно, без «медицинского тумана», с логикой причин',
+      ],
+      footer: true,
+    },
+    {
+      key: 'individual-support',
+      title: 'Индивидуальное сопровождение',
+      description:
+        '3 персональных консультации для разбора ваших трудностей, анализов, вопросов здоровья, питания, движения',
+      price: { currency: '₽', value: '60 000' },
+      icon: UserRoundCheck,
+      bullets: ['3 персональных консультации', 'План действий на 1–2 месяца'],
+      footer: true,
+    },
+    {
+      key: 'nutrition-support',
+      title: 'Сопровождение нутрициолога',
+      description:
+        'Глубокая диагностика, индивидуальный план и системное восстановление тела. Для тех, кто хочет разобраться в причине симптомов и настроить питание, нутрицевтики и образ жизни под себя',
+      price: { currency: '₽', value: '60 000' },
+      icon: ClipboardCheck,
+      bullets: [
+        '3 персональных консультации с нутрициологом',
+        'Индивидуальный план питания и образа жизни',
+      ],
+      footer: true,
+    },
+  ]
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
@@ -797,10 +838,10 @@ export default function Home() {
                           />
                         ) : null}
                         <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/85 via-black/50 to-transparent" />
-                        <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col gap-3 p-6 text-white">
-                          <div className="text-lg font-semibold flex items-center gap-3">
-                            <span>{x.t}</span>
-                          </div>
+                        <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col justify-between h-full p-4 lg:pb-6 lg:px-4  text-white">
+                          <Badge className="text-lg font-semibold bg-background/70 text-secondary-foreground">
+                            {x.t}
+                          </Badge>
                           <p className="text-sm text-white/90">{x.d}</p>
                         </div>
                       </div>
@@ -824,7 +865,7 @@ export default function Home() {
                   asChild
                   className="h-12 rounded-2xl bg-background text-foreground hover:bg-background/90"
                 >
-                  <a href="#programs">Подобрать программу</a>
+                  <a href="#programs">Выбрать программу</a>
                 </Button>
               </CardContent>
             </Card>
@@ -832,7 +873,6 @@ export default function Home() {
         </Card>
       </section>
 
-      {/* Programs */}
       <section id="programs" className="py-7 sm:py-14">
         <div className="flex flex-col justify-between pb-6">
           <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
@@ -845,6 +885,161 @@ export default function Home() {
           </p>
         </div>
         <CoursesList />
+      </section>
+
+      {/* Individual Support */}
+      <section id="individual" className="py-7 sm:py-14">
+        <div className="space-y-4">
+          <h2 className="font-montserrat text-2xl font-semibold sm:text-3xl">
+            <span className="text-primary font-bold">Индивидуальная</span>{' '}
+            работа
+          </h2>
+
+          {/* <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="space-y-2">
+              <h2 className="font-montserrat text-2xl font-semibold sm:text-3xl">
+                <span className="text-primary font-bold">Индивидуальная</span>{' '}
+                работа
+              </h2>
+            </div>
+          </div>
+          <div className="grid gap-3 lg:grid-cols-12">
+            <div className="lg:col-span-5">
+              <ServiceCard
+                title="Сопровождение нутрициолога"
+                description={`Глубокая диагностика, индивидуальный план и системное восстановление тела.
+
+Индивидуальное сопровождение для тех, кто хочет разобраться в причине симптомов и настроить питание, нутрицевтики и образ жизни под себя.`}
+                priceTitle="Подробнее"
+                href="https://t.me/YanasporteOnline"
+                imageUrl={relaxImageUrl}
+              />
+            </div>
+            <Card className="w-full lg:col-span-7">
+              <CardHeader className="space-y-3">
+                <Badge className="w-fit" variant="secondary">
+                  дистанционно
+                </Badge>
+
+                <h3 className="text-2xl font-semibold">Консультация онлайн</h3>
+
+                <p className="text-muted-foreground">
+                  Дистанционный формат работы для разбора вашего запроса и
+                  выстраивания понятного плана действий. Встреча проходит в
+                  видео-формате, с фокусом на текущее состояние, питание и
+                  ключевые привычки.
+                </p>
+              </CardHeader>
+
+              <CardContent className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2 rounded-xl border p-4">
+                    <p className="font-medium">Одна консультация</p>
+                    <p className="text-sm text-muted-foreground">
+                      55 минут в видео-формате
+                      <br />
+                      Telegram, Zoom или IMO
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 rounded-xl border p-4">
+                    <p className="font-medium">Сопровождение</p>
+                    <p className="text-sm text-muted-foreground">
+                      3 онлайн-консультации
+                      <br />+ доступ к одному из курсов на 2 месяца
+                    </p>
+                  </div>
+                </div>
+
+                <Button className="w-full rounded-2xl">
+                  Оставить заявку
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div> */}
+          <div className="bg-primary/10 rounded-3xl p-5">
+            <div className="flex items-center flex-wrap gap-2">
+              {' '}
+              <Badge className="w-fit" variant="secondary">
+                дистанционно
+              </Badge>
+              <Badge className="w-fit" variant="secondary">
+                персональный разбор
+              </Badge>
+            </div>
+            <p className="text-muted-foreground py-6">
+              Формат для тех, кому не подходят общие рекомендации и стандартные
+              схемы. Если вы уже многое пробовали, но состояние не улучшается
+              или результат постоянно откатывается, здесь важен персональный
+              разбор и понимание причин. В работе учитываются особенности тела,
+              анализы и образ жизни, чтобы подобрать индивидуальные рекомендации
+              и выстроить программу, которая реально вписывается в жизнь и даёт
+              устойчивый результат.
+            </p>
+
+            <div className="grid gap-4 lg:grid-cols-3">
+              {individualSupportItems.map(item => {
+                const Icon = item.icon
+                const bullets = item.bullets?.filter(Boolean) ?? []
+
+                return (
+                  <Card key={item.key} className="justify-between rounded-3xl">
+                    <CardHeader>
+                      <div className="flex justify-between mb-4">
+                        <h3 className="text-2xl font-semibold">{item.title}</h3>
+                        <div className="bg-primary p-3 rounded-2xl w-14 h-14">
+                          <Icon className="h-8 w-8 text-white" />
+                        </div>
+                      </div>
+
+                      <p>{item.description}</p>
+                      <div className="flex gap-1.5 pt-2">
+                        <span className="text-lg font-medium">
+                          {item.price.currency}
+                        </span>
+                        <span className="font-semibold text-4xl">
+                          {item.price.value}
+                        </span>
+                      </div>
+                    </CardHeader>
+                    <div className="px-4">
+                      <Separator />
+                    </div>
+                    <CardContent>
+                      {bullets.length ? (
+                        <ul className="space-y-2 text-sm text-muted-foreground">
+                          {bullets.map(bullet => (
+                            <li key={bullet} className="flex gap-2">
+                              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/60" />
+                              <span>{bullet}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </CardContent>
+                    {item.footer ? (
+                      <CardFooter>
+                        <div className="w-full flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <Button variant="outline" className="rounded-2xl">
+                            <Link href="#">Подробнее</Link>
+                          </Button>
+                          <Button
+                            asChild
+                            className="w-full sm:w-auto rounded-2xl"
+                          >
+                            <a href="/apply">Оставить заявку</a>
+                          </Button>
+                        </div>
+                      </CardFooter>
+                    ) : null}
+                  </Card>
+                )
+              })}
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* About */}
@@ -870,8 +1065,8 @@ export default function Home() {
                 </p>
 
                 <div className="mt-5">
-                  <Button asChild className="rounded-2xl">
-                    <a href="/about">Подробнее о Яне</a>
+                  <Button asChild size="lg" className="rounded-2xl">
+                    <Link href="/about">Подробнее о Яне</Link>
                   </Button>
                 </div>
               </div>
