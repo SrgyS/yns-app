@@ -109,6 +109,7 @@ export default function Home() {
       dialogText:
         'Формат для более глубокой работы: разбор анализов, питания, движения и состояния, регулярная связь и корректировки по ходу сопровождения.',
       footer: true,
+      href: '/individual-support',
     },
     {
       key: 'nutrition-support',
