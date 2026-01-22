@@ -54,7 +54,7 @@ export const Footer = () => {
     <footer className="border-t bg-black/85 text-slate-200 w-full">
       <div className="px-1.5 min-[375px]:container">
         <div className="py-8 sm:py-12 space-y-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 items-start gap-6 md:gap-8 mb-6">
+          <div className="grid md:grid-cols-3 lg:grid-cols-4 items-start gap-6 md:gap-8 mb-6">
             <div className="flex flex-col gap-4">
               {/* Logo */}
               <Logo />
@@ -128,7 +128,7 @@ export const Footer = () => {
                 </ul>
               </div>
             ))}
-            <div className="flex gap-3 flex-col w-fit justify-self-end md:justify-self-start">
+            <div className="flex gap-3 flex-col w-fit justify-self-start md:justify-self-start">
               <Button
                 variant="outline"
                 className="border-primary bg-transparent"
@@ -136,7 +136,9 @@ export const Footer = () => {
                 Личный кабинет
               </Button>
               <Button asChild>
-                <Link href="https://t.me/YanasporteOnline">Написать</Link>
+                <Link href="https://t.me/YanasporteOnline">
+                  Написать в техподдержку
+                </Link>
               </Button>
             </div>
           </div>
