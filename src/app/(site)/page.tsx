@@ -7,16 +7,6 @@ import {
 } from '@/shared/ui/accordion'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/shared/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-} from '@/shared/ui/dialog'
 // import { Separator } from '@/shared/ui/separator'
 import React from 'react'
 import Image from 'next/image'
@@ -26,6 +16,8 @@ import { HeroSection } from './_components/hero-section'
 import Link from 'next/link'
 import { Badge } from '@/shared/ui/badge'
 import { Separator } from '@/shared/ui/separator'
+import { LeadRequestDialog } from '@/features/lead-request/_ui/lead-request-dialog'
+import { LeadRequestDetailsDialog } from '@/features/lead-request/_ui/lead-request-details-dialog'
 import {
   Award,
   ClipboardCheck,
@@ -438,44 +430,19 @@ export default function Home() {
                               <Link href={item.href}>Подробнее</Link>
                             </Button>
                           ) : (
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className="rounded-2xl"
-                                >
-                                  Подробнее
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>{item.title}</DialogTitle>
-                                  <DialogDescription>
-                                    {item.dialogText}
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <DialogFooter className="sm:justify-between">
-                                  <DialogClose asChild>
-                                    <Button
-                                      variant="outline"
-                                      className="rounded-2xl"
-                                    >
-                                      Назад
-                                    </Button>
-                                  </DialogClose>
-                                  <Button asChild className="rounded-2xl">
-                                    <a href="/apply">Оставить заявку</a>
-                                  </Button>
-                                </DialogFooter>
-                              </DialogContent>
-                            </Dialog>
+                            <LeadRequestDetailsDialog
+                              title={item.title}
+                              description={item.dialogText ?? ''}
+                              source={`индивидуальное сопровождение:${item.key}`}
+                            />
                           )}
-                          <Button
-                            asChild
-                            className="w-full sm:w-auto rounded-2xl"
+                          <LeadRequestDialog
+                            source={`индивидуальное сопровождение:${item.key}`}
                           >
-                            <a href="/apply">Оставить заявку</a>
-                          </Button>
+                            <Button className="w-full sm:w-auto rounded-2xl">
+                              Оставить заявку
+                            </Button>
+                          </LeadRequestDialog>
                         </div>
                       </CardFooter>
                     ) : null}

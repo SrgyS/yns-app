@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent } from '@/shared/ui/card'
 import { Badge } from '@/shared/ui/badge'
+import { LeadRequestDialog } from '@/features/lead-request/_ui/lead-request-dialog'
 
 const infoBlocks = [
   {
@@ -53,9 +54,9 @@ export default function IndividualSupportPage() {
       </section>
 
       <section className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <Button asChild className="rounded-2xl">
-          <Link href="/apply">Оставить заявку</Link>
-        </Button>
+        <LeadRequestDialog source="site:individual-support-page">
+          <Button className="rounded-2xl">Оставить заявку</Button>
+        </LeadRequestDialog>
         <Button variant="outline" asChild className="rounded-2xl">
           <Link href="/about">Подробнее о Яне</Link>
         </Button>

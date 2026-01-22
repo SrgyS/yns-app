@@ -4,6 +4,7 @@ import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader } from '@/shared/ui/card'
 import { Badge } from '@/shared/ui/badge'
 import { getImageUrl } from '@/shared/lib/images'
+import { LeadRequestDialog } from '@/features/lead-request/_ui/lead-request-dialog'
 
 const steps = [
   {
@@ -157,18 +158,11 @@ export default function NutritionSupport() {
                   питания, поддержка и бонусная тренировка под ваши запросы.
                 </p>
                 <div className="flex flex-1 gap-3">
-                  <Button
-                    asChild
-                    className="rounded-2xl text-xs sm:text-base sm:w-fit"
-                  >
-                    <Link
-                      href="https://t.me/dominadara"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
+                  <LeadRequestDialog source="site:nutrition-support">
+                    <Button className="rounded-2xl text-xs sm:text-base sm:w-fit">
                       Оставить заявку
-                    </Link>
-                  </Button>
+                    </Button>
+                  </LeadRequestDialog>
                   <Button
                     variant="outline"
                     className="rounded-2xl text-xs sm:text-base bg-background/50 hover:bg-background/80 w-fit"

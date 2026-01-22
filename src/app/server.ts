@@ -24,6 +24,7 @@ import { UserKnowledgeModule } from '@/features/knowledge/module'
 import { RecipesModule } from '@/entities/recipes/module'
 import { AdminRecipesModule } from '@/features/admin-panel/recipes/module'
 import { UserRecipesModule } from '@/features/user-recipes/module'
+import { LeadRequestModule } from '@/features/lead-request/module'
 
 
 export function createServer() {
@@ -52,7 +53,8 @@ export function createServer() {
     UserKnowledgeModule,
     RecipesModule,
     AdminRecipesModule,
-    UserRecipesModule
+    UserRecipesModule,
+    LeadRequestModule
   )
 
   return container
