@@ -46,7 +46,7 @@ export function CourseItem({ course }: Readonly<{ course: Course }>) {
                 sizes="(max-width: 768px) 100vw, 40vw"
               />
             ) : (
-              <div className="h-full w-full bg-muted" />
+              <div className="h-full w-full bg-[linear-gradient(135deg,rgba(16,185,129,0.18),rgba(14,116,144,0.12),rgba(15,23,42,0.08))]" />
             )}
           </div>
         </div>
