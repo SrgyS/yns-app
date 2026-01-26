@@ -10,19 +10,19 @@ const footerSections = [
     links: [
       {
         title: 'Перезагрузка движения',
-        href: '#',
+        href: '/#programs',
       },
       {
         title: 'Тело без отеков',
-        href: '#',
+        href: '/#programs',
       },
       {
         title: 'Антикорка',
-        href: '#',
+        href: '/#programs',
       },
       {
         title: 'Персональная работа',
-        href: '#',
+        href: '/#individual',
       },
     ],
   },
@@ -31,19 +31,19 @@ const footerSections = [
     links: [
       {
         title: 'Главная',
-        href: '#',
+        href: '/',
       },
       {
         title: 'Обо мне',
-        href: '#',
+        href: '/about',
       },
       {
         title: 'Результаты и отзывы клиентов',
-        href: '#',
+        href: '/results',
       },
       {
         title: 'Оборудование для тренировок',
-        href: '#',
+        href: '/equipment',
       },
     ],
   },
