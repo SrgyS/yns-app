@@ -1,13 +1,13 @@
 import { z } from 'zod'
 
-const accessProductSchema = z.discriminatedUnion('access', [
-  z.object({ access: z.literal('free') }),
-  z.object({
+const courseTariffSchema = z
+  .object({
+    id: z.string().min(1).optional(),
     access: z.literal('paid'),
     price: z.number().int().positive(),
-    accessDurationDays: z.number().int().positive(),
-  }),
-])
+    durationDays: z.number().int().positive(),
+    feedback: z.boolean().optional(),
+  })
 
 const weekSchema = z.object({
   id: z.string().min(1).optional(),
@@ -62,7 +62,7 @@ const courseBaseSchema = z.object({
     .array(z.number().int().min(1).max(7))
     .min(1),
   contentType: z.enum(['FIXED_COURSE', 'SUBSCRIPTION']),
-  product: accessProductSchema,
+  tariffs: z.array(courseTariffSchema).min(1),
   dependencies: z.array(z.string().min(1)).default([]),
 })
 

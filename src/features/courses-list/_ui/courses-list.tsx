@@ -15,7 +15,7 @@ export function CoursesListClient({
   )
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="grid lg:grid-cols-2 gap-3">
       {coursesList.length > 0 ? (
         coursesList.map(course => (
           <CourseItem key={course.id} course={course} />

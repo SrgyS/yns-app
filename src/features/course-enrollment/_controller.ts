@@ -183,7 +183,7 @@ export class CourseEnrollmentController extends Controller {
             })
           )
 
-          if (!course || !course.product) {
+          if (!course || course.tariffs.length === 0) {
             return {
               hasAccess: false,
               enrollment: null,
@@ -201,7 +201,7 @@ export class CourseEnrollmentController extends Controller {
                 userId: input.userId,
                 course: {
                   id: course.id,
-                  product: course.product,
+                  tariffs: course.tariffs,
                   contentType: course.contentType,
                 },
               })

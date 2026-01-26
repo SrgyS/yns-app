@@ -2,7 +2,7 @@ import { Card, CardHeader, CardContent, CardFooter } from '@/shared/ui/card'
 
 import { BackButton } from './back-button'
 import React from 'react'
-import Link from 'next/link'
+// import Link from 'next/link'
 
 interface CardWrapperProps {
   children: React.ReactNode
@@ -18,7 +18,7 @@ export const CardWrapper = ({
   headerLabel,
   backButtonLabel,
   backButtonHref,
-  showPolicy,
+  // showPolicy,
 }: CardWrapperProps) => {
   return (
     <div className="container relative  flex-col items-center justify-center self-center pt-24">
@@ -30,14 +30,14 @@ export const CardWrapper = ({
         </CardHeader>
         <CardContent className="grid gap-4">
           {children}
-          {showPolicy && (
+          {/* {showPolicy && (
             <p className="px-0 text-center text-sm text-muted-foreground">
-              Нажимая продолжить вы соглашаетесь с{' '}
+              Нажимая зарегистрироваться вы соглашаетесь с{' '}
               <Link
-                href="/terms"
+                href="/order"
                 className="underline underline-offset-4 hover:text-primary"
               >
-                Пользовательским соглашением
+                договором-офертой
               </Link>{' '}
               и{' '}
               <Link
@@ -47,7 +47,7 @@ export const CardWrapper = ({
                 Политикой конфиденциальности
               </Link>
             </p>
-          )}
+          )} */}
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
           <BackButton href={backButtonHref} label={backButtonLabel} />

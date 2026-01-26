@@ -3,11 +3,19 @@ import { CourseSlug } from '../domain/course'
 export const getCourseOrderPath = (
   courseSlug: CourseSlug,
   urlReturn: string,
-  baseUrl = ''
+  baseUrl = '',
+  tariffId?: string
 ) => {
-  const url = `${baseUrl}/platform/order?courseSlug=${courseSlug}&urlReturn=${encodeURIComponent(
-    urlReturn
-  )}`
+  const params = new URLSearchParams({
+    courseSlug,
+    urlReturn,
+  })
+
+  if (tariffId) {
+    params.set('tariffId', tariffId)
+  }
+
+  const url = `${baseUrl}/platform/order?${params.toString()}`
 
   return url
 }
@@ -25,6 +33,12 @@ export const getCourseOrdereWebhookPath = (baseUrl = '') => {
 
 export const getCoursePath = (courseSlug: CourseSlug, baseUrl = '') => {
   const url = `${baseUrl}/platform/day/${courseSlug}`
+
+  return url
+}
+
+export const getCoursePublicPath = (courseSlug: CourseSlug, baseUrl = '') => {
+  const url = `${baseUrl}/courses/${courseSlug}`
 
   return url
 }

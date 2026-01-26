@@ -7,7 +7,9 @@ import { toast } from 'sonner'
 import { CourseContentType, AccessType } from '@prisma/client'
 
 import { adminCoursesApi } from '../../_api'
+import type { CourseUpsertInput } from '../../_schemas'
 import { courseFormSchema, CourseFormValues } from './schema'
+import { CourseTariff } from '@/kernel/domain/course'
 
 export function useCourseForm(editSlug?: string) {
   const router = useRouter()
@@ -40,9 +42,14 @@ export function useCourseForm(editSlug?: string) {
       description: '',
       shortDescription: '',
       contentType: CourseContentType.FIXED_COURSE,
-      access: AccessType.paid,
-      price: undefined,
-      accessDurationDays: undefined,
+      tariffs: [
+        {
+          access: AccessType.paid,
+          price: 1,
+          durationDays: 1,
+          feedback: false,
+        },
+      ],
       durationWeeks: 4,
       allowedWorkoutDaysPerWeek: [5],
       thumbnail: '',
@@ -56,13 +63,34 @@ export function useCourseForm(editSlug?: string) {
     const courseData = courseQuery.data
     setCourseId(courseData.id)
 
-    const isPaid = courseData.product.access === 'paid'
-    const paidProduct = isPaid
-      ? (courseData.product as Extract<
-          typeof courseData.product,
-          { access: 'paid' }
-        >)
-      : null
+    const tariffsWithId: CourseTariff[] = courseData.tariffs
+      .filter((tariff): tariff is typeof tariff & { id: string } =>
+        Boolean(tariff.id)
+      )
+      .map(tariff => ({
+        id: tariff.id,
+        access: tariff.access,
+        price: tariff.price,
+        durationDays: tariff.durationDays,
+        feedback: tariff.feedback ?? false,
+      }))
+
+    const tariffsFormValues =
+      tariffsWithId.length > 0
+        ? tariffsWithId.map(tariff => ({
+            access: AccessType.paid,
+            price: tariff.price,
+            durationDays: tariff.durationDays,
+            feedback: tariff.feedback ?? false,
+          }))
+        : [
+            {
+              access: AccessType.paid,
+              price: 1,
+              durationDays: 1,
+              feedback: false,
+            },
+          ]
 
     const existingWeeks =
       courseData.weeks?.map(week => ({
@@ -86,9 +114,7 @@ export function useCourseForm(editSlug?: string) {
       description: courseData.description,
       shortDescription: courseData.shortDescription ?? '',
       contentType: courseData.contentType as CourseContentType,
-      access: isPaid ? AccessType.paid : AccessType.free,
-      price: paidProduct?.price ?? undefined,
-      accessDurationDays: paidProduct?.accessDurationDays ?? undefined,
+      tariffs: tariffsFormValues,
       durationWeeks: courseData.durationWeeks,
       allowedWorkoutDaysPerWeek: courseData.allowedWorkoutDaysPerWeek ?? [5],
       thumbnail: courseData.thumbnail ?? '',
@@ -115,18 +141,16 @@ export function useCourseForm(editSlug?: string) {
             warmupId: plan.warmupId || null,
           })) ?? []
 
-        let product
-        if (data.access === AccessType.paid) {
-          product = {
-            access: 'paid' as const,
-            price: Number(data.price),
-            accessDurationDays: Number(data.accessDurationDays),
+        const tariffs: CourseUpsertInput['tariffs'] = data.tariffs.map(
+          tariff => {
+            return {
+              access: 'paid',
+              price: Number(tariff.price),
+              durationDays: Number(tariff.durationDays),
+              feedback: tariff.feedback ?? false,
+            }
           }
-        } else {
-          product = {
-            access: 'free' as const,
-          }
-        }
+        )
 
         // Prepare weeks based on current state
         // data.weeks is already populated via useFieldArray in the UI
@@ -150,7 +174,7 @@ export function useCourseForm(editSlug?: string) {
           durationWeeks: data.durationWeeks,
           allowedWorkoutDaysPerWeek: data.allowedWorkoutDaysPerWeek,
           contentType: data.contentType,
-          product,
+          tariffs,
           dependencies: preservedDependencies,
           weeks: weeksPayload,
           mealPlans: preservedMealPlans,

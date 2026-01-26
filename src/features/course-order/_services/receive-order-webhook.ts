@@ -5,6 +5,8 @@ import { webhookDataScehama } from '../_domain/schemas'
 import { ReceivePaymentService } from '@/entities/payment/module'
 import { GrandCourseAccessService } from '@/entities/user-access/module'
 import { GetCourseService } from '@/entities/course/module'
+import { addDays } from 'date-fns'
+import { selectDefaultCourseTariff } from '@/kernel/domain/course'
 
 type Command = {
   data: DataObject
@@ -64,13 +66,14 @@ export class ReceiveOrderWebhookService {
       type: 'success',
     })
 
+    const [courseId, tariffId] = payment.products[0].sku.split(':')
     const course = await this.getCourseService.exec({
-      id: payment.products[0].sku,
+      id: courseId,
     })
     if (!course) {
       console.error('Course not found while processing payment', {
         paymentId,
-        courseId: payment.products[0].sku,
+        courseId,
       })
       return {
         type: 'error',
@@ -78,17 +81,19 @@ export class ReceiveOrderWebhookService {
         message: 'Course not found',
       }
     }
+
+    const tariff =
+      (tariffId
+        ? course.tariffs.find(entry => entry.id === tariffId)
+        : null) ?? selectDefaultCourseTariff(course.tariffs)
     const expiresAt = (() => {
-      if (course.product.access !== 'paid') {
+      if (tariff?.access !== 'paid') {
         return null
       }
-      if (course.product.accessDurationDays <= 0) {
+      if (!tariff.durationDays || tariff.durationDays <= 0) {
         return null
       }
-      const millisecondsPerDay = 24 * 60 * 60 * 1000
-      return new Date(
-        Date.now() + course.product.accessDurationDays * millisecondsPerDay
-      )
+      return addDays(new Date(), tariff.durationDays)
     })()
 
     await this.grandAccessService.exec({

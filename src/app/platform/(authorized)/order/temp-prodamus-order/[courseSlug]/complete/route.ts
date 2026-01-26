@@ -57,7 +57,8 @@ export const POST = async (
       )
     }
 
-    const targetCourseId = payment.products[0]?.sku
+    const productSku = payment.products[0]?.sku ?? null
+    const targetCourseId = productSku ? productSku.split(':')[0] : null
 
     return NextResponse.json({
       message: 'success',

@@ -1,5 +1,5 @@
 import { injectable, inject } from 'inversify'
-import { Prisma } from '@prisma/client'
+import { Prisma, AccessType } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 import { dbClient } from '@/shared/lib/db'
 import {
@@ -22,7 +22,7 @@ export class CoursesWriteService {
   ) {}
 
   async upsertCourse(input: CourseUpsertInput) {
-    this.validateProduct(input)
+    this.validateTariffs(input)
     const allowedWorkoutDays = this.normalizeAllowedWorkoutDays(input)
     const hasManualWeeks = input.weeks.length > 0
     const hasManualDailyPlans = input.dailyPlans.length > 0
@@ -43,7 +43,7 @@ export class CoursesWriteService {
           input.durationWeeks
         )
 
-        const productData = this.buildProductData(input)
+        const tariffsData = this.buildTariffsData(input)
 
         const baseCourseData = {
           slug: input.slug,
@@ -62,7 +62,7 @@ export class CoursesWriteService {
           tx,
           input,
           baseCourseData,
-          productData
+          tariffsData
         )
 
         const dependencyIds = input.dependencies ?? []
@@ -146,27 +146,33 @@ export class CoursesWriteService {
 
   // --- Private Helpers ---
 
-  private validateProduct(input: CourseUpsertInput) {
-    if (input.product.access === 'free') {
-      return
-    }
-
-    if (!Number.isInteger(input.product.price) || input.product.price < 1) {
+  private validateTariffs(input: CourseUpsertInput) {
+    if (input.tariffs.length === 0) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: 'Для платного курса требуется целочисленная цена >= 1',
+        message: 'Нужно указать хотя бы один тариф',
       })
     }
 
-    if (
-      !Number.isInteger(input.product.accessDurationDays) ||
-      input.product.accessDurationDays < 1
-    ) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message:
-          'Для платного курса требуется положительное целое accessDurationDays',
-      })
+    for (const tariff of input.tariffs) {
+      if (tariff.access === 'paid') {
+        if (!Number.isInteger(tariff.price) || (tariff.price ?? 0) < 1) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Для платного тарифа требуется целочисленная цена >= 1',
+          })
+        }
+
+        if (
+          tariff.durationDays !== undefined &&
+          (!Number.isInteger(tariff.durationDays) || tariff.durationDays < 1)
+        ) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Для тарифа требуется durationDays >= 1',
+          })
+        }
+      }
     }
   }
 
@@ -245,18 +251,27 @@ export class CoursesWriteService {
     return { weeksInput, dailyPlansInput, shouldPruneAutoPlans }
   }
 
-  private buildProductData(input: CourseUpsertInput) {
-    return input.product.access === 'paid'
-      ? {
-          access: 'paid' as const,
-          price: input.product.price,
-          accessDurationDays: input.product.accessDurationDays,
-        }
-      : {
-          access: 'free' as const,
-          price: null,
-          accessDurationDays: null,
-        }
+  private buildTariffsData(input: CourseUpsertInput) {
+    const normalizedTariffs = this.normalizeTariffs(input.tariffs)
+    return normalizedTariffs.map(tariff => ({
+      access: AccessType.paid,
+      price: tariff.price,
+      durationDays: tariff.durationDays,
+      feedback: tariff.feedback ?? false,
+    }))
+  }
+
+  private normalizeTariffs(
+    tariffs: CourseUpsertInput['tariffs']
+  ): CourseUpsertInput['tariffs'] {
+    if (tariffs.length === 0) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Нужно указать хотя бы один тариф',
+      })
+    }
+
+    return tariffs
   }
 
   private async upsertCourseRecord(
@@ -274,38 +289,34 @@ export class CoursesWriteService {
       allowedWorkoutDaysPerWeek: number[]
       contentType: CourseUpsertInput['contentType']
     },
-    productData: ReturnType<typeof this.buildProductData>
+    tariffsData: ReturnType<typeof this.buildTariffsData>
   ) {
     return input.id
       ? tx.course.update({
           where: { id: input.id },
           data: {
             ...baseCourseData,
-            product: {
-              upsert: {
-                update: productData,
-                create: productData,
-              },
+            tariffs: {
+              deleteMany: {},
+              create: tariffsData,
             },
           },
-          include: { product: true },
+          include: { tariffs: true },
         })
       : tx.course.upsert({
           where: { slug: input.slug },
           update: {
             ...baseCourseData,
-            product: {
-              upsert: {
-                update: productData,
-                create: productData,
-              },
+            tariffs: {
+              deleteMany: {},
+              create: tariffsData,
             },
           },
           create: {
             ...baseCourseData,
-            product: { create: productData },
+            tariffs: { create: tariffsData },
           },
-          include: { product: true },
+          include: { tariffs: true },
         })
   }
 }

@@ -31,10 +31,12 @@ export class CheckOrderStatusService {
       })
     }
 
+    const [courseId] = payment.products[0].sku.split(':')
+
     return {
       state: payment.state,
       courseSlug: await this.getCourseService
-        .exec({ id: payment.products[0].sku })
+        .exec({ id: courseId })
         .then(course => course?.slug),
     }
   }

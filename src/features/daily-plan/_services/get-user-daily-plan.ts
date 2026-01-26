@@ -58,9 +58,9 @@ export class GetUserDailyPlanService {
         return null
       }
 
-      if (!course.product) {
+      if (course.tariffs.length === 0) {
         logger.error({
-          msg: 'Course product missing while fetching daily plan',
+          msg: 'Course tariffs missing while fetching daily plan',
           courseId: course.id,
         })
         return null
@@ -74,7 +74,7 @@ export class GetUserDailyPlanService {
                 userId: params.userId,
                 course: {
                   id: course.id,
-                  product: course.product,
+                  tariffs: course.tariffs,
                   contentType: course.contentType,
                 },
               })

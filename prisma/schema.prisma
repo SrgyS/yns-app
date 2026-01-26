@@ -164,7 +164,7 @@ model Course {
   allowedWorkoutDaysPerWeek Int[]             @default([])
   contentType               CourseContentType @default(FIXED_COURSE)
   showRecipes               Boolean           @default(false)
-  product                   CourseProduct?
+  tariffs                   CourseTariff[]
 
   dailyPlans DailyPlan[] // Дни (планы) в фиксированном курсе
   weeks      Week[] // Недели для подписочных курсов
@@ -603,13 +603,17 @@ model PasswordResetToken {
   @@id([email, token])
 }
 
-model CourseProduct {
-  id                 String     @id @default(cuid())
-  access             AccessType
-  price              Int?
-  accessDurationDays Int?
-  courseId           String     @unique
-  course             Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+model CourseTariff {
+  id             String     @id @default(cuid())
+  access         AccessType
+  price          Int?
+  durationDays   Int?
+  feedback       Boolean    @default(false)
+  isDefault      Boolean    @default(false)
+  courseId       String
+  course         Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
 }
 
 model Payment {

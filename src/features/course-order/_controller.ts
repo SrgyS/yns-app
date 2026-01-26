@@ -24,6 +24,7 @@ export class CourseOrderController extends Controller {
           z.object({
             courseSlug: z.string(),
             urlReturn: z.string(),
+            tariffId: z.string().optional(),
           })
         )
         .mutation(({ input, ctx }) => {
@@ -32,6 +33,7 @@ export class CourseOrderController extends Controller {
             userId: ctx.session.user.id,
             userEmail: ctx.session.user.email,
             urlReturn: input.urlReturn,
+            tariffId: input.tariffId,
           })
         }),
       check: authorizedProcedure

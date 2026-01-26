@@ -29,6 +29,9 @@ const privateConfigSchema = z.object({
   CONTENT_URL: z.string(),
   CONTENT_TOKEN: z.string().optional(),
 
+  TELEGRAM_BOT_TOKEN: z.string().optional(),
+  TELEGRAM_CHAT_ID: z.string().optional(),
+
   PRODAMUS_DEMO_ENABLED: z
     .string()
     .optional()

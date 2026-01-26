@@ -32,8 +32,8 @@ export class GrantCourseAccessService {
       throw new Error('Курс не найден')
     }
 
-    if (!course.product) {
-      throw new Error('Нельзя выдать доступ к курсу без продукта')
+    if (course.tariffs.length === 0) {
+      throw new Error('Нельзя выдать доступ к курсу без тарифов')
     }
 
     const savedAccess = await this.grandCourseAccessService.exec({

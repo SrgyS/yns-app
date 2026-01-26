@@ -67,7 +67,7 @@ export class DayPlanLoadService {
   }: DayPlanLoadParams): Promise<DayPlanLoadResult> {
     const course = await this.getCourseService.exec({ slug: courseSlug })
 
-    if (!course || !course.product) {
+    if (!course || course.tariffs.length === 0) {
       return {
         course: course ?? null,
         access: {
@@ -90,7 +90,7 @@ export class DayPlanLoadService {
       userId,
       course: {
         id: course.id,
-        product: course.product,
+        tariffs: course.tariffs,
         contentType: course.contentType,
       },
     })
