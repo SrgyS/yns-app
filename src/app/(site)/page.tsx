@@ -289,7 +289,7 @@ export default function Home() {
                     className="rounded-3xl shadow-sm p-0 overflow-hidden"
                   >
                     <CardContent className="p-0">
-                      <div className="relative min-h-60 md:min-h-72">
+                      <div className="relative min-h-60 md:min-h-72 bg-[linear-gradient(135deg,rgba(16,185,129,0.18),rgba(14,116,144,0.12),rgba(15,23,42,0.08))]">
                         {x.img ? (
                           <Image
                             src={x.img}
@@ -463,7 +463,7 @@ export default function Home() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-12 md:gap-8 lg:gap-10">
           {/* Фото */}
           <div className="order-1 md:order-2 md:col-span-5 lg:col-span-6 lg:row-span-2">
-            <div className="relative shadow-sm h-full w-full overflow-hidden rounded-2xl bg-muted/40 aspect-4/3 md:aspect-auto md:min-h-[360px]">
+            <div className="relative shadow-sm h-full w-full overflow-hidden rounded-2xl bg-[linear-gradient(135deg,rgba(16,185,129,0.18),rgba(14,116,144,0.12),rgba(15,23,42,0.08))] aspect-4/3 md:aspect-auto md:min-h-[360px]">
               <Image
                 src={aboutImgeUrl}
                 alt="Яна Степанова"
