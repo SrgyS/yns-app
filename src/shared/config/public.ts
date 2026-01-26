@@ -3,7 +3,7 @@ import { z } from 'zod'
 const publicConfigSchema = z.object({
   isDev: z.boolean(),
   PUBLIC_URL: z.string(),
-  STORAGE_BASE_URL: z.string(),
+  STORAGE_BASE_URL: z.string().optional().default(''),
 })
 
 export const publicConfig = publicConfigSchema.parse({

@@ -4,8 +4,11 @@ import { z } from 'zod'
 import { server } from '@/app/server'
 import { SessionService } from '@/kernel/lib/next-auth/module'
 import { fileStorage } from '@/shared/lib/file-storage/file-storage'
-import { BadRequest } from '@/shared/lib/errors'
+import { AuthorizatoinError, BadRequest } from '@/shared/lib/errors'
+import { resolveStorageUrl } from '@/shared/lib/images'
 import { redirect } from 'next/navigation'
+import { StaffPermissionService } from '@/features/admin-panel/users/_services/staff-permissions'
+import { createAdminAbility } from '@/features/admin-panel/users/_domain/ability'
 import {
   ALLOWED_IMAGE_TYPES,
   DEFAULT_IMAGE_MAX_SIZE_MB,
@@ -53,6 +56,17 @@ export const uploadCourseImageAction = async (formData: FormData) => {
     return redirect('/auth/sign-in')
   }
 
+  const staffPermissionService = server.get(StaffPermissionService)
+  const permissions = await staffPermissionService.getPermissionsForUser({
+    id: session.user.id,
+    role: session.user.role,
+  })
+  const ability = createAdminAbility(session, permissions)
+
+  if (!ability.canManageCourses) {
+    throw new AuthorizatoinError('Недостаточно прав для загрузки изображения')
+  }
+
   const storedFile = await fileStorage.uploadImage(
     safeFile,
     tag,
@@ -60,6 +74,6 @@ export const uploadCourseImageAction = async (formData: FormData) => {
   )
 
   return resultSchema.parse({
-    path: storedFile.path,
+    path: resolveStorageUrl(storedFile.path),
   })
 }
