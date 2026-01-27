@@ -1,4 +1,6 @@
-const imageBaseUrl = process.env.NEXT_PUBLIC_IMAGE_URL
+import { publicConfig } from '@/shared/config/public'
+
+const imageBaseUrl = publicConfig.IMAGE_BASE_URL
 
 export function resolvePracticeImagePath(relativePath: string | undefined) {
   if (!relativePath || !imageBaseUrl) {
