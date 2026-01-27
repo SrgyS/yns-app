@@ -4,7 +4,7 @@ const supabaseBaseUrl = process.env.SUPABASE_URL
   ? `${process.env.SUPABASE_URL}/storage/v1/object/public`
   : ''
 
-const storageBaseUrl = publicConfig.STORAGE_BASE_URL || supabaseBaseUrl
+const storageBaseUrl = publicConfig.IMAGE_BASE_URL || supabaseBaseUrl
 
 const normalizePath = (path: string) => path.replace(/^\/+/, '')
 const withTrailingSlash = (value: string) =>
@@ -19,7 +19,7 @@ export const resolveStorageUrl = (path: string) => {
 
   if (!storageBaseUrl) {
     if (process.env.NODE_ENV !== 'production') {
-      console.warn('STORAGE_BASE_URL is not configured.')
+      console.warn('IMAGE_BASE_URL is not configured.')
     }
     return path.startsWith('/') ? path : `/${path}`
   }
