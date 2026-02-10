@@ -13,8 +13,11 @@ const config: Config = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^lodash-es/(.*)$': 'lodash/$1',
+    '^lodash-es$': 'lodash',
   },
   modulePathIgnorePatterns: ['<rootDir>/tests/'],
+  transformIgnorePatterns: ['/node_modules/(?!lodash-es)/'],
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
