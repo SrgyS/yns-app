@@ -39,7 +39,7 @@ export default async function CoursePage({
   const urlReturn = getCoursePublicPath(course.slug)
 
   return (
-    <main className="container space-y-10 py-10">
+    <section className="space-y-10 pb-4 pt-18">
       <section className="space-y-4">
         <h1 className="text-3xl font-semibold tracking-tight">
           {course.title}
@@ -95,6 +95,6 @@ export default async function CoursePage({
           })}
         </div>
       </section>
-    </main>
+    </section>
   )
 }

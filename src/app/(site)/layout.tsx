@@ -9,7 +9,7 @@ export default async function Layout({
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <SiteHeader />
-      <div className="container pb-17 flex-1">{children}</div>
+      <main className="container pb-17 flex-1">{children}</main>
       <Footer />
     </div>
   )

@@ -84,8 +84,8 @@ export default async function PlatformLayout({
           <div className="hidden md:block">
             <PlatformHeader />
           </div>
-          <main className="flex-1 flex items-start justify-center">
-            <div className="w-full max-w-[720px] px-4 sm:px-6 py-10">
+          <main className="flex-1 flex items-start justify-center sm:pt-14">
+            <div className="w-full max-w-[720px] px-4 sm:px-6">
               <NoAccessCallout
                 title={title}
                 description={description}
@@ -107,7 +107,7 @@ export default async function PlatformLayout({
         <div className="hidden md:block">
           <PlatformHeader />
         </div>
-        <main className="flex-1 container pb-17 md:pb-0 px-3 sm:px-6 py-6">
+        <main className="flex-1 container pb-17 md:pb-0 px-3 sm:px-6 sm:pt-14">
           {children}
         </main>
         <MobileBottomNav variant="private" />

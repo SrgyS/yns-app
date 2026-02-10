@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function NotFound() {
   return (
-    <main className="flex flex-col justify-center space-y-6 py-14 container max-w-[800px]">
+    <section className="flex flex-col justify-center space-y-6 py-14 container max-w-[800px]">
       <div className="text-center">
         <h1 className="text-2xl font-bold">Курс не найден</h1>
         <p className="mt-4">У вас нет доступных курсов</p>
@@ -15,6 +15,6 @@ export default function NotFound() {
           </Link>
         </div>
       </div>
-    </main>
+    </section>
   )
 }

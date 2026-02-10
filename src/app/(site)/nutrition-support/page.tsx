@@ -119,7 +119,7 @@ export default function NutritionSupport() {
   const heroImageUrl = getImageUrl('images', 'yns.png')
 
   return (
-    <main className="flex flex-col gap-14">
+    <section className="flex flex-col gap-14">
       <section>
         <Card className="relative overflow-hidden rounded-4xl border-0 bg-muted/20 shadow-none pb-0">
           <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-muted via-background/70 to-transparent z-0" />
@@ -417,6 +417,6 @@ export default function NutritionSupport() {
           </div>
         </div>
       </section>
-    </main>
+    </section>
   )
 }

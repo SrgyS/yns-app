@@ -63,7 +63,7 @@ const equipmentItems = [
 
 export default function EquipmentPage() {
   return (
-    <main className="flex flex-col gap-8 pt-17 pb-10">
+    <section className="flex flex-col gap-8 pt-14 pb-10">
       <div className="space-y-3">
         <Badge className="w-fit" variant="secondary">
           Оборудование
@@ -72,8 +72,8 @@ export default function EquipmentPage() {
           Оборудование для тренировок
         </h1>
         <p className="text-sm text-muted-foreground sm:text-base max-w-2xl">
-          Собрали список оборудования для занятий и варианты замены, если
-          сейчас нет возможности купить инвентарь.
+          Собрали список оборудования для занятий и варианты замены, если сейчас
+          нет возможности купить инвентарь.
         </p>
       </div>
 
@@ -117,6 +117,6 @@ export default function EquipmentPage() {
           </Card>
         ))}
       </section>
-    </main>
+    </section>
   )
 }

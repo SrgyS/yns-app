@@ -99,15 +99,15 @@ export function DayPageClient({ courseSlug }: { courseSlug: CourseSlug }) {
 
   if (shouldRedirectToSetup) {
     return (
-      <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
+      <section className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
         <Skeleton className="h-6 w-[300px]" />
         <Skeleton className="h-[200px] w-full" />
-      </main>
+      </section>
     )
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-5 px-3 py-4 sm:space-y-6 sm:px-4 md:px-6">
+    <section className="mx-auto flex w-full max-w-[640px] flex-col space-y-5 px-3 py-4 sm:space-y-6 sm:px-4 md:px-6">
       <Suspense fallback={<Skeleton className="h-6 w-[300px]" />}>
         <CourseBanner
           courseSlug={courseSlug}
@@ -126,6 +126,6 @@ export function DayPageClient({ courseSlug }: { courseSlug: CourseSlug }) {
       )}
 
       <CalendarTabs courseSlug={courseSlug} />
-    </main>
+    </section>
   )
 }

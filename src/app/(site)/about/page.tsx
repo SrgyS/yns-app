@@ -35,7 +35,7 @@ export default function AboutPage() {
   ]
 
   return (
-    <main className="pt-22 sm:pt-26 pb-14">
+    <section className="pt-22 sm:pt-26 pb-14">
       <section className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
         <div className="space-y-6">
           <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
@@ -177,6 +177,6 @@ export default function AboutPage() {
           })}
         </div>
       </section>
-    </main>
+    </section>
   )
 }

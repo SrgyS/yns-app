@@ -26,7 +26,7 @@ export default async function EditProfilePage({
   const id = session.user.id
 
   return (
-    <main className="space-y-8 py-14 max-w-[600px]">
+    <section className="space-y-8 py-14 max-w-[600px]">
       <div className="flex items-center">
         <Button variant="ghost" size="sm" asChild>
           <Link href={returnTo} className="flex items-center gap-2">
@@ -43,6 +43,6 @@ export default async function EditProfilePage({
       <div className="bg-card rounded-lg border p-6">
         <UpdateProfileForm userId={id} callbackUrl={returnTo} />
       </div>
-    </main>
+    </section>
   )
 }

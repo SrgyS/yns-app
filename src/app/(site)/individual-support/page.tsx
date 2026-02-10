@@ -21,7 +21,7 @@ const infoBlocks = [
 
 export default function IndividualSupportPage() {
   return (
-    <main className="flex flex-col gap-10 py-17">
+    <section className="flex flex-col gap-10 py-17">
       <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
         <div className="order-2 space-y-4 lg:order-1">
           <Badge className="w-fit bg-primary/10 text-primary">
@@ -61,6 +61,6 @@ export default function IndividualSupportPage() {
           <Link href="/about">Подробнее о Яне</Link>
         </Button>
       </section>
-    </main>
+    </section>
   )
 }
