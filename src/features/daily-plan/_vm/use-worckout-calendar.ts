@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
+
+import { useAvailableWeeksQuery } from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 
 export function useWorkoutCalendar(
@@ -9,10 +9,8 @@ export function useWorkoutCalendar(
   isSubscription?: boolean
 ) {
   const { data: session } = useAppSession()
-  const { getAvailableWeeks } = useCourseEnrollment()
-
   // Получаем доступные недели для курса-подписки
-  const availableWeeksQuery = getAvailableWeeks(
+  const availableWeeksQuery = useAvailableWeeksQuery(
     session?.user?.id || '',
     courseSlug || ''
   )
@@ -23,7 +21,7 @@ export function useWorkoutCalendar(
 
   const noProgram = !programStart
 
-  const totalWeeks = useMemo(() => {
+  const totalWeeks = (() => {
     if (totalWeeksFromApi && totalWeeksFromApi > 0) {
       return totalWeeksFromApi
     }
@@ -36,9 +34,9 @@ export function useWorkoutCalendar(
 
     const startDay = programStart.getDay()
     return startDay === 1 ? fallbackWeeks : fallbackWeeks + 1
-  }, [programStart, durationWeeks, totalWeeksFromApi])
+  })()
 
-  const availableWeeks = useMemo(() => {
+  const availableWeeks = (() => {
     if (
       availableWeeksFromApi &&
       Array.isArray(availableWeeksFromApi) &&
@@ -48,16 +46,16 @@ export function useWorkoutCalendar(
     }
 
     return Array.from({ length: totalWeeks }, (_, i) => i + 1)
-  }, [availableWeeksFromApi, totalWeeks])
+  })()
 
-  const weeksMeta = useMemo(() => {
+  const weeksMeta = (() => {
     if (isSubscription) {
       return availableWeeksQuery.data?.weeksMeta ?? []
     }
     return [] as Array<{ weekNumber: number; releaseAt: string }>
-  }, [isSubscription, availableWeeksQuery.data])
+  })()
 
-  const currentWeekIndex = useMemo(() => {
+  const currentWeekIndex = (() => {
     // Для курсов-подписок используем данные из API. Пока данных нет — возвращаем 0,
     // чтобы родитель мог отобразить плейсхолдер/сообщение и не активировать табы.
     if (isSubscription) {
@@ -75,12 +73,7 @@ export function useWorkoutCalendar(
       1
 
     return Math.min(Math.max(diff, 1), totalWeeks)
-  }, [
-    isSubscription,
-    availableWeeksQuery.data?.currentWeekIndex,
-    programStart,
-    totalWeeks,
-  ])
+  })()
 
   return {
     noProgram,

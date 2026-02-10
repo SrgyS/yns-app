@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { KinescopePlayer, type PlayerHandle } from './kinescope-player'
 import { Timer } from 'lucide-react'
 import { Badge } from '@/shared/ui/badge'
@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter } from '@/shared/ui/card'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { useWorkoutCompletions } from '../_vm/use-workout-completions'
-import { useWorkout } from '../_vm/use-workout'
+import { useWorkoutQuery } from '../_vm/use-workout'
 import { FavoriteButton } from '@/shared/ui/favorite-button'
 import { useWorkoutFavorites } from '../_vm/use-workout-favorites'
 import { cn } from '@/shared/ui/utils'
@@ -47,8 +47,7 @@ export function ExerciseCard({
 
   const playerRef = useRef<PlayerHandle | null>(null)
 
-  const { getWorkout } = useWorkout()
-  const { data: workout } = getWorkout(workoutId)
+  const { data: workout } = useWorkoutQuery(workoutId)
 
   const { getWorkoutCompletionStatus, updateWorkoutCompletion } =
     useWorkoutCompletions()
@@ -60,36 +59,24 @@ export function ExerciseCard({
     isToggling: isTogglingFavorite,
   } = useWorkoutFavorites({ enabled: Boolean(session?.user?.id) })
 
-  const playerOptions = useMemo(
-    () => ({
-      size: { height: 260 },
-      autoplay: false,
-    }),
-    []
-  )
+  const playerOptions = {
+    size: { height: 260 },
+    autoplay: false,
+  }
 
-  const durationMinutes = useMemo(
-    () => getDurationMinutes(workout?.durationSec ?? null),
-    [workout?.durationSec]
-  )
+  const durationMinutes = getDurationMinutes(workout?.durationSec ?? null)
 
-  const muscleBadges = useMemo(
-    () => formatMuscleLabels(workout?.muscles),
-    [workout?.muscles]
-  )
+  const muscleBadges = formatMuscleLabels(workout?.muscles)
 
-  const equipmentText = useMemo(() => {
+  const equipmentText = (() => {
     const formatted = formatEquipmentList(workout?.equipment)
     if (formatted) {
       return formatted
     }
     return Array.isArray(workout?.equipment) ? 'Без инвентаря' : null
-  }, [workout?.equipment])
+  })()
 
-  const difficultyLevel = useMemo(
-    () => getDifficultyLevel(workout?.difficulty),
-    [workout?.difficulty]
-  )
+  const difficultyLevel = getDifficultyLevel(workout?.difficulty)
 
   useEffect(() => {
     if (session?.user?.id && enrollmentId) {
@@ -121,13 +108,13 @@ export function ExerciseCard({
     }
   }
 
-  const handleVideoPlay = useCallback(() => {
+  const handleVideoPlay = () => {
     setIsVideoPlaying(true)
-  }, [])
+  }
 
-  const handleVideoPause = useCallback(() => {
+  const handleVideoPause = () => {
     setIsVideoPlaying(false)
-  }, [])
+  }
 
   // Убираем неиспользуемые обработчики
 

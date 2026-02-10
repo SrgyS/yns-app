@@ -12,8 +12,8 @@ import { CalendarCheck } from 'lucide-react'
 import { DAYS_ORDER } from '../constant'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
 import { ExerciseCard } from './exercise-card'
-import { useDailyPlan } from '../_vm/use-daily-plan'
-import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
+import { useDailyPlanQuery } from '../_vm/use-daily-plan'
+import { useEnrollmentQuery } from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { DailyContentType, DayOfWeek } from '@prisma/client'
 import { DAY_LABELS } from '@/features/select-training-days/constants'
@@ -44,11 +44,11 @@ export function DayTabs({
   onDayChange?: (date: Date) => void
   isActiveWeek?: boolean
 }) {
-  const { getDailyPlan } = useDailyPlan()
+  // Removed destructuring of getDailyPlan
   const { data: session } = useAppSession()
-  const { getEnrollment } = useCourseEnrollment()
+  // Removed useCourseEnrollment destructuring
 
-  const enrollmentQuery = getEnrollment(session?.user?.id || '', courseId)
+  const enrollmentQuery = useEnrollmentQuery(session?.user?.id || '', courseId)
   const tabsListRef = useRef<HTMLDivElement | null>(null)
   // const hasResetScrollRef = useRef(false)
 
@@ -181,7 +181,7 @@ export function DayTabs({
 
   const selectedDayNumberInCourse = useMemo(() => {
     return days.find(d => d.key === selectedDay)?.programDay ?? null
-  }, [selectedDay, days])
+  }, [days, selectedDay])
 
   const selectedDayDate = useMemo(() => {
     return days.find(d => d.key === selectedDay)?.date ?? null
@@ -199,16 +199,14 @@ export function DayTabs({
     selectedDayNumberInCourse > 0 &&
     (totalProgramDays === 0 || selectedDayNumberInCourse <= totalProgramDays)
 
-  // Вызываем хук всегда, но управляем выполнением через enabled
-  const dailyPlanQuery =
-    enrollmentId && enrollment
-      ? getDailyPlan(
-          enrollmentId,
-          courseId,
-          selectedDayNumberInCourse || 1,
-          enabled
-        )
-      : { data: null, isLoading: false, isFetching: false }
+  const shouldFetchDailyPlan = Boolean(enrollmentId && enrollment && enabled)
+  
+  const dailyPlanQuery = useDailyPlanQuery(
+    enrollmentId || '',
+    courseId,
+    selectedDayNumberInCourse || 1,
+    shouldFetchDailyPlan
+  )
 
   return (
     <Tabs

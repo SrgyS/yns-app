@@ -6,7 +6,7 @@ import { CourseSlug } from '@/kernel/domain/course'
 import { FullPageSpinner } from '@/shared/ui/full-page-spinner'
 import {
   isCourseAccessState,
-  useCourseEnrollment,
+  useCheckAccessByCourseSlugQuery,
 } from './use-course-enrollment'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { usePaidAccess } from './paid-access-context'
@@ -20,7 +20,7 @@ export function CheckAccessGuard({
 }) {
   const paidAccess = usePaidAccess()
   const { data: session, status } = useAppSession()
-  const { checkAccessByCourseSlug } = useCourseEnrollment()
+  // Removed useCourseEnrollment
 
   const userId = session?.user?.id ?? ''
   const accessibleEntry = paidAccess?.accessibleCourses.find(
@@ -32,7 +32,7 @@ export function CheckAccessGuard({
     !hasServerAccess && status === 'authenticated' && Boolean(userId)
 
   const { data, error, isError, isSuccess, isPending } =
-    checkAccessByCourseSlug(userId, courseSlug, {
+    useCheckAccessByCourseSlugQuery(userId, courseSlug, {
       enabled: shouldFetch,
     })
 
