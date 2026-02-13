@@ -1,6 +1,6 @@
 'use client'
 
-import Image from 'next/image'
+import { AppImage } from '@/shared/ui/app-image'
 
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent } from '@/shared/ui/card'
@@ -34,7 +34,7 @@ export function ResultsGrid({ items }: ResultsGridProps) {
           <CardContent className="p-0">
             <div className="grid sm:grid-cols-[220px_1fr]">
               <div className="relative h-56 sm:h-full">
-                <Image
+                <AppImage
                   src={item.imageUrl}
                   alt={`История ${item.name}`}
                   fill

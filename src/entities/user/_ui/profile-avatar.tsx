@@ -13,11 +13,10 @@ export const ProfileAvatar = ({
   if (!profile) {
     return null
   }
-  const imageSrc = profile.image
 
   return (
     <Avatar className={cn(className)}>
-      <AvatarImage src={imageSrc ?? undefined} className="object-cover" />
+      <AvatarImage src={profile.image ?? undefined} className="object-cover" />
       <AvatarFallback>{getProfileLetters(profile)}</AvatarFallback>
     </Avatar>
   )
