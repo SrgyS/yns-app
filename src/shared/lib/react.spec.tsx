@@ -57,10 +57,10 @@ describe('react helpers', () => {
   })
 
   test('ComposeChildren nests wrappers around the last child', () => {
-    const Wrapper = ({ children }: { children: React.ReactNode }) => (
+    const Wrapper = ({ children }: { children?: React.ReactNode }) => (
       <div data-testid="wrapper">{children}</div>
     )
-    const Outer = ({ children }: { children: React.ReactNode }) => (
+    const Outer = ({ children }: { children?: React.ReactNode }) => (
       <section data-testid="outer">{children}</section>
     )
 

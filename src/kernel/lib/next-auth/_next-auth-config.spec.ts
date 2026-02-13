@@ -87,6 +87,7 @@ describe('NextAuthConfig callbacks', () => {
     const token = await config.options.callbacks!.jwt!({
       token: {},
       user: { id: 'u1', role: 'USER', image: 'img', name: 'Name' } as any,
+      account: null,
       trigger: undefined,
       session: undefined,
     })
@@ -99,7 +100,8 @@ describe('NextAuthConfig callbacks', () => {
 
     const updated = await config.options.callbacks!.jwt!({
       token,
-      user: undefined,
+      user: { id: 'u1', role: 'USER', image: 'img', name: 'Name' } as any,
+      account: null,
       trigger: 'update',
       session: { user: { image: 'new-img', name: 'New' } } as any,
     })
@@ -108,6 +110,9 @@ describe('NextAuthConfig callbacks', () => {
     const session = await config.options.callbacks!.session!({
       session: { user: { email: 'a@b.com' } } as any,
       token: updated as any,
+      user: { id: 'u1' } as any,
+      trigger: 'update',
+      newSession: { user: { image: 'new-img', name: 'New' } } as any,
     })
     expect(session.user).toMatchObject({
       id: 'u1',
@@ -125,7 +130,7 @@ describe('NextAuthConfig callbacks', () => {
     )
     const provider = config.options.providers?.find(
       entry => (entry as { id?: string }).id === 'credentials'
-    ) as { authorize: (cred: unknown) => Promise<unknown> }
+    ) as unknown as { authorize: (cred: unknown) => Promise<unknown> }
 
     authCredentialsService.exec.mockResolvedValue({
       success: true,
