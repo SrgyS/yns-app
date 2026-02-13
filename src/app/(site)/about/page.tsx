@@ -1,7 +1,6 @@
 'use client'
 
-import Image from 'next/image'
-import { getImageUrl } from '@/shared/lib/images'
+import { AppImage } from '@/shared/ui/app-image'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent } from '@/shared/ui/card'
 import {
@@ -14,7 +13,7 @@ import {
 import Link from 'next/link'
 
 export default function AboutPage() {
-  const aboutImgUrl = getImageUrl('images', '932A0111.jpg')
+  const aboutImgUrl = 'images/932A0111.jpg'
   const diplomImgNames = [
     'dip-1-min.webp',
     'dip-2-min.jpg',
@@ -62,7 +61,7 @@ export default function AboutPage() {
         <Card className="overflow-hidden rounded-4xl border-0 bg-muted/30 shadow-sm p-0">
           <CardContent className="p-0">
             <div className="relative aspect-4/5 w-full">
-              <Image
+              <AppImage
                 src={aboutImgUrl}
                 alt="Портрет тренера"
                 fill
@@ -134,7 +133,7 @@ export default function AboutPage() {
         </div>
         <div className="mt-6 columns-1 gap-4 sm:columns-3 lg:columns-4 [column-fill:balance]">
           {diplomImgNames.map(name => {
-            const src = getImageUrl('images', name)
+            const src = `images/${name}`
 
             return (
               <div key={name} className="mb-4 break-inside-avoid">
@@ -144,7 +143,7 @@ export default function AboutPage() {
                       type="button"
                       className="block w-full cursor-zoom-in overflow-hidden rounded-2xl bg-muted/10"
                     >
-                      <Image
+                      <AppImage
                         src={src}
                         alt={`Диплом ${name}`}
                         width={1200}
@@ -160,16 +159,16 @@ export default function AboutPage() {
                         Сертификат {name}
                       </DialogTitle>
                     </DialogHeader>
-                    <div className="w-full">
-                      <Image
-                        src={src}
-                        alt={`Диплом ${name}`}
-                        width={1600}
-                        height={2200}
-                        sizes="(max-width: 1024px) 100vw, 900px"
-                        className="h-auto w-full object-contain"
-                      />
-                    </div>
+                      <div className="w-full">
+                        <AppImage
+                          src={src}
+                          alt={`Диплом ${name}`}
+                          width={1600}
+                          height={2200}
+                          sizes="(max-width: 1024px) 100vw, 900px"
+                          className="h-auto w-full object-contain"
+                        />
+                      </div>
                   </DialogContent>
                 </Dialog>
               </div>

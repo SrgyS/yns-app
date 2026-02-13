@@ -1,9 +1,8 @@
-import Image from 'next/image'
+import { AppImage } from '@/shared/ui/app-image'
 import Link from 'next/link'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader } from '@/shared/ui/card'
 import { Badge } from '@/shared/ui/badge'
-import { getImageUrl } from '@/shared/lib/images'
 import { LeadRequestDialog } from '@/features/lead-request/_ui/lead-request-dialog'
 
 const steps = [
@@ -116,7 +115,7 @@ const genetics = [
 ]
 
 export default function NutritionSupport() {
-  const heroImageUrl = getImageUrl('images', 'yns.png')
+  const heroImageUrl = 'images/yns.png'
 
   return (
     <section className="flex flex-col gap-14">
@@ -140,7 +139,7 @@ export default function NutritionSupport() {
 
             {/* Photo */}
             <div className="relative  sm:mt-15 order-3 md:col-start-2 md:row-span-2 min-h-[300px] md:min-h-full w-full">
-              <Image
+              <AppImage
                 src={heroImageUrl}
                 alt="Яна Степанова"
                 fill

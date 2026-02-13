@@ -39,13 +39,11 @@ export class SupabaseStorage {
 
     if (error) throw error
 
-    const { data } = this.supabase.storage.from(bucket).getPublicUrl(key)
-
     return {
       id: createId(),
       name: file.name,
       type: file.type,
-      path: data.publicUrl,
+      path: `${bucket}/${key}`,
       prefix: '/storage',
     }
   }

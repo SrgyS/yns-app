@@ -30,6 +30,11 @@ const nextConfig: NextConfig = {
         hostname: 'kinescopecdn.net',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
+        pathname: '/**',
+      },
     ],
   },
   rewrites: async () => [

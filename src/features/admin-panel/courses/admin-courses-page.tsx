@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Badge } from '@/shared/ui/badge'
 import { selectDefaultCourseTariff } from '@/kernel/domain/course'
 import { Button } from '@/shared/ui/button'
-import { OptimizedImage } from '@/shared/ui/optimized-image'
+import { AppImage } from '@/shared/ui/app-image'
 import {
   Dialog,
   DialogContent,
@@ -116,12 +116,14 @@ export function AdminCoursesPage({ courses }: Readonly<AdminCoursesPageProps>) {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {courses.map(course => {
-            const thumbnailImgSrc = course.thumbnail
-            const mainImgSrc = course.image
+            const rawThumbnail = course.thumbnail
+            const rawMain = course.image
             const hasThumb =
-              Boolean(thumbnailImgSrc) && !thumbnailImgSrc.includes('/logo-yns')
+              Boolean(rawThumbnail) && !rawThumbnail.includes('/logo-yns')
             const hasMain =
-              Boolean(mainImgSrc) && !mainImgSrc.includes('/logo-yns')
+              Boolean(rawMain) && !rawMain.includes('/logo-yns')
+            const thumbnailImgSrc = hasThumb ? rawThumbnail : ''
+            const mainImgSrc = hasMain ? rawMain : ''
             const isDraftMutating =
               toggleDraft.isPending && pendingDraftId === course.id
             let publishLabel: string
@@ -139,7 +141,7 @@ export function AdminCoursesPage({ courses }: Readonly<AdminCoursesPageProps>) {
               <Card key={course.id} className="flex flex-col overflow-hidden">
                 <div className="relative h-40 w-full bg-muted flex items-center justify-center">
                   {hasThumb ? (
-                    <OptimizedImage
+                    <AppImage
                       src={thumbnailImgSrc}
                       alt={course.title}
                       fill
@@ -187,7 +189,7 @@ export function AdminCoursesPage({ courses }: Readonly<AdminCoursesPageProps>) {
                     </div>
                     {hasMain && (
                       <div className="mt-2 relative w-full aspect-4/3 max-h-40 overflow-hidden rounded bg-background">
-                        <OptimizedImage
+                        <AppImage
                           src={mainImgSrc}
                           alt={`${course.title} основное изображение`}
                           fill

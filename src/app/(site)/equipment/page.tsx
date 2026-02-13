@@ -1,6 +1,5 @@
-import Image from 'next/image'
+import { AppImage } from '@/shared/ui/app-image'
 import Link from 'next/link'
-import { getImageUrl } from '@/shared/lib/images'
 import { Card, CardContent, CardHeader } from '@/shared/ui/card'
 
 const equipmentItems = [
@@ -92,8 +91,8 @@ export default function EquipmentPage() {
             <CardHeader className="block space-y-0">
               {item.image && (
                 <div className="float-right ml-4 mb-2 -mr-4 -mt-2 h-20 w-20 overflow-hidden rounded-2xl relative">
-                  <Image
-                    src={getImageUrl('images', item.image)}
+                  <AppImage
+                    src={`images/${item.image}`}
                     alt={item.title}
                     fill
                     sizes="80px"

@@ -16,6 +16,8 @@ import {
 } from '@/shared/ui/card'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { COURSE_LAYOUTS } from '../_content/layout-config'
+import { BlockRenderer } from '../_ui/block-renderer'
 
 const CURRENCY_FORMATTER = new Intl.NumberFormat('ru-RU', {
   style: 'currency',
@@ -36,10 +38,20 @@ export default async function CoursePage({
     notFound()
   }
 
+  const layout = COURSE_LAYOUTS[courseSlug]
+
+  if (layout) {
+    return (
+      <section className="pt-14 pb-7">
+        <BlockRenderer blocks={layout} course={course} />
+      </section>
+    )
+  }
+
   const urlReturn = getCoursePublicPath(course.slug)
 
   return (
-    <section className="space-y-10 pb-4 pt-18">
+    <section className="space-y-10 pb-4 pt-14">
       <section className="space-y-4">
         <h1 className="text-3xl font-semibold tracking-tight">
           {course.title}

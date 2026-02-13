@@ -1,4 +1,3 @@
-import { getImageUrl } from '@/shared/lib/images'
 import { ResultsGrid } from './_components/results-grid'
 
 const results = [
@@ -6,7 +5,7 @@ const results = [
     id: 'result-1',
     name: 'Марина С.',
     course: 'Перезагрузка движений',
-    imageUrl: getImageUrl('images', '932A0186.jpeg'),
+    imageUrl: 'images/932A0186.jpeg',
     excerpt:
       'За первые 4 недели ушла утренняя скованность, стало легче держать спину и исчезло ощущение тяжести...',
     story: [
@@ -19,7 +18,7 @@ const results = [
     id: 'result-2',
     name: 'Алина К.',
     course: 'Тело без отеков',
-    imageUrl: getImageUrl('images', '932A0014.jpg'),
+    imageUrl: 'images/932A0014.jpg',
     excerpt:
       'Сначала было страшно менять питание, но после двух недель лицо стало более четким, а вечерние отеки почти исчезли...',
     story: [
@@ -32,7 +31,7 @@ const results = [
     id: 'result-3',
     name: 'Светлана Л.',
     course: 'Клуб',
-    imageUrl: getImageUrl('images', 'training.jpeg'),
+    imageUrl: 'images/training.jpeg',
     excerpt:
       'В клубе мне понравилась системность: каждую неделю новый акцент, и я наконец-то вижу прогрессию...',
     story: [
@@ -45,7 +44,7 @@ const results = [
     id: 'result-4',
     name: 'Ольга Н.',
     course: 'Осанка без боли и стресса',
-    imageUrl: getImageUrl('images', 'relax.jpg'),
+    imageUrl: 'images/relax.jpg',
     excerpt:
       'Боль в шее уходила постепенно, но впервые за долгое время я могу сидеть за компьютером без напряжения...',
     story: [

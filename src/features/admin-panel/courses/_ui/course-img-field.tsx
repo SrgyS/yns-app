@@ -5,7 +5,7 @@ import { FormItem, FormLabel, FormMessage } from '@/shared/ui/form'
 import { toast } from 'sonner'
 
 import { useUploadCourseImage } from '../_vm/use-upload-course-image'
-import { OptimizedImage } from '@/shared/ui/optimized-image'
+import { AppImage } from '@/shared/ui/app-image'
 import { Button } from '@/shared/ui/button'
 
 type Props = {
@@ -96,8 +96,8 @@ export function CourseImgField({
                   className="object-contain"
                 />
               ) : (
-                <OptimizedImage
-                  src={preview}
+                <AppImage
+                  src={preview ?? ''}
                   alt="Preview"
                   fill
                   className="object-contain"

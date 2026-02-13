@@ -1,10 +1,9 @@
-import Image from 'next/image'
-import { getImageUrl } from '@/shared/lib/images'
+import { AppImage } from '@/shared/ui/app-image'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
 
 export function HeroSection() {
-  const heroImageUrl = getImageUrl('images', 'hero.jpeg')
+  const heroImageUrl = 'images/hero.jpeg'
 
   return (
     <section className="relative flex flex-col justify-between overflow-hidden rounded-b-2xl pt-14 pb-7 sm:pb-14">
@@ -15,7 +14,7 @@ export function HeroSection() {
       <div className="relative h-[387px] w-full overflow-hidden rounded-b-2xl md:h-[600px]">
         {/* Gradient Overlay */}
         <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-32 bg-[linear-gradient(180deg,rgba(210,217,214,0.95)_0%,rgba(210,217,214,0.6)_80%,rgba(232,224,212,0)_100%)] sm:h-0" />
-        <Image
+        <AppImage
           src={heroImageUrl}
           alt="Фото блока"
           fill

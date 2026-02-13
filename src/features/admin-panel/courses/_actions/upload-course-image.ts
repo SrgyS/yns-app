@@ -5,7 +5,6 @@ import { server } from '@/app/server'
 import { SessionService } from '@/kernel/lib/next-auth/module'
 import { fileStorage } from '@/shared/lib/file-storage/file-storage'
 import { AuthorizatoinError, BadRequest } from '@/shared/lib/errors'
-import { resolveStorageUrl } from '@/shared/lib/images'
 import { redirect } from 'next/navigation'
 import { StaffPermissionService } from '@/features/admin-panel/users/_services/staff-permissions'
 import { createAdminAbility } from '@/features/admin-panel/users/_domain/ability'
@@ -74,6 +73,6 @@ export const uploadCourseImageAction = async (formData: FormData) => {
   )
 
   return resultSchema.parse({
-    path: resolveStorageUrl(storedFile.path),
+    path: storedFile.path,
   })
 }

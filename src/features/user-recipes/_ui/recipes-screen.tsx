@@ -17,7 +17,7 @@ import {
 import { Separator } from '@/shared/ui/separator'
 import { Switch } from '@/shared/ui/switch'
 import { SmallSpinner } from '@/shared/ui/small-spinner'
-import { OptimizedImage } from '@/shared/ui/optimized-image'
+import { AppImage } from '@/shared/ui/app-image'
 import { userRecipesApi } from '../_api'
 import { toast } from 'sonner'
 
@@ -314,7 +314,7 @@ function renderRecipesState({
         >
           <div className="relative h-40 w-full bg-muted">
             {recipe.imageUrl ? (
-              <OptimizedImage
+              <AppImage
                 src={recipe.imageUrl}
                 alt={recipe.title}
                 fill

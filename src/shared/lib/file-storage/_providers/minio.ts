@@ -55,7 +55,7 @@ export class MinioStorage {
       id: createId(),
       name: file.name,
       type: file.type,
-      path: `/storage/${bucket}/${res.Key}`,
+      path: `${bucket}/${res.Key}`,
       prefix: '/storage',
       eTag: res.ETag,
     }
