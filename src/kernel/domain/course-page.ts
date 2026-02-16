@@ -6,6 +6,7 @@ export type CourseBlockType =
   | 'accordion'
   | 'list'
   | 'video'
+  | 'equipment'
   | 'highlights'
   | 'fit-check'
   | 'system'
@@ -178,6 +179,12 @@ export interface VideoBlock extends CourseBlockBase {
   videoId: string
 }
 
+export interface EquipmentBlock extends CourseBlockBase {
+  type: 'equipment'
+  title?: string
+  itemIds?: string[]
+}
+
 export type CourseBlock =
   | HeroBlock
   | HighlightsBlock
@@ -191,3 +198,4 @@ export type CourseBlock =
   | AccordionBlock
   | ListBlock
   | VideoBlock
+  | EquipmentBlock

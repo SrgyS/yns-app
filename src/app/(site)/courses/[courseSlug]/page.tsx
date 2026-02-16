@@ -18,6 +18,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { COURSE_LAYOUTS } from '../_content/layout-config'
 import { BlockRenderer } from '../_ui/block-renderer'
+import { EquipmentBlockComponent } from '../_ui/blocks/equipment-block'
 
 const CURRENCY_FORMATTER = new Intl.NumberFormat('ru-RU', {
   style: 'currency',
@@ -60,6 +61,13 @@ export default async function CoursePage({
           <MdxCode code={course.description} />
         </div>
       </section>
+
+      <EquipmentBlockComponent
+        id="equipment-fallback"
+        type="equipment"
+        isVisible
+        title="Оборудование для курса"
+      />
 
       <section className="space-y-4">
         <h2 className="text-2xl font-semibold tracking-tight">Тарифы</h2>

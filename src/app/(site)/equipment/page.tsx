@@ -1,70 +1,7 @@
 import { AppImage } from '@/shared/ui/app-image'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader } from '@/shared/ui/card'
-
-const equipmentItems = [
-  {
-    title: 'Коврик для фитнеса',
-    image: 'kovrik.png',
-    description:
-      'Нужен для устойчивости и комфорта в упражнениях на полу, защищает суставы и обеспечивает сцепление.',
-    replacement: 'Заниматься на ковре без спортивного коврика.',
-    buy: {
-      label: 'Любой спортивный магазин или маркетплейсы',
-    },
-  },
-  {
-    title: 'Пилатес лента от 180 см',
-    image: 'lenta-pilates.png',
-    description:
-      'Помогает включать мышцы мягко и без перегрузки, дает нужное сопротивление в упражнениях.',
-    replacement: 'Пояс от халата или шарф.',
-    buy: {
-      label: 'Ozon или Wildberries',
-      href: 'https://www.ozon.ru/',
-    },
-  },
-  {
-    title: 'Роллер для МФР',
-    description:
-      'Мягкий роллер без ребер для работы с мышцами и фасциями, улучшает восстановление.',
-    image: 'roll.png',
-    replacement: 'Плотно свернутый валик из банного полотенца.',
-    buy: {
-      label: 'Любой спортивный магазин',
-    },
-  },
-  {
-    title: 'Мягкие массажные мячи (мячи Франклина), 2 шт.',
-    image: 'balls_cutout_clean.png',
-    description:
-      'Используются для точечного массажа и снятия напряжения в мышцах.',
-    replacement: 'Мяч для большого тенниса или детские шипованные мячи.',
-    buy: {
-      label: 'Маркетплейсы или магазин спортивных товаров',
-    },
-  },
-  {
-    title: 'Мяч для пилатеса, d 25/50 см',
-    image: 'ball-pilates.png',
-    description:
-      'Поддерживает стабильность и помогает включать глубокие мышцы корпуса.',
-    replacement: 'Надувной детский мяч.',
-    buy: {
-      label: 'Детские товары или спортмагазин',
-    },
-  },
-  {
-    title: 'Гантели/гири/набор разборных гантелей',
-    image: 'dumbell.png',
-    description: 'Нужны для силовых тренировок и прогрессии нагрузки.',
-    replacement:
-      'Тренироваться с собственным весом, 5 л бутыли с водой или книги в пакете.',
-    buy: {
-      label: 'Спортивные сети и маркетплейсы',
-    },
-  },
-]
+import { equipmentItems } from '@/shared/lib/equipment'
 
 export default function EquipmentPage() {
   return (
@@ -87,7 +24,7 @@ export default function EquipmentPage() {
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {equipmentItems.map(item => (
-          <Card key={item.title} className="overflow-hidden rounded-3xl">
+          <Card key={item.id} className="overflow-hidden rounded-3xl">
             <CardHeader className="block space-y-0">
               {item.image && (
                 <div className="float-right ml-4 mb-2 -mr-4 -mt-2 h-20 w-20 overflow-hidden rounded-2xl relative">
