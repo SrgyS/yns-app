@@ -149,6 +149,18 @@ export interface TariffsBlock extends CourseBlockBase {
     title: string
     description: string
   }
+  tariffPresentation?: {
+    groupTitles?: {
+      withFeedback?: string
+      withoutFeedback?: string
+    }
+    options: Array<{
+      feedback: boolean
+      badge?: string
+      cardTitle?: string
+      includes: string[]
+    }>
+  }
 }
 
 export interface AccordionBlock extends CourseBlockBase {

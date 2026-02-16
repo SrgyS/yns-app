@@ -1,5 +1,55 @@
 
-import { CourseBlock } from '@/kernel/domain/course-page'
+import { CourseBlock, TariffsBlock } from '@/kernel/domain/course-page'
+
+const DEFAULT_TARIFF_PRESENTATION: NonNullable<
+  TariffsBlock['tariffPresentation']
+> = {
+  options: [
+    {
+      feedback: false,
+      badge: 'Без обратной связи',
+      includes: [
+        'Полный доступ к материалам курса',
+        'Пошаговый план занятий',
+        'Доступ в личный кабинет на весь срок тарифа',
+      ],
+    },
+    {
+      feedback: true,
+      badge: 'С обратной связью',
+      includes: [
+        'Полный доступ к материалам курса',
+        'Пошаговый план занятий',
+        'Проверка и комментарии от куратора',
+      ],
+    },
+  ],
+}
+
+const CLUB_TARIFF_PRESENTATION: NonNullable<
+  TariffsBlock['tariffPresentation']
+> = {
+  options: [
+    {
+      feedback: false,
+      badge: 'Без обратной связи',
+      includes: [
+        'Доступ ко всем материалам клуба на {duration}',
+        'Ежемесячные обновления тренировок',
+        'Библиотека «от боли», зарядки и самотесты',
+      ],
+    },
+    {
+      feedback: true,
+      badge: 'С обратной связью',
+      includes: [
+        'Доступ ко всем материалам клуба на {duration}',
+        'Ежемесячные обновления тренировок',
+        'Обратная связь и рекомендации по прогрессу',
+      ],
+    },
+  ],
+}
 
 export const COURSE_LAYOUTS: Record<string, CourseBlock[]> = {
   // Перезагрузка движений
@@ -159,6 +209,7 @@ export const COURSE_LAYOUTS: Record<string, CourseBlock[]> = {
       type: 'tariffs',
       isVisible: true,
       title: 'Выберите свой тариф',
+      tariffPresentation: DEFAULT_TARIFF_PRESENTATION,
     },
 
     // FAQ
@@ -188,7 +239,7 @@ export const COURSE_LAYOUTS: Record<string, CourseBlock[]> = {
   ],
 
   // Тело без отёков
-  'telo-bez-otekov': [
+  noedema: [
     // Hero
     {
       id: 'hero-1',
@@ -338,7 +389,8 @@ export const COURSE_LAYOUTS: Record<string, CourseBlock[]> = {
       id: 'tariffs-1',
       type: 'tariffs',
       isVisible: true,
-      title: 'Выберите формат',
+      title: 'Тарифы курса',
+      tariffPresentation: DEFAULT_TARIFF_PRESENTATION,
     },
 
     // FAQ
@@ -512,6 +564,7 @@ export const COURSE_LAYOUTS: Record<string, CourseBlock[]> = {
       type: 'tariffs',
       isVisible: true,
       title: 'Выберите формат',
+      tariffPresentation: DEFAULT_TARIFF_PRESENTATION,
     },
 
     // FAQ
@@ -667,7 +720,8 @@ export const COURSE_LAYOUTS: Record<string, CourseBlock[]> = {
       id: 'tariffs-1',
       type: 'tariffs',
       isVisible: true,
-      title: 'Выберите формат участия',
+      title: 'Вступить в',
+      tariffPresentation: CLUB_TARIFF_PRESENTATION,
     },
 
     // FAQ

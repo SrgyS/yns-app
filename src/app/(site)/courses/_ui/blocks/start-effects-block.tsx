@@ -16,8 +16,8 @@ export function StartEffectsBlockComponent({
     <section className="grid gap-6 md:grid-cols-[0.9fr_1fr]">
       {/* Video Placeholder */}
       {videoPlaceholder && (
-        <div className="relative aspect-[16/11] overflow-hidden rounded-3xl border bg-muted/20">
-          <div className="absolute inset-0 bg-gradient-to-br from-muted/10 via-transparent to-muted/20" />
+        <div className="relative aspect-16/11 overflow-hidden rounded-3xl border bg-muted/20">
+          <div className="absolute inset-0 bg-linear-to-br from-muted/10 via-transparent to-muted/20" />
           <div className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full border bg-background/70 px-3 py-1 text-xs text-muted-foreground backdrop-blur">
             Короткий ролик: техника
 </div>

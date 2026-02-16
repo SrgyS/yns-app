@@ -42,9 +42,9 @@ export function TestimonialsBlockComponent({
           {[1, 2, 3].map((index) => (
             <div
               key={index}
-              className="relative aspect-[4/5] overflow-hidden rounded-3xl border bg-muted/20"
+              className="relative aspect-4/5 overflow-hidden rounded-3xl border bg-muted/20"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-muted/10 via-transparent to-muted/20" />
+              <div className="absolute inset-0 bg-linear-to-br from-muted/10 via-transparent to-muted/20" />
               <div className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full border bg-background/70 px-3 py-1 text-xs text-muted-foreground backdrop-blur">
                 Галерея {index}
               </div>

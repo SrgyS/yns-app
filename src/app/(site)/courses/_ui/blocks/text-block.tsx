@@ -55,7 +55,7 @@ export function TextBlockComponent({
           </div>
           <div
             className={cn(
-              'relative aspect-video w-full overflow-hidden rounded-xl md:aspect-[4/3]',
+              'relative aspect-video w-full overflow-hidden rounded-xl md:aspect-4/3',
               imagePosition === 'right' ? 'md:order-2' : 'md:order-1'
             )}
           >
