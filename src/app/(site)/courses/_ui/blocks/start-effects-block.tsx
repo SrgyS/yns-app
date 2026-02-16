@@ -13,7 +13,7 @@ export function StartEffectsBlockComponent({
   videoPlaceholder,
 }: StartEffectsBlock) {
   return (
-    <section className="grid gap-6 md:grid-cols-[0.9fr_1fr]">
+    <section className="grid gap-4 md:grid-cols-[0.9fr_1fr] md:gap-6">
       {/* Video Placeholder */}
       {videoPlaceholder && (
         <div className="relative aspect-16/11 overflow-hidden rounded-3xl border bg-muted/20">
@@ -25,7 +25,7 @@ export function StartEffectsBlockComponent({
       )}
 
       {/* Content Cards */}
-      <div className="space-y-4">
+      <div className="space-y-3 md:space-y-4">
         {title && (
           <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
         )}
@@ -39,7 +39,7 @@ export function StartEffectsBlockComponent({
               Эти эффекты дают телу сигнал безопасности и запускают восстановление
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm text-muted-foreground">
+          <CardContent className="space-y-1.5 text-sm text-muted-foreground md:space-y-2">
             {effects.map((effect, index) => (
               <div key={index} className="flex gap-2">
                 <Check className="mt-0.5 h-4 w-4 shrink-0" />

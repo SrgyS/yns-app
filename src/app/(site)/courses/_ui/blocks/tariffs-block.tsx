@@ -176,7 +176,7 @@ const renderTariffCard = ({
 
   return (
     <Card key={tariff.id} className="flex h-full flex-col rounded-3xl">
-      <CardHeader className="space-y-3">
+      <CardHeader className="space-y-2 p-4 md:space-y-3 md:p-6">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant={tariff.feedback ? 'default' : 'secondary'}>
             {cardBadge}
@@ -185,8 +185,8 @@ const renderTariffCard = ({
         </div>
         <CardTitle className="text-lg">{cardTitle}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 text-sm text-foreground/80">
-        <div className="space-y-2">
+      <CardContent className="space-y-3 p-4 pt-0 text-sm text-foreground/80 md:space-y-4 md:p-6 md:pt-0">
+        <div className="space-y-1.5 md:space-y-2">
           {includes.map((item, index) => (
             <div
               key={`${tariff.id}-${index}`}
@@ -237,19 +237,19 @@ export function TariffsBlockComponent({
   const withFeedbackTitle = groupTitles?.withFeedback || 'С обратной связью'
 
   return (
-    <section className="space-y-4" id="tariffs">
-      <h2 className="text-2xl font-semibold tracking-tight mb-0">
+    <section className="space-y-3 md:space-y-4" id="tariffs">
+      <h2 className="mb-0 text-2xl font-semibold tracking-tight">
         {resolvedTitle}
       </h2>
-      <div className="text-2xl font-bold tracking-tight text-primary">
+      <div className="text-lg font-semibold tracking-tight text-primary md:text-2xl">
         {course.title}
       </div>
       {shouldGroupByFeedback ? (
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           {withoutFeedbackTariffs.length > 0 && (
-            <section className="space-y-3">
+            <section className="space-y-2.5 md:space-y-3">
               <h3 className="text-lg font-medium">{withoutFeedbackTitle}</h3>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">
                 {withoutFeedbackTariffs.map(tariff =>
                   renderTariffCard({
                     course,
@@ -262,9 +262,9 @@ export function TariffsBlockComponent({
             </section>
           )}
           {withFeedbackTariffs.length > 0 && (
-            <section className="space-y-3">
+            <section className="space-y-2.5 md:space-y-3">
               <h3 className="text-lg font-medium">{withFeedbackTitle}</h3>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">
                 {withFeedbackTariffs.map(tariff =>
                   renderTariffCard({
                     course,
@@ -278,7 +278,7 @@ export function TariffsBlockComponent({
           )}
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">
           {paidTariffs.map(tariff =>
             renderTariffCard({ course, tariff, urlReturn, tariffPresentation })
           )}

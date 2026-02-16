@@ -11,16 +11,16 @@ export function TestimonialsBlockComponent({
   showGallery,
 }: TestimonialsBlock) {
   return (
-    <section className="space-y-6">
+    <section className="space-y-4 md:space-y-6">
       {title && (
         <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
       )}
 
       {/* Testimonials Grid */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-3 md:gap-4">
         {items.map((item, index) => (
           <Card key={index} className="rounded-3xl">
-            <CardHeader>
+            <CardHeader className="p-4 md:p-6">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Quote className="h-4 w-4 text-muted-foreground" />
                 <span>{item.title}</span>
@@ -29,7 +29,7 @@ export function TestimonialsBlockComponent({
                 {item.author || 'Отзыв участницы'}
               </CardDescription>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
+            <CardContent className="p-4 pt-0 text-sm text-muted-foreground md:p-6 md:pt-0">
               {item.text}
             </CardContent>
           </Card>
@@ -38,7 +38,7 @@ export function TestimonialsBlockComponent({
 
       {/* Media Gallery Placeholders */}
       {showGallery && (
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-2.5 md:grid-cols-3 md:gap-3">
           {[1, 2, 3].map((index) => (
             <div
               key={index}

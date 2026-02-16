@@ -7,6 +7,7 @@ import { COURSE_LAYOUTS } from '../_content/layout-config'
 import { BlockRenderer } from '../_ui/block-renderer'
 import { EquipmentBlockComponent } from '../_ui/blocks/equipment-block'
 import { TariffsBlockComponent } from '../_ui/blocks/tariffs-block'
+import { CourseCtaBlock } from '../_ui/blocks/course-cta-block'
 
 export default async function CoursePage({
   params,
@@ -25,15 +26,16 @@ export default async function CoursePage({
 
   if (layout) {
     return (
-      <section className="pt-14 pb-7">
+      <section className="pb-5 md:pb-7 pt-14">
         <BlockRenderer blocks={layout} course={course} />
+        <CourseCtaBlock />
       </section>
     )
   }
 
   return (
-    <section className="space-y-10 pb-4 pt-14">
-      <section className="space-y-4">
+    <section className="space-y-6 pb-4 pt-14 md:space-y-10">
+      <section className="space-y-3 md:space-y-4">
         <h1 className="text-3xl font-semibold tracking-tight">
           {course.title}
         </h1>
@@ -56,6 +58,8 @@ export default async function CoursePage({
         title="Тарифы"
         course={course}
       />
+
+      <CourseCtaBlock />
     </section>
   )
 }

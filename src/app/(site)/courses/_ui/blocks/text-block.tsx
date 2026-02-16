@@ -14,7 +14,7 @@ export function TextBlockComponent({
   imagePosition = 'right',
 }: TextBlock) {
   const Content = (
-    <div className="space-y-4">
+    <div className="space-y-3 md:space-y-4">
       {title && (
         <h2
           className={cn(
@@ -28,7 +28,7 @@ export function TextBlockComponent({
       )}
       <div
         className={cn(
-          'prose md:prose-lg dark:prose-invert max-w-none text-foreground/80',
+          'prose prose-sm md:prose-lg dark:prose-invert max-w-none text-foreground/80 prose-p:my-2 md:prose-p:my-4',
           align === 'center' && 'text-center',
           align === 'right' && 'text-right'
         )}
@@ -41,11 +41,11 @@ export function TextBlockComponent({
     return (
       <section
         className={cn(
-          'py-8',
-          background === 'muted' && 'bg-muted rounded-xl p-8'
+          'py-5 md:py-8',
+          background === 'muted' && 'rounded-xl bg-muted p-4 md:p-8'
         )}
       >
-        <div className="grid gap-8 md:grid-cols-2 md:items-center">
+        <div className="grid gap-4 md:grid-cols-2 md:items-center md:gap-8">
           <div
             className={cn(
               imagePosition === 'right' ? 'md:order-1' : 'md:order-2'
@@ -74,8 +74,8 @@ export function TextBlockComponent({
   return (
     <section
       className={cn(
-        'space-y-4 py-8',
-        background === 'muted' && 'bg-muted rounded-xl p-8'
+        'space-y-3 py-5 md:space-y-4 md:py-8',
+        background === 'muted' && 'rounded-xl bg-muted p-4 md:p-8'
       )}
     >
       {Content}

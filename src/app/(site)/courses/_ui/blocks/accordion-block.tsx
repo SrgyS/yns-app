@@ -11,7 +11,7 @@ import {
 
 export function AccordionBlockComponent({ title, items }: AccordionBlock) {
   return (
-    <section className="space-y-6 py-8">
+    <section className="space-y-4 py-5 md:space-y-6 md:py-8">
       {title && (
         <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
       )}
@@ -22,7 +22,7 @@ export function AccordionBlockComponent({ title, items }: AccordionBlock) {
             key={`${item.title}-${index}`}
             value={`item-${index}`}
           >
-            <AccordionTrigger className="text-base">
+            <AccordionTrigger className="text-sm md:text-base">
               {item.title}
             </AccordionTrigger>
             <AccordionContent className="text-muted-foreground text-sm">

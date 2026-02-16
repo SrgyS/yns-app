@@ -23,11 +23,11 @@ const iconMap: Record<string, React.ReactNode> = {
 
 export function SystemBlockComponent({ title, cards }: SystemBlock) {
   return (
-    <section className="space-y-6">
+    <section className="space-y-4 md:space-y-6">
       {title && (
         <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
       )}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2 md:gap-4">
         {cards.map((card, index) => {
           const icon = card.icon
             ? iconMap[card.icon.toLowerCase()]
@@ -35,7 +35,7 @@ export function SystemBlockComponent({ title, cards }: SystemBlock) {
 
           return (
             <Card key={index} className="rounded-3xl">
-              <CardHeader>
+              <CardHeader className="p-4 md:p-6">
                 <CardTitle className="flex items-center gap-2">
                   <span className="text-muted-foreground">{icon}</span>
                   <span>{card.title}</span>

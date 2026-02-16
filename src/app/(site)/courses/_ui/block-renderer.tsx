@@ -46,7 +46,7 @@ export function BlockRenderer({ blocks, course }: BlockRendererProps) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 md:space-y-8">
       {visibleBlocks.map((block, index) => {
         const previousBlock = visibleBlocks[index - 1]
 

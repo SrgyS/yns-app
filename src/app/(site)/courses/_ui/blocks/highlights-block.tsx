@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/shared/ui/card'
 
 export function HighlightsBlockComponent({ items }: HighlightsBlock) {
   return (
-    <section className="grid gap-3 md:grid-cols-4">
+    <section className="grid gap-2.5 md:grid-cols-4 md:gap-3">
       {items.map((item, index) => (
         <Card
           key={`${item.label}-${index}`}

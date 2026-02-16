@@ -14,21 +14,21 @@ export function FitCheckBlockComponent({
   contactOptions,
 }: FitCheckBlock) {
   return (
-    <section className="space-y-6">
+    <section className="space-y-4 md:space-y-6">
       {title && (
         <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
       )}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2 md:gap-4">
         {/* Кому подходит */}
         <Card className="rounded-3xl">
-          <CardHeader>
+          <CardHeader className="p-4 md:p-6">
             <CardTitle>Кому подходит</CardTitle>
             <CardDescription>
               Быстро проверьте, ваш ли это формат
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm">
+          <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
+            <ul className="space-y-1.5 text-sm md:space-y-2">
               {goodFor.map((item, index) => (
                 <li key={index} className="flex gap-2">
                   <Check className="mt-0.5 h-4 w-4 shrink-0" />
@@ -41,14 +41,14 @@ export function FitCheckBlockComponent({
 
         {/* Когда лучше иначе */}
         <Card className="rounded-3xl">
-          <CardHeader>
+          <CardHeader className="p-4 md:p-6">
             <CardTitle>Когда лучше иначе</CardTitle>
             <CardDescription>
               Безопасность и здравый подход к телу
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <ul className="space-y-2 text-sm text-muted-foreground">
+          <CardContent className="space-y-3 p-4 pt-0 md:space-y-4 md:p-6 md:pt-0">
+            <ul className="space-y-1.5 text-sm text-muted-foreground md:space-y-2">
               {notGoodFor.map((item, index) => (
                 <li key={index} className="flex gap-2">
                   <Shield className="mt-0.5 h-4 w-4 shrink-0" />

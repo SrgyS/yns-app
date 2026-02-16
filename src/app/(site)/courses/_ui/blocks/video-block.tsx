@@ -36,14 +36,17 @@ export function VideoBlockComponent({
 
   return (
     <section
-      className={cn(isCompact ? 'space-y-3' : 'space-y-6 py-8', className)}
+      className={cn(
+        isCompact ? 'space-y-3' : 'space-y-4 py-5 md:space-y-6 md:py-8',
+        className
+      )}
     >
       {shouldShowTitle && title && (
         <h2
           className={cn(
             isCompact
               ? 'text-sm font-medium text-muted-foreground'
-              : 'text-2xl font-semibold tracking-tight'
+              : 'text-xl font-semibold tracking-tight md:text-2xl'
           )}
         >
           {title}

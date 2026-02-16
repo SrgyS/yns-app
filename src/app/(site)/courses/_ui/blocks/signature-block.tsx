@@ -11,7 +11,7 @@ export function SignatureBlockComponent({
   content,
 }: SignatureBlock) {
   return (
-    <section className="space-y-6">
+    <section className="space-y-4 md:space-y-6">
       {title && <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>}
       
       {variant === 'reboot' && <RebootVariant content={content} />}
@@ -24,7 +24,7 @@ export function SignatureBlockComponent({
 
 function RebootVariant({ content }: { content: SignatureBlock['content'] }) {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-3 md:grid-cols-2 md:gap-4">
       {content.entryLevels && (
         <Card className="rounded-3xl">
           <CardHeader>
@@ -74,7 +74,7 @@ function RebootVariant({ content }: { content: SignatureBlock['content'] }) {
 
 function EdemaVariant({ content }: { content: SignatureBlock['content'] }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 md:space-y-4">
       {content.keys && (
         <Card className="rounded-3xl">
           <CardHeader>
@@ -124,7 +124,7 @@ function EdemaVariant({ content }: { content: SignatureBlock['content'] }) {
 
 function AntikorkaVariant({ content }: { content: SignatureBlock['content'] }) {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-3 md:grid-cols-2 md:gap-4">
       {content.progressCriteria && (
         <Card className="rounded-3xl">
           <CardHeader>
@@ -164,7 +164,7 @@ function AntikorkaVariant({ content }: { content: SignatureBlock['content'] }) {
 
 function ClubVariant({ content }: { content: SignatureBlock['content'] }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 md:space-y-4">
       {content.weekPlan && (
         <Card className="rounded-3xl">
           <CardHeader>
