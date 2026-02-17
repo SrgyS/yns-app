@@ -1,5 +1,6 @@
 import { SiteHeader } from '@/features/headers/site-header'
 import { Footer } from './_components/footer'
+import { MobileBottomNav } from '@/features/navigation/mobile/mobile-bottom-nav'
 
 export default async function Layout({
   children,
@@ -11,6 +12,7 @@ export default async function Layout({
       <SiteHeader />
       <main className="container pb-17 flex-1">{children}</main>
       <Footer />
+      <MobileBottomNav variant="public" />
     </div>
   )
 }

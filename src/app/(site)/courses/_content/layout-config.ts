@@ -2,7 +2,6 @@
 import {
   CourseBlock,
   TariffsBlock,
-  TestimonialsBlock,
 } from '@/kernel/domain/course-page'
 
 const DEFAULT_TARIFF_PRESENTATION: NonNullable<

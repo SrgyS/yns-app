@@ -19,7 +19,13 @@ export function TopBar({
           <MainNav variant={variant === 'public' ? 'public' : 'private'} />
         )
       }
-      profile={isProfile && <Profile />}
+      profile={
+        isProfile && (
+          <div className="hidden md:block">
+            <Profile />
+          </div>
+        )
+      }
       actions={<ToggleTheme />}
     />
   )

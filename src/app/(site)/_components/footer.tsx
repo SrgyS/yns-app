@@ -1,8 +1,8 @@
 import { Logo } from '@/features/headers/top-bar/_ui/logo'
 import { Separator } from '@/shared/ui/separator'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Button } from '@/shared/ui/button'
+import { SocialsRow } from '@/shared/ui/socials-row'
 
 const footerSections = [
   {
@@ -58,55 +58,7 @@ export const Footer = () => {
             <div className="flex flex-col gap-4">
               {/* Logo */}
               <Logo />
-              <div className="flex items-center gap-1">
-                <Link href="#" target="_blank">
-                  <div className="bg-white rounded-full overflow-hidden p-1">
-                    <Image
-                      src="/youtube-icon.png"
-                      alt="Youtube"
-                      width={20}
-                      height={20}
-                      className="opacity-70 hover:opacity-100 transition"
-                    />
-                  </div>
-                </Link>
-                <Link href="#" target="_blank">
-                  <div className="bg-white rounded-full overflow-hidden p-1">
-                    <Image
-                      src="/telegram-icon.png"
-                      alt="Telegram"
-                      width={20}
-                      height={20}
-                      className="opacity-70 hover:opacity-100 transition"
-                    />
-                  </div>
-                </Link>
-                <Link href="#" target="_blank">
-                  <div className="bg-white rounded-full overflow-hidden p-1">
-                    <Image
-                      src="/vk-icon.png"
-                      alt="VKontakte"
-                      width={20}
-                      height={20}
-                      className="opacity-70 hover:opacity-100 transition"
-                    />
-                  </div>
-                </Link>
-                <Link href="#" target="_blank" className="relative">
-                  <div className="bg-white rounded-full overflow-hidden p-1">
-                    <Image
-                      src="/instagram-icon.png"
-                      alt="Instagram"
-                      width={20}
-                      height={20}
-                      className="opacity-70 hover:opacity-100 transition"
-                    />
-                  </div>
-                  <span className="absolute -right-1 -top-2 text-sm font-semibold text-slate-200">
-                    *
-                  </span>
-                </Link>
-              </div>
+              <SocialsRow />
               <div className="text-[8px] sm:text-[10px] text-slate-300">
                 Meta признана экстремистской организацией на территории РФ*
               </div>
