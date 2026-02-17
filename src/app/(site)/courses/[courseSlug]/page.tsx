@@ -3,11 +3,15 @@ import { GetCourseService } from '@/entities/course/module'
 import { CourseSlug } from '@/kernel/domain/course'
 import { MdxCode } from '@/shared/lib/mdx'
 import { notFound } from 'next/navigation'
-import { COURSE_LAYOUTS } from '../_content/layout-config'
+import {
+  COURSE_LAYOUTS,
+  FALLBACK_COURSE_TESTIMONIALS_BLOCK,
+} from '../_content/layout-config'
 import { BlockRenderer } from '../_ui/block-renderer'
 import { EquipmentBlockComponent } from '../_ui/blocks/equipment-block'
 import { TariffsBlockComponent } from '../_ui/blocks/tariffs-block'
 import { CourseCtaBlock } from '../_ui/blocks/course-cta-block'
+import { TestimonialsBlockComponent } from '../_ui/blocks/testimonials-block'
 
 export default async function CoursePage({
   params,

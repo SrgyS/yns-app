@@ -124,11 +124,14 @@ export interface TestimonialsBlock extends CourseBlockBase {
   type: 'testimonials'
   title?: string
   items: Array<{
-    title: string
+    title?: string
     text: string
     author?: string
+    authorRole?: string
+    image?: string
+    imageAlt?: string
+    avatar?: string
   }>
-  showGallery?: boolean
 }
 
 export interface TextBlock extends CourseBlockBase {

@@ -25,11 +25,11 @@ export function EquipmentBlockComponent({
     <section className="space-y-4 py-5 md:space-y-6 md:py-8">
       <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
       <div className="grid gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3">
-        {itemsToRender.map((item) => (
+        {itemsToRender.map(item => (
           <Card key={item.id} className="overflow-hidden rounded-3xl">
             <CardHeader className="block space-y-0 p-4 md:p-6">
               {item.image && (
-                <div className="relative float-right -mr-4 -mt-2 mb-2 ml-4 h-20 w-20 overflow-hidden rounded-2xl">
+                <div className="relative float-right -mt-2 mb-2 ml-4 h-20 w-20 overflow-hidden rounded-2xl">
                   <AppImage
                     src={`images/${item.image}`}
                     alt={item.title}

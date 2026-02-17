@@ -1,24 +1,14 @@
-'use client'
-
 import { AppImage } from '@/shared/ui/app-image'
-
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent } from '@/shared/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/shared/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/shared/ui/dialog'
 
 type ResultStory = {
   id: string
   name: string
   course: string
-  imageUrl: string
-  excerpt: string
+  period: string
+  resultImageUrl: string
   story: string[]
 }
 
@@ -28,40 +18,51 @@ type ResultsGridProps = {
 
 export function ResultsGrid({ items }: ResultsGridProps) {
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid gap-5 md:grid-cols-2 md:gap-6">
       {items.map(item => (
         <Card key={item.id} className="overflow-hidden rounded-3xl">
           <CardContent className="p-0">
-            <div className="grid sm:grid-cols-[220px_1fr]">
-              <div className="relative h-56 sm:h-full">
+            <div className="grid gap-4 p-4 md:items-start md:gap-5 md:p-6 lg:grid-cols-[200px_1fr]">
+              <div className="relative mx-auto aspect-5/4  w-full overflow-hidden rounded-2xl border bg-muted/20 md:mx-0 md:max-w-none">
                 <AppImage
-                  src={item.imageUrl}
-                  alt={`История ${item.name}`}
+                  src={item.resultImageUrl}
+                  alt={`Результат до и после: ${item.name}`}
                   fill
+                  sizes="(max-width: 767px) 220px, (max-width: 1279px) 180px, 200px"
                   className="object-cover"
-                  sizes="(max-width: 640px) 100vw, 220px"
                 />
               </div>
-              <div className="flex h-full flex-col gap-4 p-6">
-                <div className="text-right text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  {item.course}
+
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    {item.course}
+                  </p>
+                  <p className="rounded-full border px-2.5 py-1 text-xs text-muted-foreground">
+                    {item.period}
+                  </p>
                 </div>
-                <div className="text-lg font-semibold">{item.name}</div>
-                <p className="text-sm text-muted-foreground">{item.excerpt}</p>
+                <h2 className="text-lg font-semibold tracking-tight md:text-xl">
+                  {item.name}
+                </h2>
+                <p className="line-clamp-4 whitespace-pre-line text-sm text-foreground/85">
+                  {item.story.join('\n\n')}
+                </p>
+
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="w-fit rounded-2xl">
-                      Читать историю
+                    <Button variant="link" className="h-auto p-0 text-sm">
+                      Читать весь отзыв
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-2xl">
+                  <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
                     <DialogHeader>
                       <DialogTitle>{item.name}</DialogTitle>
-                      <DialogDescription>{item.course}</DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-3 text-sm text-foreground">
+
+                    <div className="space-y-3 text-sm text-foreground/90">
                       {item.story.map((paragraph, index) => (
-                        <p key={`${item.id}-p-${index}`}>{paragraph}</p>
+                        <p key={`${item.id}-dialog-p-${index}`}>{paragraph}</p>
                       ))}
                     </div>
                   </DialogContent>

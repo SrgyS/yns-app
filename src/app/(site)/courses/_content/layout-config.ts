@@ -1,5 +1,9 @@
 
-import { CourseBlock, TariffsBlock } from '@/kernel/domain/course-page'
+import {
+  CourseBlock,
+  TariffsBlock,
+  TestimonialsBlock,
+} from '@/kernel/domain/course-page'
 
 const DEFAULT_TARIFF_PRESENTATION: NonNullable<
   TariffsBlock['tariffPresentation']
@@ -195,6 +199,28 @@ export const COURSE_LAYOUTS: Record<string, CourseBlock[]> = {
     //   ],
     // },
 
+    {
+      id: 'testimonials-1',
+      type: 'testimonials',
+      isVisible: true,
+      title: 'Отзывы участниц',
+      items: [
+        {
+          title: 'Стало легче двигаться',
+          text: 'После двух недель ушла скованность в шее и спине. Наконец-то появилась энергия на весь день.',
+          author: 'Анна',
+          authorRole: 'Участница курса «Перезагрузка»',
+          avatar: '',
+        },
+        {
+          text: 'Минус отёки к вечеру, одежда сидит свободнее. Самое важное - нет перегруза, можно идти в своём темпе.',
+          author: 'Елена',
+          image: 'images/player-img.jpg',
+          imageAlt: 'Фото результата Елены',
+        },
+      ],
+    },
+
     // Оборудование
     {
       id: 'equipment-1',
@@ -313,32 +339,32 @@ export const COURSE_LAYOUTS: Record<string, CourseBlock[]> = {
     },
 
     // Программа
-    {
-      id: 'accordion-curriculum',
-      type: 'accordion',
-      isVisible: true,
-      title: 'Программа курса',
-      items: [
-        {
-          title: 'Неделя 1: Ритм и базовая разгрузка ЖКТ',
-          content:
-            'Конструктор питания. Вода и соль без крайностей. Зарядки ежедневно.',
-        },
-        {
-          title: 'Неделя 2: Усиление лимфотока через движение',
-          content: 'Тренировки 5 раз. Дыхание. Мини-лекции.',
-        },
-        {
-          title: 'Неделя 3: Плотность тела',
-          content: 'Силовые блоки. Белок и овощи. Контроль перекусов.',
-        },
-        {
-          title: 'Неделя 4: Закрепление',
-          content:
-            'Переход в клуб. Сборка недельного ритма. Стратегия на месяц. План поддержания.',
-        },
-      ],
-    },
+    // {
+    //   id: 'accordion-curriculum',
+    //   type: 'accordion',
+    //   isVisible: true,
+    //   title: 'Программа курса',
+    //   items: [
+    //     {
+    //       title: 'Неделя 1: Ритм и базовая разгрузка ЖКТ',
+    //       content:
+    //         'Конструктор питания. Вода и соль без крайностей. Зарядки ежедневно.',
+    //     },
+    //     {
+    //       title: 'Неделя 2: Усиление лимфотока через движение',
+    //       content: 'Тренировки 5 раз. Дыхание. Мини-лекции.',
+    //     },
+    //     {
+    //       title: 'Неделя 3: Плотность тела',
+    //       content: 'Силовые блоки. Белок и овощи. Контроль перекусов.',
+    //     },
+    //     {
+    //       title: 'Неделя 4: Закрепление',
+    //       content:
+    //         'Переход в клуб. Сборка недельного ритма. Стратегия на месяц. План поддержания.',
+    //     },
+    //   ],
+    // },
 
     // Что включено
     {
@@ -374,6 +400,29 @@ export const COURSE_LAYOUTS: Record<string, CourseBlock[]> = {
       isVisible: true,
       title: 'Пример тренировки для лимфодренажа',
       videoId: 'fZffoSFor5rCL1qV78ZRn7',
+    },
+
+    // Отзывы
+    {
+      id: 'testimonials-1',
+      type: 'testimonials',
+      isVisible: true,
+      title: 'Отзывы участниц',
+      items: [
+        {
+          text: 'Через 10 дней лицо и ноги заметно меньше отекали. Появилась легкость утром.',
+          author: 'Марина',
+          authorRole: 'Курс «Тело без отёков»',
+          avatar: '/telegram-icon.png',
+        },
+        {
+          title: 'Рабочая система без крайностей',
+          text: 'Понравилось, что питание и тренировки можно встроить в обычный график без стресса.',
+          author: 'Светлана',
+          image: 'images/player-img.jpg',
+          imageAlt: 'Отзыв Светланы',
+        },
+      ],
     },
 
     // Оборудование
@@ -550,6 +599,29 @@ export const COURSE_LAYOUTS: Record<string, CourseBlock[]> = {
       videoId: 'fZffoSFor5rCL1qV78ZRn7',
     },
 
+    // Отзывы
+    {
+      id: 'testimonials-1',
+      type: 'testimonials',
+      isVisible: true,
+      title: 'Отзывы участниц',
+      items: [
+        {
+          title: 'Тело стало плотнее',
+          text: 'За месяц заметно подтянулись ноги и ягодицы, ушла рыхлость. Прогресс видно и в зеркале, и по самочувствию.',
+          author: 'Ольга',
+          authorRole: 'Курс «Антикорка»',
+          avatar: '/telegram-icon.png',
+        },
+        {
+          text: 'Силы стало больше, тренировки перестали пугать. Очень помогла структура по неделям.',
+          author: 'Ирина',
+          image: 'images/player-img.jpg',
+          imageAlt: 'Фото результата Ирины',
+        },
+      ],
+    },
+
     // Оборудование
     {
       id: 'equipment-1',
@@ -684,25 +756,25 @@ export const COURSE_LAYOUTS: Record<string, CourseBlock[]> = {
       ],
     },
 
-    // Библиотека
+    // Отзывы
     {
-      id: 'list-library',
-      type: 'list',
+      id: 'testimonials-1',
+      type: 'testimonials',
       isVisible: true,
-      title: 'Библиотека под задачи',
-      layout: 'grid',
+      title: 'Отзывы участниц клуба',
       items: [
         {
-          title: 'Папки от боли',
-          description: 'Поясница, шея, колени',
+          text: 'Клуб держит в ритме: не выпадаю из тренировок и вижу результат без откатов.',
+          author: 'Наталья',
+          authorRole: 'Клуб, 3 месяца',
+          avatar: '/telegram-icon.png',
         },
         {
-          title: 'Самотесты',
-          description: 'Таз, стопы, грудная клетка',
-        },
-        {
-          title: 'Зарядки',
-          description: '5–15 минут под ритм дня',
+          title: 'Регулярность без выгорания',
+          text: 'Нравится, что каждую неделю есть готовый план и обновления. Не нужно придумывать всё самой.',
+          author: 'Татьяна',
+          image: 'images/player-img.jpg',
+          imageAlt: 'Отзыв участницы клуба',
         },
       ],
     },
