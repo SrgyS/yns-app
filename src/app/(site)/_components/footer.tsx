@@ -59,9 +59,6 @@ export const Footer = () => {
               {/* Logo */}
               <Logo />
               <SocialsRow />
-              <div className="text-[8px] sm:text-[10px] text-slate-300">
-                Meta признана экстремистской организацией на территории РФ*
-              </div>
             </div>
             {footerSections.map(({ title, links }) => (
               <div key={title} className="hidden md:block">

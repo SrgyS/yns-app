@@ -37,7 +37,7 @@ export const PLATFORM_NAV_ITEMS: NavigationItem[] = [
     label: 'Главная',
     href: '/',
     icon: Home,
-    targets: ['desktop', 'mobile'],
+    targets: ['desktop'], // Removed 'mobile' - accessible via profile page button
   },
   {
     key: 'plan',

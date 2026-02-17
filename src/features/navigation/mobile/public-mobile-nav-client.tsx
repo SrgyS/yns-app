@@ -44,7 +44,12 @@ export function PublicMobileNavClient({
         }}
       >
         <li>
-          <Button asChild variant="ghost" size="sm" className={bottomNavItemClass}>
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className={bottomNavItemClass}
+          >
             <Link href="/">
               <Home className="size-5" />
               <span>Главная</span>
@@ -65,7 +70,10 @@ export function PublicMobileNavClient({
                 <span>Курсы</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto pb-8">
+            <SheetContent
+              side="bottom"
+              className="max-h-[80vh] overflow-y-auto pb-8"
+            >
               <SheetHeader className="mb-4 text-left">
                 <SheetTitle>Наши курсы</SheetTitle>
               </SheetHeader>
@@ -75,7 +83,7 @@ export function PublicMobileNavClient({
                     <SheetClose asChild key={course.id}>
                       <Link
                         href={`/course/${course.slug}`}
-                        className="flex items-center justify-between rounded-lg border bg-card p-4 transition-colors hover:border-primary"
+                        className="flex items-center justify-between  bg-card p-4 transition-colors hover:border-primary"
                       >
                         <span className="font-medium">{course.title}</span>
                       </Link>
@@ -93,14 +101,23 @@ export function PublicMobileNavClient({
 
         <li>
           {isAuthenticated ? (
-            <Button asChild variant="ghost" size="sm" className={bottomNavItemClass}>
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className={bottomNavItemClass}
+            >
               <Link href={profileHref}>
                 <User className="size-5" />
                 <span>Кабинет</span>
               </Link>
             </Button>
           ) : (
-            <SignInButton variant="ghost" size="sm" className={bottomNavItemClass}>
+            <SignInButton
+              variant="ghost"
+              size="sm"
+              className={bottomNavItemClass}
+            >
               <LogIn className="size-5" />
               <span>Войти</span>
             </SignInButton>
@@ -120,7 +137,7 @@ export function PublicMobileNavClient({
                 <span>Меню</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="pb-8">
+            <SheetContent side="bottom" className="">
               <SheetHeader className="mb-4 text-left">
                 <SheetTitle>Меню</SheetTitle>
               </SheetHeader>
@@ -137,7 +154,7 @@ export function PublicMobileNavClient({
                   </SheetClose>
                 ))}
               </div>
-              <div className="mt-6 border-t pt-6">
+              <div className="mt-6 border-t py-6 px-4  bg-black/75">
                 <SocialsRow className="justify-center" />
               </div>
             </SheetContent>

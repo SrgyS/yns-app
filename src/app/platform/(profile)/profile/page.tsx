@@ -3,6 +3,7 @@ import {
   ChevronRight,
   Dumbbell,
   Edit,
+  Home,
   LayoutDashboard,
 } from 'lucide-react'
 
@@ -58,6 +59,20 @@ export default async function ProfilePage() {
 
         <Card>
           <CardContent className="flex flex-col gap-2">
+            <Button
+              asChild
+              className="w-full justify-between"
+              variant="outline"
+            >
+              <Link href="/">
+                <div className="flex items-center gap-2">
+                  <Home className="h-5 w-5 text-primary" />
+                  Выбрать курс
+                </div>
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </Button>
+
             <Button
               asChild
               className="w-full justify-between"
