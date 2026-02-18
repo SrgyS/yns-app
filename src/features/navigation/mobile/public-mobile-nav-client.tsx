@@ -82,7 +82,7 @@ export function PublicMobileNavClient({
                   courses.map(course => (
                     <SheetClose asChild key={course.id}>
                       <Link
-                        href={`/course/${course.slug}`}
+                        href={`/courses/${course.slug}`}
                         className="flex items-center justify-between  bg-card p-4 transition-colors hover:border-primary"
                       >
                         <span className="font-medium">{course.title}</span>
