@@ -3,6 +3,7 @@ import { Separator } from '@/shared/ui/separator'
 import Link from 'next/link'
 import { Button } from '@/shared/ui/button'
 import { SocialsRow } from '@/shared/ui/socials-row'
+import { cn } from '@/shared/ui/utils'
 
 const footerSections = [
   {
@@ -49,9 +50,9 @@ const footerSections = [
   },
 ]
 
-export const Footer = () => {
+export const Footer = ({ className }: { className?: string }) => {
   return (
-    <footer className="border-t bg-black/85 text-slate-200 w-full">
+    <footer className={cn('bg-black text-white py-8 w-full', className)}>
       <div className="px-1.5 min-[375px]:container">
         <div className="py-8 sm:py-12 space-y-8">
           <div className="grid md:grid-cols-3 lg:grid-cols-4 items-start gap-6 md:gap-8 mb-6">

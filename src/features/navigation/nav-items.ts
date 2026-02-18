@@ -91,13 +91,14 @@ export const PUBLIC_NAV_ITEMS: NavigationItem[] = [
     icon: CalendarCheck,
     targets: ['desktop', 'mobile'],
   },
-  {
-    key: 'articles',
-    label: 'Статьи',
-    href: '/articles',
-    icon: BookOpen,
-    targets: ['desktop', 'mobile'],
-  },
+  // TODO: add back when articles are ready
+  // {
+  //   key: 'articles',
+  //   label: 'Статьи',
+  //   href: '/articles',
+  //   icon: BookOpen,
+  //   targets: ['desktop', 'mobile'],
+  // },
   {
     key: 'equipment',
     label: 'Оборудование',

@@ -8,10 +8,10 @@ export default async function Layout({
   children: React.ReactNode
 }>) {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background pb-16 md:pb-0">
       <SiteHeader />
       <main className="container pb-17 flex-1">{children}</main>
-      <Footer />
+      <Footer className="pb-1" />
       <MobileBottomNav variant="public" />
     </div>
   )
