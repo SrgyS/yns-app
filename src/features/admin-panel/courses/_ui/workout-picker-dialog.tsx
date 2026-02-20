@@ -24,7 +24,7 @@ import { Spinner } from '@/shared/ui/spinner'
 import { cn } from '@/shared/ui/utils'
 import { formatDuration } from '@/shared/lib/format-duration'
 import { LoadMoreHint } from '@/shared/ui/load-more-hint'
-import Image from 'next/image'
+import { AppImage } from '@/shared/ui/app-image'
 
 export type WorkoutSummary = {
   id: string
@@ -203,7 +203,7 @@ export function WorkoutPickerDialog({
                 >
                   <div className="h-12 w-16 shrink-0 overflow-hidden rounded bg-muted">
                     {item.posterUrl ? (
-                      <Image
+                      <AppImage
                         width={56}
                         height={32}
                         src={item.posterUrl}

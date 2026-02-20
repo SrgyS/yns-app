@@ -2,7 +2,7 @@
 
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardTitle } from '@/shared/ui/card'
-import Image from 'next/image'
+import { AppImage } from '@/shared/ui/app-image'
 import Link from 'next/link'
 
 type ServiceCardProps = {
@@ -41,7 +41,7 @@ export function ServiceCard({
           </div>
           <div className="relative min-h-[220px] md:min-h-full rounded-2xl overflow-hidden">
             {imageUrl ? (
-              <Image
+              <AppImage
                 src={imageUrl}
                 alt={title}
                 fill

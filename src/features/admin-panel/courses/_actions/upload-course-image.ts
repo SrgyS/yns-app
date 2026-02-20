@@ -12,6 +12,7 @@ import {
   ALLOWED_IMAGE_TYPES,
   DEFAULT_IMAGE_MAX_SIZE_MB,
 } from '@/shared/lib/upload-constants'
+import { sanitizeFileName } from '@/shared/lib/file-storage/utils'
 
 const allowedTags = ['course-image', 'course-thumbnail'] as const
 const tagSchema = z.enum(allowedTags)
@@ -23,8 +24,6 @@ const resultSchema = z.object({
 const MAX_SIZE_MB = DEFAULT_IMAGE_MAX_SIZE_MB
 const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024
 
-const sanitizeFileName = (name: string) =>
-  name.replaceAll(/[^\w.-]+/g, '_').slice(-200)
 
 export const uploadCourseImageAction = async (formData: FormData) => {
   const file = formData.get('file')

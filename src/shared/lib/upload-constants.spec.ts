@@ -7,7 +7,7 @@ import {
 describe('upload constants', () => {
   test('exposes size limits', () => {
     expect(DEFAULT_IMAGE_MAX_SIZE_MB).toBe(10)
-    expect(AVATAR_IMAGE_MAX_SIZE_MB).toBe(5)
+    expect(AVATAR_IMAGE_MAX_SIZE_MB).toBe(8)
   })
 
   test('includes common image mime types', () => {
