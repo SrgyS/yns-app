@@ -56,7 +56,7 @@ export function HeroBlockComponent({
               alt={title || 'Hero'}
               fill
               priority
-              className="object-cover -scale-x-100 "
+              className="object-cover"
               sizes="100vw"
             />
           )}

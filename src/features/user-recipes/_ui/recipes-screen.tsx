@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Clock, Flame, Filter, Heart, HeartOff } from 'lucide-react'
-import { Badge } from '@/shared/ui/badge'
+import { Clock, Flame, Filter, Heart } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import {
@@ -14,7 +13,6 @@ import {
   SheetTrigger,
   SheetFooter,
 } from '@/shared/ui/sheet'
-import { Separator } from '@/shared/ui/separator'
 import { Switch } from '@/shared/ui/switch'
 import { SmallSpinner } from '@/shared/ui/small-spinner'
 import { AppImage } from '@/shared/ui/app-image'
@@ -132,15 +130,11 @@ export function RecipesScreen() {
   const isEmpty = !listQuery.isLoading && recipes.length === 0
 
   return (
-    <div className="space-y-6">
+    <section className="py-4 space-y-6">
       <header className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-2">
-          <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              Рецепты
-            </p>
-            <h1 className="text-2xl font-semibold leading-tight">Подборки под ваш курс</h1>
-          </div>
+          <h1 className="text-2xl font-semibold leading-tight">Рецепты</h1>
+
           <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
@@ -148,7 +142,7 @@ export function RecipesScreen() {
                 Фильтр
               </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto">
+            <SheetContent side="top" className="max-h-[85vh] overflow-y-auto">
               <SheetHeader className="flex flex-row items-center justify-between">
                 <SheetTitle>Фильтры</SheetTitle>
                 <Button
@@ -229,7 +223,10 @@ export function RecipesScreen() {
                   <Switch
                     checked={filters.onlyFavorites}
                     onCheckedChange={checked =>
-                      setFilters(prev => ({ ...prev, onlyFavorites: Boolean(checked) }))
+                      setFilters(prev => ({
+                        ...prev,
+                        onlyFavorites: Boolean(checked),
+                      }))
                     }
                   />
                 </div>
@@ -242,9 +239,6 @@ export function RecipesScreen() {
             </SheetContent>
           </Sheet>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Рецепты доступны для ваших активных курсов с поддержкой питания.
-        </p>
       </header>
 
       <div className="flex flex-wrap gap-2">
@@ -261,7 +255,7 @@ export function RecipesScreen() {
       </div>
 
       {renderRecipesState({ listQuery, isEmpty, recipes, toggleFavorite })}
-    </div>
+    </section>
   )
 }
 
@@ -306,13 +300,13 @@ function renderRecipesState({
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
       {recipes.map((recipe: any) => (
         <Card
           key={recipe.id}
-          className="overflow-hidden border-border/80 hover:shadow-lg transition max-w-xs"
+          className="overflow-hidden border-border/80 transition hover:shadow-lg py-0 gap-2"
         >
-          <div className="relative h-40 w-full bg-muted">
+          <div className="relative h-32 w-full bg-muted md:h-40">
             {recipe.imageUrl ? (
               <AppImage
                 src={recipe.imageUrl}
@@ -323,41 +317,31 @@ function renderRecipesState({
             ) : null}
             <button
               className="absolute right-2 top-2 rounded-full bg-background/80 p-2 shadow-sm transition hover:scale-105"
-              onClick={() =>
-                toggleFavorite.mutate({ recipeId: recipe.id })
-              }
+              onClick={() => toggleFavorite.mutate({ recipeId: recipe.id })}
               aria-label="Переключить избранное"
             >
               {recipe.isFavorite ? (
                 <Heart className="h-4 w-4 fill-red-500 text-red-500" />
               ) : (
-                <HeartOff className="h-4 w-4 text-muted-foreground" />
+                <Heart className="h-4 w-4 text-muted-foreground" />
               )}
             </button>
           </div>
-          <CardHeader className="space-y-1">
-            <CardTitle className="line-clamp-2 text-lg">{recipe.title}</CardTitle>
+          <CardHeader className="space-y-1 px-3">
+            <CardTitle className="line-clamp-2 wrap-break-word text-base leading-snug md:text-lg">
+              {recipe.title}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                {recipe.preparationTimeMinutes} мин
-              </span>
-              <Separator orientation="vertical" className="h-4" />
-              <span className="flex items-center gap-1">
-                <Flame className="h-4 w-4" />
-                {recipe.calories ?? '—'} ккал
-              </span>
+          <CardContent className="space-y-2 p-3 pt-0">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground md:text-sm">
+              <Clock className="h-4 w-4" />
+              <span>{recipe.preparationTimeMinutes} мин</span>
             </div>
-            <div className="flex flex-wrap gap-1">
-              {recipe.mealCategories.map((tag: string) => (
-                <Badge key={tag} variant="secondary">
-                  {mealLabel(tag)}
-                </Badge>
-              ))}
+            <div className="flex items-center gap-1 text-xs text-muted-foreground md:text-sm">
+              <Flame className="h-4 w-4" />
+              <span>{recipe.calories ?? '—'} ккал</span>
             </div>
-            <Button asChild variant="link" className="px-0 text-primary">
+            <Button asChild variant="link" className="h-auto px-0 text-primary">
               <Link href={`/platform/recipes/${recipe.slug}`}>Подробнее</Link>
             </Button>
           </CardContent>
@@ -406,17 +390,4 @@ function FilterGroup({
 
 function toggleItem(list: string[], value: string) {
   return list.includes(value) ? list.filter(item => item !== value) : [...list, value]
-}
-
-function mealLabel(meal: string) {
-  const map: Record<string, string> = {
-    BREAKFAST: 'Завтрак',
-    LUNCH: 'Обед',
-    DINNER: 'Ужин',
-    SNACK: 'Перекус',
-    SALAD: 'Салат',
-    SOUP: 'Суп',
-    DESSERT: 'Десерт',
-  }
-  return map[meal] ?? meal
 }

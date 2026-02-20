@@ -26,7 +26,7 @@ export default async function EditProfilePage({
   const id = session.user.id
 
   return (
-    <section className="space-y-8 py-14 max-w-[600px]">
+    <section className="container space-y-8 py-14 max-w-[600px]">
       <div className="flex items-center">
         <Button variant="ghost" size="sm" asChild>
           <Link href={returnTo} className="flex items-center gap-2">
