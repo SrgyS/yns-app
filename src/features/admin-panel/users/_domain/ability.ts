@@ -25,5 +25,6 @@ export const createAdminAbility = (
     canViewPayments: resolvePermission('canViewPayments'),
     canLoginAsUser: resolvePermission('canLoginAsUser'),
     canManageCourses: resolvePermission('canManageCourses'),
+    canManageSupportChats: resolvePermission('canManageSupportChats'),
   }
 }

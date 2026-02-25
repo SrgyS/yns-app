@@ -59,6 +59,7 @@ export function AvatarField({
         </div>
       )}
       {localPreview ? (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={localPreview}
           alt="Новый аватар"

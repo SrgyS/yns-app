@@ -63,6 +63,7 @@ export function AdminUserProfile({
       { key: 'canGrantAccess', label: 'Выдача доступов' },
       { key: 'canLoginAsUser', label: 'Войти под пользователем' },
       { key: 'canManageCourses', label: 'Управление курсами' },
+      { key: 'canManageSupportChats', label: 'Управление support-чатами' },
     ] as const,
     []
   )

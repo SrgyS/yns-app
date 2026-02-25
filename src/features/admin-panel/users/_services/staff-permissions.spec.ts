@@ -39,6 +39,7 @@ describe('StaffPermissionService', () => {
       canGrantAccess: false,
       canLoginAsUser: true,
       canManageCourses: false,
+      canManageSupportChats: true,
       userId: 's',
     })
 
@@ -54,6 +55,7 @@ describe('StaffPermissionService', () => {
       canGrantAccess: false,
       canLoginAsUser: true,
       canManageCourses: false,
+      canManageSupportChats: true,
     })
   })
 
