@@ -7,14 +7,13 @@ import { Button } from '@/shared/ui/button'
 import Link from 'next/link'
 import { getCoursePublicPath } from '@/kernel/lib/router'
 import { getMinPaidTariffPrice } from '@/kernel/domain/course'
-import Image from 'next/image'
+import { AppImage } from '@/shared/ui/app-image'
 
 export function CourseItem({ course }: Readonly<{ course: Course }>) {
   const minPrice = getMinPaidTariffPrice(course.tariffs)
   if (minPrice === null) {
     return null
   }
-  const imageUrl = course.thumbnail
 
   return (
     <Card className="overflow-hidden py-2 rounded-3xl">
@@ -37,9 +36,9 @@ export function CourseItem({ course }: Readonly<{ course: Course }>) {
             </Button>
           </div>
           <div className="relative min-h-[220px] md:min-h-full rounded-2xl overflow-hidden">
-            {imageUrl ? (
-              <Image
-                src={imageUrl}
+            {course.thumbnail ? (
+              <AppImage
+                src={course.thumbnail}
                 alt={course.title}
                 fill
                 className="object-cover object-bottom"

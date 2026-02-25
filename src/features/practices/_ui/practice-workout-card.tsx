@@ -1,6 +1,5 @@
 'use client'
 
-import { useCallback, useMemo } from 'react'
 import { Timer } from 'lucide-react'
 import { WorkoutSection } from '@prisma/client'
 
@@ -50,7 +49,7 @@ export function PracticeWorkoutCard({
     isToggling,
   } = favoriteControls
 
-  const handleToggleFavorite = useCallback(async () => {
+  const handleToggleFavorite = async () => {
     try {
       await toggleFavorite(workout.id)
     } catch (error) {
@@ -63,43 +62,28 @@ export function PracticeWorkoutCard({
         toast.error('Не удалось обновить избранное')
       }
     }
-  }, [toggleFavorite, workout.id])
+  }
 
-  const durationMinutes = useMemo(
-    () => getDurationMinutes(workout.durationSec),
-    [workout.durationSec]
-  )
+  const durationMinutes = getDurationMinutes(workout.durationSec)
 
-  const difficultyLevel = useMemo(
-    () => getDifficultyLevel(workout.difficulty),
-    [workout.difficulty]
-  )
+  const difficultyLevel = getDifficultyLevel(workout.difficulty)
 
-  const equipmentText = useMemo(() => {
+  const equipmentText = (() => {
     const formatted = formatEquipmentList(workout.equipment)
     if (formatted) {
       return formatted
     }
     return Array.isArray(workout.equipment) ? 'Без инвентаря' : null
-  }, [workout.equipment])
+  })()
 
-  const muscleBadges = useMemo(
-    () => formatMuscleLabels(workout.muscles),
-    [workout.muscles]
-  )
+  const muscleBadges = formatMuscleLabels(workout.muscles)
 
-  const sectionLabel = useMemo(
-    () => SECTION_LABELS[workout.section] ?? 'Тренировка',
-    [workout.section]
-  )
+  const sectionLabel = SECTION_LABELS[workout.section] ?? 'Тренировка'
 
-  const playerOptions = useMemo(
-    () => ({
-      size: { height: 260 },
-      autoplay: false,
-    }),
-    []
-  )
+  const playerOptions = {
+    size: { height: 260 },
+    autoplay: false,
+  }
 
   return (
     <Card className="rounded-xl border-border/80 p-4 shadow-sm transition">

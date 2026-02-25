@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '20mb',
     },
+    reactCompiler: true,
   },
   images: {
     remotePatterns: [
@@ -27,6 +28,11 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'kinescopecdn.net',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
         pathname: '/**',
       },
     ],

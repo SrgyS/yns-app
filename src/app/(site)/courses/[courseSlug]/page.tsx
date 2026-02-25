@@ -1,28 +1,13 @@
 import { server } from '@/app/server'
 import { GetCourseService } from '@/entities/course/module'
 import { CourseSlug } from '@/kernel/domain/course'
-import {
-  getCourseOrderPath,
-  getCoursePublicPath,
-} from '@/kernel/lib/router'
 import { MdxCode } from '@/shared/lib/mdx'
-import { Button } from '@/shared/ui/button'
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/shared/ui/card'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
-
-const CURRENCY_FORMATTER = new Intl.NumberFormat('ru-RU', {
-  style: 'currency',
-  currency: 'RUB',
-  maximumFractionDigits: 0,
-})
-
+import { COURSE_LAYOUTS } from '../_content/layout-config'
+import { BlockRenderer } from '../_ui/block-renderer'
+import { EquipmentBlockComponent } from '../_ui/blocks/equipment-block'
+import { TariffsBlockComponent } from '../_ui/blocks/tariffs-block'
+import { CourseCtaBlock } from '../_ui/blocks/course-cta-block'
 export default async function CoursePage({
   params,
 }: {
@@ -36,11 +21,20 @@ export default async function CoursePage({
     notFound()
   }
 
-  const urlReturn = getCoursePublicPath(course.slug)
+  const layout = COURSE_LAYOUTS[courseSlug]
+
+  if (layout) {
+    return (
+      <section className="pb-5 md:pb-7 pt-14">
+        <BlockRenderer blocks={layout} course={course} />
+        <CourseCtaBlock />
+      </section>
+    )
+  }
 
   return (
-    <main className="container space-y-10 py-10">
-      <section className="space-y-4">
+    <section className="space-y-6 pb-4 pt-14 md:space-y-10">
+      <section className="space-y-3 md:space-y-4">
         <h1 className="text-3xl font-semibold tracking-tight">
           {course.title}
         </h1>
@@ -49,52 +43,22 @@ export default async function CoursePage({
         </div>
       </section>
 
-      <section className="space-y-4">
-        <h2 className="text-2xl font-semibold tracking-tight">Тарифы</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {course.tariffs.map(tariff => {
-            if (tariff.price <= 0) {
-              return null
-            }
+      <EquipmentBlockComponent
+        id="equipment-fallback"
+        type="equipment"
+        isVisible
+        title="Оборудование для курса"
+      />
 
-            const price = CURRENCY_FORMATTER.format(tariff.price)
-            const durationLabel = tariff.durationDays
-              ? `Доступ на ${tariff.durationDays} дней`
-              : 'Без ограничения по сроку'
-            const feedbackLabel = tariff.feedback
-              ? 'С обратной связью'
-              : 'Без обратной связи'
+      <TariffsBlockComponent
+        id="tariffs-fallback"
+        type="tariffs"
+        isVisible
+        title="Тарифы"
+        course={course}
+      />
 
-            return (
-              <Card key={tariff.id} className="flex h-full flex-col">
-                <CardHeader>
-                  <CardTitle className="text-lg">{feedbackLabel}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm text-foreground/80">
-                  <div>{durationLabel}</div>
-                  <div className="text-base font-semibold text-foreground">
-                    {price}
-                  </div>
-                </CardContent>
-                <CardFooter className="mt-auto">
-                  <Button size="lg" className="w-full" asChild>
-                    <Link
-                      href={getCourseOrderPath(
-                        course.slug,
-                        urlReturn,
-                        '',
-                        tariff.id
-                      )}
-                    >
-                      Купить за {price}
-                    </Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            )
-          })}
-        </div>
-      </section>
-    </main>
+      <CourseCtaBlock />
+    </section>
   )
 }

@@ -1,4 +1,3 @@
-import { getImageUrl } from '@/shared/lib/images'
 import {
   Accordion,
   AccordionContent,
@@ -9,7 +8,7 @@ import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/shared/ui/card'
 // import { Separator } from '@/shared/ui/separator'
 import React from 'react'
-import Image from 'next/image'
+import { AppImage } from '@/shared/ui/app-image'
 import { CoursesList } from '@/features/courses-list/courses-list'
 import { HeroSection } from './_components/hero-section'
 // import { ServiceCard } from './_components/service-card'
@@ -70,11 +69,11 @@ const faqColumns = [
 ]
 
 export default function Home() {
-  const trainingImageUrl = getImageUrl('images', 'move.webp')
-  const relaxImageUrl = getImageUrl('images', 'relax.jpg')
-  const nutritionImageUrl = getImageUrl('images', 'yana-4-3-2.png')
-  const aboutImgeUrl = getImageUrl('images', 'about-yana.png')
-  // const heroImageUrl = getImageUrl('images', '932A0174.jpg')
+  const trainingImageUrl = 'images/move.webp'
+  const relaxImageUrl = 'images/relax.jpg'
+  const nutritionImageUrl = 'images/yana-4-3-2.png'
+  const aboutImgeUrl = 'images/about-yana.png'
+  // const heroImageUrl = 'images/932A0174.jpg'
   const individualSupportItems = [
     {
       key: 'consultation',
@@ -291,7 +290,7 @@ export default function Home() {
                     <CardContent className="p-0">
                       <div className="relative min-h-60 md:min-h-72 bg-[linear-gradient(135deg,rgba(16,185,129,0.18),rgba(14,116,144,0.12),rgba(15,23,42,0.08))]">
                         {x.img ? (
-                          <Image
+                          <AppImage
                             src={x.img}
                             alt="block image"
                             fill
@@ -464,7 +463,7 @@ export default function Home() {
           {/* Фото */}
           <div className="order-1 md:order-2 md:col-span-5 lg:col-span-6 lg:row-span-2">
             <div className="relative shadow-sm h-full w-full overflow-hidden rounded-2xl bg-[linear-gradient(135deg,rgba(16,185,129,0.18),rgba(14,116,144,0.12),rgba(15,23,42,0.08))] aspect-4/3 md:aspect-auto md:min-h-[360px]">
-              <Image
+              <AppImage
                 src={aboutImgeUrl}
                 alt="Яна Степанова"
                 fill

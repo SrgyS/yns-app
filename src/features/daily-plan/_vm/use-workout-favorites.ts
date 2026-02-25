@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo } from 'react'
+
 
 import { workoutApi } from '../_api'
 import { CACHE_SETTINGS } from '@/shared/lib/cache/cache-constants'
@@ -57,26 +57,17 @@ export function useWorkoutFavorites(options: UseWorkoutFavoritesOptions = {}) {
     },
   })
 
-  const favoritesSet = useMemo(() => {
-    const data = favoritesQuery.data ?? []
-    return new Set(data)
-  }, [favoritesQuery.data])
+  const favoritesSet = new Set(favoritesQuery.data ?? [])
 
-  const isFavorite = useCallback(
-    (workoutId: string) => favoritesSet.has(workoutId),
-    [favoritesSet]
-  )
+  const isFavorite = (workoutId: string) => favoritesSet.has(workoutId)
 
-  const toggleFavorite = useCallback(
-    async (workoutId: string) => {
-      if (!enabled) {
-        return
-      }
+  const toggleFavorite = async (workoutId: string) => {
+    if (!enabled) {
+      return
+    }
 
-      await toggleMutation.mutateAsync({ workoutId })
-    },
-    [enabled, toggleMutation]
-  )
+    await toggleMutation.mutateAsync({ workoutId })
+  }
 
   return {
     favorites: favoritesQuery.data ?? [],

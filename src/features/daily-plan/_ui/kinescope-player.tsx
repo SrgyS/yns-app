@@ -77,9 +77,8 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
     const [loadError, setLoadError] = useState<Error | null>(null)
     const [attempt, setAttempt] = useState(0)
 
-    const containerId = useMemo(
-      () => `kinescope-player-${Math.random().toString(36).slice(2)}`,
-      []
+    const [containerId] = useState(
+      () => `kinescope-player-${Math.random().toString(36).slice(2)}`
     )
 
     const normalized = useMemo(() => {
@@ -194,8 +193,7 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
         getInstance() {
           return playerInstanceRef.current
         },
-      }),
-      [destroyPlayerInstance, detachPlayerHandlers]
+      })
     )
 
     const { createOptions, widthStyle, heightStyle } = normalized

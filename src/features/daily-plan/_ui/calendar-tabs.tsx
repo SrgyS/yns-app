@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import {
   format,
   startOfWeek,
@@ -12,7 +12,7 @@ import { ru } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui/tabs'
 import { DayTabs } from './day-tabs'
-import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
+import { useEnrollmentByCourseSlugQuery } from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { useWorkoutCalendar } from '../_vm/use-worckout-calendar'
 import { CourseSlug } from '@/kernel/domain/course'
@@ -31,20 +31,18 @@ const MemoizedDayTabs = memo(DayTabs)
 export function CalendarTabs({
   courseSlug,
 }: Readonly<{ courseSlug: CourseSlug }>) {
-  const today = useMemo(() => new Date(), [])
+  const today = new Date()
   const { data: session } = useAppSession()
-  const { getEnrollmentByCourseSlug } = useCourseEnrollment()
-
-  const enrollmentQuery = getEnrollmentByCourseSlug(
+  const enrollmentQuery = useEnrollmentByCourseSlugQuery(
     session?.user?.id || '',
     courseSlug
   )
 
   const enrollment = enrollmentQuery.data
-  const programStart = useMemo(() => {
+  const programStart = (() => {
     const start = enrollment?.startDate
     return start ? new Date(start) : null
-  }, [enrollment?.startDate])
+  })()
 
   const durationWeeks = enrollment?.course?.durationWeeks
 
@@ -73,58 +71,46 @@ export function CalendarTabs({
     setActiveWeekNumber(defaultWeek)
   }, [defaultWeek])
 
-  const handleDayChange = useCallback((date: Date) => {
+  const handleDayChange = (date: Date) => {
     setActiveDate(prev => {
       if (prev && isSameDay(prev, date)) {
         return prev
       }
       return date
     })
-  }, [])
-  const getDisplayWeekStart = useCallback(
-    (week: number) => {
-      if (isSubscription) {
-        const meta = weeksMeta?.find(m => m.weekNumber === week)
-        const releaseDate = meta ? new Date(meta.releaseAt) : today
-        return startOfWeek(releaseDate, { weekStartsOn: 1 })
-      }
-      // Фиксированный курс: неделя относительно начала записи
-      const base = startOfWeek(programStart!, { weekStartsOn: 1 })
-      return addDays(base, (week - 1) * 7)
-    },
-    [isSubscription, weeksMeta, today, programStart]
+  }
+
+  const getDisplayWeekStart = (week: number) => {
+    if (isSubscription) {
+      const meta = weeksMeta?.find(m => m.weekNumber === week)
+      const releaseDate = meta ? new Date(meta.releaseAt) : today
+      return startOfWeek(releaseDate, { weekStartsOn: 1 })
+    }
+    // Фиксированный курс: неделя относительно начала записи
+    const base = startOfWeek(programStart!, { weekStartsOn: 1 })
+    return addDays(base, (week - 1) * 7)
+  }
+
+  const getWeekLabel = (week: number) => {
+    if (isSubscription) {
+      const weekStart = getDisplayWeekStart(week)
+      const weekInMonth = getWeekOfMonth(weekStart)
+      return `${weekInMonth} неделя`
+    }
+    return `${week} неделя`
+  }
+
+  const availableWeeksNumbers = [...availableWeeks].sort((a, b) => a - b)
+
+  const weekMeta = new Map(
+    availableWeeksNumbers.map(week => {
+      const displayStart = getDisplayWeekStart(week)
+      const label = getWeekLabel(week)
+      return [week, { displayStart, label }] as const
+    })
   )
 
-  const getWeekLabel = useCallback(
-    (week: number) => {
-      if (isSubscription) {
-        const weekStart = getDisplayWeekStart(week)
-        const weekInMonth = getWeekOfMonth(weekStart)
-        return `${weekInMonth} неделя`
-      }
-      return `${week} неделя`
-    },
-    [getDisplayWeekStart, isSubscription]
-  )
-
-  const availableWeeksNumbers = useMemo(() => {
-    return [...availableWeeks].sort((a, b) => a - b)
-  }, [availableWeeks])
-
-  const weekMeta = useMemo(() => {
-    return new Map(
-      availableWeeksNumbers.map(week => {
-        const displayStart = getDisplayWeekStart(week)
-        const label = getWeekLabel(week)
-        return [week, { displayStart, label }] as const
-      })
-    )
-  }, [availableWeeksNumbers, getDisplayWeekStart, getWeekLabel])
-
-  const getWeekMeta = useCallback(
-    (week: number) => weekMeta.get(week),
-    [weekMeta]
-  )
+  const getWeekMeta = (week: number) => weekMeta.get(week)
 
   useEffect(() => {
     if (!availableWeeksNumbers.includes(activeWeekNumber)) {
@@ -135,48 +121,40 @@ export function CalendarTabs({
     }
   }, [activeWeekNumber, availableWeeksNumbers])
 
-  const activeWeekIndex = useMemo(() => {
+  const activeWeekIndex = (() => {
     const idx = availableWeeksNumbers.findIndex(w => w === activeWeekNumber)
     return idx === -1 ? 0 : idx
-  }, [activeWeekNumber, availableWeeksNumbers])
+  })()
 
   const currentWeekNumber =
     availableWeeksNumbers[activeWeekIndex] ??
     availableWeeksNumbers[0] ??
     currentWeekIndex
 
-  const shiftWeek = useCallback(
-    (offset: number) => {
-      const targetIndex = activeWeekIndex + offset
-      if (targetIndex < 0 || targetIndex >= availableWeeksNumbers.length) return
-      const nextWeek = availableWeeksNumbers[targetIndex]
-      if (nextWeek) {
-        setActiveWeekNumber(nextWeek)
-      }
-    },
-    [activeWeekIndex, availableWeeksNumbers]
-  )
+  const shiftWeek = (offset: number) => {
+    const targetIndex = activeWeekIndex + offset
+    if (targetIndex < 0 || targetIndex >= availableWeeksNumbers.length) return
+    const nextWeek = availableWeeksNumbers[targetIndex]
+    if (nextWeek) {
+      setActiveWeekNumber(nextWeek)
+    }
+  }
 
-  const handlePrevWeek = useCallback(() => {
+  const handlePrevWeek = () => {
     shiftWeek(-1)
-  }, [shiftWeek])
+  }
 
-  const handleNextWeek = useCallback(() => {
+  const handleNextWeek = () => {
     shiftWeek(1)
-  }, [shiftWeek])
+  }
 
   const weeksCount = availableWeeks.length
 
-  const getWeekLabelSafe = useCallback(
-    (week: number) => getWeekMeta(week)?.label ?? getWeekLabel(week),
-    [getWeekMeta, getWeekLabel]
-  )
+  const getWeekLabelSafe = (week: number) =>
+    getWeekMeta(week)?.label ?? getWeekLabel(week)
 
-  const getDisplayWeekStartSafe = useCallback(
-    (week: number) =>
-      getWeekMeta(week)?.displayStart ?? getDisplayWeekStart(week),
-    [getWeekMeta, getDisplayWeekStart]
-  )
+  const getDisplayWeekStartSafe = (week: number) =>
+    getWeekMeta(week)?.displayStart ?? getDisplayWeekStart(week)
 
   if (enrollmentQuery.isLoading || isCalendarLoading) {
     return (

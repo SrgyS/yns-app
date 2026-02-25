@@ -3,6 +3,7 @@
 import * as React from 'react'
 import * as AvatarPrimitive from '@radix-ui/react-avatar'
 
+import { resolveStorageUrl } from '@/shared/lib/images'
 import { cn } from '@/shared/ui/utils'
 
 function Avatar({
@@ -23,12 +24,16 @@ function Avatar({
 
 function AvatarImage({
   className,
+  src,
   ...props
 }: React.ComponentProps<typeof AvatarPrimitive.Image>) {
+  const resolvedSrc = typeof src === 'string' ? resolveStorageUrl(src) : src
+
   return (
     <AvatarPrimitive.Image
       data-slot="avatar-image"
       className={cn('aspect-square size-full', className)}
+      src={resolvedSrc}
       {...props}
     />
   )

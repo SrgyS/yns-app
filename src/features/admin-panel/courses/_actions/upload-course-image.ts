@@ -5,7 +5,6 @@ import { server } from '@/app/server'
 import { SessionService } from '@/kernel/lib/next-auth/module'
 import { fileStorage } from '@/shared/lib/file-storage/file-storage'
 import { AuthorizatoinError, BadRequest } from '@/shared/lib/errors'
-import { resolveStorageUrl } from '@/shared/lib/images'
 import { redirect } from 'next/navigation'
 import { StaffPermissionService } from '@/features/admin-panel/users/_services/staff-permissions'
 import { createAdminAbility } from '@/features/admin-panel/users/_domain/ability'
@@ -13,6 +12,7 @@ import {
   ALLOWED_IMAGE_TYPES,
   DEFAULT_IMAGE_MAX_SIZE_MB,
 } from '@/shared/lib/upload-constants'
+import { sanitizeFileName } from '@/shared/lib/file-storage/utils'
 
 const allowedTags = ['course-image', 'course-thumbnail'] as const
 const tagSchema = z.enum(allowedTags)
@@ -24,8 +24,6 @@ const resultSchema = z.object({
 const MAX_SIZE_MB = DEFAULT_IMAGE_MAX_SIZE_MB
 const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024
 
-const sanitizeFileName = (name: string) =>
-  name.replaceAll(/[^\w.-]+/g, '_').slice(-200)
 
 export const uploadCourseImageAction = async (formData: FormData) => {
   const file = formData.get('file')
@@ -74,6 +72,6 @@ export const uploadCourseImageAction = async (formData: FormData) => {
   )
 
   return resultSchema.parse({
-    path: resolveStorageUrl(storedFile.path),
+    path: storedFile.path,
   })
 }

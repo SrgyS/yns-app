@@ -1,16 +1,19 @@
 import { AVATAR_FILE_KEY, AVATAR_MAX_SIZE } from '../_constants'
 import { uploadAvatarAction } from '../_actions/upload-avatar'
 import { useUploadImage } from '@/shared/lib/use-upload-image'
-import { AVATAR_IMAGE_MAX_SIZE_MB } from '@/shared/lib/upload-constants'
+import {
+  ALLOWED_IMAGE_TYPES,
+  AVATAR_IMAGE_MAX_SIZE_MB,
+} from '@/shared/lib/upload-constants'
 
 export const useUploadAvatar = ({
   onError,
   onSuccess,
 }: {
   onError?: (type?: 'big-size') => void
-  onSuccess?: (avatarPath: string) => void
+  onSuccess?: (avatarPath: string | undefined, file: File) => void
 }) => {
-  const uploader = useUploadImage<FormData>({
+  const uploader = useUploadImage<void, { path: string }>({
     mutationFn: async (file: File) => {
       const formData = new FormData()
       formData.set(AVATAR_FILE_KEY, file)
@@ -20,13 +23,11 @@ export const useUploadAvatar = ({
 
   const handleFileSelect = () =>
     uploader.upload({
+      accept: Array.from(ALLOWED_IMAGE_TYPES).join(','),
       maxSizeMb: AVATAR_IMAGE_MAX_SIZE_MB ?? AVATAR_MAX_SIZE,
       onError,
-      onSuccess: data => {
-        const path = (data as any)?.path
-        if (typeof path === 'string') {
-          onSuccess?.(path)
-        }
+      onSuccess: (data, file) => {
+        onSuccess?.(data.path, file)
       },
     })
 

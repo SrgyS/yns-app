@@ -29,7 +29,7 @@ export function FavoritePracticesScreen() {
   }
 
   return (
-    <div className="max-w-[640px] space-y-6 py-10">
+    <div className="max-w-[640px] space-y-6 py-4 sm:pt-14">
       <div className="flex items-center gap-3">
         <Button
           type="button"

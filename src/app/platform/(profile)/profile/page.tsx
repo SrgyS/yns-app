@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import {
   ChevronRight,
-  Dumbbell,
+  // Dumbbell,
   Edit,
+  Home,
   LayoutDashboard,
 } from 'lucide-react'
 
@@ -37,7 +38,7 @@ export default async function ProfilePage() {
       <div className="fixed top-4 right-4 md:hidden">
         <ToggleTheme variant="outline" />
       </div>
-      <main className="space-y-8 py-14 max-w-[800px] m-auto">
+      <section className="space-y-8 py-14 max-w-[800px] m-auto">
         <div className="flex flex-col items-center space-y-4">
           <ProfileAvatar profile={user} className="w-24 h-24" />
           <div className="text-center">
@@ -63,6 +64,20 @@ export default async function ProfilePage() {
               className="w-full justify-between"
               variant="outline"
             >
+              <Link href="/">
+                <div className="flex items-center gap-2">
+                  <Home className="h-5 w-5 text-primary" />
+                  Выбрать курс
+                </div>
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </Button>
+
+            <Button
+              asChild
+              className="w-full justify-between"
+              variant="outline"
+            >
               <Link href={`/platform/profile/edit`}>
                 <div className="flex items-center gap-2">
                   <Edit className="h-5 w-5 text-primary" />
@@ -71,14 +86,14 @@ export default async function ProfilePage() {
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </Button>
-
+            {/* 
             <Button variant="outline" className="w-full justify-between">
-              <div className="flex items-center gap-2">
+              <Link href="/site/equipment" className="flex items-center gap-2">
                 <Dumbbell className="h-5 w-5 text-primary" />
-                Инвентарь для тренировок
-              </div>
+                Оборудование для тренировок
+              </Link>
               <ChevronRight className="h-4 w-4" />
-            </Button>
+            </Button> */}
           </CardContent>
         </Card>
 
@@ -98,7 +113,7 @@ export default async function ProfilePage() {
             <LogoutButton email={user.email} />
           </CardContent>
         </Card>
-      </main>
+      </section>
     </>
   )
 }

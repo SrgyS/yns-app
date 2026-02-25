@@ -6,7 +6,7 @@ import { Skeleton } from '@/shared/ui/skeleton/skeleton'
 import { CourseBanner } from '@/features/daily-plan/_ui/course-banner'
 import {
   isCourseAccessState,
-  useCourseEnrollment,
+  useCheckAccessByCourseSlugQuery,
   type CourseAccessState,
 } from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
@@ -18,7 +18,7 @@ import { useRouter } from 'next/navigation'
 
 export function DayPageClient({ courseSlug }: { courseSlug: CourseSlug }) {
   const { data: session } = useAppSession()
-  const { checkAccessByCourseSlug } = useCourseEnrollment()
+  // Removed useCourseEnrollment
   const paidAccess = usePaidAccess()
   const router = useRouter()
 
@@ -28,7 +28,7 @@ export function DayPageClient({ courseSlug }: { courseSlug: CourseSlug }) {
 
   const hasServerAccess = Boolean(accessibleEntry)
 
-  const accessQuery = checkAccessByCourseSlug(
+  const accessQuery = useCheckAccessByCourseSlugQuery(
     session?.user?.id || '',
     courseSlug,
     {
@@ -77,37 +77,37 @@ export function DayPageClient({ courseSlug }: { courseSlug: CourseSlug }) {
 
   if (shouldShowInitialLoading) {
     return (
-      <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
+      <div className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
         <Skeleton className="h-6 w-[300px]" />
         <Skeleton className="h-[200px] w-full" />
-      </main>
+      </div>
     )
   }
 
   if (!hasAccess || !enrollment) {
     return (
-      <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
+      <div className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 pb-4 sm:px-4 md:px-6">
         <NoAccessCallout
           title="Доступ запрещен"
           description="У вас нет доступа к этому курсу. Приобретите курс, чтобы продолжить."
           ctaHref="/"
           ctaLabel="Купить курс"
         />
-      </main>
+      </div>
     )
   }
 
   if (shouldRedirectToSetup) {
     return (
-      <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
+      <section className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
         <Skeleton className="h-6 w-[300px]" />
         <Skeleton className="h-[200px] w-full" />
-      </main>
+      </section>
     )
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-[640px] flex-col space-y-5 px-3 py-4 sm:space-y-6 sm:px-4 md:px-6">
+    <section className="mx-auto flex w-full max-w-[640px] flex-col space-y-5 px-3 py-4 sm:space-y-6 sm:px-4 md:px-6">
       <Suspense fallback={<Skeleton className="h-6 w-[300px]" />}>
         <CourseBanner
           courseSlug={courseSlug}
@@ -126,6 +126,6 @@ export function DayPageClient({ courseSlug }: { courseSlug: CourseSlug }) {
       )}
 
       <CalendarTabs courseSlug={courseSlug} />
-    </main>
+    </section>
   )
 }

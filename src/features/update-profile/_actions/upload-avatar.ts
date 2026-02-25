@@ -12,15 +12,13 @@ import {
   ALLOWED_IMAGE_TYPES,
   AVATAR_IMAGE_MAX_SIZE_MB,
 } from '@/shared/lib/upload-constants'
+import { sanitizeFileName } from '@/shared/lib/file-storage/utils'
 
 const resultSchema = z.object({
   path: z.string(),
 })
 
 const MAX_SIZE_BYTES = AVATAR_IMAGE_MAX_SIZE_MB * 1024 * 1024
-
-const sanitizeFileName = (name: string) =>
-  name.replaceAll(/[^\w.-]+/g, '_').slice(-200)
 
 export const uploadAvatarAction = async (formData: FormData) => {
   const file = formData.get(AVATAR_FILE_KEY)

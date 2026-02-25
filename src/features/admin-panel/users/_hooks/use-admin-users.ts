@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useTransition } from 'react'
+import { useTransition } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import { adminUsersApi } from '../_api'
@@ -40,69 +40,61 @@ export function useAdminUsers() {
   const router = useRouter()
   const pathname = usePathname()
 
-  const serializeParams = useCallback(
-    () => new URLSearchParams(searchParams.toString()),
-    [searchParams]
-  )
+  const serializeParams = () => new URLSearchParams(searchParams.toString())
+
   const [isPending, startTransition] = useTransition()
 
-  const updateParams = useCallback(
-    (updater: (params: URLSearchParams) => void) => {
-      const params = serializeParams()
-      updater(params)
-      const query = params.toString()
-      startTransition(() => {
-        router.replace(query ? `${pathname}?${query}` : pathname, {
-          scroll: false,
-        })
+  const updateParams = (updater: (params: URLSearchParams) => void) => {
+    const params = serializeParams()
+    updater(params)
+    const query = params.toString()
+    startTransition(() => {
+      router.replace(query ? `${pathname}?${query}` : pathname, {
+        scroll: false,
       })
-    },
-    [pathname, router, serializeParams]
-  )
+    })
+  }
 
-  const setFilter = useCallback(
-    (
-      key: AdminUsersFilterKey,
-      value: string,
-      options?: { resetPage?: boolean }
-    ) => {
-      const resetPage = options?.resetPage ?? true
-      updateParams(params => {
-        const normalized = value.trim()
-        const shouldDelete =
-          normalized === '' ||
-          (key === 'hasAvatar' && normalized === 'any') ||
-          (key === 'hasActiveAccess' && normalized === 'any') ||
-          (key === 'role' && normalized === 'all') ||
-          (key === 'pageSize' && Number(normalized) === DEFAULT_PAGE_SIZE) ||
-          (key === 'page' && Number(normalized) <= 1)
+  const setFilter = (
+    key: AdminUsersFilterKey,
+    value: string,
+    options?: { resetPage?: boolean }
+  ) => {
+    const resetPage = options?.resetPage ?? true
+    updateParams(params => {
+      const normalized = value.trim()
+      const shouldDelete =
+        normalized === '' ||
+        (key === 'hasAvatar' && normalized === 'any') ||
+        (key === 'hasActiveAccess' && normalized === 'any') ||
+        (key === 'role' && normalized === 'all') ||
+        (key === 'pageSize' && Number(normalized) === DEFAULT_PAGE_SIZE) ||
+        (key === 'page' && Number(normalized) <= 1)
 
-        if (shouldDelete) {
-          params.delete(key)
-        } else {
-          params.set(key, normalized)
-        }
+      if (shouldDelete) {
+        params.delete(key)
+      } else {
+        params.set(key, normalized)
+      }
 
-        if (resetPage) {
-          params.delete('page')
-        }
-      })
-    },
-    [updateParams]
-  )
-
-  const setSorting = useCallback(
-    (sortBy: 'createdAt' | 'name', sortDir: 'asc' | 'desc') => {
-      updateParams(params => {
-        params.set('sortBy', sortBy)
-        params.set('sortDir', sortDir)
+      if (resetPage) {
         params.delete('page')
-      })
-    },
-    [updateParams]
-  )
+      }
+    })
+  }
 
-  const filters = useMemo(() => {
+  const setSorting = (
+    sortBy: 'createdAt' | 'name',
+    sortDir: 'asc' | 'desc'
+  ) => {
+    updateParams(params => {
+      params.set('sortBy', sortBy)
+      params.set('sortDir', sortDir)
+      params.delete('page')
+    })
+  }
+
+  const filters = (() => {
     const id = searchParams.get('id') ?? undefined
     const email = searchParams.get('email') ?? undefined
     const name = searchParams.get('name') ?? undefined
@@ -140,7 +132,7 @@ export function useAdminUsers() {
       page,
       pageSize,
     }
-  }, [searchParams])
+  })()
 
   const query = adminUsersApi.admin.user.list.useQuery(filters, {
     staleTime: 30 * 1000,

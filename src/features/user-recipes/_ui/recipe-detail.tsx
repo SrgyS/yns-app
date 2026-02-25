@@ -7,7 +7,7 @@ import { Button } from '@/shared/ui/button'
 import { Card, CardContent } from '@/shared/ui/card'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/shared/ui/dialog'
 import { Separator } from '@/shared/ui/separator'
-import { OptimizedImage } from '@/shared/ui/optimized-image'
+import { AppImage } from '@/shared/ui/app-image'
 import { Clock, Flame, ChefHat, Minus, Plus, ArrowLeft, Heart, HeartOff } from 'lucide-react'
 import { SmallSpinner } from '@/shared/ui/small-spinner'
 import { userRecipesApi } from '../_api'
@@ -88,7 +88,7 @@ export function RecipeDetail({ slug }: Readonly<RecipeDetailProps>) {
       <div className="space-y-4">
         <div className="relative aspect-4/3 w-full overflow-hidden rounded-xl bg-muted">
           {recipe.imageUrl ? (
-            <OptimizedImage
+            <AppImage
               src={recipe.imageUrl}
               alt={recipe.title}
               fill

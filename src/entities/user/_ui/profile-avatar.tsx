@@ -16,8 +16,15 @@ export const ProfileAvatar = ({
 
   return (
     <Avatar className={cn(className)}>
-      <AvatarImage src={profile.image || undefined} className="object-cover" />
+      {/*
+       * AvatarImage внутри вызывает resolveStorageUrl для нормализации пути:
+       * storage-пути (/storage/...) превращаются в полный URL через IMAGE_BASE_URL,
+       * а внешние URL (https://...) и OAuth-аватары передаются как есть.
+       * При рефакторинге avatar.tsx это поведение необходимо сохранить.
+       */}
+      <AvatarImage src={profile.image ?? undefined} className="object-cover" />
       <AvatarFallback>{getProfileLetters(profile)}</AvatarFallback>
     </Avatar>
   )
 }
+

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, type ComponentProps } from 'react'
+import { type ComponentProps } from 'react'
 import { useTheme } from 'next-themes'
 import { Moon, Sun } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
@@ -14,10 +14,10 @@ export function ToggleTheme({
 }: ToggleThemeProps) {
   const { setTheme, resolvedTheme, theme } = useTheme()
 
-  const toggleTheme = useCallback(() => {
+  const toggleTheme = () => {
     const current = (resolvedTheme ?? theme) as 'light' | 'dark' | undefined
     setTheme(current === 'dark' ? 'light' : 'dark')
-  }, [resolvedTheme, theme, setTheme])
+  }
 
   return (
     <Button

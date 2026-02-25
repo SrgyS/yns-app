@@ -1,5 +1,5 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { courseOrderApi } from './_api'
 import { createCourseOrderSchema } from './_domain/schemas'
@@ -11,7 +11,12 @@ export function StartOrder() {
 
   const createPaymentLink = courseOrderApi.courseOrder.start.useMutation()
 
+  const hasStarted = useRef(false)
+
   useEffect(() => {
+    if (hasStarted.current) return
+    hasStarted.current = true
+
     const res = createCourseOrderSchema.safeParse(
       Object.fromEntries(searchParams.entries())
     )
@@ -36,8 +41,7 @@ export function StartOrder() {
       })
       router.back()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [createPaymentLink, router, searchParams])
 
   return null
 }

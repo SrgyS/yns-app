@@ -80,7 +80,7 @@ export default function PracticesPage() {
 
   if (!selectedType) {
     return (
-      <div className="space-y-8 py-10 max-w-2xl">
+      <div className="space-y-8 py-4 sm:pt-14 max-w-2xl mx-auto">
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold">Отдельные тренировки</h1>
           <p className="text-muted-foreground">
@@ -133,7 +133,7 @@ export default function PracticesPage() {
   }
 
   return (
-    <div className="space-y-6 py-10 max-w-2xl">
+    <div className="space-y-6 py-4 sm:pt-14 max-w-2xl mx-auto">
       <PracticeSectionHero
         practiceType={selectedType}
         onBack={handleCloseCategories}

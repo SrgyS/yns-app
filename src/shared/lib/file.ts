@@ -1,7 +1,7 @@
-export function selectFile(contentType: string, multiple: true): Promise<File[]>
-export function selectFile(contentType: string): Promise<File>
+export function selectFile(contentType: string, multiple: true): Promise<File[] | null>
+export function selectFile(contentType: string): Promise<File | null>
 export function selectFile(contentType: string, multiple?: boolean) {
-  return new Promise(resolve => {
+  return new Promise<File | File[] | null>(resolve => {
     const input = document.createElement('input')
     input.type = 'file'
     input.multiple = multiple ?? false
@@ -9,8 +9,8 @@ export function selectFile(contentType: string, multiple?: boolean) {
 
     input.onchange = () => {
       const files = Array.from(input.files as Iterable<File>)
-      if (multiple) resolve(files)
-      else resolve(files[0])
+      if (multiple) resolve(files.length ? files : null)
+      else resolve(files[0] ?? null)
     }
 
     input.click()
@@ -18,10 +18,6 @@ export function selectFile(contentType: string, multiple?: boolean) {
 }
 
 export function validateFileSize(file: File, sizeMb: number) {
-  const fileSize = file.size / 1024 / 1024 // in MiB
-  if (fileSize > sizeMb) {
-    return false
-  } else {
-    return true
-  }
+  const fileSize = file.size / 1024 / 1024
+  return fileSize <= sizeMb
 }

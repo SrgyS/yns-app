@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
-import Image from 'next/image'
 import { Upload } from 'lucide-react'
 import { FormItem, FormLabel, FormMessage } from '@/shared/ui/form'
 import { toast } from 'sonner'
 
 import { useUploadCourseImage } from '../_vm/use-upload-course-image'
-import { OptimizedImage } from '@/shared/ui/optimized-image'
+import { AppImage } from '@/shared/ui/app-image'
 import { Button } from '@/shared/ui/button'
 
 type Props = {
@@ -33,9 +32,6 @@ export function CourseImgField({
   const [baseValue, setBaseValue] = useState<string | null>(
     initialValue ?? null
   )
-
-  const isLocalPreview =
-    preview && (preview.startsWith('blob:') || preview.startsWith('data:'))
 
   useEffect(() => {
     setPreview(value ?? null)
@@ -87,22 +83,14 @@ export function CourseImgField({
         <div className="w-full max-w-xl overflow-hidden rounded-md border border-dashed bg-muted/50 cursor-pointer transition hover:border-primary/70 focus:outline-none focus:ring-2 focus:ring-primary">
           {preview ? (
             <div className="relative h-full w-full">
-              {isLocalPreview ? (
-                <Image
-                  src={preview}
-                  alt="Preview"
-                  fill
-                  unoptimized
-                  className="object-contain"
-                />
-              ) : (
-                <OptimizedImage
-                  src={preview}
-                  alt="Preview"
-                  fill
-                  className="object-contain"
-                />
-              )}
+              {/* AppImage handles blob:/data: as-is and storage paths via resolveStorageUrl */}
+              <AppImage
+                src={preview}
+                alt="Preview"
+                fill
+                unoptimized
+                className="object-contain"
+              />
             </div>
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-muted-foreground">

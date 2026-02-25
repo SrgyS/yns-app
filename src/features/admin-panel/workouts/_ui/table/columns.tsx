@@ -1,13 +1,13 @@
 'use client'
 
 import { ColumnDef } from '@tanstack/react-table'
-import Image from 'next/image'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { Button } from '@/shared/ui/button'
 import { Badge } from '@/shared/ui/badge'
 import { AdminWorkoutRow } from './table'
 import { formatDuration } from '@/shared/lib/format-duration'
+import { AppImage } from '@/shared/ui/app-image'
 
 const statusBadge = (workout: AdminWorkoutRow) => {
   if (workout.needsReview) {
@@ -28,7 +28,7 @@ export const workoutColumns: ColumnDef<AdminWorkoutRow>[] = [
         <div className="flex items-center gap-3">
           {workout.posterUrl ? (
             <div className="relative h-14 w-24 overflow-hidden rounded border">
-              <Image
+              <AppImage
                 src={workout.posterUrl}
                 alt={workout.title}
                 fill

@@ -2,14 +2,17 @@ import { useUploadImage } from '@/shared/lib/use-upload-image'
 import { uploadCourseImageAction } from '../_actions/upload-course-image'
 import { DEFAULT_IMAGE_MAX_SIZE_MB } from '@/shared/lib/upload-constants'
 
+type UploadTag = 'course-image' | 'course-thumbnail'
+type UploadCourseImageResult = { path: string }
+
 type UploadParams = {
-  tag: 'course-image' | 'course-thumbnail'
+  tag: UploadTag
   onSuccess?: (path: string, file: File) => void
   onError?: (reason?: 'big-size') => void
 }
 
 export function useUploadCourseImage() {
-  const uploader = useUploadImage<UploadParams['tag']>({
+  const uploader = useUploadImage<UploadTag, UploadCourseImageResult>({
     mutationFn: async (file, tag) => {
       const formData = new FormData()
       formData.append('file', file)
@@ -24,10 +27,7 @@ export function useUploadCourseImage() {
       maxSizeMb: DEFAULT_IMAGE_MAX_SIZE_MB,
       onError,
       onSuccess: (result, file) => {
-        const path = (result as any)?.path
-        if (typeof path === 'string') {
-          onSuccess?.(path, file)
-        }
+        onSuccess?.(result.path, file)
       },
     })
 

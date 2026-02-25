@@ -1,10 +1,10 @@
 'use client'
 
-import Image from 'next/image'
 import { useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import type { PracticeType } from '../_domain/practice-types'
 import { Button } from '@/shared/ui/button'
+import { AppImage } from '@/shared/ui/app-image'
 
 type PracticeSectionHeroProps = {
   practiceType: PracticeType
@@ -21,7 +21,7 @@ export function PracticeSectionHero({
   return (
     <div className="relative flex h-56 flex-col overflow-hidden rounded-2xl border border-border/60">
       {hasImage ? (
-        <Image
+        <AppImage
           src={practiceType.imagePath!}
           alt={practiceType.title}
           fill

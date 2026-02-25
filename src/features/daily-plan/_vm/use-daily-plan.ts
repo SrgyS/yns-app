@@ -1,30 +1,19 @@
-import { useCallback } from 'react'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { workoutApi } from '../_api'
 import { CACHE_SETTINGS } from '@/shared/lib/cache/cache-constants'
 
-export function useDailyPlan() {
+export function useDailyPlanQuery(
+  enrollmentId: string,
+  courseId: string,
+  dayNumberInCourse: number,
+  enabled: boolean = true
+) {
   const { data: session } = useAppSession()
-  const getUserDailyPlan = workoutApi.getUserDailyPlan.useQuery
+  const userId = session?.user?.id || ''
+  const isEnabled = enabled && Boolean(session?.user?.id)
 
-  const getDailyPlan = useCallback(
-    (
-      enrollmentId: string,
-      courseId: string,
-      dayNumberInCourse: number,
-      enabled: boolean
-    ) => {
-      const userId = session?.user?.id || ''
-      const isEnabled = enabled && Boolean(session?.user?.id)
-      return getUserDailyPlan(
-        { userId, enrollmentId, courseId, dayNumberInCourse },
-        { ...CACHE_SETTINGS.FREQUENT_UPDATE, enabled: isEnabled }
-      )
-    },
-    [getUserDailyPlan, session?.user?.id]
+  return workoutApi.getUserDailyPlan.useQuery(
+    { userId, enrollmentId, courseId, dayNumberInCourse },
+    { ...CACHE_SETTINGS.FREQUENT_UPDATE, enabled: isEnabled }
   )
-
-  return {
-    getDailyPlan,
-  }
 }

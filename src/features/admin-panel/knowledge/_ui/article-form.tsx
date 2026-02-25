@@ -27,7 +27,7 @@ import { adminKnowledgeApi } from '../_api'
 import { toast } from 'sonner'
 import { useUploadKnowledgeFile } from '../_vm/use-upload-knowledge-file'
 import { Loader2, Trash2, Upload } from 'lucide-react'
-import Image from 'next/image'
+import { AppImage } from '@/shared/ui/app-image'
 
 const attachmentSchema = z.object({
   name: z.string(),
@@ -401,7 +401,7 @@ export function ArticleForm({
                 >
                   <div className="relative aspect-video w-full overflow-hidden rounded bg-muted">
                     {video.posterUrl ? (
-                      <Image
+                      <AppImage
                         src={video.posterUrl}
                         alt={video.title}
                         fill
