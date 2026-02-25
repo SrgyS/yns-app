@@ -6,7 +6,9 @@ describe('resolvePracticeImagePath', () => {
     }))
     let resolver: (path?: string) => string | undefined
     jest.isolateModules(() => {
-      resolver = require('./image-path').resolvePracticeImagePath
+      const imagePathModule =
+        jest.requireActual<typeof import('./image-path')>('./image-path')
+      resolver = imagePathModule.resolvePracticeImagePath
     })
     return resolver!
   }
