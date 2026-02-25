@@ -25,6 +25,8 @@ import { RecipesModule } from '@/entities/recipes/module'
 import { AdminRecipesModule } from '@/features/admin-panel/recipes/module'
 import { UserRecipesModule } from '@/features/user-recipes/module'
 import { LeadRequestModule } from '@/features/lead-request/module'
+import { SupportChatModule } from '@/features/support-chat/module'
+import { SupportChatEntityModule } from '@/entities/support-chat/module'
 
 
 export function createServer() {
@@ -54,7 +56,9 @@ export function createServer() {
     RecipesModule,
     AdminRecipesModule,
     UserRecipesModule,
-    LeadRequestModule
+    LeadRequestModule,
+    SupportChatEntityModule,
+    SupportChatModule
   )
 
   return container

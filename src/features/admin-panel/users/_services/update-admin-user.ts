@@ -75,6 +75,9 @@ export class UpdateAdminUserService {
         input.permissions.canLoginAsUser ?? current.canLoginAsUser,
       canManageCourses:
         input.permissions.canManageCourses ?? current.canManageCourses,
+      canManageSupportChats:
+        input.permissions.canManageSupportChats ??
+        current.canManageSupportChats,
     }
 
     await this.staffPermissionRepository.upsert(input.userId, merged)

@@ -31,6 +31,10 @@ const privateConfigSchema = z.object({
 
   TELEGRAM_BOT_TOKEN: z.string().optional(),
   TELEGRAM_CHAT_ID: z.string().optional(),
+  SUPPORT_CHAT_ENABLED: z
+    .string()
+    .optional()
+    .transform(val => val === 'true'),
 
   PRODAMUS_DEMO_ENABLED: z
     .string()

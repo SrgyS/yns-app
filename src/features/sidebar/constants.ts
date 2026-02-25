@@ -1,4 +1,12 @@
-import { GraduationCap, LineChart, Users, Dumbbell, BookOpen, ChefHat } from 'lucide-react'
+import {
+  GraduationCap,
+  LineChart,
+  Users,
+  Dumbbell,
+  BookOpen,
+  ChefHat,
+  MessageCircle,
+} from 'lucide-react'
 
 export const adminNavItems = [
   {
@@ -30,5 +38,10 @@ export const adminNavItems = [
     title: 'Рецепты',
     url: '/admin/recipes',
     icon: ChefHat,
+  },
+  {
+    title: 'Support чат',
+    url: '/admin/support-chat',
+    icon: MessageCircle,
   },
 ]

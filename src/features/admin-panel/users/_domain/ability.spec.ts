@@ -26,6 +26,7 @@ describe('createAdminAbility', () => {
     expect(ability.canViewPayments).toBe(true)
     expect(ability.canLoginAsUser).toBe(true)
     expect(ability.canManageCourses).toBe(true)
+    expect(ability.canManageSupportChats).toBe(true)
   })
 
   test('staff permissions depend on flags', () => {
@@ -41,6 +42,7 @@ describe('createAdminAbility', () => {
     expect(ability.canManageUsers).toBe(true)
     expect(ability.canEditAccess).toBe(true)
     expect(ability.canGrantAccess).toBe(false)
+    expect(ability.canManageSupportChats).toBe(false)
   })
 
   test('user has no admin permissions', () => {
@@ -51,5 +53,6 @@ describe('createAdminAbility', () => {
     expect(ability.canVisitAdminPanel).toBe(false)
     expect(ability.canManageUsers).toBe(false)
     expect(ability.canGrantAccess).toBe(false)
+    expect(ability.canManageSupportChats).toBe(false)
   })
 })
