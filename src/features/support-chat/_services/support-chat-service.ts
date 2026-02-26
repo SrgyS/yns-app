@@ -1,15 +1,16 @@
 import {
   Prisma,
   ROLE,
-  SupportMessageSenderType,
+  ChatMessageSenderType,
   SupportReadType,
 } from '@prisma/client'
 import { injectable } from 'inversify'
 
 import {
-  SupportConversationRepository,
-  SupportMessageRepository,
-  SupportReadStateRepository,
+  ChatAttachmentRepository,
+  ChatDialogRepository,
+  ChatMessageRepository,
+  ChatReadStateRepository,
 } from '@/entities/support-chat/module'
 import { dbClient } from '@/shared/lib/db'
 import { sanitizeFileName } from '@/shared/lib/file-storage/utils'
@@ -70,7 +71,7 @@ type SupportChatAttachmentInput = {
   base64: string
 }
 
-type StoredSupportChatAttachment = {
+type UploadedChatAttachment = {
   id: string
   name: string
   path: string
@@ -81,9 +82,10 @@ type StoredSupportChatAttachment = {
 @injectable()
 export class SupportChatService {
   constructor(
-    private readonly conversationRepository: SupportConversationRepository,
-    private readonly messageRepository: SupportMessageRepository,
-    private readonly readStateRepository: SupportReadStateRepository,
+    private readonly attachmentRepository: ChatAttachmentRepository,
+    private readonly conversationRepository: ChatDialogRepository,
+    private readonly messageRepository: ChatMessageRepository,
+    private readonly readStateRepository: ChatReadStateRepository,
     private readonly readService: SupportChatReadService,
     private readonly telegramSupportNotifier: TelegramSupportNotifier
   ) {}
@@ -92,7 +94,7 @@ export class SupportChatService {
     this.ensureUserRole(input.actor)
 
     const limit = input.limit ?? 20
-    const rows = await dbClient.supportDialog.findMany({
+    const rows = await dbClient.chatDialog.findMany({
       where: {
         userId: input.actor.id,
       },
@@ -117,7 +119,7 @@ export class SupportChatService {
     const items = await Promise.all(
       pageItems.map(async dialog => {
         const [lastMessage, unreadCount] = await Promise.all([
-          dbClient.supportMessage.findFirst({
+          dbClient.chatMessage.findFirst({
             where: {
               dialogId: dialog.id,
             },
@@ -192,7 +194,7 @@ export class SupportChatService {
     await this.ensureStaffAccess(input.actor)
 
     const limit = input.limit ?? 20
-    const rows = await dbClient.supportDialog.findMany({
+    const rows = await dbClient.chatDialog.findMany({
       include: {
         user: {
           select: {
@@ -266,7 +268,8 @@ export class SupportChatService {
 
     const uploadedAttachments = await this.uploadAttachments(
       input.attachments,
-      input.actor.id
+      dialog.id,
+      dialog.userId
     )
 
     const now = new Date()
@@ -278,6 +281,11 @@ export class SupportChatService {
       text: normalizedText ?? null,
       attachments: uploadedAttachments as Prisma.InputJsonValue,
     })
+    await this.linkUploadedAttachmentsToMessage(
+      dialog.id,
+      message.id,
+      uploadedAttachments
+    )
 
     await this.conversationRepository.touchLastMessageAt(dialog.id, now)
 
@@ -336,7 +344,7 @@ export class SupportChatService {
   async markDialogRead(input: MarkDialogReadInput) {
     const dialog = await this.assertDialogAccess(input.dialogId, input.actor)
 
-    const message = await dbClient.supportMessage.findFirst({
+    const message = await dbClient.chatMessage.findFirst({
       where: {
         id: input.lastReadMessageId,
         dialogId: dialog.id,
@@ -396,38 +404,34 @@ export class SupportChatService {
       throw createSupportChatError('INVALID_MESSAGE')
     }
 
+    const now = new Date()
+    const dialog = await this.conversationRepository.create({
+      userId: input.actor.id,
+      lastMessageAt: now,
+    })
     const uploadedAttachments = await this.uploadAttachments(
       input.attachments,
+      dialog.id,
       input.actor.id
     )
-
-    const result = await dbClient.$transaction(async tx => {
-      const now = new Date()
-      const dialog = await this.conversationRepository.create(
-        {
-          userId: input.actor.id,
-          lastMessageAt: now,
-        },
-        tx
-      )
-
-      const message = await this.messageRepository.create(
-        {
-          dialogId: dialog.id,
-          senderType: 'USER',
-          senderUserId: input.actor.id,
-          text: hasText ? normalizedMessage : null,
-          attachments: uploadedAttachments as Prisma.InputJsonValue,
-        },
-        tx
-      )
-
-      return {
-        dialogId: dialog.id,
-        createdAt: dialog.createdAt,
-        firstMessageId: message.id,
-      }
+    const message = await this.messageRepository.create({
+      dialogId: dialog.id,
+      senderType: 'USER',
+      senderUserId: input.actor.id,
+      text: hasText ? normalizedMessage : null,
+      attachments: uploadedAttachments as Prisma.InputJsonValue,
     })
+    await this.linkUploadedAttachmentsToMessage(
+      dialog.id,
+      message.id,
+      uploadedAttachments
+    )
+
+    const result = {
+      dialogId: dialog.id,
+      createdAt: dialog.createdAt,
+      firstMessageId: message.id,
+    }
 
     const occurredAt = result.createdAt.toISOString()
     publishSupportChatEvent({
@@ -522,7 +526,7 @@ export class SupportChatService {
     throw createSupportChatError('DIALOG_ACCESS_DENIED')
   }
 
-  private resolveSenderType(role: ROLE): SupportMessageSenderType {
+  private resolveSenderType(role: ROLE): ChatMessageSenderType {
     if (role === 'USER') {
       return 'USER'
     }
@@ -540,8 +544,9 @@ export class SupportChatService {
 
   private async uploadAttachments(
     attachments: SupportChatAttachmentInput[] | undefined,
-    actorId: string
-  ): Promise<StoredSupportChatAttachment[]> {
+    dialogId: string,
+    ownerUserId: string
+  ): Promise<UploadedChatAttachment[]> {
     if (!attachments || attachments.length === 0) {
       return []
     }
@@ -567,10 +572,25 @@ export class SupportChatService {
           type: attachment.mimeType,
         })
 
-        const stored = await fileStorage.uploadFile(file, 'support-chat', actorId)
+        const stored = await fileStorage.uploadFile(
+          file,
+          'support-chat',
+          ownerUserId,
+          'private'
+        )
+        const uploadedAttachment = await this.attachmentRepository.createUploaded({
+          dialogId,
+          storagePath: stored.path,
+          mimeType: attachment.mimeType,
+          sizeBytes: attachment.sizeBytes,
+          originalName: safeName,
+          createdByUserId: ownerUserId,
+          etag: stored.eTag ?? null,
+          lastModified: null,
+        })
 
         return {
-          id: stored.id,
+          id: uploadedAttachment.id,
           name: stored.name,
           path: stored.path,
           type: stored.type,
@@ -580,6 +600,30 @@ export class SupportChatService {
     )
 
     return uploaded
+  }
+
+  private async linkUploadedAttachmentsToMessage(
+    dialogId: string,
+    messageId: string,
+    attachments: UploadedChatAttachment[]
+  ): Promise<void> {
+    if (attachments.length === 0) {
+      return
+    }
+
+    await Promise.all(
+      attachments.map(async attachment => {
+        const linked = await this.attachmentRepository.linkToMessage({
+          id: attachment.id,
+          dialogId,
+          messageId,
+        })
+
+        if (!linked) {
+          throw new Error('Failed to link uploaded attachment to message')
+        }
+      })
+    )
   }
 
   private decodeAttachment(base64Data: string): ArrayBuffer {

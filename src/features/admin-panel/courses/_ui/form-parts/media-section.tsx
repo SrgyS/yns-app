@@ -17,7 +17,7 @@ export function MediaSection({ control, disabled }: MediaSectionProps) {
         render={({ field }) => (
           <CourseImgField
             label="Миниатюра (Thumbnail)"
-            tag="course-thumbnail"
+            tag="site/course-thumbnail"
             value={field.value ?? null}
             initialValue={field.value ?? null} // Changed from loading initial helper, assume control has data
             onChange={(path) => field.onChange(path)}
@@ -32,7 +32,7 @@ export function MediaSection({ control, disabled }: MediaSectionProps) {
         render={({ field }) => (
           <CourseImgField
             label="Основное изображение"
-            tag="course-image"
+            tag="site/course-image"
             value={field.value ?? null}
             initialValue={field.value ?? null}
             onChange={(path) => field.onChange(path)}

@@ -263,7 +263,7 @@ export function RecipeForm({
         fileName: file.name,
         fileType: file.type,
         base64,
-        tag: 'recipe-image',
+        tag: 'site/recipe-image',
       })
     }
     reader.onerror = () => toast.error('Не удалось загрузить изображение')

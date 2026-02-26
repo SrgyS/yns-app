@@ -18,13 +18,17 @@ const privateConfigSchema = z.object({
 
   S3_ACCESS_KEY_ID: z.string(),
   S3_SECRET_ACCESS_KEY: z.string(),
-  S3_IMAGES_BUCKET: z.string(),
+  S3_PUBLIC_BUCKET: z.string().optional(),
+  S3_PRIVATE_BUCKET: z.string().optional(),
+  S3_IMAGES_BUCKET: z.string().optional(),
   S3_ENDPOINT: z.string(),
   S3_REGION: z.string(),
 
   SUPABASE_URL: z.string(),
   SUPABASE_SERVICE_KEY: z.string(),
-  SUPABASE_IMAGE_BUCKET: z.string(),
+  SUPABASE_PUBLIC_BUCKET: z.string().optional(),
+  SUPABASE_PRIVATE_BUCKET: z.string().optional(),
+  SUPABASE_IMAGE_BUCKET: z.string().optional(),
 
   CONTENT_URL: z.string(),
   CONTENT_TOKEN: z.string().optional(),
@@ -35,6 +39,11 @@ const privateConfigSchema = z.object({
     .string()
     .optional()
     .transform(val => val === 'true'),
+  SUPPORT_CHAT_ATTACHMENT_CLEANUP_STALE_MINUTES: z.string().optional(),
+  SUPPORT_CHAT_ATTACHMENT_CLEANUP_BATCH_SIZE: z.string().optional(),
+  SUPPORT_CHAT_ATTACHMENT_CLEANUP_LOCK_KEY: z.string().optional(),
+  SUPPORT_CHAT_ATTACHMENT_BACKFILL_BATCH_SIZE: z.string().optional(),
+  SUPPORT_CHAT_ATTACHMENT_BACKFILL_LOCK_KEY: z.string().optional(),
 
   PRODAMUS_DEMO_ENABLED: z
     .string()

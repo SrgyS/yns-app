@@ -10,6 +10,8 @@ import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Input } from '@/shared/ui/input'
 import { Textarea } from '@/shared/ui/textarea'
+import { SupportChatMessageAttachments } from '../../_ui/support-chat-message-attachments'
+import { resolveSupportChatClientErrorMessage } from '../../_domain/client-error-message'
 
 import {
   useStaffDialogMessages,
@@ -128,8 +130,10 @@ export function SupportChatAdminInboxPage() {
       setMessage('')
       setFiles([])
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Не удалось отправить ответ'
+      const errorMessage = resolveSupportChatClientErrorMessage(
+        error,
+        'Не удалось отправить ответ'
+      )
       toast.error(errorMessage)
     }
   }
@@ -276,13 +280,10 @@ export function SupportChatAdminInboxPage() {
                       }`}
                     >
                       {item.text ? <p className="whitespace-pre-wrap">{item.text}</p> : null}
-                      {Array.isArray(item.attachments) && item.attachments.length > 0 ? (
-                        <div className="mt-2 space-y-1 text-xs opacity-90">
-                          {item.attachments.map((attachment: any, index: number) => (
-                            <p key={`${item.id}-${index}`}>📎 {attachment.name ?? 'Вложение'}</p>
-                          ))}
-                        </div>
-                      ) : null}
+                      <SupportChatMessageAttachments
+                        dialogId={item.dialogId}
+                        attachments={item.attachments}
+                      />
                       <p className="mt-1 text-[10px] opacity-75">
                         {new Date(item.createdAt).toLocaleString()}
                       </p>

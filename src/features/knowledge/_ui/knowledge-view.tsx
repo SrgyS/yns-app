@@ -45,12 +45,9 @@ export function KnowledgeView({
   const hasData = allCategories.length > 0
 
   return (
-    <div className="space-y-6">
+    <section className="space-y-6 py-4">
       <header className="flex flex-col gap-2">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-linear-to-br from-slate-900 via-slate-700 to-slate-500 text-white flex items-center justify-center text-lg font-semibold shadow-md">
-            Z
-          </div>
           <div>
             <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
               База знаний
@@ -86,7 +83,7 @@ export function KnowledgeView({
           </CardContent>
         </Card>
       )}
-    </div>
+    </section>
   )
 }
 

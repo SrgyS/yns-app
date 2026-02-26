@@ -1,9 +1,9 @@
 jest.mock('@/shared/lib/db', () => ({
   dbClient: {
-    supportDialog: {
+    chatDialog: {
       findMany: jest.fn(),
     },
-    supportMessage: {
+    chatMessage: {
       findFirst: jest.fn(),
     },
     staffPermission: {
@@ -32,10 +32,15 @@ jest.mock('../_integrations/support-chat-events', () => ({
 }))
 
 import { dbClient } from '@/shared/lib/db'
+import { fileStorage } from '@/shared/lib/file-storage/file-storage'
 import { SupportChatService } from './support-chat-service'
 import { SupportChatDomainError } from '../_domain/errors'
 
 describe('SupportChatService', () => {
+  const attachmentRepository = {
+    createUploaded: jest.fn(),
+    linkToMessage: jest.fn(),
+  }
   const conversationRepository = {
     findById: jest.fn(),
     touchLastMessageAt: jest.fn(),
@@ -59,6 +64,7 @@ describe('SupportChatService', () => {
   }
 
   const service = new SupportChatService(
+    attachmentRepository as any,
     conversationRepository as any,
     messageRepository as any,
     readStateRepository as any,
@@ -67,6 +73,8 @@ describe('SupportChatService', () => {
   )
 
   beforeEach(() => {
+    attachmentRepository.createUploaded.mockReset()
+    attachmentRepository.linkToMessage.mockReset()
     conversationRepository.findById.mockReset()
     conversationRepository.touchLastMessageAt.mockReset()
     conversationRepository.create.mockReset()
@@ -78,7 +86,7 @@ describe('SupportChatService', () => {
     readService.countUnreadForStaff.mockReset()
     readService.hasUnansweredIncoming.mockReset()
     notifier.notifyNewUserMessage.mockClear()
-    ;(dbClient.supportMessage.findFirst as jest.Mock).mockReset()
+    ;(dbClient.chatMessage.findFirst as jest.Mock).mockReset()
     ;(dbClient.staffPermission.findUnique as jest.Mock).mockReset()
   })
 
@@ -132,7 +140,7 @@ describe('SupportChatService', () => {
       id: 'dialog-1',
       userId: 'user-1',
     })
-    ;(dbClient.supportMessage.findFirst as jest.Mock).mockResolvedValue(null)
+    ;(dbClient.chatMessage.findFirst as jest.Mock).mockResolvedValue(null)
 
     await expect(
       service.markDialogRead({
@@ -143,5 +151,101 @@ describe('SupportChatService', () => {
     ).rejects.toMatchObject<Partial<SupportChatDomainError>>({
       code: 'MESSAGE_NOT_FOUND',
     })
+  })
+
+  test('sendMessage persists uploaded attachments and links them to message', async () => {
+    conversationRepository.findById.mockResolvedValue({
+      id: 'dialog-1',
+      userId: 'user-1',
+    })
+    ;(dbClient.chatMessage.findFirst as jest.Mock).mockResolvedValue({
+      text: 'msg',
+      createdAt: new Date(),
+    })
+    readService.countUnreadForUser.mockResolvedValue(0)
+    readService.countUnreadForStaff.mockResolvedValue(0)
+    messageRepository.create.mockResolvedValue({
+      id: 'message-1',
+      dialogId: 'dialog-1',
+      senderType: 'USER',
+      text: 'hello',
+      attachments: [],
+      createdAt: new Date(),
+    })
+    ;(fileStorage.uploadFile as jest.Mock).mockResolvedValue({
+      id: 'storage-file-1',
+      name: 'image.png',
+      type: 'image/png',
+      path: 'private/support-chat/user-1/file.png',
+      prefix: '/storage',
+      eTag: 'etag-1',
+    })
+    attachmentRepository.createUploaded.mockResolvedValue({
+      id: 'attachment-1',
+      dialogId: 'dialog-1',
+      messageId: null,
+      storagePath: 'private/support-chat/user-1/file.png',
+      mimeType: 'image/png',
+      sizeBytes: 4,
+      originalName: 'image.png',
+      createdByUserId: 'user-1',
+      status: 'UPLOADED',
+      etag: 'etag-1',
+      lastModified: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    attachmentRepository.linkToMessage.mockResolvedValue({
+      id: 'attachment-1',
+      dialogId: 'dialog-1',
+      messageId: 'message-1',
+      storagePath: 'private/support-chat/user-1/file.png',
+      mimeType: 'image/png',
+      sizeBytes: 4,
+      originalName: 'image.png',
+      createdByUserId: 'user-1',
+      status: 'LINKED',
+      etag: 'etag-1',
+      lastModified: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+
+    const result = await service.sendMessage({
+      actor: { id: 'user-1', role: 'USER' },
+      dialogId: 'dialog-1',
+      text: 'hello',
+      attachments: [
+        {
+          filename: 'image.png',
+          mimeType: 'image/png',
+          sizeBytes: 4,
+          base64: Buffer.from([1, 2, 3, 4]).toString('base64'),
+        },
+      ],
+    })
+
+    expect(attachmentRepository.createUploaded).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dialogId: 'dialog-1',
+        createdByUserId: 'user-1',
+      })
+    )
+    expect(attachmentRepository.linkToMessage).toHaveBeenCalledWith({
+      id: 'attachment-1',
+      dialogId: 'dialog-1',
+      messageId: 'message-1',
+    })
+    expect(messageRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attachments: [
+          expect.objectContaining({
+            id: 'attachment-1',
+            path: 'private/support-chat/user-1/file.png',
+          }),
+        ],
+      })
+    )
+    expect(result.message.id).toBe('message-1')
   })
 })

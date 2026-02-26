@@ -1,36 +1,36 @@
-import { Prisma, SupportMessageSenderType } from '@prisma/client'
+import { Prisma, ChatMessageSenderType } from '@prisma/client'
 import { injectable } from 'inversify'
 
 import { dbClient, type DbClient } from '@/shared/lib/db'
-import { SupportMessageEntity } from '../_domain/types'
+import { ChatMessageEntity } from '../_domain/types'
 
-type CreateSupportMessageInput = {
+type CreateChatMessageInput = {
   dialogId: string
-  senderType: SupportMessageSenderType
+  senderType: ChatMessageSenderType
   senderUserId?: string | null
   senderStaffId?: string | null
   text?: string | null
   attachments?: Prisma.InputJsonValue
 }
 
-type ListSupportMessagesInput = {
+type ListChatMessagesInput = {
   dialogId: string
   cursor?: string
   limit?: number
 }
 
-type ListSupportMessagesResult = {
-  items: SupportMessageEntity[]
+type ListChatMessagesResult = {
+  items: ChatMessageEntity[]
   nextCursor?: string
 }
 
 @injectable()
-export class SupportMessageRepository {
+export class ChatMessageRepository {
   async create(
-    input: CreateSupportMessageInput,
+    input: CreateChatMessageInput,
     db: DbClient = dbClient
-  ): Promise<SupportMessageEntity> {
-    const record = await db.supportMessage.create({
+  ): Promise<ChatMessageEntity> {
+    const record = await db.chatMessage.create({
       data: {
         dialogId: input.dialogId,
         senderType: input.senderType,
@@ -45,11 +45,11 @@ export class SupportMessageRepository {
   }
 
   async listByDialog(
-    input: ListSupportMessagesInput,
+    input: ListChatMessagesInput,
     db: DbClient = dbClient
-  ): Promise<ListSupportMessagesResult> {
+  ): Promise<ListChatMessagesResult> {
     const limit = input.limit ?? 30
-    const records = await db.supportMessage.findMany({
+    const records = await db.chatMessage.findMany({
       where: { dialogId: input.dialogId },
       orderBy: { createdAt: 'desc' },
       take: limit + 1,
@@ -73,11 +73,11 @@ export class SupportMessageRepository {
 
   async countDialogUnreadMessages(
     dialogId: string,
-    senderType: SupportMessageSenderType,
+    senderType: ChatMessageSenderType,
     since: Date | null,
     db: DbClient = dbClient
   ): Promise<number> {
-    const count = await db.supportMessage.count({
+    const count = await db.chatMessage.count({
       where: {
         dialogId,
         senderType,
@@ -91,13 +91,13 @@ export class SupportMessageRepository {
   private toEntity(record: {
     id: string
     dialogId: string
-    senderType: SupportMessageSenderType
+    senderType: ChatMessageSenderType
     senderUserId: string | null
     senderStaffId: string | null
     text: string | null
     attachments: unknown
     createdAt: Date
-  }): SupportMessageEntity {
+  }): ChatMessageEntity {
     return {
       id: record.id,
       dialogId: record.dialogId,

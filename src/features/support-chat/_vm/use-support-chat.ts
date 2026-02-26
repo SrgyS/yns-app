@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo } from 'react'
-import { SupportMessageSenderType } from '@prisma/client'
+import { ChatMessageSenderType } from '@prisma/client'
 
 import { CACHE_SETTINGS } from '@/shared/lib/cache/cache-constants'
 import { supportChatApi } from '../_api'
@@ -251,6 +251,6 @@ export function useSupportChatActions() {
   }
 }
 
-export const isIncomingSupportMessageForUser = (
-  senderType: SupportMessageSenderType
+export const isIncomingChatMessageForUser = (
+  senderType: ChatMessageSenderType
 ) => senderType === 'STAFF'

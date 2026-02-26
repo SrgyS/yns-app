@@ -183,7 +183,7 @@ sequenceDiagram
     S->>S: ownership check (dialog.userId == session.user.id)
     S->>ST: upload attachments (optional)
     ST-->>S: storage keys + metadata
-    S->>DB: create SupportMessage + update dialog timestamps
+    S->>DB: create ChatMessage + update dialog timestamps
     DB-->>S: persisted message DTO
     S->>TG: notify new user message (async fire-and-forget)
     S-->>R: message DTO + unread counters
@@ -276,23 +276,23 @@ For each procedure:
 
 ## Persistence (Prisma)
 - Models to add/change
-  - Add `SupportDialog`:
+  - Add `ChatDialog`:
     - `id`, `userId`, `lastMessageAt`, `createdAt`, `updatedAt`.
-  - Add `SupportMessage`:
+  - Add `ChatMessage`:
     - `id`, `dialogId`, `senderUserId?`, `senderStaffId?`, `senderType` (`USER|STAFF|SYSTEM`), `text?`, `attachments` (JSONB), `createdAt`.
   - Add `SupportReadState`:
     - `id`, `dialogId`, `readerType` (`USER|STAFF`), `readerUserId?`, `lastReadMessageId?`, `readAt`, `updatedAt`.
   - Change `StaffPermission`: add `canManageSupportChats Boolean @default(false)`.
 - Relations and constraints (unique/FK)
-  - `SupportDialog.userId -> User.id` (FK, on delete cascade restricted by policy).
-  - `SupportMessage.dialogId -> SupportDialog.id` (FK).
-  - `SupportReadState.dialogId -> SupportDialog.id` (FK).
+  - `ChatDialog.userId -> User.id` (FK, on delete cascade restricted by policy).
+  - `ChatMessage.dialogId -> ChatDialog.id` (FK).
+  - `SupportReadState.dialogId -> ChatDialog.id` (FK).
   - Unique: one read row per `(dialogId, readerType, readerUserId)`.
   - Check-like invariant at service layer: only one of `senderUserId`/`senderStaffId` must be set according to `senderType`.
 - Indexes
-  - `SupportDialog(userId, updatedAt desc)` for user inbox.
-  - `SupportDialog(lastMessageAt desc)` for staff queue в общем inbox.
-  - `SupportMessage(dialogId, createdAt desc)` for thread pagination.
+  - `ChatDialog(userId, updatedAt desc)` for user inbox.
+  - `ChatDialog(lastMessageAt desc)` for staff queue в общем inbox.
+  - `ChatMessage(dialogId, createdAt desc)` for thread pagination.
   - `SupportReadState(dialogId, readerType)` for unread calculations.
 - Migration strategy (additive/backfill/cleanup if needed)
   - Additive migration: новые таблицы + enum + permission flag.

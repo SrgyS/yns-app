@@ -20,6 +20,29 @@ export const supportChatAttachmentSchema = z.object({
   base64: z.string().min(1),
 })
 
+export const storedSupportChatAttachmentSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1).max(255),
+  path: z.string().min(1),
+  type: z.string().min(1),
+  sizeBytes: z.number().int().positive(),
+})
+
+export type StoredSupportChatAttachment = z.infer<
+  typeof storedSupportChatAttachmentSchema
+>
+
+export const parseStoredSupportChatAttachments = (
+  value: unknown
+): StoredSupportChatAttachment[] => {
+  const parsed = z.array(storedSupportChatAttachmentSchema).safeParse(value)
+  if (parsed.success) {
+    return parsed.data
+  }
+
+  return []
+}
+
 export const assertAttachmentMimeType = (mimeType: string) => {
   if (ALLOWED_ATTACHMENT_MIME_TYPES.has(mimeType)) {
     return
