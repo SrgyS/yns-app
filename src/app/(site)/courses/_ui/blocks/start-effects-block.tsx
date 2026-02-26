@@ -40,8 +40,8 @@ export function StartEffectsBlockComponent({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-1.5 text-sm text-muted-foreground md:space-y-2">
-            {effects.map((effect, index) => (
-              <div key={index} className="flex gap-2">
+            {effects.map(effect => (
+              <div key={effect} className="flex gap-2">
                 <Check className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>{effect}</span>
               </div>

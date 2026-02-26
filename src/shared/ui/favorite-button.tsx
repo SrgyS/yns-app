@@ -25,10 +25,13 @@ export function FavoriteButton({
       return
     }
 
+    setIsPending(true)
+
     try {
-      setIsPending(true)
       await onToggle()
-    } finally {
+      setIsPending(false)
+    } catch (error) {
+      void error
       setIsPending(false)
     }
   }

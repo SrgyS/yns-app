@@ -32,6 +32,8 @@ export function SupportChatUserPage() {
   const [message, setMessage] = useState('')
   const [files, setFiles] = useState<File[]>([])
 
+  const effectiveSelectedDialogId = selectedDialogId ?? dialogs[0]?.dialogId
+
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const lastMarkedMessageIdRef = useRef<string | null>(null)
 
@@ -49,21 +51,10 @@ export function SupportChatUserPage() {
     hasNextPage: hasMoreMessages,
     fetchNextPage: fetchMoreMessages,
     isFetchingNextPage: isFetchingMoreMessages,
-  } = useDialogMessages(selectedDialogId)
+  } = useDialogMessages(effectiveSelectedDialogId)
   const latestMessageId = messages[messages.length - 1]?.id
 
-  useSupportChatSse(selectedDialogId)
-
-  useEffect(() => {
-    if (selectedDialogId) {
-      return
-    }
-
-    const firstDialogId = dialogs[0]?.dialogId
-    if (firstDialogId) {
-      setSelectedDialogId(firstDialogId)
-    }
-  }, [dialogs, selectedDialogId])
+  useSupportChatSse(effectiveSelectedDialogId)
 
   useEffect(() => {
     if (!messages.length) {
@@ -76,7 +67,7 @@ export function SupportChatUserPage() {
     }
 
     const isIncoming = isIncomingChatMessageForUser(latestMessage.senderType)
-    if (!isIncoming || !selectedDialogId) {
+    if (!isIncoming || !effectiveSelectedDialogId) {
       return
     }
 
@@ -86,20 +77,20 @@ export function SupportChatUserPage() {
 
     lastMarkedMessageIdRef.current = latestMessage.id
     markDialogRead({
-      dialogId: selectedDialogId,
+      dialogId: effectiveSelectedDialogId,
       lastReadMessageId: latestMessage.id,
     }).catch(() => {
       lastMarkedMessageIdRef.current = null
     })
-  }, [markDialogRead, messages, selectedDialogId])
+  }, [markDialogRead, messages, effectiveSelectedDialogId])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [latestMessageId])
 
   const selectedDialog = useMemo(
-    () => dialogs.find(dialog => dialog.dialogId === selectedDialogId),
-    [dialogs, selectedDialogId]
+    () => dialogs.find(dialog => dialog.dialogId === effectiveSelectedDialogId),
+    [dialogs, effectiveSelectedDialogId]
   )
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -114,18 +105,21 @@ export function SupportChatUserPage() {
       return
     }
 
+    const textPayload = hasText ? trimmedText : undefined
+    const initialMessageText = hasText ? trimmedText : 'Вложение без текста'
+
     try {
       const attachments = await toAttachments(files)
 
-      if (selectedDialogId) {
+      if (effectiveSelectedDialogId) {
         await sendMessage({
-          dialogId: selectedDialogId,
-          text: hasText ? trimmedText : undefined,
+          dialogId: effectiveSelectedDialogId,
+          text: textPayload,
           attachments,
         })
       } else {
         const created = await createDialog({
-          initialMessage: hasText ? trimmedText : 'Вложение без текста',
+          initialMessage: initialMessageText,
           attachments,
         })
         setSelectedDialogId(created.dialogId)
@@ -175,7 +169,7 @@ export function SupportChatUserPage() {
           ) : null}
 
           {dialogs.map(dialog => {
-            const isActive = dialog.dialogId === selectedDialogId
+            const isActive = dialog.dialogId === effectiveSelectedDialogId
 
             return (
               <button
@@ -268,10 +262,14 @@ export function SupportChatUserPage() {
             />
 
             <div className="flex flex-wrap items-center gap-2">
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted">
+              <label
+                htmlFor="support-chat-user-file-input"
+                className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted"
+              >
                 <Paperclip className="h-4 w-4" />
                 Вложить файл
                 <Input
+                  id="support-chat-user-file-input"
                   type="file"
                   className="hidden"
                   multiple

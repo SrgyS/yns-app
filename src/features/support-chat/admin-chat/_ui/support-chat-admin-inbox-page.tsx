@@ -40,7 +40,9 @@ export function SupportChatAdminInboxPage() {
   const dialogsQuery = useStaffDialogs(onlyUnanswered ? true : undefined)
   const dialogs = dialogsQuery.dialogs
 
-  const messagesQuery = useStaffDialogMessages(selectedDialogId)
+  const effectiveSelectedDialogId = selectedDialogId ?? dialogs[0]?.dialogId
+
+  const messagesQuery = useStaffDialogMessages(effectiveSelectedDialogId)
   const messages = messagesQuery.messages
 
   const {
@@ -50,24 +52,13 @@ export function SupportChatAdminInboxPage() {
     isMarkingRead,
   } = useSupportChatActions()
 
-  useSupportChatStaffSse(selectedDialogId)
+  useSupportChatStaffSse(effectiveSelectedDialogId)
 
   const lastMarkedMessageIdRef = useRef<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    if (selectedDialogId) {
-      return
-    }
-
-    const firstDialogId = dialogs[0]?.dialogId
-    if (firstDialogId) {
-      setSelectedDialogId(firstDialogId)
-    }
-  }, [dialogs, selectedDialogId])
-
-  useEffect(() => {
-    if (!messages.length || !selectedDialogId) {
+    if (!messages.length || !effectiveSelectedDialogId) {
       return
     }
 
@@ -85,26 +76,26 @@ export function SupportChatAdminInboxPage() {
 
     lastMarkedMessageIdRef.current = latestIncoming.id
     markDialogRead({
-      dialogId: selectedDialogId,
+      dialogId: effectiveSelectedDialogId,
       lastReadMessageId: latestIncoming.id,
     }).catch(() => {
       lastMarkedMessageIdRef.current = null
     })
-  }, [markDialogRead, messages, selectedDialogId])
+  }, [markDialogRead, messages, effectiveSelectedDialogId])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
   const selectedDialog = useMemo(
-    () => dialogs.find(dialog => dialog.dialogId === selectedDialogId),
-    [dialogs, selectedDialogId]
+    () => dialogs.find(dialog => dialog.dialogId === effectiveSelectedDialogId),
+    [dialogs, effectiveSelectedDialogId]
   )
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    if (!selectedDialogId) {
+    if (!effectiveSelectedDialogId) {
       toast.error('Выберите диалог для ответа')
       return
     }
@@ -118,12 +109,14 @@ export function SupportChatAdminInboxPage() {
       return
     }
 
+    const textPayload = hasText ? trimmedText : undefined
+
     try {
       const attachments = await toAttachments(files)
 
       await sendMessage({
-        dialogId: selectedDialogId,
-        text: hasText ? trimmedText : undefined,
+        dialogId: effectiveSelectedDialogId,
+        text: textPayload,
         attachments,
       })
 
@@ -203,7 +196,7 @@ export function SupportChatAdminInboxPage() {
           ) : null}
 
           {dialogs.map(dialog => {
-            const isActive = dialog.dialogId === selectedDialogId
+            const isActive = dialog.dialogId === effectiveSelectedDialogId
 
             return (
               <button
@@ -304,10 +297,14 @@ export function SupportChatAdminInboxPage() {
             />
 
             <div className="flex flex-wrap items-center gap-2">
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted">
+              <label
+                htmlFor="support-chat-admin-file-input"
+                className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted"
+              >
                 <Paperclip className="h-4 w-4" />
                 Вложить файл
                 <Input
+                  id="support-chat-admin-file-input"
                   type="file"
                   className="hidden"
                   multiple

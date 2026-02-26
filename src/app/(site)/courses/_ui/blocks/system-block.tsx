@@ -28,13 +28,13 @@ export function SystemBlockComponent({ title, cards }: SystemBlock) {
         <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
       )}
       <div className="grid gap-3 md:grid-cols-2 md:gap-4">
-        {cards.map((card, index) => {
+        {cards.map(card => {
           const icon = card.icon
             ? iconMap[card.icon.toLowerCase()]
             : iconMap.check
 
           return (
-            <Card key={index} className="rounded-3xl">
+            <Card key={`${card.title}-${card.description}`} className="rounded-3xl">
               <CardHeader className="p-4 md:p-6">
                 <CardTitle className="flex items-center gap-2">
                   <span className="text-muted-foreground">{icon}</span>

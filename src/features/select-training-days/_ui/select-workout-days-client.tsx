@@ -65,23 +65,33 @@ export function SelectWorkoutDaysClient({
     }
 
     setIsSubmitting(true)
-    try {
-      let existingEnrollment =
-        accessible && 'accessibleCourses' in accessible
-          ? (accessible.accessibleCourses.find(
-              (entry: PaidAccessState['accessibleCourses'][number]) =>
-                entry.enrollment.courseId === courseId
-            ) ?? null)
-          : null
 
+    let existingEnrollment: PaidAccessState['accessibleCourses'][number] | null =
+      null
+    if (accessible && 'accessibleCourses' in accessible) {
+      existingEnrollment =
+        accessible.accessibleCourses.find(
+          (entry: PaidAccessState['accessibleCourses'][number]) =>
+            entry.enrollment.courseId === courseId
+        ) ?? null
+    }
+
+    try {
       if (!existingEnrollment) {
         const refreshed = await accessibleQuery.refetch()
         const refreshedData = refreshed.data as PaidAccessState | undefined
-        existingEnrollment =
-          refreshedData?.accessibleCourses.find(
-            (entry: PaidAccessState['accessibleCourses'][number]) =>
-              entry.enrollment.courseId === courseId
-          ) ?? null
+        if (refreshedData) {
+          if ('accessibleCourses' in refreshedData) {
+            const found = refreshedData.accessibleCourses.find(
+              (entry: PaidAccessState['accessibleCourses'][number]) =>
+                entry.enrollment.courseId === courseId
+            )
+            existingEnrollment = null
+            if (found !== undefined) {
+              existingEnrollment = found
+            }
+          }
+        }
       }
 
       if (existingEnrollment) {
@@ -103,14 +113,12 @@ export function SelectWorkoutDaysClient({
       router.push(`/platform/day/${courseSlug}`)
     } catch (error) {
       console.error('Error handling workout days:', error)
-      // Проверяем, есть ли сообщение об ошибке
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'Не удалось создать запись на курс!'
-      toast.error(errorMessage)
-    } finally {
+      let errorMessage = 'Не удалось создать запись на курс!'
+      if (error instanceof Error) {
+        errorMessage = error.message
+      }
       setIsSubmitting(false)
+      toast.error(errorMessage)
     }
   }
 

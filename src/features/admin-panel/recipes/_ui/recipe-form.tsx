@@ -470,106 +470,106 @@ export function RecipeForm({
               <FormField
                 control={form.control}
                 name="mealCategories"
-                render={() => (
-                  <FormItem>
-                    <FormLabel>Прием пищи</FormLabel>
-                    <div className="space-y-2 rounded-md border p-3">
-                      {mealCategoryOptions.map(option => (
-                        <label
-                          key={option.value}
-                          className="flex items-center gap-2 text-sm"
-                        >
-                          <Checkbox
-                            checked={form.watch('mealCategories').includes(option.value)}
-                            onCheckedChange={checked => {
-                              const current = form.getValues('mealCategories')
-                              if (checked) {
-                                form.setValue('mealCategories', [...current, option.value])
-                              } else {
-                                form.setValue(
-                                  'mealCategories',
-                                  current.filter(item => item !== option.value)
-                                )
-                              }
-                            }}
-                          />
-                          {option.label}
-                        </label>
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const current = field.value ?? []
+
+                  return (
+                    <FormItem>
+                      <FormLabel>Прием пищи</FormLabel>
+                      <div className="space-y-2 rounded-md border p-3">
+                        {mealCategoryOptions.map(option => (
+                          <label
+                            key={option.value}
+                            className="flex items-center gap-2 text-sm"
+                          >
+                            <Checkbox
+                              checked={current.includes(option.value)}
+                              onCheckedChange={checked => {
+                                if (checked) {
+                                  field.onChange([...current, option.value])
+                                } else {
+                                  field.onChange(current.filter(item => item !== option.value))
+                                }
+                              }}
+                            />
+                            {option.label}
+                          </label>
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )
+                }}
               />
 
               <FormField
                 control={form.control}
                 name="diets"
-                render={() => (
-                  <FormItem>
-                    <FormLabel>Диета</FormLabel>
-                    <div className="space-y-2 rounded-md border p-3">
-                      {dietOptions.map(option => (
-                        <label
-                          key={option.value}
-                          className="flex items-center gap-2 text-sm"
-                        >
-                          <Checkbox
-                            checked={form.watch('diets').includes(option.value)}
-                            onCheckedChange={checked => {
-                              const current = form.getValues('diets')
-                              if (checked) {
-                                form.setValue('diets', [...current, option.value])
-                              } else {
-                                form.setValue(
-                                  'diets',
-                                  current.filter(item => item !== option.value)
-                                )
-                              }
-                            }}
-                          />
-                          {option.label}
-                        </label>
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const current = field.value ?? []
+
+                  return (
+                    <FormItem>
+                      <FormLabel>Диета</FormLabel>
+                      <div className="space-y-2 rounded-md border p-3">
+                        {dietOptions.map(option => (
+                          <label
+                            key={option.value}
+                            className="flex items-center gap-2 text-sm"
+                          >
+                            <Checkbox
+                              checked={current.includes(option.value)}
+                              onCheckedChange={checked => {
+                                if (checked) {
+                                  field.onChange([...current, option.value])
+                                } else {
+                                  field.onChange(current.filter(item => item !== option.value))
+                                }
+                              }}
+                            />
+                            {option.label}
+                          </label>
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )
+                }}
               />
 
               <FormField
                 control={form.control}
                 name="ingredientTags"
-                render={() => (
-                  <FormItem>
-                    <FormLabel>Ингредиенты (теги)</FormLabel>
-                    <div className="space-y-2 rounded-md border p-3">
-                      {ingredientTagOptions.map(option => (
-                        <label
-                          key={option.value}
-                          className="flex items-center gap-2 text-sm"
-                        >
-                          <Checkbox
-                            checked={form.watch('ingredientTags').includes(option.value)}
-                            onCheckedChange={checked => {
-                              const current = form.getValues('ingredientTags')
-                              if (checked) {
-                                form.setValue('ingredientTags', [...current, option.value])
-                              } else {
-                                form.setValue(
-                                  'ingredientTags',
-                                  current.filter(item => item !== option.value)
-                                )
-                              }
-                            }}
-                          />
-                          {option.label}
-                        </label>
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const current = field.value ?? []
+
+                  return (
+                    <FormItem>
+                      <FormLabel>Ингредиенты (теги)</FormLabel>
+                      <div className="space-y-2 rounded-md border p-3">
+                        {ingredientTagOptions.map(option => (
+                          <label
+                            key={option.value}
+                            className="flex items-center gap-2 text-sm"
+                          >
+                            <Checkbox
+                              checked={current.includes(option.value)}
+                              onCheckedChange={checked => {
+                                if (checked) {
+                                  field.onChange([...current, option.value])
+                                } else {
+                                  field.onChange(current.filter(item => item !== option.value))
+                                }
+                              }}
+                            />
+                            {option.label}
+                          </label>
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )
+                }}
               />
             </div>
 

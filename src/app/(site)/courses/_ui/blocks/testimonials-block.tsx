@@ -35,6 +35,7 @@ export function TestimonialsBlockComponent({
   }
 
   const testimonials = items.map(item => ({
+    key: `${item.author || 'Участница курса'}-${item.authorRole || 'Участница программы'}-${item.avatar || ''}-${item.text}`,
     content: item.text,
     name: item.author || 'Участница курса',
     role: item.authorRole || 'Участница программы',
@@ -85,8 +86,8 @@ export function TestimonialsBlockComponent({
 
         <div className="relative">
           <CarouselContent className="md:-ml-6">
-            {testimonials.map((testimonial, index) => (
-              <CarouselItem key={index} className="md:pl-6">
+            {testimonials.map(testimonial => (
+              <CarouselItem key={testimonial.key} className="md:pl-6">
                 <Card className="rounded-3xl border gap-0">
                   <div className="pl-5 md:pl-6">
                     <Avatar className="h-12 w-12 bg-slate-300">

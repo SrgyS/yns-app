@@ -79,14 +79,16 @@ export function WorkoutPickerDialog({
       }
     )
 
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const selectionScope = `${open}-${debouncedSearch}-${sectionFilter}`
+  const [selection, setSelection] = useState<{ scope: string; id: string | null }>({
+    scope: selectionScope,
+    id: null,
+  })
+  const selectedId = selection.scope === selectionScope ? selection.id : null
+
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const isFetchingMore = workoutsQuery.isFetching && !workoutsQuery.isLoading
-
-  useEffect(() => {
-    setSelectedId(null)
-  }, [open, debouncedSearch, sectionFilter])
 
   const workouts = useMemo(() => {
     const seen = new Set<string>()
@@ -195,7 +197,7 @@ export function WorkoutPickerDialog({
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => setSelectedId(item.id)}
+                  onClick={() => setSelection({ scope: selectionScope, id: item.id })}
                   className={cn(
                     'flex w-full items-center gap-3 border-b px-4 py-3 text-left transition-colors hover:bg-muted/70',
                     selectedId === item.id && 'bg-muted'

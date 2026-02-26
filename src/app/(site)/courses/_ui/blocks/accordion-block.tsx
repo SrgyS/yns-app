@@ -16,11 +16,11 @@ export function AccordionBlockComponent({ title, items }: AccordionBlock) {
         <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
       )}
       <Accordion type="single" collapsible className="w-full">
-        {items.map((item, index) => (
+        {items.map(item => (
           <AccordionItem
             className="border-b-primary/30"
-            key={`${item.title}-${index}`}
-            value={`item-${index}`}
+            key={`${item.title}-${item.content}`}
+            value={`${item.title}-${item.content}`}
           >
             <AccordionTrigger className="text-sm md:text-base">
               {item.title}
