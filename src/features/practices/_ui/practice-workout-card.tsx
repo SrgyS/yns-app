@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Timer } from 'lucide-react'
 import { WorkoutSection } from '@prisma/client'
 
@@ -42,6 +43,8 @@ export function PracticeWorkoutCard({
   workout,
   favoriteControls,
 }: PracticeWorkoutCardProps) {
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false)
+
   const {
     isFavorite: checkIsFavorite,
     toggleFavorite,
@@ -81,7 +84,7 @@ export function PracticeWorkoutCard({
   const sectionLabel = SECTION_LABELS[workout.section] ?? 'Тренировка'
 
   const playerOptions = {
-    size: { height: 260 },
+    size: { width: '100%', height: '100%' },
     autoplay: false,
   }
 
@@ -90,14 +93,24 @@ export function PracticeWorkoutCard({
       <CardContent className="space-y-4 p-0">
         <p>{sectionLabel}</p>
         {workout.videoId ? (
-          <div className="relative h-[260px]">
+          <div className="relative w-full aspect-video">
             <KinescopePlayer
               key={workout.id}
               videoId={workout.videoId}
               options={playerOptions}
+              onPlay={() => setIsVideoPlaying(true)}
+              onPause={() => setIsVideoPlaying(false)}
+              onEnded={() => setIsVideoPlaying(false)}
               className="h-full w-full overflow-hidden rounded-xl"
             />
-            <div className="absolute inset-x-0 top-0 flex items-center justify-between p-2 sm:p-3">
+            <div
+              className={cn(
+                'absolute inset-x-0 top-0 flex items-center justify-between p-2 sm:p-3 transition-opacity duration-200',
+                isVideoPlaying
+                  ? 'pointer-events-none opacity-0'
+                  : 'pointer-events-auto opacity-100'
+              )}
+            >
               {durationMinutes && (
                 <Badge
                   variant="secondary"

@@ -60,7 +60,7 @@ export function ExerciseCard({
   } = useWorkoutFavorites({ enabled: Boolean(session?.user?.id) })
 
   const playerOptions = {
-    size: { height: 260 },
+    size: { width: '100%', height: '100%' },
     autoplay: false,
   }
 
@@ -146,7 +146,7 @@ export function ExerciseCard({
       <CardContent className="px-3 sm:px-4">
         <h3 className="text-base font-medium sm:text-lg mb-1">{title}</h3>
         {workout?.videoId && (
-          <div className="relative h-[260px]">
+          <div className="relative w-full aspect-video">
             <KinescopePlayer
               key={`${userDailyPlanId}-${workout.videoId}`}
               ref={playerRef}
