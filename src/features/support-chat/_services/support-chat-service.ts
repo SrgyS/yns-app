@@ -57,6 +57,19 @@ type MarkDialogReadInput = {
   lastReadMessageId: string
 }
 
+type EditMessageInput = {
+  actor: SupportChatActor
+  dialogId: string
+  messageId: string
+  text: string
+}
+
+type DeleteMessageInput = {
+  actor: SupportChatActor
+  dialogId: string
+  messageId: string
+}
+
 type CreateDialogInput = {
   actor: SupportChatActor
   topic?: string
@@ -78,6 +91,8 @@ type UploadedChatAttachment = {
   type: string
   sizeBytes: number
 }
+
+type SupportChatParticipantType = Extract<SupportReadType, 'USER' | 'STAFF'>
 
 @injectable()
 export class SupportChatService {
@@ -114,7 +129,7 @@ export class SupportChatService {
 
     const hasNextPage = rows.length > limit
     const pageItems = hasNextPage ? rows.slice(0, limit) : rows
-    const nextCursor = hasNextPage ? pageItems[pageItems.length - 1]?.id : undefined
+    const nextCursor = hasNextPage ? pageItems.at(-1)?.id : undefined
 
     const items = await Promise.all(
       pageItems.map(async dialog => {
@@ -127,18 +142,28 @@ export class SupportChatService {
               createdAt: 'desc',
             },
             select: {
+              id: true,
+              senderType: true,
               text: true,
               createdAt: true,
+              deletedAt: true,
             },
           }),
           this.readService.countUnreadForUser(dialog.id, input.actor.id),
         ])
 
+        const isUnanswered = await this.resolveIsUnansweredDialog({
+          actor: input.actor,
+          dialogId: dialog.id,
+          lastMessage,
+        })
+
         return {
           dialogId: dialog.id,
           title: 'Диалог с поддержкой',
-          lastMessagePreview: lastMessage?.text ?? null,
+          lastMessagePreview: lastMessage?.deletedAt ? 'Сообщение удалено' : lastMessage?.text ?? null,
           unreadCount,
+          isUnanswered,
           updatedAt: dialog.updatedAt,
         }
       })
@@ -160,18 +185,27 @@ export class SupportChatService {
       limit,
     })
 
-    const readerType = this.resolveReaderType(input.actor.role)
+    const readerType = this.resolveParticipantType(input.actor.role)
     const readState = await this.readStateRepository.findByDialogAndReader(
       dialog.id,
       readerType,
       input.actor.id
     )
+    const counterpartyReadAt = await this.getCounterpartyReadAt({
+      actor: input.actor,
+      dialogId: dialog.id,
+      dialogUserId: dialog.userId,
+    })
 
     const items = page.items.map(item => {
       const readAt =
         readState?.readAt && item.createdAt <= readState.readAt
           ? readState.readAt
           : null
+      const isOwnMessage = this.isOwnMessage(item, input.actor)
+      const isUnreadByCounterparty =
+        !counterpartyReadAt || item.createdAt > counterpartyReadAt
+      const canMutate = isOwnMessage && !item.deletedAt && isUnreadByCounterparty
 
       return {
         id: item.id,
@@ -179,6 +213,11 @@ export class SupportChatService {
         senderType: item.senderType,
         text: item.text,
         attachments: item.attachments,
+        editedAt: item.editedAt,
+        deletedAt: item.deletedAt,
+        deletedBy: item.deletedBy,
+        canEdit: canMutate,
+        canDelete: canMutate,
         createdAt: item.createdAt,
         readAt,
       }
@@ -222,10 +261,29 @@ export class SupportChatService {
 
     const mapped = await Promise.all(
       pageItems.map(async dialog => {
-        const [unreadCount, hasUnansweredIncoming] = await Promise.all([
+        const [unreadCount, lastMessage] = await Promise.all([
           this.readService.countUnreadForStaff(dialog.id, input.actor.id),
-          this.readService.hasUnansweredIncoming(dialog.id),
+          dbClient.chatMessage.findFirst({
+            where: {
+              dialogId: dialog.id,
+            },
+            orderBy: {
+              createdAt: 'desc',
+            },
+            select: {
+              id: true,
+              senderType: true,
+              text: true,
+              createdAt: true,
+              deletedAt: true,
+            },
+          }),
         ])
+        const isUnanswered = await this.resolveIsUnansweredDialog({
+          actor: input.actor,
+          dialogId: dialog.id,
+          lastMessage,
+        })
 
         return {
           dialogId: dialog.id,
@@ -234,7 +292,9 @@ export class SupportChatService {
             name: dialog.user.name,
           },
           unreadCount,
-          hasUnansweredIncoming,
+          hasUnansweredIncoming: isUnanswered,
+          isUnanswered,
+          lastMessagePreview: lastMessage?.deletedAt ? 'Сообщение удалено' : lastMessage?.text ?? null,
           lastMessageAt: dialog.lastMessageAt,
         }
       })
@@ -248,7 +308,7 @@ export class SupportChatService {
       return item.hasUnansweredIncoming === input.hasUnansweredIncoming
     })
 
-    const nextCursor = hasNextPage ? pageItems[pageItems.length - 1]?.id : undefined
+    const nextCursor = hasNextPage ? pageItems.at(-1)?.id : undefined
 
     return {
       items,
@@ -275,9 +335,9 @@ export class SupportChatService {
     const now = new Date()
     const message = await this.messageRepository.create({
       dialogId: dialog.id,
-      senderType: this.resolveSenderType(input.actor.role),
+      senderType: this.resolveParticipantType(input.actor.role),
       senderUserId: input.actor.role === 'USER' ? input.actor.id : null,
-      senderStaffId: input.actor.role !== 'USER' ? input.actor.id : null,
+      senderStaffId: input.actor.role === 'USER' ? null : input.actor.id,
       text: normalizedText ?? null,
       attachments: uploadedAttachments as Prisma.InputJsonValue,
     })
@@ -358,7 +418,7 @@ export class SupportChatService {
       throw createSupportChatError('MESSAGE_NOT_FOUND')
     }
 
-    const readerType = this.resolveReaderType(input.actor.role)
+    const readerType = this.resolveParticipantType(input.actor.role)
     const readState = await this.readStateRepository.upsert({
       dialogId: dialog.id,
       readerType,
@@ -391,6 +451,212 @@ export class SupportChatService {
     })
 
     return result
+  }
+
+  async getUnansweredDialogsCount(input: { actor: SupportChatActor }) {
+    const actor = input.actor
+
+    if (actor.role === 'USER') {
+      const rows = await dbClient.$queryRaw<{ count: bigint }[]>(Prisma.sql`
+        WITH last_messages AS (
+          SELECT DISTINCT ON ("dialogId")
+            "dialogId",
+            "senderType",
+            "createdAt"
+          FROM "ChatMessage"
+          ORDER BY "dialogId", "createdAt" DESC
+        ),
+        user_reads AS (
+          SELECT
+            "dialogId",
+            "readAt"
+          FROM "SupportReadState"
+          WHERE "readerType" = 'USER'
+            AND "readerUserId" = ${actor.id}
+        )
+        SELECT COUNT(*)::bigint AS count
+        FROM "ChatDialog" d
+        JOIN last_messages lm
+          ON lm."dialogId" = d."id"
+        LEFT JOIN user_reads ur
+          ON ur."dialogId" = d."id"
+        WHERE d."userId" = ${actor.id}
+          AND lm."senderType" = 'STAFF'
+          AND (ur."readAt" IS NULL OR lm."createdAt" > ur."readAt")
+      `)
+      const countRow = rows[0]
+
+      return {
+        count: Number(countRow?.count ?? 0n),
+      }
+    }
+
+    await this.ensureStaffAccess(actor)
+
+    const rows = await dbClient.$queryRaw<{ count: bigint }[]>(Prisma.sql`
+      WITH last_messages AS (
+        SELECT DISTINCT ON ("dialogId")
+          "dialogId",
+          "senderType",
+          "createdAt"
+        FROM "ChatMessage"
+        ORDER BY "dialogId", "createdAt" DESC
+      ),
+      staff_reads AS (
+        SELECT
+          "dialogId",
+          "readAt"
+        FROM "SupportReadState"
+        WHERE "readerType" = 'STAFF'
+          AND "readerUserId" = ${actor.id}
+      )
+      SELECT COUNT(*)::bigint AS count
+      FROM "ChatDialog" d
+      JOIN last_messages lm
+        ON lm."dialogId" = d."id"
+      LEFT JOIN staff_reads sr
+        ON sr."dialogId" = d."id"
+      WHERE lm."senderType" = 'USER'
+        AND (sr."readAt" IS NULL OR lm."createdAt" > sr."readAt")
+    `)
+    const countRow = rows[0]
+
+    return {
+      count: Number(countRow?.count ?? 0n),
+    }
+  }
+
+  async editMessage(input: EditMessageInput) {
+    const dialog = await this.assertDialogAccess(input.dialogId, input.actor)
+    const message = await dbClient.chatMessage.findFirst({
+      where: {
+        id: input.messageId,
+        dialogId: dialog.id,
+      },
+      select: {
+        id: true,
+        senderType: true,
+        senderUserId: true,
+        senderStaffId: true,
+        createdAt: true,
+        deletedAt: true,
+      },
+    })
+
+    if (!message) {
+      throw createSupportChatError('MESSAGE_NOT_FOUND')
+    }
+
+    if (message.deletedAt) {
+      throw createSupportChatError('MESSAGE_ALREADY_DELETED')
+    }
+
+    if (!this.isMessageAuthor(message, input.actor)) {
+      throw createSupportChatError('MESSAGE_ACTION_FORBIDDEN')
+    }
+
+    const isReadByCounterparty = await this.isMessageReadByCounterparty({
+      dialogId: dialog.id,
+      dialogUserId: dialog.userId,
+      senderType: message.senderType,
+      createdAt: message.createdAt,
+    })
+    if (isReadByCounterparty) {
+      throw createSupportChatError('MESSAGE_ALREADY_READ')
+    }
+
+    const editedAt = new Date()
+    const updated = await dbClient.chatMessage.update({
+      where: {
+        id: message.id,
+      },
+      data: {
+        text: input.text.trim(),
+        editedAt,
+      },
+      select: {
+        id: true,
+        dialogId: true,
+        text: true,
+        editedAt: true,
+      },
+    })
+
+    publishSupportChatEvent({
+      type: 'message.updated',
+      dialogId: dialog.id,
+      userId: dialog.userId,
+      occurredAt: editedAt.toISOString(),
+    })
+
+    return updated
+  }
+
+  async deleteMessage(input: DeleteMessageInput) {
+    const dialog = await this.assertDialogAccess(input.dialogId, input.actor)
+    const message = await dbClient.chatMessage.findFirst({
+      where: {
+        id: input.messageId,
+        dialogId: dialog.id,
+      },
+      select: {
+        id: true,
+        senderType: true,
+        senderUserId: true,
+        senderStaffId: true,
+        createdAt: true,
+        deletedAt: true,
+      },
+    })
+
+    if (!message) {
+      throw createSupportChatError('MESSAGE_NOT_FOUND')
+    }
+
+    if (message.deletedAt) {
+      throw createSupportChatError('MESSAGE_ALREADY_DELETED')
+    }
+
+    if (!this.isMessageAuthor(message, input.actor)) {
+      throw createSupportChatError('MESSAGE_ACTION_FORBIDDEN')
+    }
+
+    const isReadByCounterparty = await this.isMessageReadByCounterparty({
+      dialogId: dialog.id,
+      dialogUserId: dialog.userId,
+      senderType: message.senderType,
+      createdAt: message.createdAt,
+    })
+    if (isReadByCounterparty) {
+      throw createSupportChatError('MESSAGE_ALREADY_READ')
+    }
+
+    const deletedAt = new Date()
+    const updated = await dbClient.chatMessage.update({
+      where: {
+        id: message.id,
+      },
+      data: {
+        text: null,
+        deletedAt,
+        deletedBy: input.actor.id,
+      },
+      select: {
+        id: true,
+        dialogId: true,
+        deletedAt: true,
+        deletedBy: true,
+      },
+    })
+
+    publishSupportChatEvent({
+      type: 'message.updated',
+      dialogId: dialog.id,
+      userId: dialog.userId,
+      occurredAt: deletedAt.toISOString(),
+    })
+
+    return updated
   }
 
   async createDialog(input: CreateDialogInput) {
@@ -526,7 +792,7 @@ export class SupportChatService {
     throw createSupportChatError('DIALOG_ACCESS_DENIED')
   }
 
-  private resolveSenderType(role: ROLE): ChatMessageSenderType {
+  private resolveParticipantType(role: ROLE): SupportChatParticipantType {
     if (role === 'USER') {
       return 'USER'
     }
@@ -534,12 +800,139 @@ export class SupportChatService {
     return 'STAFF'
   }
 
-  private resolveReaderType(role: ROLE): SupportReadType {
-    if (role === 'USER') {
-      return 'USER'
+  private async resolveIsUnansweredDialog(input: {
+    actor: SupportChatActor
+    dialogId: string
+    lastMessage: {
+      id: string
+      senderType: ChatMessageSenderType
+      text: string | null
+      createdAt: Date
+      deletedAt: Date | null
+    } | null
+  }): Promise<boolean> {
+    if (!input.lastMessage) {
+      return false
     }
 
-    return 'STAFF'
+    if (input.actor.role === 'USER') {
+      if (input.lastMessage.senderType !== 'STAFF') {
+        return false
+      }
+
+      const readState = await this.readStateRepository.findByDialogAndReader(
+        input.dialogId,
+        'USER',
+        input.actor.id
+      )
+      if (!readState?.readAt) {
+        return true
+      }
+
+      return input.lastMessage.createdAt > readState.readAt
+    }
+
+    if (input.lastMessage.senderType !== 'USER') {
+      return false
+    }
+
+    const readState = await this.readStateRepository.findByDialogAndReader(
+      input.dialogId,
+      'STAFF',
+      input.actor.id
+    )
+    if (!readState?.readAt) {
+      return true
+    }
+
+    return input.lastMessage.createdAt > readState.readAt
+  }
+
+  private async getCounterpartyReadAt(input: {
+    actor: SupportChatActor
+    dialogId: string
+    dialogUserId: string
+  }): Promise<Date | null> {
+    if (input.actor.role === 'USER') {
+      const latestStaffRead = await dbClient.supportReadState.findFirst({
+        where: {
+          dialogId: input.dialogId,
+          readerType: 'STAFF',
+          readAt: {
+            not: null,
+          },
+        },
+        orderBy: {
+          readAt: 'desc',
+        },
+        select: {
+          readAt: true,
+        },
+      })
+
+      return latestStaffRead?.readAt ?? null
+    }
+
+    const userReadState = await this.readStateRepository.findByDialogAndReader(
+      input.dialogId,
+      'USER',
+      input.dialogUserId
+    )
+
+    return userReadState?.readAt ?? null
+  }
+
+  private isOwnMessage(
+    message: { senderType: ChatMessageSenderType; senderUserId: string | null; senderStaffId: string | null },
+    actor: SupportChatActor
+  ) {
+    return this.isMessageAuthor(message, actor)
+  }
+
+  private isMessageAuthor(
+    message: { senderType: ChatMessageSenderType; senderUserId: string | null; senderStaffId: string | null },
+    actor: SupportChatActor
+  ): boolean {
+    if (message.senderType === 'USER') {
+      return actor.role === 'USER' && message.senderUserId === actor.id
+    }
+
+    return actor.role !== 'USER' && message.senderStaffId === actor.id
+  }
+
+  private async isMessageReadByCounterparty(input: {
+    dialogId: string
+    dialogUserId: string
+    senderType: ChatMessageSenderType
+    createdAt: Date
+  }): Promise<boolean> {
+    if (input.senderType === 'USER') {
+      const supportReadState = await dbClient.supportReadState.findFirst({
+        where: {
+          dialogId: input.dialogId,
+          readerType: 'STAFF',
+          readAt: {
+            gte: input.createdAt,
+          },
+        },
+        select: {
+          id: true,
+        },
+      })
+
+      return Boolean(supportReadState)
+    }
+
+    const userReadState = await this.readStateRepository.findByDialogAndReader(
+      input.dialogId,
+      'USER',
+      input.dialogUserId
+    )
+    if (!userReadState?.readAt) {
+      return false
+    }
+
+    return userReadState.readAt >= input.createdAt
   }
 
   private async uploadAttachments(

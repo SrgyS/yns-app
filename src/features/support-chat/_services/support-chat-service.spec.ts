@@ -5,11 +5,16 @@ jest.mock('@/shared/lib/db', () => ({
     },
     chatMessage: {
       findFirst: jest.fn(),
+      update: jest.fn(),
+    },
+    supportReadState: {
+      findFirst: jest.fn(),
     },
     staffPermission: {
       findUnique: jest.fn(),
     },
     $transaction: jest.fn(),
+    $queryRaw: jest.fn(),
   },
 }))
 
@@ -35,6 +40,7 @@ import { dbClient } from '@/shared/lib/db'
 import { fileStorage } from '@/shared/lib/file-storage/file-storage'
 import { SupportChatService } from './support-chat-service'
 import { SupportChatDomainError } from '../_domain/errors'
+import { publishSupportChatEvent } from '../_integrations/support-chat-events'
 
 describe('SupportChatService', () => {
   const attachmentRepository = {
@@ -87,7 +93,11 @@ describe('SupportChatService', () => {
     readService.hasUnansweredIncoming.mockReset()
     notifier.notifyNewUserMessage.mockClear()
     ;(dbClient.chatMessage.findFirst as jest.Mock).mockReset()
+    ;(dbClient.chatMessage.update as jest.Mock).mockReset()
+    ;(dbClient.supportReadState.findFirst as jest.Mock).mockReset()
     ;(dbClient.staffPermission.findUnique as jest.Mock).mockReset()
+    ;(dbClient.$queryRaw as jest.Mock).mockReset()
+    ;(publishSupportChatEvent as jest.Mock).mockReset()
   })
 
   test('sendMessage rejects empty message without attachments', async () => {
@@ -247,5 +257,105 @@ describe('SupportChatService', () => {
       })
     )
     expect(result.message.id).toBe('message-1')
+  })
+
+  test('editMessage rejects when counterparty has already read message', async () => {
+    conversationRepository.findById.mockResolvedValue({
+      id: 'dialog-1',
+      userId: 'user-1',
+    })
+    ;(dbClient.chatMessage.findFirst as jest.Mock).mockResolvedValue({
+      id: 'message-1',
+      senderType: 'USER',
+      senderUserId: 'user-1',
+      senderStaffId: null,
+      createdAt: new Date('2026-02-26T10:00:00.000Z'),
+      deletedAt: null,
+    })
+    ;(dbClient.supportReadState.findFirst as jest.Mock).mockResolvedValue({
+      id: 'read-state-1',
+    })
+
+    await expect(
+      service.editMessage({
+        actor: { id: 'user-1', role: 'USER' },
+        dialogId: 'dialog-1',
+        messageId: 'message-1',
+        text: 'updated',
+      })
+    ).rejects.toMatchObject<Partial<SupportChatDomainError>>({
+      code: 'MESSAGE_ALREADY_READ',
+    })
+  })
+
+  test('deleteMessage soft deletes own unread message and publishes event', async () => {
+    conversationRepository.findById.mockResolvedValue({
+      id: 'dialog-1',
+      userId: 'user-1',
+    })
+    ;(dbClient.chatMessage.findFirst as jest.Mock).mockResolvedValue({
+      id: 'message-1',
+      senderType: 'USER',
+      senderUserId: 'user-1',
+      senderStaffId: null,
+      createdAt: new Date('2026-02-26T10:00:00.000Z'),
+      deletedAt: null,
+    })
+    ;(dbClient.supportReadState.findFirst as jest.Mock).mockResolvedValue(null)
+    ;(dbClient.chatMessage.update as jest.Mock).mockResolvedValue({
+      id: 'message-1',
+      dialogId: 'dialog-1',
+      deletedAt: new Date('2026-02-26T11:00:00.000Z'),
+      deletedBy: 'user-1',
+    })
+
+    const result = await service.deleteMessage({
+      actor: { id: 'user-1', role: 'USER' },
+      dialogId: 'dialog-1',
+      messageId: 'message-1',
+    })
+
+    expect(dbClient.chatMessage.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'message-1' },
+      })
+    )
+    expect(publishSupportChatEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'message.updated',
+        dialogId: 'dialog-1',
+        userId: 'user-1',
+      })
+    )
+    expect(result.deletedBy).toBe('user-1')
+  })
+
+  test('getUnansweredDialogsCount for user uses aggregated query result', async () => {
+    ;(dbClient.$queryRaw as jest.Mock).mockResolvedValue([{ count: 4n }])
+
+    const result = await service.getUnansweredDialogsCount({
+      actor: { id: 'user-1', role: 'USER' },
+    })
+
+    expect(dbClient.$queryRaw).toHaveBeenCalledTimes(1)
+    expect(result.count).toBe(4)
+  })
+
+  test('getUnansweredDialogsCount for staff checks permission and uses aggregated query', async () => {
+    ;(dbClient.staffPermission.findUnique as jest.Mock).mockResolvedValue({
+      canManageSupportChats: true,
+    })
+    ;(dbClient.$queryRaw as jest.Mock).mockResolvedValue([{ count: 2n }])
+
+    const result = await service.getUnansweredDialogsCount({
+      actor: { id: 'staff-1', role: 'STAFF' },
+    })
+
+    expect(dbClient.staffPermission.findUnique).toHaveBeenCalledWith({
+      where: { userId: 'staff-1' },
+      select: { canManageSupportChats: true },
+    })
+    expect(dbClient.$queryRaw).toHaveBeenCalledTimes(1)
+    expect(result.count).toBe(2)
   })
 })

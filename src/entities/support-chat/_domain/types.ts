@@ -20,6 +20,9 @@ export type ChatMessageEntity = {
   senderStaffId: string | null
   text: string | null
   attachments: unknown
+  editedAt: Date | null
+  deletedAt: Date | null
+  deletedBy: string | null
   createdAt: Date
 }
 

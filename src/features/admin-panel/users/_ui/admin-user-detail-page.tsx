@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type ComponentProps } from 'react'
 import { toast } from 'sonner'
 import { addDays, endOfDay, startOfDay } from 'date-fns'
 import { type DateRange } from 'react-day-picker'
@@ -200,6 +200,10 @@ type FreezeUserDialogProps = {
   disabled?: boolean
 }
 
+type FormSubmitEvent = Parameters<
+  NonNullable<ComponentProps<'form'>['onSubmit']>
+>[0]
+
 function FreezeUserDialog({
   userId,
   accessId,
@@ -234,7 +238,7 @@ function FreezeUserDialog({
     }
   }, [open])
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: FormSubmitEvent) => {
     event.preventDefault()
     if (!accessId || !dateRange?.from || !dateRange.to) {
       return

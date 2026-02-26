@@ -14,6 +14,7 @@ type SupportChatAttachmentInput = {
 }
 
 const SUPPORT_CHAT_LIMIT = 20
+type SupportChatDialogScope = 'user' | 'staff'
 
 export function useUserDialogs() {
   const query = supportChatApi.supportChat.userListDialogs.useInfiniteQuery(
@@ -69,14 +70,25 @@ export function useDialogMessages(dialogId?: string) {
   }
 }
 
-export function useSupportChatSse(dialogId?: string) {
+function useSupportChatEventsSse(
+  dialogId: string | undefined,
+  dialogScope: SupportChatDialogScope
+) {
   const utils = supportChatApi.useUtils()
 
   useEffect(() => {
     const eventSource = new EventSource('/api/support-chat/events')
 
     const invalidateDialogs = () => {
-      utils.supportChat.userListDialogs.invalidate().catch(() => undefined)
+      if (dialogScope === 'user') {
+        utils.supportChat.userListDialogs.invalidate().catch(() => undefined)
+      }
+
+      if (dialogScope === 'staff') {
+        utils.supportChat.staffListDialogs.invalidate().catch(() => undefined)
+      }
+
+      utils.supportChat.getUnansweredDialogsCount.invalidate().catch(() => undefined)
     }
 
     const invalidateMessages = () => {
@@ -102,18 +114,28 @@ export function useSupportChatSse(dialogId?: string) {
       invalidateDialogs()
       invalidateMessages()
     }
+    const handleMessageUpdated = () => {
+      invalidateDialogs()
+      invalidateMessages()
+    }
 
     eventSource.addEventListener('dialog.created', handleDialogCreated)
     eventSource.addEventListener('message.created', handleMessageCreated)
+    eventSource.addEventListener('message.updated', handleMessageUpdated)
     eventSource.addEventListener('read.updated', handleReadUpdated)
 
     return () => {
       eventSource.removeEventListener('dialog.created', handleDialogCreated)
       eventSource.removeEventListener('message.created', handleMessageCreated)
+      eventSource.removeEventListener('message.updated', handleMessageUpdated)
       eventSource.removeEventListener('read.updated', handleReadUpdated)
       eventSource.close()
     }
-  }, [dialogId, utils])
+  }, [dialogId, dialogScope, utils])
+}
+
+export function useSupportChatSse(dialogId?: string) {
+  useSupportChatEventsSse(dialogId, 'user')
 }
 
 export function useStaffDialogs(hasUnansweredIncoming?: boolean) {
@@ -145,50 +167,13 @@ export function useStaffDialogMessages(dialogId?: string) {
 }
 
 export function useSupportChatStaffSse(dialogId?: string) {
-  const utils = supportChatApi.useUtils()
+  useSupportChatEventsSse(dialogId, 'staff')
+}
 
-  useEffect(() => {
-    const eventSource = new EventSource('/api/support-chat/events')
-
-    const invalidateDialogs = () => {
-      utils.supportChat.staffListDialogs.invalidate().catch(() => undefined)
-    }
-
-    const invalidateMessages = () => {
-      if (!dialogId) {
-        return
-      }
-
-      utils.supportChat.userGetMessages
-        .invalidate({ dialogId })
-        .catch(() => undefined)
-    }
-
-    const handleMessageCreated = () => {
-      invalidateDialogs()
-      invalidateMessages()
-    }
-
-    const handleDialogCreated = () => {
-      invalidateDialogs()
-    }
-
-    const handleReadUpdated = () => {
-      invalidateDialogs()
-      invalidateMessages()
-    }
-
-    eventSource.addEventListener('dialog.created', handleDialogCreated)
-    eventSource.addEventListener('message.created', handleMessageCreated)
-    eventSource.addEventListener('read.updated', handleReadUpdated)
-
-    return () => {
-      eventSource.removeEventListener('dialog.created', handleDialogCreated)
-      eventSource.removeEventListener('message.created', handleMessageCreated)
-      eventSource.removeEventListener('read.updated', handleReadUpdated)
-      eventSource.close()
-    }
-  }, [dialogId, utils])
+export function useSupportChatUnansweredCount() {
+  return supportChatApi.supportChat.getUnansweredDialogsCount.useQuery(undefined, {
+    ...CACHE_SETTINGS.FREQUENT_UPDATE,
+  })
 }
 
 export function useSupportChatActions() {
@@ -197,12 +182,15 @@ export function useSupportChatActions() {
   const createDialogMutation = supportChatApi.supportChat.createDialog.useMutation({
     onSuccess: () => {
       utils.supportChat.userListDialogs.invalidate().catch(() => undefined)
+      utils.supportChat.getUnansweredDialogsCount.invalidate().catch(() => undefined)
     },
   })
 
   const sendMessageMutation = supportChatApi.supportChat.sendMessage.useMutation({
     onSuccess: (_result, variables) => {
       utils.supportChat.userListDialogs.invalidate().catch(() => undefined)
+      utils.supportChat.staffListDialogs.invalidate().catch(() => undefined)
+      utils.supportChat.getUnansweredDialogsCount.invalidate().catch(() => undefined)
       utils.supportChat.userGetMessages
         .invalidate({ dialogId: variables.dialogId })
         .catch(() => undefined)
@@ -212,6 +200,30 @@ export function useSupportChatActions() {
   const markReadMutation = supportChatApi.supportChat.markDialogRead.useMutation({
     onSuccess: (_result, variables) => {
       utils.supportChat.userListDialogs.invalidate().catch(() => undefined)
+      utils.supportChat.staffListDialogs.invalidate().catch(() => undefined)
+      utils.supportChat.getUnansweredDialogsCount.invalidate().catch(() => undefined)
+      utils.supportChat.userGetMessages
+        .invalidate({ dialogId: variables.dialogId })
+        .catch(() => undefined)
+    },
+  })
+
+  const editMessageMutation = supportChatApi.supportChat.editMessage.useMutation({
+    onSuccess: (_result, variables) => {
+      utils.supportChat.userListDialogs.invalidate().catch(() => undefined)
+      utils.supportChat.staffListDialogs.invalidate().catch(() => undefined)
+      utils.supportChat.getUnansweredDialogsCount.invalidate().catch(() => undefined)
+      utils.supportChat.userGetMessages
+        .invalidate({ dialogId: variables.dialogId })
+        .catch(() => undefined)
+    },
+  })
+
+  const deleteMessageMutation = supportChatApi.supportChat.deleteMessage.useMutation({
+    onSuccess: (_result, variables) => {
+      utils.supportChat.userListDialogs.invalidate().catch(() => undefined)
+      utils.supportChat.staffListDialogs.invalidate().catch(() => undefined)
+      utils.supportChat.getUnansweredDialogsCount.invalidate().catch(() => undefined)
       utils.supportChat.userGetMessages
         .invalidate({ dialogId: variables.dialogId })
         .catch(() => undefined)
@@ -241,13 +253,32 @@ export function useSupportChatActions() {
     return await markReadMutation.mutateAsync(params)
   }
 
+  const editMessage = async (params: {
+    dialogId: string
+    messageId: string
+    text: string
+  }) => {
+    return await editMessageMutation.mutateAsync(params)
+  }
+
+  const deleteMessage = async (params: {
+    dialogId: string
+    messageId: string
+  }) => {
+    return await deleteMessageMutation.mutateAsync(params)
+  }
+
   return {
     createDialog,
     sendMessage,
     markDialogRead,
+    editMessage,
+    deleteMessage,
     isCreatingDialog: createDialogMutation.isPending,
     isSendingMessage: sendMessageMutation.isPending,
     isMarkingRead: markReadMutation.isPending,
+    isEditingMessage: editMessageMutation.isPending,
+    isDeletingMessage: deleteMessageMutation.isPending,
   }
 }
 

@@ -25,6 +25,7 @@ const ALLOWED_SSE_EVENTS = new Set<string>([
   'heartbeat',
   'dialog.created',
   'message.created',
+  'message.updated',
   'read.updated',
 ])
 

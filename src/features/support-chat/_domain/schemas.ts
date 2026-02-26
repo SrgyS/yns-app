@@ -42,6 +42,17 @@ export const markDialogReadInputSchema = z.object({
   lastReadMessageId: z.string().min(1),
 })
 
+export const editMessageInputSchema = z.object({
+  dialogId: z.string().min(1),
+  messageId: z.string().min(1),
+  text: z.string().trim().min(1).max(4000),
+})
+
+export const deleteMessageInputSchema = z.object({
+  dialogId: z.string().min(1),
+  messageId: z.string().min(1),
+})
+
 export const createDialogInputSchema = z
   .object({
     topic: z.string().trim().max(200).optional(),

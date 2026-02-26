@@ -565,6 +565,9 @@ model ChatMessage {
   text         String?
   attachments  Json?
   attachmentItems ChatAttachment[]   @relation("ChatMessageAttachments")
+  editedAt     DateTime?
+  deletedAt    DateTime?
+  deletedBy    String?
   createdAt    DateTime                 @default(now())
 
   @@index([dialogId, createdAt])

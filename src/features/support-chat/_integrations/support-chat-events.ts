@@ -1,4 +1,8 @@
-type SupportChatEventType = 'dialog.created' | 'message.created' | 'read.updated'
+type SupportChatEventType =
+  | 'dialog.created'
+  | 'message.created'
+  | 'message.updated'
+  | 'read.updated'
 
 export type SupportChatEvent = {
   type: SupportChatEventType

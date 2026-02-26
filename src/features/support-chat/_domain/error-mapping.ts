@@ -14,7 +14,8 @@ export const mapSupportChatDomainErrorToTrpc = (
 
   if (
     error.code === 'DIALOG_ACCESS_DENIED' ||
-    error.code === 'STAFF_PERMISSION_DENIED'
+    error.code === 'STAFF_PERMISSION_DENIED' ||
+    error.code === 'MESSAGE_ACTION_FORBIDDEN'
   ) {
     return new TRPCError({
       code: 'FORBIDDEN',
@@ -26,6 +27,13 @@ export const mapSupportChatDomainErrorToTrpc = (
     return new TRPCError({
       code: 'BAD_REQUEST',
       message: 'Некорректное сообщение или вложение',
+    })
+  }
+
+  if (error.code === 'MESSAGE_ALREADY_READ' || error.code === 'MESSAGE_ALREADY_DELETED') {
+    return new TRPCError({
+      code: 'BAD_REQUEST',
+      message: 'Сообщение уже нельзя изменить',
     })
   }
 

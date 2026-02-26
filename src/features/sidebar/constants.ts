@@ -43,5 +43,6 @@ export const adminNavItems = [
     title: 'Support чат',
     url: '/admin/support-chat',
     icon: MessageCircle,
+    badgeKey: 'support-chat-unanswered',
   },
 ]

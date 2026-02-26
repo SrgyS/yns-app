@@ -96,6 +96,9 @@ export class ChatMessageRepository {
     senderStaffId: string | null
     text: string | null
     attachments: unknown
+    editedAt: Date | null
+    deletedAt: Date | null
+    deletedBy: string | null
     createdAt: Date
   }): ChatMessageEntity {
     return {
@@ -106,6 +109,9 @@ export class ChatMessageRepository {
       senderStaffId: record.senderStaffId,
       text: record.text,
       attachments: record.attachments,
+      editedAt: record.editedAt,
+      deletedAt: record.deletedAt,
+      deletedBy: record.deletedBy,
       createdAt: record.createdAt,
     }
   }
