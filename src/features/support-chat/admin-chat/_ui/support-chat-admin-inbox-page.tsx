@@ -486,6 +486,10 @@ function SupportChatAdminConversationCard({
   isSubmitting,
   isSubmitDisabled,
 }: Readonly<SupportChatAdminConversationCardProps>) {
+  if (!selectedDialog) {
+    return null
+  }
+
   const selectedUserProfile = selectedDialog
     ? {
         email: '',
@@ -494,7 +498,7 @@ function SupportChatAdminConversationCard({
       }
     : null
 
-  const title = selectedDialog ? (
+  const title = (
     <Link
       href={`/admin/users/${selectedDialog.user.id}`}
       className="inline-flex max-w-full items-center gap-2 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -507,13 +511,11 @@ function SupportChatAdminConversationCard({
         {selectedDialog.user.name ?? selectedDialog.user.id}
       </span>
     </Link>
-  ) : (
-    'Выберите диалог'
   )
 
   return (
     <SupportChatConversationCard
-      cardClassName={`h-full gap-2 min-w-0 py-2 overflow-hidden ${showMobileChat ? 'flex' : 'hidden lg:flex'} flex-col border-none`}
+      cardClassName={`max-w-[800px] h-full gap-2 min-w-0 py-2 overflow-hidden ${showMobileChat ? 'flex' : 'hidden lg:flex'} flex-col border-none`}
       headerClassName="px-1"
       title={title}
       backButton={
@@ -526,13 +528,13 @@ function SupportChatAdminConversationCard({
             }
           : undefined
       }
-      hasMoreMessages={selectedDialog ? hasMoreMessages : false}
+      hasMoreMessages={hasMoreMessages}
       isFetchingMoreMessages={isFetchingMoreMessages}
       onFetchMoreMessages={fetchMoreMessages}
       messages={messages}
-      selectedDialogKey={selectedDialog?.dialogId}
+      selectedDialogKey={selectedDialog.dialogId}
       isLoadingMessages={isMessagesLoading}
-      emptyStateText={selectedDialog ? 'Нет сообщений в диалоге.' : 'Выберите диалог'}
+      emptyStateText="Нет сообщений в диалоге."
       editingMessageId={editingMessageId}
       editingText={editingText}
       isEditingMessage={isEditingMessage}
