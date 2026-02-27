@@ -79,7 +79,7 @@ export function SupportChatUserPage() {
     }
 
     const textPayload = hasText ? trimmedMessage : undefined
-    const initialMessageText = hasText ? trimmedMessage : 'Вложение без текста'
+    const initialMessageText = hasText ? trimmedMessage : ''
 
     try {
       const attachments = await toSupportChatAttachments(files)

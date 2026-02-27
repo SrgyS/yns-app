@@ -12,7 +12,6 @@ import {
   Trash2,
 } from 'lucide-react'
 
-import { parseStoredSupportChatAttachments } from '../_domain/attachment-schema'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
@@ -433,16 +432,8 @@ function SupportChatMessageBubble({
 }: Readonly<SupportChatMessageBubbleProps>) {
   const isOutgoing = item.senderType === outgoingSenderType
   const isEditing = editingMessageId === item.id
-  const hasAttachments =
-    parseStoredSupportChatAttachments(item.attachments).length > 0
   const hasText = Boolean(item.text && item.text.trim().length > 0)
   const shouldRenderTextBubble = isEditing || Boolean(item.deletedAt) || hasText
-  const shouldInlineMeta =
-    shouldRenderTextBubble &&
-    !isEditing &&
-    !item.deletedAt &&
-    !hasAttachments &&
-    isSingleLineMessage(item.text)
   const containerClass = isOutgoing ? 'justify-end' : 'justify-start'
   const bubbleClass = isOutgoing
     ? 'bg-primary text-primary-foreground'
@@ -457,7 +448,7 @@ function SupportChatMessageBubble({
         />
         {shouldRenderTextBubble ? (
           <div
-            className={`text-fluid-sm relative min-w-0 rounded-2xl px-3 py-2 ${bubbleClass} ${shouldInlineMeta ? 'pr-24 pb-1' : ''}`}
+            className={`text-fluid-sm min-w-0 rounded-2xl px-3 py-2 ${bubbleClass}`}
           >
             <SupportChatMessageBubbleContent
               item={item}
@@ -471,7 +462,6 @@ function SupportChatMessageBubble({
             <SupportChatMessageMeta
               item={item}
               isOutgoing={isOutgoing}
-              isInline={shouldInlineMeta}
               isDeletingMessage={isDeletingMessage}
               onStartEdit={onStartEdit}
               onDelete={onDelete}
@@ -482,7 +472,6 @@ function SupportChatMessageBubble({
             <SupportChatMessageMeta
               item={item}
               isOutgoing={isOutgoing}
-              isInline={false}
               isDeletingMessage={isDeletingMessage}
               onStartEdit={onStartEdit}
               onDelete={onDelete}
@@ -557,7 +546,6 @@ function SupportChatMessageBubbleContent({
 type SupportChatMessageMetaProps = {
   item: SupportChatMessageItem
   isOutgoing: boolean
-  isInline: boolean
   isDeletingMessage: boolean
   onStartEdit: (messageId: string, text: string | null) => void
   onDelete: (messageId: string) => void
@@ -566,7 +554,6 @@ type SupportChatMessageMetaProps = {
 function SupportChatMessageMeta({
   item,
   isOutgoing,
-  isInline,
   isDeletingMessage,
   onStartEdit,
   onDelete,
@@ -574,15 +561,12 @@ function SupportChatMessageMeta({
   const metaText = item.editedAt
     ? `изменено ${formatMessageTime(item.editedAt)}`
     : formatMessageTime(item.createdAt)
-  const wrapperClass = isInline
-    ? 'absolute bottom-1 right-2 flex items-end gap-1'
-    : 'mt-1 flex items-end justify-end gap-1'
 
   return (
-    <div className={wrapperClass}>
+    <div className="mt-1 flex items-end justify-end gap-1">
       <div className="flex items-center gap-1 text-[11px] leading-none opacity-75">
         <p className={item.editedAt ? 'italic' : ''}>{metaText}</p>
-        {isOutgoing && item.readAt ? (
+        {isOutgoing && isReadByCounterparty(item) ? (
           <CheckCheck className="h-3 w-3 opacity-80" />
         ) : null}
       </div>
@@ -664,27 +648,18 @@ function isSameCalendarDate(left: string, right: string) {
   )
 }
 
-function isSingleLineMessage(text: string | null) {
-  if (!text) {
-    return false
-  }
-
-  const normalized = text.trim()
-  if (normalized.length === 0) {
-    return false
-  }
-
-  if (normalized.includes('\n')) {
-    return false
-  }
-
-  return normalized.length <= 22
-}
-
 function formatMessageDate(value: string) {
   return dateFormatter.format(new Date(value))
 }
 
 function formatMessageTime(value: string) {
   return timeFormatter.format(new Date(value))
+}
+
+function isReadByCounterparty(item: SupportChatMessageItem) {
+  if (item.deletedAt) {
+    return false
+  }
+
+  return !item.canEdit && !item.canDelete
 }

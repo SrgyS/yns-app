@@ -29,6 +29,14 @@ const isPdfAttachment = (attachment: StoredSupportChatAttachment) => {
   return attachment.type === 'application/pdf'
 }
 
+const isTextAttachment = (attachment: StoredSupportChatAttachment) => {
+  return (
+    attachment.type.startsWith('text/') ||
+    attachment.type === 'application/json' ||
+    attachment.type === 'application/xml'
+  )
+}
+
 const formatAttachmentSize = (sizeBytes: number) => {
   if (sizeBytes >= 1024 * 1024) {
     return `${(sizeBytes / (1024 * 1024)).toFixed(1)} MB`
@@ -95,8 +103,30 @@ const renderAttachmentPreview = (
           title={attachment.name}
           className="h-40 w-full rounded-md border border-border/60"
         />
+        <a
+          href={attachmentUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="absolute inset-0"
+          aria-label={`Открыть ${attachment.name}`}
+        />
         <span className={sizeBadgeClassName}>{sizeLabel}</span>
       </div>
+    )
+  }
+
+  if (isTextAttachment(attachment)) {
+    return (
+      <a
+        href={attachmentUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="relative flex min-h-16 items-center rounded-md border border-border/60 px-3 py-2"
+      >
+        <FileText className="h-4 w-4" />
+        <span className="ml-2 truncate text-xs">Текстовый документ</span>
+        <span className={sizeBadgeClassName}>{sizeLabel}</span>
+      </a>
     )
   }
 
