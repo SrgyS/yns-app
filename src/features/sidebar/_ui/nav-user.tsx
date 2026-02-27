@@ -8,7 +8,7 @@ import {
 } from '@/shared/ui/sidebar'
 import Link from 'next/link'
 
-export function NavUser({ user }: { user: SharedUser }) {
+export function NavUser({ user }: Readonly<{ user: SharedUser }>) {
   const profile: Profile = {
     email: user.email ?? '',
     name: user.name,

@@ -12,7 +12,7 @@
 
 ## Настройки кеширования
 
-Настройки кеширования определены в файле `src/lib/cache/cache-constants.ts`.
+Настройки кеширования определены в файле `src/shared/lib/cache/cache-constants.ts`.
 
 ## Инвалидация кеша
 
@@ -24,4 +24,4 @@
 
 ## Группы кешей
 
-Группы связанных кешей определены в файле `src/lib/cache/cache-invalidation.ts`.
+Группы связанных кешей определены в файле `src/shared/lib/cache/cache-invalidation.ts`.
