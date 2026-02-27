@@ -1,7 +1,6 @@
 'use client'
 
 import {
-  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -267,6 +266,11 @@ export function SupportChatAdminInboxPage() {
         hasMoreMessages={messagesQuery.hasNextPage}
         isFetchingMoreMessages={messagesQuery.isFetchingNextPage}
         fetchMoreMessages={() => messagesQuery.fetchNextPage()}
+        isMessagesLoading={
+          Boolean(selectedDialogId) &&
+          (messagesQuery.isPending || messagesQuery.isFetching) &&
+          messages.length === 0
+        }
         editingMessageId={editingMessageId}
         editingText={editingText}
         isEditingMessage={isEditingMessage}
@@ -409,6 +413,7 @@ type SupportChatAdminConversationCardProps = {
   hasMoreMessages: boolean
   isFetchingMoreMessages: boolean
   fetchMoreMessages: () => void
+  isMessagesLoading: boolean
   messages: StaffMessage[]
   editingMessageId: string | null
   editingText: string
@@ -435,6 +440,7 @@ function SupportChatAdminConversationCard({
   hasMoreMessages,
   isFetchingMoreMessages,
   fetchMoreMessages,
+  isMessagesLoading,
   messages,
   editingMessageId,
   editingText,
@@ -453,10 +459,6 @@ function SupportChatAdminConversationCard({
   isSubmitting,
   isSubmitDisabled,
 }: Readonly<SupportChatAdminConversationCardProps>) {
-  const isOutgoingMessage = useCallback((senderType: string) => {
-    return senderType !== 'USER'
-  }, [])
-
   return (
     <SupportChatConversationCard
       cardClassName={`h-full gap-2 min-w-0 py-2 overflow-hidden ${showMobileChat ? 'flex' : 'hidden lg:flex'} flex-col`}
@@ -469,6 +471,7 @@ function SupportChatAdminConversationCard({
       backButton={
         showMobileChat
           ? {
+              mode: 'action',
               label: 'Назад',
               onClick: handleBackToDialogs,
               className: 'lg:hidden has-[>svg]:ps-0',
@@ -480,6 +483,7 @@ function SupportChatAdminConversationCard({
       onFetchMoreMessages={fetchMoreMessages}
       messages={messages}
       selectedDialogKey={selectedDialog?.dialogId}
+      isLoadingMessages={isMessagesLoading}
       emptyStateText="Нет сообщений в диалоге."
       editingMessageId={editingMessageId}
       editingText={editingText}
@@ -497,7 +501,7 @@ function SupportChatAdminConversationCard({
       onSubmit={handleSubmit}
       isSubmitting={isSubmitting}
       isSubmitDisabled={isSubmitDisabled}
-      isOutgoingMessage={isOutgoingMessage}
+      outgoingSenderType="STAFF"
       fileInputId="support-chat-admin-file-input"
     />
   )
