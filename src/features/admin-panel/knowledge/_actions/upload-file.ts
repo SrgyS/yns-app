@@ -2,9 +2,11 @@
 
 import { z } from 'zod'
 import { server } from '@/app/server'
+import { createAdminAbility } from '@/features/admin-panel/users/_domain/ability'
+import { StaffPermissionService } from '@/features/admin-panel/users/_services/staff-permissions'
 import { SessionService } from '@/kernel/lib/next-auth/module'
 import { fileStorage } from '@/shared/lib/file-storage/file-storage'
-import { BadRequest } from '@/shared/lib/errors'
+import { AuthorizatoinError, BadRequest } from '@/shared/lib/errors'
 import { redirect } from 'next/navigation'
 
 const ALLOWED_FILE_TYPES = new Set([
@@ -23,7 +25,7 @@ const sanitizeFileName = (name: string) =>
 
 export const uploadKnowledgeFileAction = async (formData: FormData) => {
   const file = formData.get('file')
-  const tag = 'knowledge-file'
+  const tag = 'site/knowledge-file'
 
   if (!(file instanceof File)) {
     throw new BadRequest()
@@ -47,6 +49,16 @@ export const uploadKnowledgeFileAction = async (formData: FormData) => {
 
   if (!session) {
     return redirect('/auth/sign-in')
+  }
+
+  const staffPermissionService = server.get(StaffPermissionService)
+  const permissions = await staffPermissionService.getPermissionsForUser({
+    id: session.user.id,
+    role: session.user.role,
+  })
+  const ability = createAdminAbility(session, permissions)
+  if (!ability.canManageCourses) {
+    throw new AuthorizatoinError('Недостаточно прав для загрузки файла')
   }
 
   const storedFile = await fileStorage.uploadFile(

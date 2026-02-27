@@ -34,8 +34,8 @@ function RebootVariant({ content }: { content: SignatureBlock['content'] }) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            {content.entryLevels.map((level, index) => (
-              <div key={index} className="flex gap-2">
+            {content.entryLevels.map(level => (
+              <div key={`${level.title}-${level.description}`} className="flex gap-2">
                 <Check className="mt-0.5 h-4 w-4 shrink-0" />
                 <div>
                   <span className="font-medium text-foreground">
@@ -59,8 +59,8 @@ function RebootVariant({ content }: { content: SignatureBlock['content'] }) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            {content.first7Days.map((item, index) => (
-              <div key={index} className="flex gap-2">
+            {content.first7Days.map(item => (
+              <div key={item} className="flex gap-2">
                 <Check className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>{item}</span>
               </div>
@@ -82,8 +82,8 @@ function EdemaVariant({ content }: { content: SignatureBlock['content'] }) {
             <CardDescription>Без запретов, но с системой</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
-            {content.keys.map((key, index) => (
-              <div key={index}>
+            {content.keys.map(key => (
+              <div key={`${key.title}-${key.description}`}>
                 <div className="flex gap-2">
                   <Check className="mt-0.5 h-4 w-4 shrink-0" />
                   <div>
@@ -109,8 +109,8 @@ function EdemaVariant({ content }: { content: SignatureBlock['content'] }) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            {content.selfTest.map((item, index) => (
-              <div key={index} className="flex gap-2">
+            {content.selfTest.map(item => (
+              <div key={item} className="flex gap-2">
                 <Check className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>{item}</span>
               </div>

@@ -14,7 +14,7 @@ import {
 } from '@/shared/lib/upload-constants'
 import { sanitizeFileName } from '@/shared/lib/file-storage/utils'
 
-const allowedTags = ['course-image', 'course-thumbnail'] as const
+const allowedTags = ['site/course-image', 'site/course-thumbnail'] as const
 const tagSchema = z.enum(allowedTags)
 
 const resultSchema = z.object({
@@ -28,7 +28,7 @@ const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024
 export const uploadCourseImageAction = async (formData: FormData) => {
   const file = formData.get('file')
   const parsedTag = tagSchema.safeParse(formData.get('tag'))
-  const tag = parsedTag.success ? parsedTag.data : 'course-image'
+  const tag = parsedTag.success ? parsedTag.data : 'site/course-image'
 
   if (!(file instanceof File)) {
     throw new BadRequest()

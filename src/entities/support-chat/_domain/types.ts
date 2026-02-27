@@ -1,6 +1,10 @@
-import { SupportMessageSenderType, SupportReadType } from '@prisma/client'
+import {
+  ChatAttachmentStatus,
+  ChatMessageSenderType,
+  SupportReadType,
+} from '@prisma/client'
 
-export type SupportDialogEntity = {
+export type ChatDialogEntity = {
   id: string
   userId: string
   lastMessageAt: Date
@@ -8,24 +12,43 @@ export type SupportDialogEntity = {
   updatedAt: Date
 }
 
-export type SupportMessageEntity = {
+export type ChatMessageEntity = {
   id: string
   dialogId: string
-  senderType: SupportMessageSenderType
+  senderType: ChatMessageSenderType
   senderUserId: string | null
   senderStaffId: string | null
   text: string | null
   attachments: unknown
+  editedAt: Date | null
+  deletedAt: Date | null
+  deletedBy: string | null
   createdAt: Date
 }
 
-export type SupportReadStateEntity = {
+export type ChatReadStateEntity = {
   id: string
   dialogId: string
   readerType: SupportReadType
   readerUserId: string
   lastReadMessageId: string | null
   readAt: Date | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type ChatAttachmentEntity = {
+  id: string
+  dialogId: string
+  messageId: string | null
+  storagePath: string
+  mimeType: string
+  sizeBytes: number
+  originalName: string
+  createdByUserId: string
+  status: ChatAttachmentStatus
+  etag: string | null
+  lastModified: Date | null
   createdAt: Date
   updatedAt: Date
 }

@@ -27,6 +27,27 @@ type KinescopePlayerOptions = Omit<CreateOptions, 'url'> & {
   url?: CreateOptions['url']
 }
 
+type RefCell<T> = {
+  current: T
+}
+
+type PlayerHandlerRefs = {
+  endedHandlerRef: RefCell<((...args: unknown[]) => void) | null>
+  playHandlerRef: RefCell<((...args: unknown[]) => void) | null>
+  pauseHandlerRef: RefCell<((...args: unknown[]) => void) | null>
+}
+
+type PlayerCallbackRefs = {
+  onEndedRef: RefCell<(() => void) | undefined>
+  onPlayRef: RefCell<(() => void) | undefined>
+  onPauseRef: RefCell<(() => void) | undefined>
+}
+
+type PlayerState = {
+  isLoading: boolean
+  loadError: Error | null
+}
+
 export type KinescopePlayerProps = {
   videoId?: string
   options?: KinescopePlayerOptions
@@ -57,6 +78,92 @@ const toStyleSize = (value: number | string | undefined, fallback: string) => {
   return fallback
 }
 
+function bindPlayerHandlers(
+  player: KinescopePlayerInstance,
+  handlerRefs: PlayerHandlerRefs,
+  callbackRefs: PlayerCallbackRefs
+) {
+  if (!player.Events || !player.on) {
+    return
+  }
+
+  const endedHandler = () => {
+    const onEndedCurrent = callbackRefs.onEndedRef.current
+    if (onEndedCurrent) {
+      onEndedCurrent()
+    }
+  }
+  const playHandler = () => {
+    const onPlayCurrent = callbackRefs.onPlayRef.current
+    if (onPlayCurrent) {
+      onPlayCurrent()
+    }
+  }
+  const pauseHandler = () => {
+    const onPauseCurrent = callbackRefs.onPauseRef.current
+    if (onPauseCurrent) {
+      onPauseCurrent()
+    }
+  }
+
+  handlerRefs.endedHandlerRef.current = endedHandler
+  handlerRefs.playHandlerRef.current = playHandler
+  handlerRefs.pauseHandlerRef.current = pauseHandler
+  player.on(player.Events.Ended, endedHandler)
+  player.on(player.Events.Play, playHandler)
+  player.on(player.Events.Playing, playHandler)
+  player.on(player.Events.Pause, pauseHandler)
+}
+
+function resetPlayerHandlers(
+  handlerRefs: Pick<
+    PlayerHandlerRefs,
+    'endedHandlerRef' | 'playHandlerRef' | 'pauseHandlerRef'
+  >
+) {
+  handlerRefs.endedHandlerRef.current = null
+  handlerRefs.playHandlerRef.current = null
+  handlerRefs.pauseHandlerRef.current = null
+}
+
+function ensureKinescopeApi(): Promise<KinescopeApi> {
+  const resolvedApiPromise =
+    kinescopeApiPromise ?? loadKinescopeApi(KINESCOPE_API_VERSION)
+  kinescopeApiPromise = resolvedApiPromise
+
+  return resolvedApiPromise
+}
+
+function preparePlayerContainer(
+  container: HTMLDivElement | null,
+  containerId: string
+): HTMLDivElement | null {
+  if (!container) {
+    return null
+  }
+
+  container.innerHTML = ''
+
+  const innerContainer = document.createElement('div')
+  innerContainer.id = containerId
+  innerContainer.style.width = '100%'
+  innerContainer.style.height = '100%'
+  container.appendChild(innerContainer)
+
+  return innerContainer
+}
+
+function createPlayerNotCreatedError() {
+  return new Error('Kinescope player instance was not created')
+}
+
+function normalizePlayerInitializationError(error: unknown): Error {
+  if (error instanceof Error) {
+    return error
+  }
+  return new Error('Failed to initialize Kinescope player')
+}
+
 export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
   (
     { videoId, options, className, style, onEnded, onError, onPlay, onPause },
@@ -73,8 +180,10 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
     const onPlayRef = useRef(onPlay)
     const onPauseRef = useRef(onPause)
     const requestIdRef = useRef(0)
-    const [isLoading, setIsLoading] = useState(false)
-    const [loadError, setLoadError] = useState<Error | null>(null)
+    const [{ isLoading, loadError }, setPlayerState] = useState({
+      isLoading: false,
+      loadError: null as Error | null,
+    })
     const [attempt, setAttempt] = useState(0)
 
     const [containerId] = useState(
@@ -82,9 +191,8 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
     )
 
     const normalized = useMemo(() => {
-      const baseOptions: KinescopePlayerOptions = options ? { ...options } : {}
-
-      const size = { ...(baseOptions.size ?? {}) }
+      const baseOptions: KinescopePlayerOptions = { ...options }
+      const size = { ...baseOptions.size }
 
       const widthValue = size.width
       const heightValue = size.height
@@ -144,6 +252,7 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
 
         if (playHandlerRef.current) {
           player.off?.(player.Events.Play, playHandlerRef.current)
+          player.off?.(player.Events.Playing, playHandlerRef.current)
           playHandlerRef.current = null
         }
 
@@ -186,9 +295,11 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
             void destroyPlayerInstance(player, 'imperative')
           }
           playerInstanceRef.current = null
-          endedHandlerRef.current = null
-          playHandlerRef.current = null
-          pauseHandlerRef.current = null
+          resetPlayerHandlers({
+            endedHandlerRef,
+            playHandlerRef,
+            pauseHandlerRef,
+          })
         },
         getInstance() {
           return playerInstanceRef.current
@@ -201,6 +312,31 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
     useEffect(() => {
       const requestId = ++requestIdRef.current
       let isMounted = true
+      const isCurrentRequest = () =>
+        isMounted && requestId === requestIdRef.current
+      const setStateIfCurrent = (nextState: PlayerState) => {
+        if (isCurrentRequest()) {
+          setPlayerState(nextState)
+        }
+      }
+
+      const handlePlayerInitializationError = (error: unknown) => {
+        if (!isCurrentRequest()) {
+          return
+        }
+
+        const normalizedError = normalizePlayerInitializationError(error)
+        kinescopeApiPromise = null
+        setPlayerState({
+          isLoading: false,
+          loadError: normalizedError,
+        })
+        console.error('Failed to initialize Kinescope player', error)
+        const onErrorCurrent = onErrorRef.current
+        if (onErrorCurrent) {
+          onErrorCurrent(error)
+        }
+      }
 
       const setupPlayer = async () => {
         if (typeof window === 'undefined') {
@@ -208,96 +344,79 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
         }
 
         if (!createOptions) {
-          if (isMounted && requestId === requestIdRef.current) {
-            setIsLoading(false)
-            setLoadError(null)
+          setStateIfCurrent({
+            isLoading: false,
+            loadError: null,
+          })
+          return
+        }
+
+        setStateIfCurrent({
+          isLoading: true,
+          loadError: null,
+        })
+
+        const api = await ensureKinescopeApi()
+
+        if (!isCurrentRequest()) {
+          return
+        }
+
+        apiRef.current = api
+
+        const innerContainer = preparePlayerContainer(
+          containerRef.current,
+          containerId
+        )
+        if (!innerContainer) {
+          return
+        }
+
+        const player = await api.create(innerContainer, createOptions)
+
+        if (!isCurrentRequest()) {
+          detachPlayerHandlers(player)
+          await destroyPlayerInstance(player, 'stale')
+          return
+        }
+
+        if (!player) {
+          const createError = createPlayerNotCreatedError()
+          setStateIfCurrent({
+            isLoading: false,
+            loadError: createError,
+          })
+          console.error('Failed to initialize Kinescope player', createError)
+          const onErrorCurrent = onErrorRef.current
+          if (onErrorCurrent) {
+            onErrorCurrent(createError)
           }
           return
         }
 
-        if (isMounted && requestId === requestIdRef.current) {
-          setIsLoading(true)
-          setLoadError(null)
-        }
+        playerInstanceRef.current = player
 
-        if (!kinescopeApiPromise) {
-          kinescopeApiPromise = loadKinescopeApi(KINESCOPE_API_VERSION)
-        }
-
-        try {
-          const api = await kinescopeApiPromise
-
-          if (!isMounted || requestId !== requestIdRef.current) {
-            return
+        bindPlayerHandlers(
+          player,
+          {
+            endedHandlerRef,
+            playHandlerRef,
+            pauseHandlerRef,
+          },
+          {
+            onEndedRef,
+            onPlayRef,
+            onPauseRef,
           }
+        )
 
-          apiRef.current = api
-
-          const container = containerRef.current
-          if (!container) return
-
-          container.innerHTML = ''
-
-          const innerContainer = document.createElement('div')
-          innerContainer.id = containerId
-          innerContainer.style.width = '100%'
-          innerContainer.style.height = '100%'
-          container.appendChild(innerContainer)
-
-          const player = await api.create(innerContainer, createOptions)
-
-          const isStale = !isMounted || requestId !== requestIdRef.current
-
-          if (isStale) {
-            detachPlayerHandlers(player)
-            await destroyPlayerInstance(player, 'stale')
-            return
-          }
-
-          if (!player) {
-            throw new Error('Kinescope player instance was not created')
-          }
-
-          playerInstanceRef.current = player
-
-          if (player?.Events) {
-            const endedHandler = () => {
-              onEndedRef.current?.()
-            }
-            const playHandler = () => {
-              onPlayRef.current?.()
-            }
-            const pauseHandler = () => {
-              onPauseRef.current?.()
-            }
-
-            endedHandlerRef.current = endedHandler
-            player.on?.(player.Events.Ended, endedHandler)
-            playHandlerRef.current = playHandler
-            player.on?.(player.Events.Play, playHandler)
-            pauseHandlerRef.current = pauseHandler
-            player.on?.(player.Events.Pause, pauseHandler)
-          }
-
-          if (isMounted && requestId === requestIdRef.current) {
-            setIsLoading(false)
-          }
-        } catch (error) {
-          if (isMounted && requestId === requestIdRef.current) {
-            kinescopeApiPromise = null
-            setIsLoading(false)
-            const normalizedError =
-              error instanceof Error
-                ? error
-                : new Error('Failed to initialize Kinescope player')
-            setLoadError(normalizedError)
-            console.error('Failed to initialize Kinescope player', error)
-            onErrorRef.current?.(error)
-          }
-        }
+        setStateIfCurrent({
+          isLoading: false,
+          loadError: null,
+        })
       }
 
-      setupPlayer()
+      void setupPlayer().catch(handlePlayerInitializationError)
 
       return () => {
         isMounted = false
@@ -308,9 +427,11 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
           void destroyPlayerInstance(player, 'cleanup')
         }
         playerInstanceRef.current = null
-        endedHandlerRef.current = null
-        playHandlerRef.current = null
-        pauseHandlerRef.current = null
+        resetPlayerHandlers({
+          endedHandlerRef,
+          playHandlerRef,
+          pauseHandlerRef,
+        })
       }
     }, [
       attempt,
@@ -321,7 +442,10 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
     ])
 
     const handleRetry = () => {
-      setLoadError(null)
+      setPlayerState(previousState => ({
+        ...previousState,
+        loadError: null,
+      }))
       setAttempt(prev => prev + 1)
     }
 
@@ -336,9 +460,12 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
       >
         <div
           ref={containerRef}
-          className={cn('h-full w-full', {
-            'pointer-events-none opacity-0': isLoading || Boolean(loadError),
-          })}
+          className={cn(
+            'h-full w-full [&>div]:h-full [&>div]:w-full [&>div>iframe]:h-full! [&>div>iframe]:w-full!',
+            {
+              'pointer-events-none opacity-0': isLoading || Boolean(loadError),
+            }
+          )}
         />
         {isLoading && (
           <Skeleton className="absolute inset-0 z-10 h-full w-full pointer-events-none" />
@@ -346,9 +473,6 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
         {loadError && (
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 rounded-xl border border-destructive/30 bg-background/90 p-4 text-center text-sm text-muted-foreground backdrop-blur-sm">
             <p>Не удалось загрузить видео.</p>
-            {/* {loadError.message && (
-              <p className="text-xs opacity-70">{loadError.message}</p>
-            )} */}
             <Button size="sm" variant="outline" onClick={handleRetry}>
               Повторить попытку
             </Button>

@@ -72,7 +72,7 @@ export default async function PlatformProfileLayout({
         <div className="hidden md:block">
           <PlatformHeader />
         </div>
-        <main className="flex-1 container pb-17 md:pb-0 px-3 sm:px-6 py-6">
+        <main className="flex-1 container pb-17 md:pb-0 px-3 sm:px-6 py-6 overflow-auto">
           {children}
         </main>
         <MobileBottomNav variant="private" />

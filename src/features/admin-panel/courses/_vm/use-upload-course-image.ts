@@ -2,7 +2,7 @@ import { useUploadImage } from '@/shared/lib/use-upload-image'
 import { uploadCourseImageAction } from '../_actions/upload-course-image'
 import { DEFAULT_IMAGE_MAX_SIZE_MB } from '@/shared/lib/upload-constants'
 
-type UploadTag = 'course-image' | 'course-thumbnail'
+type UploadTag = 'site/course-image' | 'site/course-thumbnail'
 type UploadCourseImageResult = { path: string }
 
 type UploadParams = {
@@ -16,7 +16,7 @@ export function useUploadCourseImage() {
     mutationFn: async (file, tag) => {
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('tag', tag ?? 'course-image')
+      formData.append('tag', tag ?? 'site/course-image')
       return uploadCourseImageAction(formData)
     },
   })

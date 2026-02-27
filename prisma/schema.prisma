@@ -151,7 +151,7 @@ enum UserAccessReason {
   manual
 }
 
-enum SupportMessageSenderType {
+enum ChatMessageSenderType {
   USER
   STAFF
   SYSTEM
@@ -160,6 +160,11 @@ enum SupportMessageSenderType {
 enum SupportReadType {
   USER
   STAFF
+}
+
+enum ChatAttachmentStatus {
+  UPLOADED
+  LINKED
 }
 
 model Course {
@@ -511,10 +516,11 @@ model User {
   workoutCompletions UserWorkoutCompletion[]
   staffPermission    StaffPermission?
   userFreezes        UserFreeze[]
-  supportDialogs     SupportDialog[]         @relation("SupportDialogUser")
-  supportUserMessages SupportMessage[]       @relation("SupportMessageSenderUser")
-  supportStaffMessages SupportMessage[]      @relation("SupportMessageSenderStaff")
-  supportReadStates  SupportReadState[]      @relation("SupportReadStateUser")
+  chatDialogs     ChatDialog[]         @relation("ChatDialogUser")
+  chatUserMessages ChatMessage[]       @relation("ChatMessageSenderUser")
+  chatStaffMessages ChatMessage[]      @relation("ChatMessageSenderStaff")
+  chatReadStates  SupportReadState[]      @relation("SupportReadStateUser")
+  chatAttachments ChatAttachment[]     @relation("ChatAttachmentCreatedBy")
 }
 
 model StaffPermission {
@@ -532,11 +538,12 @@ model StaffPermission {
   updatedAt       DateTime @updatedAt
 }
 
-model SupportDialog {
+model ChatDialog {
   id            String            @id @default(cuid())
   userId        String
-  user          User              @relation("SupportDialogUser", fields: [userId], references: [id], onDelete: Cascade)
-  messages      SupportMessage[]
+  user          User              @relation("ChatDialogUser", fields: [userId], references: [id], onDelete: Cascade)
+  messages      ChatMessage[]
+  attachments   ChatAttachment[] @relation("ChatDialogAttachments")
   readStates    SupportReadState[]
   lastMessageAt DateTime          @default(now())
   createdAt     DateTime          @default(now())
@@ -546,27 +553,54 @@ model SupportDialog {
   @@index([lastMessageAt])
 }
 
-model SupportMessage {
+model ChatMessage {
   id           String                   @id @default(cuid())
   dialogId     String
-  dialog       SupportDialog            @relation(fields: [dialogId], references: [id], onDelete: Cascade)
-  senderType   SupportMessageSenderType
+  dialog       ChatDialog            @relation(fields: [dialogId], references: [id], onDelete: Cascade)
+  senderType   ChatMessageSenderType
   senderUserId String?
-  senderUser   User?                    @relation("SupportMessageSenderUser", fields: [senderUserId], references: [id], onDelete: SetNull)
+  senderUser   User?                    @relation("ChatMessageSenderUser", fields: [senderUserId], references: [id], onDelete: SetNull)
   senderStaffId String?
-  senderStaff  User?                    @relation("SupportMessageSenderStaff", fields: [senderStaffId], references: [id], onDelete: SetNull)
+  senderStaff  User?                    @relation("ChatMessageSenderStaff", fields: [senderStaffId], references: [id], onDelete: SetNull)
   text         String?
   attachments  Json?
+  attachmentItems ChatAttachment[]   @relation("ChatMessageAttachments")
+  editedAt     DateTime?
+  deletedAt    DateTime?
+  deletedBy    String?
   createdAt    DateTime                 @default(now())
 
   @@index([dialogId, createdAt])
   @@index([senderType, createdAt])
 }
 
+model ChatAttachment {
+  id              String                  @id @default(cuid())
+  dialogId        String
+  dialog          ChatDialog           @relation("ChatDialogAttachments", fields: [dialogId], references: [id], onDelete: Cascade)
+  messageId       String?
+  message         ChatMessage?         @relation("ChatMessageAttachments", fields: [messageId], references: [id], onDelete: SetNull)
+  storagePath     String
+  mimeType        String
+  sizeBytes       Int
+  originalName    String
+  createdByUserId String
+  createdByUser   User                    @relation("ChatAttachmentCreatedBy", fields: [createdByUserId], references: [id], onDelete: Cascade)
+  status          ChatAttachmentStatus @default(UPLOADED)
+  etag            String?
+  lastModified    DateTime?
+  updatedAt       DateTime                @updatedAt
+  createdAt       DateTime                @default(now())
+
+  @@index([dialogId, id])
+  @@index([messageId])
+  @@index([status, createdAt])
+}
+
 model SupportReadState {
   id                String          @id @default(cuid())
   dialogId          String
-  dialog            SupportDialog   @relation(fields: [dialogId], references: [id], onDelete: Cascade)
+  dialog            ChatDialog   @relation(fields: [dialogId], references: [id], onDelete: Cascade)
   readerType        SupportReadType
   readerUserId      String
   readerUser        User            @relation("SupportReadStateUser", fields: [readerUserId], references: [id], onDelete: Cascade)

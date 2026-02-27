@@ -59,7 +59,7 @@ Commit message:
 
 ## Phase 1: Prisma schema and entity persistence
 Goal:
-- Ввести модели `SupportDialog`, `SupportMessage`, `SupportReadState` и repository-слой entities.
+- Ввести модели `ChatDialog`, `ChatMessage`, `SupportReadState` и repository-слой entities.
 
 Files to change:
 - `prisma/schema.prisma`

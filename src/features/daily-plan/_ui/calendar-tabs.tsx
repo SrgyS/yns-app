@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useEffect, useState } from 'react'
+import { memo, useState } from 'react'
 import {
   format,
   startOfWeek,
@@ -63,13 +63,23 @@ export function CalendarTabs({
     isSubscription
   )
 
-  const defaultWeek = currentWeekIndex
-  const [activeWeekNumber, setActiveWeekNumber] = useState(defaultWeek)
+  const [weekSelection, setWeekSelection] = useState({
+    sourceWeek: currentWeekIndex,
+    activeWeek: currentWeekIndex,
+  })
   const [activeDate, setActiveDate] = useState(() => today)
 
-  useEffect(() => {
-    setActiveWeekNumber(defaultWeek)
-  }, [defaultWeek])
+  const activeWeekNumber =
+    weekSelection.sourceWeek === currentWeekIndex
+      ? weekSelection.activeWeek
+      : currentWeekIndex
+
+  const setActiveWeekNumber = (week: number) => {
+    setWeekSelection({
+      sourceWeek: currentWeekIndex,
+      activeWeek: week,
+    })
+  }
 
   const handleDayChange = (date: Date) => {
     setActiveDate(prev => {
@@ -101,6 +111,10 @@ export function CalendarTabs({
   }
 
   const availableWeeksNumbers = [...availableWeeks].sort((a, b) => a - b)
+  const fallbackWeekNumber = availableWeeksNumbers[0] ?? currentWeekIndex
+  const resolvedActiveWeekNumber = availableWeeksNumbers.includes(activeWeekNumber)
+    ? activeWeekNumber
+    : fallbackWeekNumber
 
   const weekMeta = new Map(
     availableWeeksNumbers.map(week => {
@@ -112,24 +126,15 @@ export function CalendarTabs({
 
   const getWeekMeta = (week: number) => weekMeta.get(week)
 
-  useEffect(() => {
-    if (!availableWeeksNumbers.includes(activeWeekNumber)) {
-      const firstWeek = availableWeeksNumbers[0]
-      if (firstWeek) {
-        setActiveWeekNumber(firstWeek)
-      }
-    }
-  }, [activeWeekNumber, availableWeeksNumbers])
-
   const activeWeekIndex = (() => {
-    const idx = availableWeeksNumbers.findIndex(w => w === activeWeekNumber)
+    const idx = availableWeeksNumbers.findIndex(
+      week => week === resolvedActiveWeekNumber
+    )
     return idx === -1 ? 0 : idx
   })()
 
   const currentWeekNumber =
-    availableWeeksNumbers[activeWeekIndex] ??
-    availableWeeksNumbers[0] ??
-    currentWeekIndex
+    availableWeeksNumbers[activeWeekIndex] ?? fallbackWeekNumber
 
   const shiftWeek = (offset: number) => {
     const targetIndex = activeWeekIndex + offset
@@ -182,7 +187,7 @@ export function CalendarTabs({
 
   return (
     <Tabs
-      value={`week-${activeWeekNumber}`}
+      value={`week-${resolvedActiveWeekNumber}`}
       onValueChange={value =>
         setActiveWeekNumber(Number(value.replace('week-', '')))
       }
@@ -271,7 +276,7 @@ export function CalendarTabs({
 
       {availableWeeksNumbers.map(week => (
         <TabsContent key={`week-${week}`} value={`week-${week}`}>
-          {activeWeekNumber === week ? (
+          {resolvedActiveWeekNumber === week ? (
             <MemoizedDayTabs
               weekNumber={week}
               displayWeekStart={getDisplayWeekStartSafe(week)}

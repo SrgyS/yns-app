@@ -59,6 +59,11 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
   --color-accent-icon: var(--accent-icon);
+  --text-fluid-sm: clamp(0.75rem, 0.8rem + 0.2vw, 0.875rem);
+  --text-fluid-base: clamp(1rem, 0.95rem + 0.5vw, 1.125rem);
+  --text-fluid-lg: clamp(1.25rem, 1.1rem + 1vw, 1.5rem);
+  --text-fluid-xl: clamp(1.5rem, 1.3rem + 1.5vw, 2rem);
+  --text-fluid-2xl: clamp(2rem, 1.6rem + 2.5vw, 3rem);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

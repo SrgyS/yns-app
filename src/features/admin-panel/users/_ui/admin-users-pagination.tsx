@@ -12,7 +12,7 @@ export function AdminUsersPagination({
   page,
   pageCount,
   onChange,
-}: AdminUsersPaginationProps) {
+}: Readonly<AdminUsersPaginationProps>) {
   const canPrev = page > 1
   const canNext = pageCount === 0 ? false : page < pageCount
 

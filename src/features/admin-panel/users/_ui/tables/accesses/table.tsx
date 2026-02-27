@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type ComponentProps } from 'react'
 import { toast } from 'sonner'
 import { startOfDay } from 'date-fns'
 import type { AdminUserAccess } from '../../../_domain/user-detail'
@@ -128,6 +128,10 @@ type ExtendDialogProps = {
   onSubmit(value: Date): void
 }
 
+type FormSubmitEvent = Parameters<
+  NonNullable<ComponentProps<'form'>['onSubmit']>
+>[0]
+
 function ExtendAccessDialog({
   target,
   onClose,
@@ -152,7 +156,7 @@ function ExtendAccessDialog({
 
   const handleOpenChange = createDialogOpenChangeHandler(onClose, isSubmitting)
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: FormSubmitEvent) => {
     event.preventDefault()
     if (!target || !dateValue) {
       return

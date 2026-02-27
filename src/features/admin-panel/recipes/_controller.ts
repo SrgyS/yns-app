@@ -241,7 +241,7 @@ export class AdminRecipesController extends Controller {
           const userId = ctx.session.user.id
           const stored = await fileStorage.uploadImage(
             file,
-            input.tag ?? 'recipe-image',
+            input.tag ?? 'site/recipe-image',
             userId
           )
 

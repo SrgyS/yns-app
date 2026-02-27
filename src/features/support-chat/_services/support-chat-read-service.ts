@@ -1,6 +1,6 @@
 import { injectable } from 'inversify'
 
-import { SupportReadStateRepository } from '@/entities/support-chat/module'
+import { ChatReadStateRepository } from '@/entities/support-chat/module'
 import { dbClient, type DbClient } from '@/shared/lib/db'
 
 type LastMessagePair = {
@@ -10,7 +10,7 @@ type LastMessagePair = {
 
 @injectable()
 export class SupportChatReadService {
-  constructor(private readonly readStateRepository: SupportReadStateRepository) {}
+  constructor(private readonly readStateRepository: ChatReadStateRepository) {}
 
   async countUnreadForUser(
     dialogId: string,
@@ -72,7 +72,7 @@ export class SupportChatReadService {
     db: DbClient
   ): Promise<LastMessagePair> {
     const [latestUserMessage, latestStaffMessage] = await Promise.all([
-      db.supportMessage.findFirst({
+      db.chatMessage.findFirst({
         where: {
           dialogId,
           senderType: 'USER',
@@ -84,7 +84,7 @@ export class SupportChatReadService {
           createdAt: true,
         },
       }),
-      db.supportMessage.findFirst({
+      db.chatMessage.findFirst({
         where: {
           dialogId,
           senderType: 'STAFF',

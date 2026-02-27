@@ -4,6 +4,8 @@ import { injectable } from 'inversify'
 import { Controller, authorizedProcedure, router } from '@/kernel/lib/trpc/module'
 import {
   createDialogInputSchema,
+  deleteMessageInputSchema,
+  editMessageInputSchema,
   markDialogReadInputSchema,
   sendMessageInputSchema,
   staffListDialogsInputSchema,
@@ -94,6 +96,45 @@ export class SupportChatController extends Controller {
               },
               dialogId: input.dialogId,
               lastReadMessageId: input.lastReadMessageId,
+            })
+          )
+        ),
+      getUnansweredDialogsCount: authorizedProcedure.query(async ({ ctx }) =>
+        this.runWithErrorMapping(() =>
+          this.supportChatService.getUnansweredDialogsCount({
+            actor: {
+              id: ctx.session.user.id,
+              role: ctx.session.user.role,
+            },
+          })
+        )
+      ),
+      editMessage: authorizedProcedure
+        .input(editMessageInputSchema)
+        .mutation(async ({ ctx, input }) =>
+          this.runWithErrorMapping(() =>
+            this.supportChatService.editMessage({
+              actor: {
+                id: ctx.session.user.id,
+                role: ctx.session.user.role,
+              },
+              dialogId: input.dialogId,
+              messageId: input.messageId,
+              text: input.text,
+            })
+          )
+        ),
+      deleteMessage: authorizedProcedure
+        .input(deleteMessageInputSchema)
+        .mutation(async ({ ctx, input }) =>
+          this.runWithErrorMapping(() =>
+            this.supportChatService.deleteMessage({
+              actor: {
+                id: ctx.session.user.id,
+                role: ctx.session.user.role,
+              },
+              dialogId: input.dialogId,
+              messageId: input.messageId,
             })
           )
         ),

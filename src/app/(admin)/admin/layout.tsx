@@ -31,13 +31,15 @@ export default async function Layout({
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider className="h-dvh min-h-dvh">
       <AdminPanelSidebar user={session.user} />
-      <SidebarInset>
-        <div className="mt-1 mx-1">
+      <SidebarInset className="min-h-0 overflow-hidden">
+        <div className="mx-1 mt-1 shrink-0">
           <SidebarTrigger className="cursor-pointer" />
         </div>
-        <div className="flex-1 px-2 pt-2 pb-8">{children}</div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-2 pt-2">
+          {children}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   )

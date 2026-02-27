@@ -2,7 +2,7 @@ import { SupportChatReadService } from './support-chat-read-service'
 
 jest.mock('@/shared/lib/db', () => ({
   dbClient: {
-    supportMessage: {
+    chatMessage: {
       findFirst: jest.fn(),
     },
   },
@@ -23,7 +23,7 @@ describe('SupportChatReadService', () => {
     readStateRepository.findByDialogAndReader.mockReset()
     readStateRepository.countUnreadForUser.mockReset()
     readStateRepository.countUnreadForStaff.mockReset()
-    ;(dbClient.supportMessage.findFirst as jest.Mock).mockReset()
+    ;(dbClient.chatMessage.findFirst as jest.Mock).mockReset()
   })
 
   test('countUnreadForUser uses null readAt when state is missing', async () => {
@@ -56,7 +56,7 @@ describe('SupportChatReadService', () => {
   })
 
   test('hasUnansweredIncoming returns false when there is no user message', async () => {
-    ;(dbClient.supportMessage.findFirst as jest.Mock)
+    ;(dbClient.chatMessage.findFirst as jest.Mock)
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ createdAt: new Date('2026-02-24T10:00:00.000Z') })
 
@@ -66,7 +66,7 @@ describe('SupportChatReadService', () => {
   })
 
   test('hasUnansweredIncoming returns true when latest user message is newer', async () => {
-    ;(dbClient.supportMessage.findFirst as jest.Mock)
+    ;(dbClient.chatMessage.findFirst as jest.Mock)
       .mockResolvedValueOnce({ createdAt: new Date('2026-02-24T11:00:00.000Z') })
       .mockResolvedValueOnce({ createdAt: new Date('2026-02-24T10:00:00.000Z') })
 
@@ -76,7 +76,7 @@ describe('SupportChatReadService', () => {
   })
 
   test('hasUnansweredIncoming returns false when staff message is newer', async () => {
-    ;(dbClient.supportMessage.findFirst as jest.Mock)
+    ;(dbClient.chatMessage.findFirst as jest.Mock)
       .mockResolvedValueOnce({ createdAt: new Date('2026-02-24T10:00:00.000Z') })
       .mockResolvedValueOnce({ createdAt: new Date('2026-02-24T11:00:00.000Z') })
 

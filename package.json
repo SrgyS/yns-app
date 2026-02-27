@@ -17,7 +17,9 @@
     "prune-subscription-content": "ts-node --project tsconfig.script.json -r tsconfig-paths/register ./scripts/prune-subscription-content",
     "check-course-data": "ts-node --project tsconfig.script.json -r tsconfig-paths/register ./scripts/check-course-data",
     "check-workout-data": "ts-node --project tsconfig.script.json -r tsconfig-paths/register ./scripts/check-workout-data",
-    "cron:release-weeks": "ts-node --project tsconfig.script.json -r tsconfig-paths/register ./scripts/release-weeks"
+    "cron:release-weeks": "ts-node --project tsconfig.script.json -r tsconfig-paths/register ./scripts/release-weeks",
+    "cron:cleanup-support-chat-attachments": "ts-node --project tsconfig.script.json -r tsconfig-paths/register ./scripts/cleanup-support-chat-attachments",
+    "script:backfill-support-chat-attachments": "ts-node --project tsconfig.script.json -r tsconfig-paths/register ./scripts/backfill-support-chat-attachments"
   },
   "overrides": {
     "cookie": "^0.7.0"

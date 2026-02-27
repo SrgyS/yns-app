@@ -5,7 +5,6 @@ import {
   Edit,
   Home,
   LayoutDashboard,
-  MessageCircle,
 } from 'lucide-react'
 
 import { server } from '@/app/server'
@@ -20,6 +19,7 @@ import { GetUserCoursesListService } from '@/features/user-courses/module'
 import { ToggleTheme } from '@/features/theme/toggle-theme'
 import { NoAccessCallout } from '@/features/course-enrollment/_ui/no-access-callout'
 import { isSupportChatEnabled } from '@/features/support-chat'
+import { SupportChatProfileLink } from '@/features/support-chat/_ui/support-chat-profile-link'
 
 export default async function ProfilePage() {
   const sessionService = server.get(SessionService)
@@ -90,19 +90,7 @@ export default async function ProfilePage() {
               </Link>
             </Button>
             {supportChatEnabled ? (
-              <Button
-                asChild
-                className="w-full justify-between"
-                variant="outline"
-              >
-                <Link href="/platform/support-chat">
-                  <div className="flex items-center gap-2">
-                    <MessageCircle className="h-5 w-5 text-primary" />
-                    Чат с поддержкой
-                  </div>
-                  <ChevronRight className="h-4 w-4" />
-                </Link>
-              </Button>
+              <SupportChatProfileLink />
             ) : null}
             {/* 
             <Button variant="outline" className="w-full justify-between">

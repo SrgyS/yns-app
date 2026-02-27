@@ -187,9 +187,9 @@ const renderTariffCard = ({
       </CardHeader>
       <CardContent className="space-y-3 p-4 pt-0 text-sm text-foreground/80 md:space-y-4 md:p-6 md:pt-0">
         <div className="space-y-1.5 md:space-y-2">
-          {includes.map((item, index) => (
+          {includes.map(item => (
             <div
-              key={`${tariff.id}-${index}`}
+              key={`${tariff.id}-${item}`}
               className="flex items-start gap-2"
             >
               <Check className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />

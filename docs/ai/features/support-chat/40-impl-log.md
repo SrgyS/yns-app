@@ -30,7 +30,7 @@ Implemented support-chat scaffolding only: added feature module with placeholder
 ## 2026-02-24 — Phase 1 (Prisma schema and entity persistence)
 
 ### Summary
-Implemented support-chat persistence layer: added Prisma enums/models (`SupportDialog`, `SupportMessage`, `SupportReadState`), added `canManageSupportChats` to `StaffPermission`, created additive migration SQL, added entity repositories in `src/entities/support-chat`, and registered `SupportChatEntityModule` in DI container.
+Implemented support-chat persistence layer: added Prisma enums/models (`ChatDialog`, `ChatMessage`, `SupportReadState`), added `canManageSupportChats` to `StaffPermission`, created additive migration SQL, added entity repositories in `src/entities/support-chat`, and registered `SupportChatEntityModule` in DI container.
 
 ### Files changed
 - `prisma/schema.prisma`
@@ -173,3 +173,65 @@ Completed hardening and verification artifacts: added support-chat unit/integrat
 
 ### Notes / issues
 - `tests/support-chat.smoke.spec.ts` is `describe.skip` because runtime e2e fixtures (seeded users + storageState) are not prepared in this phase.
+
+## 2026-02-25 — Phase 5 follow-up (Attachment preview and open)
+
+### Summary
+Implemented attachment preview/open flow in support chat UIs for user and staff: added secure attachment API endpoint with session + dialog access checks, extended file-storage providers with download API, and introduced shared attachment renderer that supports image/video/pdf preview and fallback file open link.
+
+### Files changed
+- `src/app/api/support-chat/attachments/[dialogId]/[attachmentId]/route.ts`
+- `src/shared/lib/file-storage/types.ts`
+- `src/shared/lib/file-storage/_providers/minio.ts`
+- `src/shared/lib/file-storage/_providers/supabase.ts`
+- `src/features/support-chat/_domain/attachment-schema.ts`
+- `src/features/support-chat/_domain/attachment-schema.spec.ts`
+- `src/features/support-chat/_ui/support-chat-message-attachments.tsx`
+- `src/features/support-chat/user-chat/_ui/support-chat-user-page.tsx`
+- `src/features/support-chat/admin-chat/_ui/support-chat-admin-inbox-page.tsx`
+
+### Commands run
+- `npm run lint`
+- `npm run lint:types`
+- `npm run test -- attachment-schema`
+
+### Notes / issues
+- Attachment endpoint is private and serves files inline with ownership/permission checks against `dialogId`.
+- Preview currently supports images, videos, PDFs; other MIME types are shown as openable file links.
+
+## 2026-02-25 — Security hotfix (Attachment route resource cloaking)
+
+### Summary
+Applied resource-cloaking fix for attachment access endpoint: unauthorized dialog access now returns `404` instead of `403` to avoid resource enumeration by dialogId.
+
+### Files changed
+- `src/app/api/support-chat/attachments/[dialogId]/[attachmentId]/route.ts`
+
+### Commands run
+- `npm run lint`
+- `npm run lint:types`
+
+## 2026-02-25 — Storage buckets split (public/private)
+
+### Summary
+Introduced public/private storage bucket model with access-level support in file-storage providers. Support-chat attachments are now uploaded as `private` with key prefix `support-chat/<userId>/...`, while site/admin media uploads keep `public` flow with `site/...` prefixes.
+
+### Files changed
+- `.env.example`
+- `src/shared/config/private.ts`
+- `src/shared/lib/file-storage/types.ts`
+- `src/shared/lib/file-storage/_providers/minio.ts`
+- `src/shared/lib/file-storage/_providers/supabase.ts`
+- `src/features/support-chat/_services/support-chat-service.ts`
+- `src/features/admin-panel/courses/_actions/upload-course-image.ts`
+- `src/features/admin-panel/courses/_vm/use-upload-course-image.ts`
+- `src/features/admin-panel/courses/_ui/course-img-field.tsx`
+- `src/features/admin-panel/courses/_ui/form-parts/media-section.tsx`
+- `src/features/admin-panel/recipes/_controller.ts`
+- `src/features/admin-panel/recipes/_ui/recipe-form.tsx`
+- `src/features/admin-panel/knowledge/_actions/upload-file.ts`
+
+### Commands run
+- `npm run lint:types`
+- `npm run lint`
+- `npm run test -- support-chat`

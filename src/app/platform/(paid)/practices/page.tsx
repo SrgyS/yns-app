@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import {
@@ -25,35 +25,21 @@ function EmptyState({ message }: { message: string }) {
   )
 }
 
-export default function PracticesPage() {
-  const [selectedType, setSelectedType] = useState<PracticeType | null>(null)
+function PracticesPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
   const sectionParam = searchParams.get('section')
 
-  useEffect(() => {
-    if (!sectionParam) {
-      setSelectedType(null)
-      return
-    }
+  const selectedType = sectionParam
+    ? PRACTICE_TYPES.find(type => type.section.toLowerCase() === sectionParam.toLowerCase()) ?? null
+    : null
 
-    const match = PRACTICE_TYPES.find(
-      type => type.section.toLowerCase() === sectionParam.toLowerCase()
-    )
-
-    setSelectedType(match ?? null)
-  }, [sectionParam])
-
-  const subcategories = useMemo(() => {
-    if (!selectedType) return []
-    return selectedType.subcategories
-  }, [selectedType])
+  const subcategories = selectedType ? selectedType.subcategories : []
 
   const handleSelectType = (type: PracticeType) => {
     if (type.subcategories.length === 0) return
 
-    setSelectedType(type)
     const sectionSegment = encodeURIComponent(type.section.toLowerCase())
     router.replace(`/platform/practices?section=${sectionSegment}`, {
       scroll: false,
@@ -61,7 +47,6 @@ export default function PracticesPage() {
   }
 
   const handleCloseCategories = () => {
-    setSelectedType(null)
     router.replace('/platform/practices', { scroll: false })
   }
 
@@ -153,5 +138,13 @@ export default function PracticesPage() {
         <EmptyState message="Для этой категории пока нет подразделов." />
       )}
     </div>
+  )
+}
+
+export default function PracticesPage() {
+  return (
+    <Suspense>
+      <PracticesPageContent />
+    </Suspense>
   )
 }

@@ -43,10 +43,10 @@ services:
     entrypoint: >
       /bin/sh -c "
       /usr/bin/mc alias set myminio http://minio:9000 minio minio123;
-      /usr/bin/mc mb myminio/images;
+      /usr/bin/mc mb --ignore-existing myminio/files-private;
+      /usr/bin/mc mb --ignore-existing myminio/images;
       /usr/bin/mc anonymous set public myminio/images;
       exit 0;
-      "it 0;
       "
 volumes:
   db-data:

@@ -4,6 +4,9 @@ export type SupportChatErrorCode =
   | 'STAFF_PERMISSION_DENIED'
   | 'INVALID_MESSAGE'
   | 'MESSAGE_NOT_FOUND'
+  | 'MESSAGE_ACTION_FORBIDDEN'
+  | 'MESSAGE_ALREADY_READ'
+  | 'MESSAGE_ALREADY_DELETED'
 
 export class SupportChatDomainError extends Error {
   constructor(

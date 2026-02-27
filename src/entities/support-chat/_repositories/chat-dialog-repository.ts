@@ -1,20 +1,20 @@
 import { injectable } from 'inversify'
 
 import { dbClient, type DbClient } from '@/shared/lib/db'
-import { SupportDialogEntity } from '../_domain/types'
+import { ChatDialogEntity } from '../_domain/types'
 
-type CreateSupportDialogInput = {
+type CreateChatDialogInput = {
   userId: string
   lastMessageAt?: Date
 }
 
 @injectable()
-export class SupportConversationRepository {
+export class ChatDialogRepository {
   async create(
-    input: CreateSupportDialogInput,
+    input: CreateChatDialogInput,
     db: DbClient = dbClient
-  ): Promise<SupportDialogEntity> {
-    const record = await db.supportDialog.create({
+  ): Promise<ChatDialogEntity> {
+    const record = await db.chatDialog.create({
       data: {
         userId: input.userId,
         lastMessageAt: input.lastMessageAt,
@@ -27,8 +27,8 @@ export class SupportConversationRepository {
   async findById(
     dialogId: string,
     db: DbClient = dbClient
-  ): Promise<SupportDialogEntity | null> {
-    const record = await db.supportDialog.findUnique({
+  ): Promise<ChatDialogEntity | null> {
+    const record = await db.chatDialog.findUnique({
       where: { id: dialogId },
     })
 
@@ -42,8 +42,8 @@ export class SupportConversationRepository {
   async findByUserId(
     userId: string,
     db: DbClient = dbClient
-  ): Promise<SupportDialogEntity[]> {
-    const records = await db.supportDialog.findMany({
+  ): Promise<ChatDialogEntity[]> {
+    const records = await db.chatDialog.findMany({
       where: { userId },
       orderBy: { updatedAt: 'desc' },
     })
@@ -55,8 +55,8 @@ export class SupportConversationRepository {
     dialogId: string,
     lastMessageAt: Date,
     db: DbClient = dbClient
-  ): Promise<SupportDialogEntity> {
-    const record = await db.supportDialog.update({
+  ): Promise<ChatDialogEntity> {
+    const record = await db.chatDialog.update({
       where: { id: dialogId },
       data: { lastMessageAt },
     })
@@ -70,7 +70,7 @@ export class SupportConversationRepository {
     lastMessageAt: Date
     createdAt: Date
     updatedAt: Date
-  }): SupportDialogEntity {
+  }): ChatDialogEntity {
     return {
       id: record.id,
       userId: record.userId,

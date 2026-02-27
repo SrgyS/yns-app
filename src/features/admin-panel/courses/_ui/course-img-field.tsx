@@ -12,7 +12,7 @@ type Props = {
   value?: string | null
   initialValue?: string | null
   onChange: (path: string | null) => void
-  tag: 'course-image' | 'course-thumbnail'
+  tag: 'site/course-image' | 'site/course-thumbnail'
   disabled?: boolean
   aspect?: string
 }

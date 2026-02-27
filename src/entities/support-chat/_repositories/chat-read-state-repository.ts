@@ -1,10 +1,10 @@
-import { SupportMessageSenderType, SupportReadType } from '@prisma/client'
+import { ChatMessageSenderType, SupportReadType } from '@prisma/client'
 import { injectable } from 'inversify'
 
 import { dbClient, type DbClient } from '@/shared/lib/db'
-import { SupportReadStateEntity } from '../_domain/types'
+import { ChatReadStateEntity } from '../_domain/types'
 
-type UpsertSupportReadStateInput = {
+type UpsertChatReadStateInput = {
   dialogId: string
   readerType: SupportReadType
   readerUserId: string
@@ -13,11 +13,11 @@ type UpsertSupportReadStateInput = {
 }
 
 @injectable()
-export class SupportReadStateRepository {
+export class ChatReadStateRepository {
   async upsert(
-    input: UpsertSupportReadStateInput,
+    input: UpsertChatReadStateInput,
     db: DbClient = dbClient
-  ): Promise<SupportReadStateEntity> {
+  ): Promise<ChatReadStateEntity> {
     const record = await db.supportReadState.upsert({
       where: {
         dialogId_readerType_readerUserId: {
@@ -47,7 +47,7 @@ export class SupportReadStateRepository {
     readerType: SupportReadType,
     readerUserId: string,
     db: DbClient = dbClient
-  ): Promise<SupportReadStateEntity | null> {
+  ): Promise<ChatReadStateEntity | null> {
     const record = await db.supportReadState.findUnique({
       where: {
         dialogId_readerType_readerUserId: {
@@ -83,11 +83,11 @@ export class SupportReadStateRepository {
 
   private async countUnread(
     dialogId: string,
-    senderType: SupportMessageSenderType,
+    senderType: ChatMessageSenderType,
     readAt: Date | null,
     db: DbClient
   ): Promise<number> {
-    const count = await db.supportMessage.count({
+    const count = await db.chatMessage.count({
       where: {
         dialogId,
         senderType,
@@ -107,7 +107,7 @@ export class SupportReadStateRepository {
     readAt: Date | null
     createdAt: Date
     updatedAt: Date
-  }): SupportReadStateEntity {
+  }): ChatReadStateEntity {
     return {
       id: record.id,
       dialogId: record.dialogId,

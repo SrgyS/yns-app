@@ -1,17 +1,20 @@
 import { ContainerModule } from 'inversify'
 
-import { SupportConversationRepository } from './_repositories/support-conversation-repository'
-import { SupportMessageRepository } from './_repositories/support-message-repository'
-import { SupportReadStateRepository } from './_repositories/support-read-state-repository'
+import { ChatDialogRepository } from './_repositories/chat-dialog-repository'
+import { ChatAttachmentRepository } from './_repositories/chat-attachment-repository'
+import { ChatMessageRepository } from './_repositories/chat-message-repository'
+import { ChatReadStateRepository } from './_repositories/chat-read-state-repository'
 
 export const SupportChatEntityModule = new ContainerModule(context => {
   const { bind } = context
 
-  bind(SupportConversationRepository).toSelf()
-  bind(SupportMessageRepository).toSelf()
-  bind(SupportReadStateRepository).toSelf()
+  bind(ChatDialogRepository).toSelf()
+  bind(ChatAttachmentRepository).toSelf()
+  bind(ChatMessageRepository).toSelf()
+  bind(ChatReadStateRepository).toSelf()
 })
 
-export { SupportConversationRepository } from './_repositories/support-conversation-repository'
-export { SupportMessageRepository } from './_repositories/support-message-repository'
-export { SupportReadStateRepository } from './_repositories/support-read-state-repository'
+export { ChatDialogRepository } from './_repositories/chat-dialog-repository'
+export { ChatAttachmentRepository } from './_repositories/chat-attachment-repository'
+export { ChatMessageRepository } from './_repositories/chat-message-repository'
+export { ChatReadStateRepository } from './_repositories/chat-read-state-repository'

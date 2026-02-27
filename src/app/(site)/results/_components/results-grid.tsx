@@ -61,8 +61,8 @@ export function ResultsGrid({ items }: ResultsGridProps) {
                     </DialogHeader>
 
                     <div className="space-y-3 text-sm text-foreground/90">
-                      {item.story.map((paragraph, index) => (
-                        <p key={`${item.id}-dialog-p-${index}`}>{paragraph}</p>
+                      {item.story.map(paragraph => (
+                        <p key={`${item.id}-${paragraph}`}>{paragraph}</p>
                       ))}
                     </div>
                   </DialogContent>
