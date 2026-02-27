@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import {
   useEffect,
   useMemo,
@@ -12,6 +13,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { ProfileAvatar } from '@/entities/user/_ui/profile-avatar'
 import { useAdminAbility } from '@/features/admin-panel/users/_hooks/use-admin-ability'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
@@ -252,6 +254,10 @@ export function SupportChatAdminInboxPage() {
         onlyUnanswered={onlyUnanswered}
         onToggleOnlyUnanswered={handleToggleOnlyUnanswered}
         orderedDialogs={orderedDialogs}
+        isDialogsLoading={
+          (dialogsQuery.isPending || dialogsQuery.isFetching) &&
+          orderedDialogs.length === 0
+        }
         selectedDialogId={selectedDialogId}
         onSelectDialog={handleSelectDialog}
         dialogsLoadMoreRef={dialogsLoadMoreRef}
@@ -297,6 +303,7 @@ type SupportChatAdminDialogsCardProps = {
   onlyUnanswered: boolean
   onToggleOnlyUnanswered: () => void
   orderedDialogs: StaffDialog[]
+  isDialogsLoading: boolean
   selectedDialogId: string | undefined
   onSelectDialog: (dialogId: string) => void
   dialogsLoadMoreRef: RefCell<HTMLDivElement | null>
@@ -308,6 +315,7 @@ function SupportChatAdminDialogsCard({
   onlyUnanswered,
   onToggleOnlyUnanswered,
   orderedDialogs,
+  isDialogsLoading,
   selectedDialogId,
   onSelectDialog,
   dialogsLoadMoreRef,
@@ -336,7 +344,13 @@ function SupportChatAdminDialogsCard({
       </CardHeader>
 
       <CardContent className="min-h-0 space-y-2 overflow-y-auto">
-        {orderedDialogs.length === 0 ? (
+        {isDialogsLoading ? (
+          <p className="text-fluid-sm text-muted-foreground">
+            Загрузка диалогов...
+          </p>
+        ) : null}
+
+        {!isDialogsLoading && orderedDialogs.length === 0 ? (
           <p className="text-fluid-sm text-muted-foreground">
             Диалогов нет для выбранного фильтра.
           </p>
@@ -372,6 +386,12 @@ function SupportChatAdminDialogListItem({
   isActive,
   onSelectDialog,
 }: Readonly<SupportChatAdminDialogListItemProps>) {
+  const userProfile = {
+    email: '',
+    name: dialog.user.name,
+    image: dialog.user.image,
+  }
+
   return (
     <button
       type="button"
@@ -379,14 +399,21 @@ function SupportChatAdminDialogListItem({
         isActive
           ? 'border-primary bg-primary/5'
           : 'border-border hover:border-primary/50'
-      }`}
+      } cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`}
       onClick={() => onSelectDialog(dialog.dialogId)}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-fluid-base font-medium">
-            {dialog.user.name ?? dialog.user.id}
-          </span>
+          <Link
+            href={`/admin/users/${dialog.user.id}`}
+            className="inline-flex items-center gap-2 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            onClick={event => event.stopPropagation()}
+          >
+            <ProfileAvatar profile={userProfile} className="size-8" />
+            <span className="text-fluid-base font-medium hover:underline">
+              {dialog.user.name ?? dialog.user.id}
+            </span>
+          </Link>
           {dialog.isUnanswered ? (
             <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
           ) : null}
@@ -459,20 +486,41 @@ function SupportChatAdminConversationCard({
   isSubmitting,
   isSubmitDisabled,
 }: Readonly<SupportChatAdminConversationCardProps>) {
+  const selectedUserProfile = selectedDialog
+    ? {
+        email: '',
+        name: selectedDialog.user.name,
+        image: selectedDialog.user.image,
+      }
+    : null
+
+  const title = selectedDialog ? (
+    <Link
+      href={`/admin/users/${selectedDialog.user.id}`}
+      className="inline-flex max-w-full items-center gap-2 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
+      <ProfileAvatar
+        profile={selectedUserProfile ?? undefined}
+        className="size-8"
+      />
+      <span className="truncate text-fluid-base font-medium hover:underline">
+        {selectedDialog.user.name ?? selectedDialog.user.id}
+      </span>
+    </Link>
+  ) : (
+    'Выберите диалог'
+  )
+
   return (
     <SupportChatConversationCard
-      cardClassName={`h-full gap-2 min-w-0 py-2 overflow-hidden ${showMobileChat ? 'flex' : 'hidden lg:flex'} flex-col`}
-      headerClassName="px-2"
-      title={
-        selectedDialog
-          ? `Диалог: ${selectedDialog.user.name ?? selectedDialog.user.id}`
-          : 'Выберите диалог'
-      }
+      cardClassName={`h-full gap-2 min-w-0 py-2 overflow-hidden ${showMobileChat ? 'flex' : 'hidden lg:flex'} flex-col border-none`}
+      headerClassName="px-1"
+      title={title}
       backButton={
         showMobileChat
           ? {
               mode: 'action',
-              label: 'Назад',
+              label: '',
               onClick: handleBackToDialogs,
               className: 'lg:hidden has-[>svg]:ps-0',
             }
@@ -484,7 +532,7 @@ function SupportChatAdminConversationCard({
       messages={messages}
       selectedDialogKey={selectedDialog?.dialogId}
       isLoadingMessages={isMessagesLoading}
-      emptyStateText="Нет сообщений в диалоге."
+      emptyStateText={selectedDialog ? 'Нет сообщений в диалоге.' : 'Выберите диалог'}
       editingMessageId={editingMessageId}
       editingText={editingText}
       isEditingMessage={isEditingMessage}

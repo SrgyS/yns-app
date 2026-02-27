@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useRef, type ComponentProps } from 'react'
+import { useEffect, useRef, type ComponentProps, type ReactNode } from 'react'
 import {
   ArrowLeft,
   CheckCheck,
@@ -71,7 +71,7 @@ type SupportChatBackButton =
 type SupportChatConversationCardProps = {
   cardClassName?: string
   headerClassName?: string
-  title?: string
+  title?: ReactNode
   backButton?: SupportChatBackButton
   hasMoreMessages: boolean
   isFetchingMoreMessages: boolean
@@ -218,11 +218,16 @@ export function SupportChatConversationCard({
     <Card className={cardClassName}>
       <CardHeader className={headerClassName}>
         <div className="flex items-center justify-between gap-2">
-          {backButton ? (
-            <SupportChatBackButtonView backButton={backButton} />
-          ) : (
-            <div />
-          )}
+          <div className="flex min-w-0 items-center gap-2">
+            {backButton ? (
+              <SupportChatBackButtonView backButton={backButton} />
+            ) : null}
+            {title ? (
+              <CardTitle className="text-fluid-base min-w-0 truncate">
+                {title}
+              </CardTitle>
+            ) : null}
+          </div>
           {hasMoreMessages ? (
             <Button
               type="button"
@@ -235,9 +240,6 @@ export function SupportChatConversationCard({
             </Button>
           ) : null}
         </div>
-        {title ? (
-          <CardTitle className="text-fluid-base">{title}</CardTitle>
-        ) : null}
       </CardHeader>
 
       <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden px-2">
@@ -294,7 +296,10 @@ export function SupportChatConversationCard({
           </div>
         </div>
 
-        <form className="shrink-0 space-y-2 border-t pt-3" onSubmit={onSubmit}>
+        <form
+          className="shrink-0 space-y-2 border-t pt-3 mb-1"
+          onSubmit={onSubmit}
+        >
           <div className="relative">
             <Textarea
               ref={messageTextareaRef}
@@ -537,7 +542,7 @@ function SupportChatMessageBubbleContent({
         </div>
       ) : null}
       {!isEditing && item.text ? (
-        <p className="whitespace-pre-wrap break-words">{item.text}</p>
+        <p className="whitespace-pre-wrap wrap-break-word">{item.text}</p>
       ) : null}
     </>
   )

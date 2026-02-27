@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ComponentProps } from 'react'
 import { toast } from 'sonner'
 
+import { ProfileAvatar } from '@/entities/user/_ui/profile-avatar'
 import { SupportChatConversationCard } from '../../_ui/support-chat-conversation-card'
 import { toSupportChatAttachments } from '../../_ui/support-chat-attachments-upload'
 import { resolveSupportChatClientErrorMessage } from '../../_domain/client-error-message'
@@ -27,7 +28,11 @@ function toastSupportChatActionError(error: unknown, fallbackMessage: string) {
 }
 
 export function SupportChatUserPage() {
-  const { dialogs } = useUserDialogs()
+  const {
+    dialogs,
+    isPending: isDialogsPending,
+    isFetching: isDialogsFetching,
+  } = useUserDialogs()
   const [selectedDialogId, setSelectedDialogId] = useState<string | undefined>()
   const [message, setMessage] = useState('')
   const [files, setFiles] = useState<File[]>([])
@@ -35,6 +40,16 @@ export function SupportChatUserPage() {
   const [editingText, setEditingText] = useState('')
 
   const effectiveSelectedDialogId = selectedDialogId ?? dialogs[0]?.dialogId
+  const selectedDialog = dialogs.find(dialog => dialog.dialogId === effectiveSelectedDialogId)
+  const selectedDialogCounterparty = selectedDialog?.counterparty ?? null
+  const selectedDialogCounterpartyProfile = selectedDialogCounterparty
+    ? {
+        email: '',
+        name: selectedDialogCounterparty.name,
+        image: selectedDialogCounterparty.image,
+      }
+    : null
+  const selectedDialogCounterpartyName = selectedDialogCounterparty?.name ?? 'Пользователь'
 
   const {
     createDialog,
@@ -164,22 +179,35 @@ export function SupportChatUserPage() {
     setFiles(nextFiles)
   }
 
+  const title = effectiveSelectedDialogId
+    ? (
+        <div className="inline-flex max-w-full items-center gap-2">
+          <ProfileAvatar profile={selectedDialogCounterpartyProfile ?? undefined} className="size-8" />
+          <span className="truncate text-fluid-base font-medium">
+            {selectedDialogCounterpartyName}
+          </span>
+        </div>
+      )
+    : undefined
+
+  const isDialogsLoading = (isDialogsPending || isDialogsFetching) && dialogs.length === 0
+  const isCurrentDialogMessagesLoading = Boolean(effectiveSelectedDialogId) &&
+    (isMessagesPending || isMessagesFetching) &&
+    messages.length === 0
+
   return (
     <div className="grid h-full min-h-0 gap-4 overflow-hidden">
       <SupportChatConversationCard
         cardClassName="h-full min-w-0 overflow-hidden flex flex-col border-none p-0 gap-1"
-        headerClassName="space-y-2"
+        headerClassName="space-y-2 px-1"
+        title={title}
         backButton={{ mode: 'link', label: 'Назад', href: '/platform/profile' }}
         hasMoreMessages={hasMoreMessages}
         isFetchingMoreMessages={isFetchingMoreMessages}
         onFetchMoreMessages={() => fetchMoreMessages()}
         messages={messages}
         selectedDialogKey={effectiveSelectedDialogId}
-        isLoadingMessages={
-          Boolean(effectiveSelectedDialogId) &&
-          (isMessagesPending || isMessagesFetching) &&
-          messages.length === 0
-        }
+        isLoadingMessages={isDialogsLoading || isCurrentDialogMessagesLoading}
         emptyStateText="Сообщений пока нет."
         editingMessageId={editingMessageId}
         editingText={editingText}
@@ -197,7 +225,8 @@ export function SupportChatUserPage() {
         onSubmit={handleSubmit}
         isSubmitting={isSendingMessage || isCreatingDialog}
         isSubmitDisabled={
-          (isSendingMessage || isCreatingDialog) ||
+          isSendingMessage ||
+          isCreatingDialog ||
           (!hasDraftText && !hasDraftFiles)
         }
         outgoingSenderType="USER"

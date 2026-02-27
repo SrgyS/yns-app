@@ -133,7 +133,7 @@ export class SupportChatService {
 
     const items = await Promise.all(
       pageItems.map(async dialog => {
-        const [lastMessage, unreadCount] = await Promise.all([
+        const [lastMessage, unreadCount, counterpartyStaffMessage] = await Promise.all([
           dbClient.chatMessage.findFirst({
             where: {
               dialogId: dialog.id,
@@ -150,6 +150,27 @@ export class SupportChatService {
             },
           }),
           this.readService.countUnreadForUser(dialog.id, input.actor.id),
+          dbClient.chatMessage.findFirst({
+            where: {
+              dialogId: dialog.id,
+              senderType: 'STAFF',
+              senderStaffId: {
+                not: null,
+              },
+            },
+            orderBy: {
+              createdAt: 'desc',
+            },
+            select: {
+              senderStaff: {
+                select: {
+                  id: true,
+                  name: true,
+                  image: true,
+                },
+              },
+            },
+          }),
         ])
 
         const isUnanswered = await this.resolveIsUnansweredDialog({
@@ -158,6 +179,14 @@ export class SupportChatService {
           lastMessage,
         })
 
+        const counterparty = counterpartyStaffMessage?.senderStaff
+          ? {
+              id: counterpartyStaffMessage.senderStaff.id,
+              name: counterpartyStaffMessage.senderStaff.name,
+              image: counterpartyStaffMessage.senderStaff.image,
+            }
+          : null
+
         return {
           dialogId: dialog.id,
           title: 'Диалог с поддержкой',
@@ -165,6 +194,7 @@ export class SupportChatService {
           unreadCount,
           isUnanswered,
           updatedAt: dialog.updatedAt,
+          counterparty,
         }
       })
     )
@@ -239,6 +269,7 @@ export class SupportChatService {
           select: {
             id: true,
             name: true,
+            image: true,
           },
         },
       },
@@ -290,6 +321,7 @@ export class SupportChatService {
           user: {
             id: dialog.user.id,
             name: dialog.user.name,
+            image: dialog.user.image,
           },
           unreadCount,
           hasUnansweredIncoming: isUnanswered,
