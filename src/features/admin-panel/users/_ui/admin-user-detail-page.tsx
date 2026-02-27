@@ -46,7 +46,7 @@ export function AdminUserDetailPage({ userId }: Readonly<{ userId: string }>) {
 
   if (!viewerAbility?.canManageUsers) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center text-muted-foreground">
+      <div className="flex min-h-100 items-center justify-center text-muted-foreground">
         Нет прав для просмотра этой страницы
       </div>
     )
@@ -54,7 +54,7 @@ export function AdminUserDetailPage({ userId }: Readonly<{ userId: string }>) {
 
   if (!data) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center text-muted-foreground">
+      <div className="flex min-h-100 items-center justify-center text-muted-foreground">
         Пользователь не найден
       </div>
     )
@@ -157,7 +157,7 @@ export function AdminUserDetailPage({ userId }: Readonly<{ userId: string }>) {
                     <TabsTrigger
                       key={tab.value}
                       value={tab.value}
-                      className="relative max-w-fit rounded-none border-none px-4 pb-3 pt-2 text-sm font-medium shadow-none data-[state=active]:shadow-none after:absolute after:-bottom-px after:left-0 after:right-0 after:h-[3px] after:bg-transparent data-[state=active]:after:bg-primary data-[state=active]:after:z-10"
+                      className="relative max-w-fit rounded-none border-none px-4 pb-3 pt-2 text-sm font-medium shadow-none data-[state=active]:shadow-none after:absolute after:-bottom-px after:left-0 after:right-0 after:h-0.75 after:bg-transparent data-[state=active]:after:bg-primary data-[state=active]:after:z-10"
                     >
                       {tab.label}
                     </TabsTrigger>
@@ -312,7 +312,7 @@ function FreezeUserDialog({
         Активировать заморозку
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="w-full sm:max-w-[720px]">
+        <DialogContent className="w-full sm:max-w-180">
           <DialogHeader>
             <DialogTitle>Активировать заморозку</DialogTitle>
             <DialogDescription>

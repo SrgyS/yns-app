@@ -78,7 +78,7 @@ export function GrantAccessDialog({
     }
   }
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit: React.ComponentProps<'form'>['onSubmit'] = event => {
     event.preventDefault()
     if (!courseId) {
       return

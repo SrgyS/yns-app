@@ -25,6 +25,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Input } from '@/shared/ui/input'
 import { Textarea } from '@/shared/ui/textarea'
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/shared/ui/tooltip'
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -105,9 +111,7 @@ export function SupportChatAdminInboxPage() {
     })
   }, [dialogs])
 
-  const effectiveSelectedDialogId = selectedDialogId
-
-  const messagesQuery = useStaffDialogMessages(effectiveSelectedDialogId)
+  const messagesQuery = useStaffDialogMessages(selectedDialogId)
   const messages = messagesQuery.messages
 
   const {
@@ -116,7 +120,6 @@ export function SupportChatAdminInboxPage() {
     editMessage,
     deleteMessage,
     isSendingMessage,
-    isMarkingRead,
     isEditingMessage,
     isDeletingMessage,
   } = useSupportChatActions()
@@ -124,20 +127,15 @@ export function SupportChatAdminInboxPage() {
   const hasDraftText = trimmedMessage.length > 0
   const hasDraftFiles = files.length > 0
 
-  useSupportChatStaffSse(effectiveSelectedDialogId)
+  useSupportChatStaffSse(selectedDialogId)
 
-  const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const dialogsLoadMoreRef = useRef<HTMLDivElement | null>(null)
 
   const resetLastMarkedMessageId = useMarkLatestIncomingAsRead({
     messages,
-    effectiveSelectedDialogId,
+    selectedDialogId,
     markDialogRead,
   })
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
 
   useDialogsInfiniteScroll({
     dialogsLoadMoreRef,
@@ -147,17 +145,14 @@ export function SupportChatAdminInboxPage() {
   })
 
   const selectedDialog = useMemo(
-    () =>
-      orderedDialogs.find(
-        dialog => dialog.dialogId === effectiveSelectedDialogId
-      ),
-    [orderedDialogs, effectiveSelectedDialogId]
+    () => orderedDialogs.find(dialog => dialog.dialogId === selectedDialogId),
+    [orderedDialogs, selectedDialogId]
   )
 
   const handleSubmit = async (event: FormSubmitEvent) => {
     event.preventDefault()
 
-    if (!effectiveSelectedDialogId) {
+    if (!selectedDialogId) {
       toast.error('Выберите диалог для ответа')
       return
     }
@@ -176,7 +171,7 @@ export function SupportChatAdminInboxPage() {
       const attachments = await toAttachments(files)
 
       await sendMessage({
-        dialogId: effectiveSelectedDialogId,
+        dialogId: selectedDialogId,
         text: textPayload,
         attachments,
       })
@@ -208,7 +203,7 @@ export function SupportChatAdminInboxPage() {
   }
 
   const handleEditSubmit = async () => {
-    if (!effectiveSelectedDialogId || !editingMessageId) {
+    if (!selectedDialogId || !editingMessageId) {
       return
     }
 
@@ -220,7 +215,7 @@ export function SupportChatAdminInboxPage() {
 
     try {
       await editMessage({
-        dialogId: effectiveSelectedDialogId,
+        dialogId: selectedDialogId,
         messageId: editingMessageId,
         text: trimmed,
       })
@@ -233,13 +228,13 @@ export function SupportChatAdminInboxPage() {
   }
 
   const handleDeleteMessage = async (messageId: string) => {
-    if (!effectiveSelectedDialogId) {
+    if (!selectedDialogId) {
       return
     }
 
     try {
       await deleteMessage({
-        dialogId: effectiveSelectedDialogId,
+        dialogId: selectedDialogId,
         messageId,
       })
       toast.success('Сообщение удалено')
@@ -261,22 +256,18 @@ export function SupportChatAdminInboxPage() {
     setFiles(nextFiles)
   }
 
-  const scrollToLastMessage = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
-
   if (abilityQuery.isLoading) {
-    return <p className="text-sm text-muted-foreground">Загрузка...</p>
+    return <p className="text-fluid-sm text-muted-foreground">Загрузка...</p>
   }
 
   if (!canAccessSupportChat) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Доступ ограничен</CardTitle>
+          <CardTitle className="text-fluid-lg">Доступ ограничен</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-fluid-sm text-muted-foreground">
             У вас нет прав на управление support-чатами.
           </p>
         </CardContent>
@@ -285,13 +276,13 @@ export function SupportChatAdminInboxPage() {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
+    <div className="grid h-full min-h-0 gap-4 overflow-hidden lg:grid-cols-[360px_1fr]">
       <SupportChatAdminDialogsCard
         showMobileChat={showMobileChat}
         onlyUnanswered={onlyUnanswered}
         onToggleOnlyUnanswered={handleToggleOnlyUnanswered}
         orderedDialogs={orderedDialogs}
-        selectedDialogId={effectiveSelectedDialogId}
+        selectedDialogId={selectedDialogId}
         onSelectDialog={handleSelectDialog}
         dialogsLoadMoreRef={dialogsLoadMoreRef}
         isFetchingNextPage={dialogsQuery.isFetchingNextPage}
@@ -317,9 +308,6 @@ export function SupportChatAdminInboxPage() {
         onFilesChange={handleFilesChange}
         files={files}
         handleSubmit={handleSubmit}
-        messagesEndRef={messagesEndRef}
-        onScrollToLastMessage={scrollToLastMessage}
-        isMarkingRead={isMarkingRead}
         isSendingMessage={isSendingMessage}
         hasDraftText={hasDraftText}
         hasDraftFiles={hasDraftFiles}
@@ -350,11 +338,13 @@ function SupportChatAdminDialogsCard({
   isFetchingNextPage,
 }: Readonly<SupportChatAdminDialogsCardProps>) {
   return (
-    <Card className={`h-[78vh] ${showMobileChat ? 'hidden lg:block' : ''}`}>
+    <Card
+      className={`h-full min-w-0 overflow-hidden ${showMobileChat ? 'hidden lg:flex' : 'flex'} flex-col`}
+    >
       <CardHeader className="space-y-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
+        <CardTitle className="text-fluid-base flex items-center gap-2">
           <MessageSquareWarning className="h-5 w-5" />
-          Support inbox
+          Обращения
         </CardTitle>
 
         <div className="flex items-center gap-2">
@@ -369,9 +359,9 @@ function SupportChatAdminDialogsCard({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-2 overflow-y-auto">
+      <CardContent className="min-h-0 space-y-2 overflow-y-auto">
         {orderedDialogs.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-fluid-sm text-muted-foreground">
             Диалогов нет для выбранного фильтра.
           </p>
         ) : null}
@@ -386,7 +376,7 @@ function SupportChatAdminDialogsCard({
         ))}
         <div ref={dialogsLoadMoreRef} className="h-4" />
         {isFetchingNextPage ? (
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-fluid-sm text-center text-muted-foreground">
             Загрузка диалогов...
           </p>
         ) : null}
@@ -418,7 +408,7 @@ function SupportChatAdminDialogListItem({
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">
+          <span className="text-fluid-base font-medium">
             {dialog.user.name ?? dialog.user.id}
           </span>
           {dialog.isUnanswered ? (
@@ -433,7 +423,7 @@ function SupportChatAdminDialogListItem({
         </Badge>
       ) : null}
 
-      <p className="mt-2 text-xs text-muted-foreground">
+      <p className="text-fluid-sm mt-2 text-muted-foreground">
         {new Date(dialog.lastMessageAt).toLocaleString()}
       </p>
     </button>
@@ -460,9 +450,6 @@ type SupportChatAdminConversationCardProps = {
   onFilesChange: (files: File[]) => void
   files: File[]
   handleSubmit: (event: FormSubmitEvent) => void
-  messagesEndRef: RefCell<HTMLDivElement | null>
-  onScrollToLastMessage: () => void
-  isMarkingRead: boolean
   isSendingMessage: boolean
   hasDraftText: boolean
   hasDraftFiles: boolean
@@ -488,30 +475,55 @@ function SupportChatAdminConversationCard({
   onFilesChange,
   files,
   handleSubmit,
-  messagesEndRef,
-  onScrollToLastMessage,
-  isMarkingRead,
   isSendingMessage,
   hasDraftText,
   hasDraftFiles,
 }: Readonly<SupportChatAdminConversationCardProps>) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null)
+  const hasInitialScrollForDialogRef = useRef(false)
+
   const handleFileInputChange = (event: InputChangeEvent) => {
     const fileList = Array.from(event.target.files ?? [])
     onFilesChange(fileList)
   }
 
+  useEffect(() => {
+    hasInitialScrollForDialogRef.current = false
+  }, [selectedDialog?.dialogId])
+
+  useEffect(() => {
+    if (!selectedDialog || messages.length === 0) {
+      return
+    }
+
+    if (hasInitialScrollForDialogRef.current) {
+      return
+    }
+
+    requestAnimationFrame(() => {
+      const container = messagesContainerRef.current
+      if (!container) {
+        return
+      }
+
+      container.scrollTop = container.scrollHeight
+      hasInitialScrollForDialogRef.current = true
+    })
+  }, [messages, selectedDialog])
+
   return (
     <Card
-      className={`h-[78vh] ${showMobileChat ? 'block' : 'hidden lg:block'}`}
+      className={`h-full gap-2 min-w-0 py-2 overflow-hidden ${showMobileChat ? 'flex' : 'hidden lg:flex'} flex-col`}
     >
-      <CardHeader className="space-y-2">
+      <CardHeader className="px-2">
         <div className="flex items-center justify-between gap-2">
           {showMobileChat ? (
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              className="lg:hidden"
+              className="lg:hidden has-[>svg]:ps-0"
               onClick={handleBackToDialogs}
             >
               <ArrowLeft className="mr-1 h-4 w-4" />
@@ -519,7 +531,7 @@ function SupportChatAdminConversationCard({
             </Button>
           ) : null}
         </div>
-        <CardTitle className="text-lg">
+        <CardTitle className="text-fluid-base">
           {selectedDialog
             ? `Диалог: ${selectedDialog.user.name ?? selectedDialog.user.id}`
             : 'Выберите диалог'}
@@ -540,10 +552,13 @@ function SupportChatAdminConversationCard({
         ) : null}
       </CardHeader>
 
-      <CardContent className="flex h-full flex-col gap-3">
-        <div className="min-h-0 flex-1 overflow-y-auto rounded-md border p-3">
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden px-2">
+        <div
+          ref={messagesContainerRef}
+          className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto rounded-md border p-3"
+        >
           {messages.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-fluid-sm text-muted-foreground">
               Нет сообщений в диалоге.
             </p>
           ) : null}
@@ -565,54 +580,77 @@ function SupportChatAdminConversationCard({
               />
             ))}
           </div>
-          <div ref={messagesEndRef} />
         </div>
 
-        <form className="space-y-2" onSubmit={handleSubmit}>
+        <form
+          className="shrink-0 space-y-2 border-t pt-3"
+          onSubmit={handleSubmit}
+        >
           <Textarea
+            name="message"
             value={message}
             onChange={event => onMessageChange(event.target.value)}
             placeholder="Ответить пользователю"
             rows={3}
+            className="text-fluid-sm"
           />
 
-          <div className="flex flex-wrap items-center gap-2">
-            <label
-              htmlFor="support-chat-admin-file-input"
-              className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted"
-            >
-              <Paperclip className="h-4 w-4" />
-              Прикрепить файл
-              <Input
-                id="support-chat-admin-file-input"
-                type="file"
-                className="hidden"
-                multiple
-                onChange={handleFileInputChange}
-              />
-            </label>
+          {files.length > 0 ? (
+            <div className="flex flex-wrap items-center gap-2">
+              {files.map(file => (
+                <Badge key={file.name} className="max-w-full truncate">
+                  {file.name}
+                </Badge>
+              ))}
+            </div>
+          ) : null}
 
-            {files.map(file => (
-              <Badge key={file.name}>{file.name}</Badge>
-            ))}
-          </div>
+          <div className="flex w-full items-end justify-end gap-2">
+            <Input
+              ref={fileInputRef}
+              id="support-chat-admin-file-input"
+              type="file"
+              className="hidden"
+              multiple
+              onChange={handleFileInputChange}
+            />
 
-          <div className="flex items-center justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onScrollToLastMessage}
-              disabled={isMarkingRead}
-            >
-              К последнему
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSendingMessage || (!hasDraftText && !hasDraftFiles)}
-            >
-              <Send className="mr-2 h-4 w-4" />
-              {isSendingMessage ? 'Отправка...' : 'Отправить'}
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label="Прикрепить файл"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Paperclip className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Прикрепить файл</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="submit"
+                    size="icon"
+                    aria-label={isSendingMessage ? 'Отправка...' : 'Отправить'}
+                    disabled={
+                      isSendingMessage || (!hasDraftText && !hasDraftFiles)
+                    }
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isSendingMessage ? 'Отправка...' : 'Отправить'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </form>
       </CardContent>
@@ -622,19 +660,19 @@ function SupportChatAdminConversationCard({
 
 type UseMarkLatestIncomingAsReadArgs = {
   messages: StaffMessage[]
-  effectiveSelectedDialogId: string | undefined
+  selectedDialogId: string | undefined
   markDialogRead: MarkDialogRead
 }
 
 function useMarkLatestIncomingAsRead({
   messages,
-  effectiveSelectedDialogId,
+  selectedDialogId,
   markDialogRead,
 }: UseMarkLatestIncomingAsReadArgs) {
   const lastMarkedMessageIdRef = useRef<string | null>(null)
 
   useEffect(() => {
-    if (!messages.length || !effectiveSelectedDialogId) {
+    if (!messages.length || !selectedDialogId) {
       return
     }
 
@@ -652,12 +690,12 @@ function useMarkLatestIncomingAsRead({
 
     lastMarkedMessageIdRef.current = latestIncoming.id
     markDialogRead({
-      dialogId: effectiveSelectedDialogId,
+      dialogId: selectedDialogId,
       lastReadMessageId: latestIncoming.id,
     }).catch(() => {
       lastMarkedMessageIdRef.current = null
     })
-  }, [effectiveSelectedDialogId, markDialogRead, messages])
+  }, [selectedDialogId, markDialogRead, messages])
 
   return () => {
     lastMarkedMessageIdRef.current = null
@@ -740,9 +778,9 @@ function SupportChatAdminMessageItem({
     : 'bg-muted text-foreground'
 
   return (
-    <div className={`flex ${containerClass}`}>
+    <div className={`min-w-0 flex ${containerClass}`}>
       <div
-        className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${bubbleClass}`}
+        className={`text-fluid-sm min-w-0 max-w-[80%] rounded-lg px-3 py-2 ${bubbleClass}`}
       >
         <SupportChatAdminMessageItemContent
           item={item}
@@ -755,7 +793,7 @@ function SupportChatAdminMessageItem({
         />
 
         <div className="mt-1 flex items-center justify-between gap-2">
-          <p className="text-[10px] opacity-75">
+          <p className="text-fluid-sm opacity-75">
             {new Date(item.createdAt).toLocaleString()}
             {item.editedAt ? ' (изменено)' : ''}
           </p>
@@ -829,7 +867,7 @@ function SupportChatAdminMessageItemContent({
         </div>
       ) : null}
       {!isEditing && item.text ? (
-        <p className="whitespace-pre-wrap">{item.text}</p>
+        <p className="whitespace-pre-wrap break-words">{item.text}</p>
       ) : null}
     </>
   )
