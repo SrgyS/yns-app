@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -8,12 +9,6 @@ import {
   type ComponentProps,
 } from 'react'
 import {
-  ArrowLeft,
-  EllipsisVertical,
-  Paperclip,
-  Pencil,
-  Send,
-  Trash2,
   MessageSquareWarning,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -22,21 +17,8 @@ import { useAdminAbility } from '@/features/admin-panel/users/_hooks/use-admin-a
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
-import { Input } from '@/shared/ui/input'
-import { Textarea } from '@/shared/ui/textarea'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/shared/ui/tooltip'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/shared/ui/dropdown-menu'
-import { SupportChatMessageAttachments } from '../../_ui/support-chat-message-attachments'
+import { SupportChatConversationCard } from '../../_ui/support-chat-conversation-card'
+import { toSupportChatAttachments } from '../../_ui/support-chat-attachments-upload'
 import { resolveSupportChatClientErrorMessage } from '../../_domain/client-error-message'
 
 import {
@@ -46,18 +28,8 @@ import {
   useSupportChatStaffSse,
 } from '../../_vm/use-support-chat'
 
-type SupportChatAttachmentInput = {
-  filename: string
-  mimeType: string
-  sizeBytes: number
-  base64: string
-}
-
 type FormSubmitEvent = Parameters<
   NonNullable<ComponentProps<'form'>['onSubmit']>
->[0]
-type InputChangeEvent = Parameters<
-  NonNullable<ComponentProps<'input'>['onChange']>
 >[0]
 
 type StaffMessage = ReturnType<
@@ -70,7 +42,6 @@ type RefCell<T> = {
 }
 
 type StaffDialogsQuery = ReturnType<typeof useStaffDialogs>
-type StaffMessagesQuery = ReturnType<typeof useStaffDialogMessages>
 type MarkDialogRead = ReturnType<typeof useSupportChatActions>['markDialogRead']
 
 function toastSupportChatActionError(error: unknown, fallbackMessage: string) {
@@ -168,7 +139,7 @@ export function SupportChatAdminInboxPage() {
     const textPayload = hasText ? trimmedMessage : undefined
 
     try {
-      const attachments = await toAttachments(files)
+      const attachments = await toSupportChatAttachments(files)
 
       await sendMessage({
         dialogId: selectedDialogId,
@@ -291,9 +262,11 @@ export function SupportChatAdminInboxPage() {
       <SupportChatAdminConversationCard
         showMobileChat={showMobileChat}
         selectedDialog={selectedDialog}
-        messagesQuery={messagesQuery}
         handleBackToDialogs={handleBackToDialogs}
         messages={messages}
+        hasMoreMessages={messagesQuery.hasNextPage}
+        isFetchingMoreMessages={messagesQuery.isFetchingNextPage}
+        fetchMoreMessages={() => messagesQuery.fetchNextPage()}
         editingMessageId={editingMessageId}
         editingText={editingText}
         isEditingMessage={isEditingMessage}
@@ -308,9 +281,8 @@ export function SupportChatAdminInboxPage() {
         onFilesChange={handleFilesChange}
         files={files}
         handleSubmit={handleSubmit}
-        isSendingMessage={isSendingMessage}
-        hasDraftText={hasDraftText}
-        hasDraftFiles={hasDraftFiles}
+        isSubmitting={isSendingMessage}
+        isSubmitDisabled={isSendingMessage || (!hasDraftText && !hasDraftFiles)}
       />
     </div>
   )
@@ -433,8 +405,10 @@ function SupportChatAdminDialogListItem({
 type SupportChatAdminConversationCardProps = {
   showMobileChat: boolean
   selectedDialog: StaffDialog | undefined
-  messagesQuery: StaffMessagesQuery
   handleBackToDialogs: () => void
+  hasMoreMessages: boolean
+  isFetchingMoreMessages: boolean
+  fetchMoreMessages: () => void
   messages: StaffMessage[]
   editingMessageId: string | null
   editingText: string
@@ -450,16 +424,17 @@ type SupportChatAdminConversationCardProps = {
   onFilesChange: (files: File[]) => void
   files: File[]
   handleSubmit: (event: FormSubmitEvent) => void
-  isSendingMessage: boolean
-  hasDraftText: boolean
-  hasDraftFiles: boolean
+  isSubmitting: boolean
+  isSubmitDisabled: boolean
 }
 
 function SupportChatAdminConversationCard({
   showMobileChat,
   selectedDialog,
-  messagesQuery,
   handleBackToDialogs,
+  hasMoreMessages,
+  isFetchingMoreMessages,
+  fetchMoreMessages,
   messages,
   editingMessageId,
   editingText,
@@ -475,186 +450,56 @@ function SupportChatAdminConversationCard({
   onFilesChange,
   files,
   handleSubmit,
-  isSendingMessage,
-  hasDraftText,
-  hasDraftFiles,
+  isSubmitting,
+  isSubmitDisabled,
 }: Readonly<SupportChatAdminConversationCardProps>) {
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
-  const messagesContainerRef = useRef<HTMLDivElement | null>(null)
-  const hasInitialScrollForDialogRef = useRef(false)
-
-  const handleFileInputChange = (event: InputChangeEvent) => {
-    const fileList = Array.from(event.target.files ?? [])
-    onFilesChange(fileList)
-  }
-
-  useEffect(() => {
-    hasInitialScrollForDialogRef.current = false
-  }, [selectedDialog?.dialogId])
-
-  useEffect(() => {
-    if (!selectedDialog || messages.length === 0) {
-      return
-    }
-
-    if (hasInitialScrollForDialogRef.current) {
-      return
-    }
-
-    requestAnimationFrame(() => {
-      const container = messagesContainerRef.current
-      if (!container) {
-        return
-      }
-
-      container.scrollTop = container.scrollHeight
-      hasInitialScrollForDialogRef.current = true
-    })
-  }, [messages, selectedDialog])
+  const isOutgoingMessage = useCallback((senderType: string) => {
+    return senderType !== 'USER'
+  }, [])
 
   return (
-    <Card
-      className={`h-full gap-2 min-w-0 py-2 overflow-hidden ${showMobileChat ? 'flex' : 'hidden lg:flex'} flex-col`}
-    >
-      <CardHeader className="px-2">
-        <div className="flex items-center justify-between gap-2">
-          {showMobileChat ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="lg:hidden has-[>svg]:ps-0"
-              onClick={handleBackToDialogs}
-            >
-              <ArrowLeft className="mr-1 h-4 w-4" />
-              Назад
-            </Button>
-          ) : null}
-        </div>
-        <CardTitle className="text-fluid-base">
-          {selectedDialog
-            ? `Диалог: ${selectedDialog.user.name ?? selectedDialog.user.id}`
-            : 'Выберите диалог'}
-        </CardTitle>
-
-        {selectedDialog && messagesQuery.hasNextPage ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={messagesQuery.isFetchingNextPage}
-            onClick={() => messagesQuery.fetchNextPage()}
-          >
-            {messagesQuery.isFetchingNextPage
-              ? 'Загрузка...'
-              : 'Загрузить историю'}
-          </Button>
-        ) : null}
-      </CardHeader>
-
-      <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden px-2">
-        <div
-          ref={messagesContainerRef}
-          className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto rounded-md border p-3"
-        >
-          {messages.length === 0 ? (
-            <p className="text-fluid-sm text-muted-foreground">
-              Нет сообщений в диалоге.
-            </p>
-          ) : null}
-
-          <div className="space-y-2">
-            {messages.map(item => (
-              <SupportChatAdminMessageItem
-                key={item.id}
-                item={item}
-                editingMessageId={editingMessageId}
-                editingText={editingText}
-                isEditingMessage={isEditingMessage}
-                isDeletingMessage={isDeletingMessage}
-                onEditingTextChange={onEditingTextChange}
-                onCancelEdit={onCancelEdit}
-                onSubmitEdit={handleEditSubmit}
-                onStartEdit={startEditMessage}
-                onDelete={handleDeleteMessage}
-              />
-            ))}
-          </div>
-        </div>
-
-        <form
-          className="shrink-0 space-y-2 border-t pt-3"
-          onSubmit={handleSubmit}
-        >
-          <Textarea
-            name="message"
-            value={message}
-            onChange={event => onMessageChange(event.target.value)}
-            placeholder="Ответить пользователю"
-            rows={3}
-            className="text-fluid-sm"
-          />
-
-          {files.length > 0 ? (
-            <div className="flex flex-wrap items-center gap-2">
-              {files.map(file => (
-                <Badge key={file.name} className="max-w-full truncate">
-                  {file.name}
-                </Badge>
-              ))}
-            </div>
-          ) : null}
-
-          <div className="flex w-full items-end justify-end gap-2">
-            <Input
-              ref={fileInputRef}
-              id="support-chat-admin-file-input"
-              type="file"
-              className="hidden"
-              multiple
-              onChange={handleFileInputChange}
-            />
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    aria-label="Прикрепить файл"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Paperclip className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Прикрепить файл</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="submit"
-                    size="icon"
-                    aria-label={isSendingMessage ? 'Отправка...' : 'Отправить'}
-                    disabled={
-                      isSendingMessage || (!hasDraftText && !hasDraftFiles)
-                    }
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {isSendingMessage ? 'Отправка...' : 'Отправить'}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+    <SupportChatConversationCard
+      cardClassName={`h-full gap-2 min-w-0 py-2 overflow-hidden ${showMobileChat ? 'flex' : 'hidden lg:flex'} flex-col`}
+      headerClassName="px-2"
+      title={
+        selectedDialog
+          ? `Диалог: ${selectedDialog.user.name ?? selectedDialog.user.id}`
+          : 'Выберите диалог'
+      }
+      backButton={
+        showMobileChat
+          ? {
+              label: 'Назад',
+              onClick: handleBackToDialogs,
+              className: 'lg:hidden has-[>svg]:ps-0',
+            }
+          : undefined
+      }
+      hasMoreMessages={selectedDialog ? hasMoreMessages : false}
+      isFetchingMoreMessages={isFetchingMoreMessages}
+      onFetchMoreMessages={fetchMoreMessages}
+      messages={messages}
+      selectedDialogKey={selectedDialog?.dialogId}
+      emptyStateText="Нет сообщений в диалоге."
+      editingMessageId={editingMessageId}
+      editingText={editingText}
+      isEditingMessage={isEditingMessage}
+      isDeletingMessage={isDeletingMessage}
+      onEditingTextChange={onEditingTextChange}
+      onCancelEdit={onCancelEdit}
+      onSubmitEdit={handleEditSubmit}
+      onStartEdit={startEditMessage}
+      onDelete={handleDeleteMessage}
+      message={message}
+      onMessageChange={onMessageChange}
+      onFilesChange={onFilesChange}
+      files={files}
+      onSubmit={handleSubmit}
+      isSubmitting={isSubmitting}
+      isSubmitDisabled={isSubmitDisabled}
+      isOutgoingMessage={isOutgoingMessage}
+      fileInputId="support-chat-admin-file-input"
+    />
   )
 }
 
@@ -743,219 +588,4 @@ function useDialogsInfiniteScroll({
       observer.disconnect()
     }
   }, [dialogsLoadMoreRef, fetchNextPage, hasNextPage, isFetchingNextPage])
-}
-
-type SupportChatAdminMessageItemProps = {
-  item: StaffMessage
-  editingMessageId: string | null
-  editingText: string
-  isEditingMessage: boolean
-  isDeletingMessage: boolean
-  onEditingTextChange: (value: string) => void
-  onCancelEdit: () => void
-  onSubmitEdit: () => void
-  onStartEdit: (messageId: string, text: string | null) => void
-  onDelete: (messageId: string) => void
-}
-
-function SupportChatAdminMessageItem({
-  item,
-  editingMessageId,
-  editingText,
-  isEditingMessage,
-  isDeletingMessage,
-  onEditingTextChange,
-  onCancelEdit,
-  onSubmitEdit,
-  onStartEdit,
-  onDelete,
-}: Readonly<SupportChatAdminMessageItemProps>) {
-  const isOutgoing = item.senderType !== 'USER'
-  const isEditing = editingMessageId === item.id
-  const containerClass = isOutgoing ? 'justify-end' : 'justify-start'
-  const bubbleClass = isOutgoing
-    ? 'bg-primary text-primary-foreground'
-    : 'bg-muted text-foreground'
-
-  return (
-    <div className={`min-w-0 flex ${containerClass}`}>
-      <div
-        className={`text-fluid-sm min-w-0 max-w-[80%] rounded-lg px-3 py-2 ${bubbleClass}`}
-      >
-        <SupportChatAdminMessageItemContent
-          item={item}
-          isEditing={isEditing}
-          editingText={editingText}
-          isEditingMessage={isEditingMessage}
-          onEditingTextChange={onEditingTextChange}
-          onCancelEdit={onCancelEdit}
-          onSubmitEdit={onSubmitEdit}
-        />
-
-        <div className="mt-1 flex items-center justify-between gap-2">
-          <p className="text-fluid-sm opacity-75">
-            {new Date(item.createdAt).toLocaleString()}
-            {item.editedAt ? ' (изменено)' : ''}
-          </p>
-          <SupportChatAdminMessageItemActions
-            item={item}
-            isDeletingMessage={isDeletingMessage}
-            onStartEdit={onStartEdit}
-            onDelete={onDelete}
-          />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-type SupportChatAdminMessageItemContentProps = {
-  item: StaffMessage
-  isEditing: boolean
-  editingText: string
-  isEditingMessage: boolean
-  onEditingTextChange: (value: string) => void
-  onCancelEdit: () => void
-  onSubmitEdit: () => void
-}
-
-function SupportChatAdminMessageItemContent({
-  item,
-  isEditing,
-  editingText,
-  isEditingMessage,
-  onEditingTextChange,
-  onCancelEdit,
-  onSubmitEdit,
-}: Readonly<SupportChatAdminMessageItemContentProps>) {
-  if (item.deletedAt) {
-    return <p className="italic opacity-80">Сообщение удалено</p>
-  }
-
-  return (
-    <>
-      <SupportChatMessageAttachments
-        dialogId={item.dialogId}
-        attachments={item.attachments}
-      />
-      {isEditing ? (
-        <div className="space-y-2">
-          <Textarea
-            value={editingText}
-            onChange={event => onEditingTextChange(event.target.value)}
-            rows={3}
-            className="bg-background text-foreground"
-          />
-          <div className="flex items-center justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onCancelEdit}
-            >
-              Отмена
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={onSubmitEdit}
-              disabled={isEditingMessage}
-            >
-              {isEditingMessage ? 'Сохранение...' : 'Сохранить'}
-            </Button>
-          </div>
-        </div>
-      ) : null}
-      {!isEditing && item.text ? (
-        <p className="whitespace-pre-wrap break-words">{item.text}</p>
-      ) : null}
-    </>
-  )
-}
-
-type SupportChatAdminMessageItemActionsProps = {
-  item: StaffMessage
-  isDeletingMessage: boolean
-  onStartEdit: (messageId: string, text: string | null) => void
-  onDelete: (messageId: string) => void
-}
-
-function SupportChatAdminMessageItemActions({
-  item,
-  isDeletingMessage,
-  onStartEdit,
-  onDelete,
-}: Readonly<SupportChatAdminMessageItemActionsProps>) {
-  if (!item.canEdit && !item.canDelete) {
-    return null
-  }
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-6 w-6">
-          <EllipsisVertical className="h-3.5 w-3.5" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {item.canEdit ? (
-          <DropdownMenuItem onClick={() => onStartEdit(item.id, item.text)}>
-            <Pencil className="mr-1 h-3.5 w-3.5" />
-            Редактировать
-          </DropdownMenuItem>
-        ) : null}
-        {item.canDelete ? (
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={() => onDelete(item.id)}
-            disabled={isDeletingMessage}
-          >
-            <Trash2 className="mr-1 h-3.5 w-3.5" />
-            Удалить
-          </DropdownMenuItem>
-        ) : null}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
-
-async function toAttachments(
-  files: File[]
-): Promise<SupportChatAttachmentInput[] | undefined> {
-  if (files.length === 0) {
-    return undefined
-  }
-
-  const mapped = await Promise.all(
-    files.map(async file => ({
-      filename: file.name,
-      mimeType: file.type,
-      sizeBytes: file.size,
-      base64: await fileToBase64(file),
-    }))
-  )
-
-  return mapped
-}
-
-async function fileToBase64(file: File): Promise<string> {
-  return await new Promise((resolve, reject) => {
-    const reader = new FileReader()
-
-    reader.onload = () => {
-      const result = reader.result
-      if (typeof result === 'string') {
-        resolve(result)
-        return
-      }
-
-      reject(new Error('Не удалось обработать файл'))
-    }
-
-    reader.onerror = () => {
-      reject(new Error('Не удалось обработать файл'))
-    }
-
-    reader.readAsDataURL(file)
-  })
 }

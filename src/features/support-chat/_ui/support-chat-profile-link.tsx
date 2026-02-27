@@ -15,7 +15,7 @@ export function SupportChatProfileLink() {
       <Link href="/platform/support-chat">
         <div className="relative flex items-center gap-2 pr-2">
           <MessageCircle className="h-5 w-5 text-primary" />
-          <span>Чат с поддержкой</span>
+          <span>Написать в поддержку</span>
           {hasUnread ? (
             <span className="absolute -top-1 left-3 h-2.5 w-2.5 rounded-full bg-orange-500" />
           ) : null}

@@ -9,6 +9,7 @@ role: Code Reviewer
 ---
 
 You review the code for correctness, readability, and alignment with design/plan.
+Find react, next js antipatterns
 
 ## Inputs
 - Code diff (or described changes)
