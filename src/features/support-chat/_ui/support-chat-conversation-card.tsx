@@ -53,18 +53,20 @@ type SupportChatMessageItem = {
   readAt: string | null
 }
 
+type SupportChatSenderType = SupportChatMessageItem['senderType']
+
 type SupportChatBackButton =
   | {
+      mode: 'link'
       label: string
       href: string
       className?: string
-      onClick?: undefined
     }
   | {
+      mode: 'action'
       label: string
       onClick: () => void
       className?: string
-      href?: undefined
     }
 
 type SupportChatConversationCardProps = {
@@ -77,6 +79,7 @@ type SupportChatConversationCardProps = {
   onFetchMoreMessages: () => void
   messages: SupportChatMessageItem[]
   selectedDialogKey?: string
+  isLoadingMessages?: boolean
   emptyStateText: string
   editingMessageId: string | null
   editingText: string
@@ -94,7 +97,7 @@ type SupportChatConversationCardProps = {
   onSubmit: (event: FormSubmitEvent) => void
   isSubmitting: boolean
   isSubmitDisabled: boolean
-  isOutgoingMessage: (senderType: string) => boolean
+  outgoingSenderType: SupportChatSenderType
   placeholder?: string
   fileInputId: string
 }
@@ -109,6 +112,7 @@ export function SupportChatConversationCard({
   onFetchMoreMessages,
   messages,
   selectedDialogKey,
+  isLoadingMessages = false,
   emptyStateText,
   editingMessageId,
   editingText,
@@ -126,7 +130,7 @@ export function SupportChatConversationCard({
   onSubmit,
   isSubmitting,
   isSubmitDisabled,
-  isOutgoingMessage,
+  outgoingSenderType,
   placeholder = 'Сообщение...',
   fileInputId,
 }: Readonly<SupportChatConversationCardProps>) {
@@ -165,7 +169,7 @@ export function SupportChatConversationCard({
       return
     }
 
-    const latestMessage = messages[messages.length - 1]
+    const latestMessage = messages.at(-1)
     if (!latestMessage) {
       return
     }
@@ -175,7 +179,7 @@ export function SupportChatConversationCard({
     }
 
     lastRenderedMessageIdRef.current = latestMessage.id
-    if (!isOutgoingMessage(latestMessage.senderType)) {
+    if (latestMessage.senderType !== outgoingSenderType) {
       return
     }
 
@@ -190,7 +194,7 @@ export function SupportChatConversationCard({
         behavior: 'smooth',
       })
     })
-  }, [isOutgoingMessage, messages, selectedDialogKey])
+  }, [messages, outgoingSenderType, selectedDialogKey])
 
   useEffect(() => {
     const textarea = messageTextareaRef.current
@@ -232,7 +236,9 @@ export function SupportChatConversationCard({
             </Button>
           ) : null}
         </div>
-        {title ? <CardTitle className="text-fluid-base">{title}</CardTitle> : null}
+        {title ? (
+          <CardTitle className="text-fluid-base">{title}</CardTitle>
+        ) : null}
       </CardHeader>
 
       <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden px-2">
@@ -240,8 +246,15 @@ export function SupportChatConversationCard({
           ref={messagesContainerRef}
           className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto rounded-md border p-3"
         >
-          {messages.length === 0 ? (
-            <p className="text-fluid-sm text-muted-foreground">{emptyStateText}</p>
+          {isLoadingMessages ? (
+            <p className="text-fluid-sm text-muted-foreground">
+              Загрузка сообщений...
+            </p>
+          ) : null}
+          {!isLoadingMessages && messages.length === 0 ? (
+            <p className="text-fluid-sm text-muted-foreground">
+              {emptyStateText}
+            </p>
           ) : null}
 
           <div className="space-y-2">
@@ -274,7 +287,7 @@ export function SupportChatConversationCard({
                     onSubmitEdit={onSubmitEdit}
                     onStartEdit={onStartEdit}
                     onDelete={onDelete}
-                    isOutgoingMessage={isOutgoingMessage}
+                    outgoingSenderType={outgoingSenderType}
                   />
                 </div>
               )
@@ -361,7 +374,7 @@ function SupportChatBackButtonView({
 }: Readonly<{
   backButton: SupportChatBackButton
 }>) {
-  if (backButton.href) {
+  if (backButton.mode === 'link') {
     return (
       <Button
         variant="ghost"
@@ -402,7 +415,7 @@ type SupportChatMessageBubbleProps = {
   onSubmitEdit: () => void
   onStartEdit: (messageId: string, text: string | null) => void
   onDelete: (messageId: string) => void
-  isOutgoingMessage: (senderType: string) => boolean
+  outgoingSenderType: SupportChatSenderType
 }
 
 function SupportChatMessageBubble({
@@ -416,9 +429,9 @@ function SupportChatMessageBubble({
   onSubmitEdit,
   onStartEdit,
   onDelete,
-  isOutgoingMessage,
+  outgoingSenderType,
 }: Readonly<SupportChatMessageBubbleProps>) {
-  const isOutgoing = isOutgoingMessage(item.senderType)
+  const isOutgoing = item.senderType === outgoingSenderType
   const isEditing = editingMessageId === item.id
   const hasAttachments =
     parseStoredSupportChatAttachments(item.attachments).length > 0

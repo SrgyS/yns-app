@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState, type ComponentProps } from 'react'
+import { useEffect, useRef, useState, type ComponentProps } from 'react'
 import { toast } from 'sonner'
 
 import { SupportChatConversationCard } from '../../_ui/support-chat-conversation-card'
@@ -56,6 +56,8 @@ export function SupportChatUserPage() {
     hasNextPage: hasMoreMessages,
     fetchNextPage: fetchMoreMessages,
     isFetchingNextPage: isFetchingMoreMessages,
+    isPending: isMessagesPending,
+    isFetching: isMessagesFetching,
   } = useDialogMessages(effectiveSelectedDialogId)
   useSupportChatSse(effectiveSelectedDialogId)
 
@@ -162,21 +164,22 @@ export function SupportChatUserPage() {
     setFiles(nextFiles)
   }
 
-  const isOutgoingMessage = useCallback((senderType: string) => {
-    return senderType === 'USER'
-  }, [])
-
   return (
     <div className="grid h-full min-h-0 gap-4 overflow-hidden">
       <SupportChatConversationCard
         cardClassName="h-full min-w-0 overflow-hidden flex flex-col border-none p-0 gap-1"
         headerClassName="space-y-2"
-        backButton={{ label: 'Назад', href: '/platform/profile' }}
+        backButton={{ mode: 'link', label: 'Назад', href: '/platform/profile' }}
         hasMoreMessages={hasMoreMessages}
         isFetchingMoreMessages={isFetchingMoreMessages}
         onFetchMoreMessages={() => fetchMoreMessages()}
         messages={messages}
         selectedDialogKey={effectiveSelectedDialogId}
+        isLoadingMessages={
+          Boolean(effectiveSelectedDialogId) &&
+          (isMessagesPending || isMessagesFetching) &&
+          messages.length === 0
+        }
         emptyStateText="Сообщений пока нет."
         editingMessageId={editingMessageId}
         editingText={editingText}
@@ -197,7 +200,7 @@ export function SupportChatUserPage() {
           (isSendingMessage || isCreatingDialog) ||
           (!hasDraftText && !hasDraftFiles)
         }
-        isOutgoingMessage={isOutgoingMessage}
+        outgoingSenderType="USER"
         fileInputId="support-chat-user-file-input"
       />
     </div>
