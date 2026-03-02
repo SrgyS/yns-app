@@ -26,9 +26,16 @@ export function ProviderButton({ provider }: { provider: ClientSafeProvider }) {
 
   const oauthSignIn = () => {
     setIsLoading(true)
-    signIn(provider.id, {
-      callbackUrl: callBackUrl || DEAFAULT_LOGIN_REDIRECT,
-    })
+    const authParams =
+      provider.id === 'google' ? { prompt: 'select_account' } : undefined
+
+    signIn(
+      provider.id,
+      {
+        callbackUrl: callBackUrl || DEAFAULT_LOGIN_REDIRECT,
+      },
+      authParams
+    )
   }
 
   return (
