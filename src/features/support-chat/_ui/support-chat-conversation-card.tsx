@@ -308,7 +308,7 @@ export function SupportChatConversationCard({
               onChange={event => onMessageChange(event.target.value)}
               placeholder={placeholder}
               rows={1}
-              className="text-fluid-sm min-h-10 resize-none px-12 py-2"
+              className="text-base min-h-10 resize-none px-12 py-2"
             />
 
             <Input
