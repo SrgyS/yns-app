@@ -70,7 +70,7 @@ export default async function ProfilePage() {
               <Link href="/">
                 <div className="flex items-center gap-2">
                   <Home className="h-5 w-5 text-primary" />
-                  Выбрать курс
+                  На главную
                 </div>
                 <ChevronRight className="h-4 w-4" />
               </Link>

@@ -1,6 +1,12 @@
 import Link from 'next/link'
-import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/alert'
 import { Button } from '@/shared/ui/button'
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/shared/ui/card'
 
 type NoAccessCalloutProps = {
   title?: string
@@ -18,15 +24,17 @@ export function NoAccessCallout({
   className,
 }: NoAccessCalloutProps) {
   return (
-    <div className={className}>
-      <Alert>
-        <AlertTitle>{title}</AlertTitle>
-        <AlertDescription>{description}</AlertDescription>
-      </Alert>
+    <Card className={className}>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
 
-      <Button asChild className="mt-4">
-        <Link href={ctaHref}>{ctaLabel}</Link>
-      </Button>
-    </div>
+      <CardFooter>
+        <Button asChild>
+          <Link href={ctaHref}>{ctaLabel}</Link>
+        </Button>
+      </CardFooter>
+    </Card>
   )
 }
