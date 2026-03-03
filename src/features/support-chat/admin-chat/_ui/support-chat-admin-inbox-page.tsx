@@ -228,6 +228,12 @@ export function SupportChatAdminInboxPage() {
     setFiles(nextFiles)
   }
 
+  const handleRemoveFile = (indexToRemove: number) => {
+    setFiles(currentFiles => {
+      return currentFiles.filter((_, index) => index !== indexToRemove)
+    })
+  }
+
   if (abilityQuery.isLoading) {
     return <p className="text-fluid-sm text-muted-foreground">Загрузка...</p>
   }
@@ -289,6 +295,7 @@ export function SupportChatAdminInboxPage() {
         message={message}
         onMessageChange={handleMessageChange}
         onFilesChange={handleFilesChange}
+        onRemoveFile={handleRemoveFile}
         files={files}
         handleSubmit={handleSubmit}
         isSubmitting={isSendingMessage}
@@ -454,6 +461,7 @@ type SupportChatAdminConversationCardProps = {
   message: string
   onMessageChange: (value: string) => void
   onFilesChange: (files: File[]) => void
+  onRemoveFile: (index: number) => void
   files: File[]
   handleSubmit: (event: FormSubmitEvent) => void
   isSubmitting: boolean
@@ -481,6 +489,7 @@ function SupportChatAdminConversationCard({
   message,
   onMessageChange,
   onFilesChange,
+  onRemoveFile,
   files,
   handleSubmit,
   isSubmitting,
@@ -547,6 +556,7 @@ function SupportChatAdminConversationCard({
       message={message}
       onMessageChange={onMessageChange}
       onFilesChange={onFilesChange}
+      onRemoveFile={onRemoveFile}
       files={files}
       onSubmit={handleSubmit}
       isSubmitting={isSubmitting}

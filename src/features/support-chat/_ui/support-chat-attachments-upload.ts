@@ -5,6 +5,19 @@ type SupportChatAttachmentInput = {
   base64: string
 }
 
+const SUPPORT_CHAT_ATTACHMENT_ACCEPT = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
+  '.mov',
+  'application/pdf',
+  'text/plain',
+].join(',')
+
 export async function toSupportChatAttachments(
   files: File[]
 ): Promise<SupportChatAttachmentInput[] | undefined> {
@@ -45,3 +58,5 @@ async function fileToBase64(file: File): Promise<string> {
     reader.readAsDataURL(file)
   })
 }
+
+export { SUPPORT_CHAT_ATTACHMENT_ACCEPT }

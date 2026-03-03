@@ -1,7 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useRef, type ComponentProps, type ReactNode } from 'react'
+import {
+  useEffect,
+  useRef,
+  type ComponentProps,
+  type ReactNode,
+  type RefObject,
+} from 'react'
 import {
   ArrowLeft,
   CheckCheck,
@@ -10,7 +16,9 @@ import {
   Pencil,
   Send,
   Trash2,
+  X,
 } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
@@ -23,6 +31,8 @@ import {
 } from '@/shared/ui/dropdown-menu'
 import { Input } from '@/shared/ui/input'
 import { Textarea } from '@/shared/ui/textarea'
+import { MAX_ATTACHMENTS_PER_MESSAGE } from '../_domain/attachment-schema'
+import { SUPPORT_CHAT_ATTACHMENT_ACCEPT } from './support-chat-attachments-upload'
 import { SupportChatMessageAttachments } from './support-chat-message-attachments'
 import {
   Tooltip,
@@ -92,6 +102,7 @@ type SupportChatConversationCardProps = {
   message: string
   onMessageChange: (value: string) => void
   onFilesChange: (files: File[]) => void
+  onRemoveFile: (index: number) => void
   files: File[]
   onSubmit: (event: FormSubmitEvent) => void
   isSubmitting: boolean
@@ -99,6 +110,12 @@ type SupportChatConversationCardProps = {
   outgoingSenderType: SupportChatSenderType
   placeholder?: string
   fileInputId: string
+}
+
+type MergeSelectedFilesResult = {
+  nextFiles: File[]
+  hasDuplicates: boolean
+  exceedsLimit: boolean
 }
 
 export function SupportChatConversationCard({
@@ -125,6 +142,7 @@ export function SupportChatConversationCard({
   message,
   onMessageChange,
   onFilesChange,
+  onRemoveFile,
   files,
   onSubmit,
   isSubmitting,
@@ -210,166 +228,536 @@ export function SupportChatConversationCard({
   }, [message])
 
   const handleFileInputChange = (event: InputChangeEvent) => {
-    const fileList = Array.from(event.target.files ?? [])
-    onFilesChange(fileList)
+    const selectedFiles = Array.from(event.target.files ?? [])
+    const mergedFiles = mergeSelectedFiles(files, selectedFiles)
+
+    if (mergedFiles.hasDuplicates) {
+      toast.error('Такой файл уже добавлен')
+    }
+
+    if (mergedFiles.exceedsLimit) {
+      toast.error(
+        `Можно прикрепить не более ${MAX_ATTACHMENTS_PER_MESSAGE} файлов`
+      )
+    }
+
+    onFilesChange(mergedFiles.nextFiles)
+    event.target.value = ''
   }
 
   return (
     <Card className={cardClassName}>
-      <CardHeader className={headerClassName}>
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
-            {backButton ? (
-              <SupportChatBackButtonView backButton={backButton} />
-            ) : null}
-            {title ? (
-              <CardTitle className="text-fluid-base min-w-0 truncate">
-                {title}
-              </CardTitle>
-            ) : null}
-          </div>
-          {hasMoreMessages ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={isFetchingMoreMessages}
-              onClick={onFetchMoreMessages}
-            >
-              {isFetchingMoreMessages ? 'Загрузка...' : 'Загрузить историю'}
-            </Button>
-          ) : null}
-        </div>
-      </CardHeader>
+      <SupportChatConversationHeader
+        headerClassName={headerClassName}
+        backButton={backButton}
+        title={title}
+        hasMoreMessages={hasMoreMessages}
+        isFetchingMoreMessages={isFetchingMoreMessages}
+        onFetchMoreMessages={onFetchMoreMessages}
+      />
 
       <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden px-2">
-        <div
-          ref={messagesContainerRef}
-          className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto rounded-md border p-3"
-        >
-          {isLoadingMessages ? (
-            <p className="text-fluid-sm text-muted-foreground">
-              Загрузка сообщений...
-            </p>
-          ) : null}
-          {!isLoadingMessages && messages.length === 0 ? (
-            <p className="text-fluid-sm text-muted-foreground">
-              {emptyStateText}
-            </p>
-          ) : null}
+        <SupportChatMessagesViewport
+          containerRef={messagesContainerRef}
+          messages={messages}
+          isLoadingMessages={isLoadingMessages}
+          emptyStateText={emptyStateText}
+          editingMessageId={editingMessageId}
+          editingText={editingText}
+          isEditingMessage={isEditingMessage}
+          isDeletingMessage={isDeletingMessage}
+          onEditingTextChange={onEditingTextChange}
+          onCancelEdit={onCancelEdit}
+          onSubmitEdit={onSubmitEdit}
+          onStartEdit={onStartEdit}
+          onDelete={onDelete}
+          outgoingSenderType={outgoingSenderType}
+        />
 
-          <div className="space-y-2">
-            {messages.map((item, index) => {
-              const previousItem = messages[index - 1]
-              const showDateBadge =
-                !previousItem ||
-                !isSameCalendarDate(previousItem.createdAt, item.createdAt)
-
-              return (
-                <div key={item.id}>
-                  {showDateBadge ? (
-                    <div className="my-3 flex justify-center">
-                      <Badge
-                        variant="secondary"
-                        className="rounded-full border border-border/70 bg-background/90 px-3 py-0.5 font-medium"
-                      >
-                        {formatMessageDate(item.createdAt)}
-                      </Badge>
-                    </div>
-                  ) : null}
-                  <SupportChatMessageBubble
-                    item={item}
-                    editingMessageId={editingMessageId}
-                    editingText={editingText}
-                    isEditingMessage={isEditingMessage}
-                    isDeletingMessage={isDeletingMessage}
-                    onEditingTextChange={onEditingTextChange}
-                    onCancelEdit={onCancelEdit}
-                    onSubmitEdit={onSubmitEdit}
-                    onStartEdit={onStartEdit}
-                    onDelete={onDelete}
-                    outgoingSenderType={outgoingSenderType}
-                  />
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        <form
-          className="shrink-0 space-y-2 border-t pt-3 mb-1"
+        <SupportChatComposer
+          messageTextareaRef={messageTextareaRef}
+          fileInputRef={fileInputRef}
+          fileInputId={fileInputId}
+          message={message}
+          onMessageChange={onMessageChange}
+          placeholder={placeholder}
+          isSubmitting={isSubmitting}
+          isSubmitDisabled={isSubmitDisabled}
           onSubmit={onSubmit}
-        >
-          <div className="relative">
-            <Textarea
-              ref={messageTextareaRef}
-              name="message"
-              value={message}
-              onChange={event => onMessageChange(event.target.value)}
-              placeholder={placeholder}
-              rows={1}
-              className="text-base min-h-10 resize-none px-12 py-2"
-            />
-
-            <Input
-              ref={fileInputRef}
-              id={fileInputId}
-              type="file"
-              className="hidden"
-              multiple
-              onChange={handleFileInputChange}
-            />
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="absolute bottom-1 left-2 h-8 w-8 rounded-full"
-                    aria-label="Прикрепить файл"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Paperclip className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Прикрепить файл</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="submit"
-                    size="icon"
-                    className="absolute bottom-1 right-2 h-8 w-8 rounded-full"
-                    aria-label={isSubmitting ? 'Отправка...' : 'Отправить'}
-                    disabled={isSubmitDisabled}
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {isSubmitting ? 'Отправка...' : 'Отправить'}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-
-          {files.length > 0 ? (
-            <div className="flex flex-wrap items-center gap-2">
-              {files.map(file => (
-                <Badge key={file.name} className="max-w-full truncate">
-                  {file.name}
-                </Badge>
-              ))}
-            </div>
-          ) : null}
-        </form>
+          onFileInputChange={handleFileInputChange}
+          files={files}
+          onRemoveFile={onRemoveFile}
+        />
       </CardContent>
     </Card>
+  )
+}
+
+function mergeSelectedFiles(
+  existingFiles: File[],
+  selectedFiles: File[]
+): MergeSelectedFilesResult {
+  const nextFiles = [...existingFiles]
+  let hasDuplicates = false
+
+  selectedFiles.forEach(file => {
+    const isDuplicate = nextFiles.some(currentFile => {
+      return getFileSignature(currentFile) === getFileSignature(file)
+    })
+
+    if (isDuplicate) {
+      hasDuplicates = true
+      return
+    }
+
+    nextFiles.push(file)
+  })
+
+  const exceedsLimit = nextFiles.length > MAX_ATTACHMENTS_PER_MESSAGE
+
+  return {
+    nextFiles: nextFiles.slice(0, MAX_ATTACHMENTS_PER_MESSAGE),
+    hasDuplicates,
+    exceedsLimit,
+  }
+}
+
+function getFileSignature(file: File) {
+  return [
+    file.name,
+    file.size,
+    file.lastModified,
+    file.type,
+  ].join(':')
+}
+
+type SupportChatConversationHeaderProps = {
+  headerClassName?: string
+  backButton?: SupportChatBackButton
+  title?: ReactNode
+  hasMoreMessages: boolean
+  isFetchingMoreMessages: boolean
+  onFetchMoreMessages: () => void
+}
+
+function SupportChatConversationHeader({
+  headerClassName,
+  backButton,
+  title,
+  hasMoreMessages,
+  isFetchingMoreMessages,
+  onFetchMoreMessages,
+}: Readonly<SupportChatConversationHeaderProps>) {
+  return (
+    <CardHeader className={headerClassName}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <SupportChatBackButtonSlot backButton={backButton} />
+          <SupportChatConversationTitle title={title} />
+        </div>
+        <SupportChatLoadMoreButton
+          hasMoreMessages={hasMoreMessages}
+          isFetchingMoreMessages={isFetchingMoreMessages}
+          onFetchMoreMessages={onFetchMoreMessages}
+        />
+      </div>
+    </CardHeader>
+  )
+}
+
+function SupportChatBackButtonSlot({
+  backButton,
+}: Readonly<{
+  backButton?: SupportChatBackButton
+}>) {
+  if (!backButton) {
+    return null
+  }
+
+  return <SupportChatBackButtonView backButton={backButton} />
+}
+
+function SupportChatConversationTitle({
+  title,
+}: Readonly<{
+  title?: ReactNode
+}>) {
+  if (!title) {
+    return null
+  }
+
+  return (
+    <CardTitle className="text-fluid-base min-w-0 truncate">
+      {title}
+    </CardTitle>
+  )
+}
+
+function SupportChatLoadMoreButton({
+  hasMoreMessages,
+  isFetchingMoreMessages,
+  onFetchMoreMessages,
+}: Readonly<{
+  hasMoreMessages: boolean
+  isFetchingMoreMessages: boolean
+  onFetchMoreMessages: () => void
+}>) {
+  if (!hasMoreMessages) {
+    return null
+  }
+
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      disabled={isFetchingMoreMessages}
+      onClick={onFetchMoreMessages}
+    >
+      {isFetchingMoreMessages ? 'Загрузка...' : 'Загрузить историю'}
+    </Button>
+  )
+}
+
+type SupportChatMessagesViewportProps = {
+  containerRef: RefObject<HTMLDivElement | null>
+  messages: SupportChatMessageItem[]
+  isLoadingMessages: boolean
+  emptyStateText: string
+  editingMessageId: string | null
+  editingText: string
+  isEditingMessage: boolean
+  isDeletingMessage: boolean
+  onEditingTextChange: (value: string) => void
+  onCancelEdit: () => void
+  onSubmitEdit: () => void
+  onStartEdit: (messageId: string, text: string | null) => void
+  onDelete: (messageId: string) => void
+  outgoingSenderType: SupportChatSenderType
+}
+
+const SupportChatMessagesViewport = ({
+  containerRef,
+  messages,
+  isLoadingMessages,
+  emptyStateText,
+  editingMessageId,
+  editingText,
+  isEditingMessage,
+  isDeletingMessage,
+  onEditingTextChange,
+  onCancelEdit,
+  onSubmitEdit,
+  onStartEdit,
+  onDelete,
+  outgoingSenderType,
+}: Readonly<SupportChatMessagesViewportProps>) => {
+  return (
+    <div
+      ref={containerRef}
+      className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto rounded-md border p-3"
+    >
+      <SupportChatMessagesStatus
+        isLoadingMessages={isLoadingMessages}
+        messagesCount={messages.length}
+        emptyStateText={emptyStateText}
+      />
+
+      <div className="space-y-2">
+        {messages.map((item, index) => {
+          return (
+            <SupportChatMessageListItem
+              key={item.id}
+              item={item}
+              previousItem={messages[index - 1]}
+              editingMessageId={editingMessageId}
+              editingText={editingText}
+              isEditingMessage={isEditingMessage}
+              isDeletingMessage={isDeletingMessage}
+              onEditingTextChange={onEditingTextChange}
+              onCancelEdit={onCancelEdit}
+              onSubmitEdit={onSubmitEdit}
+              onStartEdit={onStartEdit}
+              onDelete={onDelete}
+              outgoingSenderType={outgoingSenderType}
+            />
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+type SupportChatMessagesStatusProps = {
+  isLoadingMessages: boolean
+  messagesCount: number
+  emptyStateText: string
+}
+
+function SupportChatMessagesStatus({
+  isLoadingMessages,
+  messagesCount,
+  emptyStateText,
+}: Readonly<SupportChatMessagesStatusProps>) {
+  if (isLoadingMessages) {
+    return (
+      <p className="text-fluid-sm text-muted-foreground">
+        Загрузка сообщений...
+      </p>
+    )
+  }
+
+  if (messagesCount > 0) {
+    return null
+  }
+
+  return (
+    <p className="text-fluid-sm text-muted-foreground">
+      {emptyStateText}
+    </p>
+  )
+}
+
+type SupportChatMessageListItemProps = {
+  item: SupportChatMessageItem
+  previousItem?: SupportChatMessageItem
+  editingMessageId: string | null
+  editingText: string
+  isEditingMessage: boolean
+  isDeletingMessage: boolean
+  onEditingTextChange: (value: string) => void
+  onCancelEdit: () => void
+  onSubmitEdit: () => void
+  onStartEdit: (messageId: string, text: string | null) => void
+  onDelete: (messageId: string) => void
+  outgoingSenderType: SupportChatSenderType
+}
+
+function SupportChatMessageListItem({
+  item,
+  previousItem,
+  editingMessageId,
+  editingText,
+  isEditingMessage,
+  isDeletingMessage,
+  onEditingTextChange,
+  onCancelEdit,
+  onSubmitEdit,
+  onStartEdit,
+  onDelete,
+  outgoingSenderType,
+}: Readonly<SupportChatMessageListItemProps>) {
+  const shouldShowDateBadge =
+    !previousItem ||
+    !isSameCalendarDate(previousItem.createdAt, item.createdAt)
+
+  return (
+    <div>
+      <SupportChatDateBadge
+        shouldShowDateBadge={shouldShowDateBadge}
+        createdAt={item.createdAt}
+      />
+      <SupportChatMessageBubble
+        item={item}
+        editingMessageId={editingMessageId}
+        editingText={editingText}
+        isEditingMessage={isEditingMessage}
+        isDeletingMessage={isDeletingMessage}
+        onEditingTextChange={onEditingTextChange}
+        onCancelEdit={onCancelEdit}
+        onSubmitEdit={onSubmitEdit}
+        onStartEdit={onStartEdit}
+        onDelete={onDelete}
+        outgoingSenderType={outgoingSenderType}
+      />
+    </div>
+  )
+}
+
+function SupportChatDateBadge({
+  shouldShowDateBadge,
+  createdAt,
+}: Readonly<{
+  shouldShowDateBadge: boolean
+  createdAt: string
+}>) {
+  if (!shouldShowDateBadge) {
+    return null
+  }
+
+  return (
+    <div className="my-3 flex justify-center">
+      <Badge
+        variant="secondary"
+        className="rounded-full border border-border/70 bg-background/90 px-3 py-0.5 font-medium"
+      >
+        {formatMessageDate(createdAt)}
+      </Badge>
+    </div>
+  )
+}
+
+type SupportChatComposerProps = {
+  messageTextareaRef: RefObject<HTMLTextAreaElement | null>
+  fileInputRef: RefObject<HTMLInputElement | null>
+  fileInputId: string
+  message: string
+  onMessageChange: (value: string) => void
+  placeholder: string
+  isSubmitting: boolean
+  isSubmitDisabled: boolean
+  onSubmit: (event: FormSubmitEvent) => void
+  onFileInputChange: (event: InputChangeEvent) => void
+  files: File[]
+  onRemoveFile: (index: number) => void
+}
+
+function SupportChatComposer({
+  messageTextareaRef,
+  fileInputRef,
+  fileInputId,
+  message,
+  onMessageChange,
+  placeholder,
+  isSubmitting,
+  isSubmitDisabled,
+  onSubmit,
+  onFileInputChange,
+  files,
+  onRemoveFile,
+}: Readonly<SupportChatComposerProps>) {
+  return (
+    <form
+      className="shrink-0 space-y-2 border-t pt-3 mb-1"
+      onSubmit={onSubmit}
+    >
+      <div className="relative">
+        <Textarea
+          ref={messageTextareaRef}
+          name="message"
+          value={message}
+          onChange={event => onMessageChange(event.target.value)}
+          placeholder={placeholder}
+          rows={1}
+          className="text-base min-h-10 resize-none px-12 py-2"
+        />
+
+        <Input
+          ref={fileInputRef}
+          id={fileInputId}
+          type="file"
+          className="hidden"
+          multiple
+          accept={SUPPORT_CHAT_ATTACHMENT_ACCEPT}
+          onChange={onFileInputChange}
+        />
+
+        <SupportChatAttachButton
+          onClick={() => fileInputRef.current?.click()}
+        />
+        <SupportChatSubmitButton
+          isSubmitting={isSubmitting}
+          isSubmitDisabled={isSubmitDisabled}
+        />
+      </div>
+
+      <SupportChatDraftAttachments
+        files={files}
+        onRemoveFile={onRemoveFile}
+      />
+    </form>
+  )
+}
+
+function SupportChatAttachButton({
+  onClick,
+}: Readonly<{
+  onClick: () => void
+}>) {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="absolute bottom-1 left-2 h-8 w-8 rounded-full"
+            aria-label="Прикрепить файл"
+            onClick={onClick}
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Прикрепить файл</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  )
+}
+
+function SupportChatSubmitButton({
+  isSubmitting,
+  isSubmitDisabled,
+}: Readonly<{
+  isSubmitting: boolean
+  isSubmitDisabled: boolean
+}>) {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="submit"
+            size="icon"
+            className="absolute bottom-1 right-2 h-8 w-8 rounded-full"
+            aria-label={isSubmitting ? 'Отправка...' : 'Отправить'}
+            disabled={isSubmitDisabled}
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          {isSubmitting ? 'Отправка...' : 'Отправить'}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  )
+}
+
+function SupportChatDraftAttachments({
+  files,
+  onRemoveFile,
+}: Readonly<{
+  files: File[]
+  onRemoveFile: (index: number) => void
+}>) {
+  if (files.length === 0) {
+    return null
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {files.map((file, index) => (
+        <Badge
+          key={getFileSignature(file)}
+          className="max-w-40 gap-1 pr-1"
+        >
+          <span className="block min-w-0 flex-1 truncate">
+            {file.name}
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="size-5 rounded-full text-current hover:bg-black/10"
+            aria-label={`Удалить ${file.name}`}
+            onClick={() => onRemoveFile(index)}
+          >
+            <X className="size-3" />
+          </Button>
+        </Badge>
+      ))}
+    </div>
   )
 }
 

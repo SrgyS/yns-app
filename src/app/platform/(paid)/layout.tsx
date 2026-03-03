@@ -85,7 +85,7 @@ export default async function PlatformLayout({
             <PlatformHeader />
           </div>
           <main className="flex-1 flex items-start justify-center sm:pt-14">
-            <div className="w-full max-w-[720px] px-4 sm:px-6">
+            <div className="w-full max-w-180 px-4 sm:px-6">
               <NoAccessCallout
                 title={title}
                 description={description}

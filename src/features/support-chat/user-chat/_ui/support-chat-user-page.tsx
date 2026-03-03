@@ -179,6 +179,12 @@ export function SupportChatUserPage() {
     setFiles(nextFiles)
   }
 
+  const handleRemoveFile = (indexToRemove: number) => {
+    setFiles(currentFiles => {
+      return currentFiles.filter((_, index) => index !== indexToRemove)
+    })
+  }
+
   const title = effectiveSelectedDialogId
     ? (
         <div className="inline-flex max-w-full items-center gap-2">
@@ -221,6 +227,7 @@ export function SupportChatUserPage() {
         message={message}
         onMessageChange={handleMessageChange}
         onFilesChange={handleFilesChange}
+        onRemoveFile={handleRemoveFile}
         files={files}
         onSubmit={handleSubmit}
         isSubmitting={isSendingMessage || isCreatingDialog}

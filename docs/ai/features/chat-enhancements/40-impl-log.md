@@ -43,7 +43,6 @@ Implemented support-chat enhancements end-to-end:
 - `npm run lint`
 - `npm run test -- support-chat-service`
 - `npm run test -- support-chat`
-- `npx -y react-doctor@latest . --verbose --diff` (did not complete in this environment)
 
 ### Notes / issues
 - `react-doctor` command from project skill did not return output in restricted environment (likely network/tooling fetch limitation).

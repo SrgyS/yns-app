@@ -12,7 +12,7 @@ import type { SelectableCourse } from '@/features/course-enrollment/_types/selec
 
 function NoAccessState() {
   return (
-    <section className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
+    <section className="mx-auto flex w-full max-w-160 flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
       <NoAccessCallout
         title="У вас нет доступных курсов"
         description="Оформите подписку или приобретите курс, чтобы получить доступ к плану тренировок."
@@ -25,7 +25,7 @@ function NoAccessState() {
 
 function UnavailableCoursesState() {
   return (
-    <section className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
+    <section className="mx-auto flex w-full max-w-160 flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
       <Alert>
         <AlertTitle>Курсы недоступны</AlertTitle>
         <AlertDescription>
@@ -42,7 +42,7 @@ function CourseSelectionState({
   courses: SelectableCourse[]
 }>) {
   return (
-    <section className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
+    <section className="mx-auto flex w-full max-w-160 flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
       <Alert>
         <AlertTitle>Выберите курс для продолжения</AlertTitle>
         <AlertDescription>

@@ -235,3 +235,21 @@ Introduced public/private storage bucket model with access-level support in file
 - `npm run lint:types`
 - `npm run lint`
 - `npm run test -- support-chat`
+
+## 2026-03-02 — Composer UX follow-up (pending attachment removal + .mov support)
+
+### Summary
+Improved support-chat composer UX for user and staff: added per-file removal controls for attachments that are selected but not yet sent, reset the hidden file input after selection so the same file can be re-selected, capped attachment selection/request payloads at 5 files, and extended validation/input hints to support `.mov` uploads via `video/quicktime`.
+
+### Files changed
+- `src/features/support-chat/_ui/support-chat-attachments-upload.ts`
+- `src/features/support-chat/_ui/support-chat-conversation-card.tsx`
+- `src/features/support-chat/user-chat/_ui/support-chat-user-page.tsx`
+- `src/features/support-chat/admin-chat/_ui/support-chat-admin-inbox-page.tsx`
+- `src/features/support-chat/_domain/attachment-schema.ts`
+- `src/features/support-chat/_domain/schemas.ts`
+- `src/features/support-chat/_domain/attachment-schema.spec.ts`
+
+### Commands run
+- `npm run test -- attachment-schema`
+- `npm run lint:types`

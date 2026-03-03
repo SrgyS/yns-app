@@ -41,7 +41,7 @@ export default async function ProfilePage() {
       <div className="fixed top-4 right-4 md:hidden">
         <ToggleTheme variant="outline" />
       </div>
-      <section className="space-y-8 py-14 max-w-[800px] m-auto">
+      <section className="space-y-8 py-14 max-w-200 m-auto">
         <div className="flex flex-col items-center space-y-4">
           <ProfileAvatar profile={user} className="w-24 h-24" />
           <div className="text-center">
@@ -89,9 +89,7 @@ export default async function ProfilePage() {
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </Button>
-            {supportChatEnabled ? (
-              <SupportChatProfileLink />
-            ) : null}
+            {supportChatEnabled ? <SupportChatProfileLink /> : null}
             {/* 
             <Button variant="outline" className="w-full justify-between">
               <Link href="/site/equipment" className="flex items-center gap-2">
