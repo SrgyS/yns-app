@@ -12,6 +12,7 @@ import {
   ChatMessageRepository,
   ChatReadStateRepository,
 } from '@/entities/support-chat/module'
+import { UserRepository } from '@/entities/user/_repositories/user'
 import { dbClient } from '@/shared/lib/db'
 import { sanitizeFileName } from '@/shared/lib/file-storage/utils'
 import { fileStorage } from '@/shared/lib/file-storage/file-storage'
@@ -49,6 +50,11 @@ type SendMessageInput = {
   dialogId: string
   text?: string
   attachments?: SupportChatAttachmentInput[]
+}
+
+type StaffOpenDialogForUserInput = {
+  actor: SupportChatActor
+  userId: string
 }
 
 type MarkDialogReadInput = {
@@ -102,7 +108,8 @@ export class SupportChatService {
     private readonly messageRepository: ChatMessageRepository,
     private readonly readStateRepository: ChatReadStateRepository,
     private readonly readService: SupportChatReadService,
-    private readonly telegramSupportNotifier: TelegramSupportNotifier
+    private readonly telegramSupportNotifier: TelegramSupportNotifier,
+    private readonly userRepository: UserRepository
   ) {}
 
   async userListDialogs(input: ListDialogsInput) {
@@ -431,6 +438,53 @@ export class SupportChatService {
     }
 
     return result
+  }
+
+  async staffOpenDialogForUser(input: StaffOpenDialogForUserInput) {
+    await this.ensureStaffAccess(input.actor)
+
+    const targetUser = await this.userRepository.findUserById(input.userId)
+    if (!targetUser) {
+      throw createSupportChatError('TARGET_USER_NOT_FOUND')
+    }
+
+    if (targetUser.role !== 'USER') {
+      throw createSupportChatError('TARGET_USER_INVALID_ROLE')
+    }
+
+    const existingDialog = await this.conversationRepository.findByUserIdUnique(
+      input.userId
+    )
+    if (existingDialog) {
+      return {
+        dialogId: existingDialog.id,
+        userId: input.userId,
+        created: false,
+        createdAt: existingDialog.createdAt.toISOString(),
+      }
+    }
+
+    const canonicalResult = await this.conversationRepository.createOrReturnCanonical({
+      userId: input.userId,
+      lastMessageAt: new Date(),
+    })
+    const { dialog, created } = canonicalResult
+
+    if (created) {
+      publishSupportChatEvent({
+        type: 'dialog.created',
+        dialogId: dialog.id,
+        userId: input.userId,
+        occurredAt: dialog.createdAt.toISOString(),
+      })
+    }
+
+    return {
+      dialogId: dialog.id,
+      userId: input.userId,
+      created,
+      createdAt: dialog.createdAt.toISOString(),
+    }
   }
 
   async markDialogRead(input: MarkDialogReadInput) {

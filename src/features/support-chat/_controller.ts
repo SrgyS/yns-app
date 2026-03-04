@@ -8,6 +8,7 @@ import {
   editMessageInputSchema,
   markDialogReadInputSchema,
   sendMessageInputSchema,
+  staffOpenDialogForUserInputSchema,
   staffListDialogsInputSchema,
   userGetMessagesInputSchema,
   userListDialogsInputSchema,
@@ -67,6 +68,19 @@ export class SupportChatController extends Controller {
               hasUnansweredIncoming: input.hasUnansweredIncoming,
               cursor: input.cursor,
               limit: input.limit,
+            })
+          )
+        ),
+      staffOpenDialogForUser: authorizedProcedure
+        .input(staffOpenDialogForUserInputSchema)
+        .mutation(async ({ ctx, input }) =>
+          this.runWithErrorMapping(() =>
+            this.supportChatService.staffOpenDialogForUser({
+              actor: {
+                id: ctx.session.user.id,
+                role: ctx.session.user.role,
+              },
+              userId: input.userId,
             })
           )
         ),

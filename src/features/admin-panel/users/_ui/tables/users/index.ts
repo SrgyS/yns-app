@@ -1,2 +1,2 @@
 export { UsersTable } from './table'
-export { adminUsersColumns } from './columns'
+export { createAdminUsersColumns } from './columns'

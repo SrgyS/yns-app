@@ -219,7 +219,10 @@ const NameHeader = ({ table }: { table: any }) => {
   )
 }
 
-export const adminUsersColumns: ColumnDef<AdminUserListItem>[] = [
+export const createAdminUsersColumns = (
+  canManageSupportChats: boolean
+): ColumnDef<AdminUserListItem>[] => {
+  const columns: ColumnDef<AdminUserListItem>[] = [
   {
     accessorKey: 'id',
     header: ({ table }) => <IdHeader table={table} />,
@@ -316,4 +319,22 @@ export const adminUsersColumns: ColumnDef<AdminUserListItem>[] = [
       </Badge>
     ),
   },
-]
+  ]
+
+  if (canManageSupportChats) {
+    columns.push({
+      id: 'actions',
+      enableSorting: false,
+      header: () => <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Действия</span>,
+      cell: ({ row }) => (
+        <Button variant="outline" size="sm" asChild>
+          <Link href={`/admin/support-chat?userId=${row.original.id}`}>
+            Сообщение
+          </Link>
+        </Button>
+      ),
+    })
+  }
+
+  return columns
+}

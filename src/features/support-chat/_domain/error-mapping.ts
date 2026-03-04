@@ -5,7 +5,12 @@ import { SupportChatDomainError } from './errors'
 export const mapSupportChatDomainErrorToTrpc = (
   error: SupportChatDomainError
 ): TRPCError => {
-  if (error.code === 'DIALOG_NOT_FOUND' || error.code === 'MESSAGE_NOT_FOUND') {
+  if (
+    error.code === 'DIALOG_NOT_FOUND' ||
+    error.code === 'MESSAGE_NOT_FOUND' ||
+    error.code === 'TARGET_USER_NOT_FOUND' ||
+    error.code === 'TARGET_USER_INVALID_ROLE'
+  ) {
     return new TRPCError({
       code: 'NOT_FOUND',
       message: 'Диалог или сообщение не найдено',

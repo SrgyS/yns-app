@@ -20,6 +20,15 @@ describe('support chat error mapping', () => {
     expect(error.message).toBe('Диалог или сообщение не найдено')
   })
 
+  test('maps TARGET_USER_INVALID_ROLE to NOT_FOUND', () => {
+    const error = mapSupportChatDomainErrorToTrpc(
+      createSupportChatError('TARGET_USER_INVALID_ROLE')
+    )
+
+    expect(error.code).toBe('NOT_FOUND')
+    expect(error.message).toBe('Диалог или сообщение не найдено')
+  })
+
   test('maps INVALID_MESSAGE to BAD_REQUEST', () => {
     const error = mapSupportChatDomainErrorToTrpc(
       createSupportChatError('INVALID_MESSAGE')

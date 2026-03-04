@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import {
   useEffect,
   useMemo,
@@ -54,10 +55,12 @@ function toastSupportChatActionError(error: unknown, fallbackMessage: string) {
 }
 
 export function SupportChatAdminInboxPage() {
+  const searchParams = useSearchParams()
   const abilityQuery = useAdminAbility()
   const ability = abilityQuery.data
 
   const canAccessSupportChat = ability?.canManageSupportChats
+  const targetUserId = searchParams.get('userId')?.trim() || undefined
   const [onlyUnanswered, setOnlyUnanswered] = useState(false)
   const [selectedDialogId, setSelectedDialogId] = useState<string | undefined>()
   const [message, setMessage] = useState('')
@@ -87,10 +90,12 @@ export function SupportChatAdminInboxPage() {
   const messages = messagesQuery.messages
 
   const {
+    openStaffDialogForUser,
     sendMessage,
     markDialogRead,
     editMessage,
     deleteMessage,
+    isOpeningStaffDialog,
     isSendingMessage,
     isEditingMessage,
     isDeletingMessage,
@@ -102,6 +107,7 @@ export function SupportChatAdminInboxPage() {
   useSupportChatStaffSse(selectedDialogId)
 
   const dialogsLoadMoreRef = useRef<HTMLDivElement | null>(null)
+  const bootstrappedTargetUserIdRef = useRef<string | null>(null)
 
   const resetLastMarkedMessageId = useMarkLatestIncomingAsRead({
     messages,
@@ -120,6 +126,42 @@ export function SupportChatAdminInboxPage() {
     () => orderedDialogs.find(dialog => dialog.dialogId === selectedDialogId),
     [orderedDialogs, selectedDialogId]
   )
+
+  useEffect(() => {
+    if (!targetUserId) {
+      bootstrappedTargetUserIdRef.current = null
+      return
+    }
+
+    if (!canAccessSupportChat) {
+      return
+    }
+
+    if (bootstrappedTargetUserIdRef.current === targetUserId) {
+      return
+    }
+
+    bootstrappedTargetUserIdRef.current = targetUserId
+
+    openStaffDialogForUser({ userId: targetUserId })
+      .then(result => {
+        setSelectedDialogId(result.dialogId)
+        setShowMobileChat(true)
+        resetLastMarkedMessageId()
+      })
+      .catch(error => {
+        bootstrappedTargetUserIdRef.current = null
+        toastSupportChatActionError(
+          error,
+          'Не удалось открыть диалог для выбранного пользователя'
+        )
+      })
+  }, [
+    canAccessSupportChat,
+    openStaffDialogForUser,
+    resetLastMarkedMessageId,
+    targetUserId,
+  ])
 
   const handleSubmit = async (event: FormSubmitEvent) => {
     event.preventDefault()
@@ -299,7 +341,11 @@ export function SupportChatAdminInboxPage() {
         files={files}
         handleSubmit={handleSubmit}
         isSubmitting={isSendingMessage}
-        isSubmitDisabled={isSendingMessage || (!hasDraftText && !hasDraftFiles)}
+        isSubmitDisabled={
+          isSendingMessage ||
+          isOpeningStaffDialog ||
+          (!hasDraftText && !hasDraftFiles)
+        }
       />
     </div>
   )

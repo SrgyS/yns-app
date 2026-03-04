@@ -19,6 +19,10 @@ export const staffListDialogsInputSchema = paginationSchema.extend({
   hasUnansweredIncoming: z.boolean().optional(),
 })
 
+export const staffOpenDialogForUserInputSchema = z.object({
+  userId: z.string().min(1),
+})
+
 export const sendMessageInputSchema = z
   .object({
     dialogId: z.string().min(1),

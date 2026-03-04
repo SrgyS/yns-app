@@ -49,6 +49,8 @@ describe('SupportChatService', () => {
   }
   const conversationRepository = {
     findById: jest.fn(),
+    findByUserIdUnique: jest.fn(),
+    createOrReturnCanonical: jest.fn(),
     touchLastMessageAt: jest.fn(),
     create: jest.fn(),
   }
@@ -68,6 +70,9 @@ describe('SupportChatService', () => {
   const notifier = {
     notifyNewUserMessage: jest.fn().mockResolvedValue(undefined),
   }
+  const userRepository = {
+    findUserById: jest.fn(),
+  }
 
   const service = new SupportChatService(
     attachmentRepository as any,
@@ -75,13 +80,16 @@ describe('SupportChatService', () => {
     messageRepository as any,
     readStateRepository as any,
     readService as any,
-    notifier as any
+    notifier as any,
+    userRepository as any
   )
 
   beforeEach(() => {
     attachmentRepository.createUploaded.mockReset()
     attachmentRepository.linkToMessage.mockReset()
     conversationRepository.findById.mockReset()
+    conversationRepository.findByUserIdUnique.mockReset()
+    conversationRepository.createOrReturnCanonical.mockReset()
     conversationRepository.touchLastMessageAt.mockReset()
     conversationRepository.create.mockReset()
     messageRepository.create.mockReset()
@@ -92,6 +100,7 @@ describe('SupportChatService', () => {
     readService.countUnreadForStaff.mockReset()
     readService.hasUnansweredIncoming.mockReset()
     notifier.notifyNewUserMessage.mockClear()
+    userRepository.findUserById.mockReset()
     ;(dbClient.chatMessage.findFirst as jest.Mock).mockReset()
     ;(dbClient.chatMessage.update as jest.Mock).mockReset()
     ;(dbClient.supportReadState.findFirst as jest.Mock).mockReset()
@@ -142,6 +151,106 @@ describe('SupportChatService', () => {
       })
     ).rejects.toMatchObject<Partial<SupportChatDomainError>>({
       code: 'STAFF_PERMISSION_DENIED',
+    })
+  })
+
+  test('staffOpenDialogForUser reuses existing canonical dialog', async () => {
+    ;(dbClient.staffPermission.findUnique as jest.Mock).mockResolvedValue({
+      canManageSupportChats: true,
+    })
+    userRepository.findUserById.mockResolvedValue({
+      id: 'user-1',
+      role: 'USER',
+    })
+    conversationRepository.findByUserIdUnique.mockResolvedValue({
+      id: 'dialog-1',
+      userId: 'user-1',
+      createdAt: new Date('2026-03-04T10:00:00.000Z'),
+    })
+
+    const result = await service.staffOpenDialogForUser({
+      actor: { id: 'staff-1', role: 'STAFF' },
+      userId: 'user-1',
+    })
+
+    expect(result).toEqual({
+      dialogId: 'dialog-1',
+      userId: 'user-1',
+      created: false,
+      createdAt: '2026-03-04T10:00:00.000Z',
+    })
+    expect(conversationRepository.createOrReturnCanonical).not.toHaveBeenCalled()
+    expect(publishSupportChatEvent).not.toHaveBeenCalled()
+  })
+
+  test('staffOpenDialogForUser creates canonical dialog when missing', async () => {
+    ;(dbClient.staffPermission.findUnique as jest.Mock).mockResolvedValue({
+      canManageSupportChats: true,
+    })
+    userRepository.findUserById.mockResolvedValue({
+      id: 'user-1',
+      role: 'USER',
+    })
+    conversationRepository.findByUserIdUnique.mockResolvedValue(null)
+    conversationRepository.createOrReturnCanonical.mockResolvedValue({
+      dialog: {
+        id: 'dialog-2',
+        userId: 'user-1',
+        createdAt: new Date('2026-03-04T11:00:00.000Z'),
+      },
+      created: true,
+    })
+
+    const result = await service.staffOpenDialogForUser({
+      actor: { id: 'admin-1', role: 'ADMIN' },
+      userId: 'user-1',
+    })
+
+    expect(conversationRepository.createOrReturnCanonical).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-1',
+        lastMessageAt: expect.any(Date),
+      })
+    )
+    expect(publishSupportChatEvent).toHaveBeenCalledWith({
+      type: 'dialog.created',
+      dialogId: 'dialog-2',
+      userId: 'user-1',
+      occurredAt: '2026-03-04T11:00:00.000Z',
+    })
+    expect(result.created).toBe(true)
+  })
+
+  test('staffOpenDialogForUser rejects missing target user', async () => {
+    ;(dbClient.staffPermission.findUnique as jest.Mock).mockResolvedValue({
+      canManageSupportChats: true,
+    })
+    userRepository.findUserById.mockResolvedValue(null)
+    await expect(
+      service.staffOpenDialogForUser({
+        actor: { id: 'staff-1', role: 'STAFF' },
+        userId: 'user-404',
+      })
+    ).rejects.toMatchObject<Partial<SupportChatDomainError>>({
+      code: 'TARGET_USER_NOT_FOUND',
+    })
+  })
+
+  test('staffOpenDialogForUser rejects non-user target role', async () => {
+    ;(dbClient.staffPermission.findUnique as jest.Mock).mockResolvedValue({
+      canManageSupportChats: true,
+    })
+    userRepository.findUserById.mockResolvedValue({
+      id: 'admin-2',
+      role: 'ADMIN',
+    })
+    await expect(
+      service.staffOpenDialogForUser({
+        actor: { id: 'staff-1', role: 'STAFF' },
+        userId: 'admin-2',
+      })
+    ).rejects.toMatchObject<Partial<SupportChatDomainError>>({
+      code: 'TARGET_USER_INVALID_ROLE',
     })
   })
 

@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import type { AdminAbility } from '../_domain/ability'
 import type { AdminUserProfile as AdminUserProfileData } from '../_domain/user-detail'
 import { Button } from '@/shared/ui/button'
@@ -180,9 +181,17 @@ export function AdminUserProfile({
           <Button variant="outline" className="w-full cursor-pointer">
             Сбросить пароль
           </Button>
-          <Button variant="outline" className="w-full cursor-pointer">
-            Отправить сообщение
-          </Button>
+          {viewerAbility.canManageSupportChats ? (
+            <Button variant="outline" className="w-full cursor-pointer" asChild>
+              <Link href={`/admin/support-chat?userId=${userId}`}>
+                Отправить сообщение
+              </Link>
+            </Button>
+          ) : (
+            <Button variant="outline" className="w-full cursor-pointer" disabled>
+              Отправить сообщение
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
