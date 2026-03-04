@@ -5,10 +5,16 @@ import { useRouter } from 'next/navigation'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent } from '@/shared/ui/card'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/shared/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/ui/dialog'
 import { Separator } from '@/shared/ui/separator'
 import { AppImage } from '@/shared/ui/app-image'
-import { Clock, Flame, ChefHat, Minus, Plus, Heart, HeartOff } from 'lucide-react'
+import { Clock, Flame, ChefHat, Minus, Plus, Heart } from 'lucide-react'
 import { SmallSpinner } from '@/shared/ui/small-spinner'
 import { userRecipesApi } from '../_api'
 import { toast } from 'sonner'
@@ -24,7 +30,9 @@ export function RecipeDetail({ slug }: Readonly<RecipeDetailProps>) {
 
   const toggleFavorite = userRecipesApi.recipes.toggleFavorite.useMutation({
     onSuccess: res => {
-      toast.success(res.favorite ? 'Добавлено в избранное' : 'Удалено из избранного')
+      toast.success(
+        res.favorite ? 'Добавлено в избранное' : 'Удалено из избранного'
+      )
       detailQuery.refetch()
     },
     onError: err => toast.error(err.message),
@@ -66,25 +74,9 @@ export function RecipeDetail({ slug }: Readonly<RecipeDetailProps>) {
   }
 
   return (
-    <div className="space-y-6 py-4">
-      <div className="flex items-center gap-2">
-        <BackButton onClick={() => router.back()} />
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Переключить избранное"
-          onClick={() => toggleFavorite.mutate({ recipeId: recipe.id })}
-        >
-          {recipe.isFavorite ? (
-            <Heart className="h-5 w-5 fill-red-500 text-red-500" />
-          ) : (
-            <HeartOff className="h-5 w-5 text-muted-foreground" />
-          )}
-        </Button>
-      </div>
-
-      <div className="space-y-4">
-        <div className="relative aspect-4/3 w-full overflow-hidden rounded-xl bg-muted">
+    <div className="relative">
+      <div className="fixed inset-x-0 top-0 z-0 px-3 sm:top-14 sm:px-6">
+        <div className="relative mx-auto h-[22rem] w-full max-w-xl overflow-hidden bg-muted sm:h-[26rem]">
           {recipe.imageUrl ? (
             <AppImage
               src={recipe.imageUrl}
@@ -93,88 +85,118 @@ export function RecipeDetail({ slug }: Readonly<RecipeDetailProps>) {
               className="object-cover"
             />
           ) : null}
-        </div>
-        <div className="space-y-2">
-          <h1 className="text-2xl font-semibold">{recipe.title}</h1>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              {recipe.preparationTimeMinutes} мин
-            </span>
-            <Separator orientation="vertical" className="h-4" />
-            <span className="flex items-center gap-1">
-              <Flame className="h-4 w-4" />
-              {recipe.calories ?? '—'} ккал
-            </span>
-            <Separator orientation="vertical" className="h-4" />
-            <span className="flex items-center gap-1">
-              <ChefHat className="h-4 w-4" />
-              {difficultyLabel(recipe.cookingDifficulty)}
-            </span>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {recipe.mealCategories.map(tag => (
-            <Badge key={tag} variant="secondary">
-              {mealLabel(tag)}
-            </Badge>
-          ))}
-          {recipe.diets.map(tag => (
-            <Badge key={tag} variant="outline">
-              {dietLabel(tag)}
-            </Badge>
-          ))}
-          {recipe.ingredientTags.map(tag => (
-            <Badge key={tag} variant="outline">
-              {ingredientLabel(tag)}
-            </Badge>
-          ))}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/10 to-black/45" />
         </div>
       </div>
 
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Ингредиенты</h2>
+      <div className="fixed inset-x-0 top-0 z-30 px-3 sm:top-14 sm:px-6">
+        <div className="mx-auto flex w-full max-w-xl items-center justify-between px-4 py-4">
+          <BackButton
+            onClick={() => router.back()}
+            className="border-white/20 bg-background/85 shadow-sm backdrop-blur"
+          />
           <Button
             variant="outline"
-            size="sm"
-            onClick={() => setServingsOpen(true)}
-            className="gap-2"
+            size="icon"
+            aria-label="Переключить избранное"
+            onClick={() => toggleFavorite.mutate({ recipeId: recipe.id })}
+            className="border-white/20 bg-background/85 shadow-sm backdrop-blur"
           >
-            Порций: {servings}
+            {recipe.isFavorite ? (
+              <Heart className="h-5 w-5 fill-red-500 text-red-500" />
+            ) : (
+              <Heart className="h-5 w-5 text-foreground" />
+            )}
           </Button>
-        </div>
-        <div className="space-y-2 rounded-md border p-3">
-          {recipe.ingredients.map(item => (
-            <div
-              key={item.id}
-              className="flex items-start justify-between text-sm"
-            >
-              <span className="text-muted-foreground">
-                {formatQuantity(adjustValue(item.quantity)) ??
-                  formatQuantity(adjustValue(item.weightGrams)) ??
-                  '—'}
-              </span>
-              <span className="text-foreground text-right">
-                {item.name}
-                {item.description ? ` (${item.description})` : ''}
-              </span>
-            </div>
-          ))}
         </div>
       </div>
 
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Приготовление</h2>
-        <div className="space-y-3 rounded-md border p-3">
-          {recipe.steps.map(step => (
-            <div key={step.id} className="space-y-1">
-              <p className="text-sm font-semibold">Шаг {step.stepNumber}</p>
-              <p className="text-sm text-muted-foreground whitespace-pre-line">
-                {step.instruction}
-              </p>
+      <div className="relative z-10 pt-[20rem] sm:pt-[24rem]">
+        <div className="mx-auto w-full max-w-xl rounded-t-[2rem] bg-background px-4 pb-8 pt-6 shadow-[0_-12px_32px_rgba(0,0,0,0.08)]">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <h1 className="text-2xl font-semibold">{recipe.title}</h1>
+              <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  {recipe.preparationTimeMinutes} мин
+                </span>
+                <Separator orientation="vertical" className="h-4" />
+                <span className="flex items-center gap-1">
+                  <Flame className="h-4 w-4" />
+                  {recipe.calories ?? '—'} ккал
+                </span>
+                <Separator orientation="vertical" className="h-4" />
+                <span className="flex items-center gap-1">
+                  <ChefHat className="h-4 w-4" />
+                  {difficultyLabel(recipe.cookingDifficulty)}
+                </span>
+              </div>
             </div>
-          ))}
+            <div className="flex flex-wrap gap-2">
+              {recipe.mealCategories.map(tag => (
+                <Badge key={tag} variant="secondary">
+                  {mealLabel(tag)}
+                </Badge>
+              ))}
+              {recipe.diets.map(tag => (
+                <Badge key={tag} variant="outline">
+                  {dietLabel(tag)}
+                </Badge>
+              ))}
+              {recipe.ingredientTags.map(tag => (
+                <Badge key={tag} variant="outline">
+                  {ingredientLabel(tag)}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Ингредиенты</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setServingsOpen(true)}
+                className="gap-2"
+              >
+                Порций: {servings}
+              </Button>
+            </div>
+            <div className="space-y-2 rounded-md border p-3">
+              {recipe.ingredients.map(item => (
+                <div
+                  key={item.id}
+                  className="flex items-start justify-between text-sm"
+                >
+                  <span className="text-muted-foreground">
+                    {formatQuantity(adjustValue(item.quantity)) ??
+                      formatQuantity(adjustValue(item.weightGrams)) ??
+                      '—'}
+                  </span>
+                  <span className="text-foreground text-right">
+                    {item.name}
+                    {item.description ? ` (${item.description})` : ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-3">
+            <h2 className="text-lg font-semibold">Приготовление</h2>
+            <div className="space-y-3 rounded-md border p-3">
+              {recipe.steps.map(step => (
+                <div key={step.id} className="space-y-1">
+                  <p className="text-sm font-semibold">Шаг {step.stepNumber}</p>
+                  <p className="text-sm text-muted-foreground whitespace-pre-line">
+                    {step.instruction}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
