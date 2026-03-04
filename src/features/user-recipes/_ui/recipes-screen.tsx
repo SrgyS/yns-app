@@ -28,7 +28,6 @@ type FilterState = {
   onlyFavorites: boolean
 }
 
-
 const defaultFilters: FilterState = {
   mealCategories: [],
   diets: [],
@@ -36,6 +35,32 @@ const defaultFilters: FilterState = {
   ingredientTags: [],
   fast: false,
   onlyFavorites: false,
+}
+
+type MealQuickFilter = {
+  label: string
+  meal: 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK' | 'SALAD' | 'SOUP'
+}
+
+type DietQuickFilter = {
+  label: string
+  diet: 'SUGAR_FREE' | 'LOW_CALORIE' | 'VEGETARIAN'
+}
+
+type QuickTypeFilter = MealQuickFilter | DietQuickFilter
+
+type RecipesListQuery = ReturnType<typeof userRecipesApi.recipes.list.useQuery>
+type ToggleFavoriteMutation = ReturnType<
+  typeof userRecipesApi.recipes.toggleFavorite.useMutation
+>
+type RecipeListItem = {
+  id: string
+  slug: string
+  title: string
+  imageUrl: string | null
+  isFavorite: boolean
+  preparationTimeMinutes: number
+  calories: number | null
 }
 
 const typeFilters = [
@@ -48,10 +73,69 @@ const typeFilters = [
   { label: 'Салат', meal: 'SALAD' as const },
   { label: 'Суп', meal: 'SOUP' as const },
   { label: 'Вегетарианское', diet: 'VEGETARIAN' as const },
-] satisfies Array<
-  | { label: string; meal: 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK' | 'SALAD' | 'SOUP' }
-  | { label: string; diet: 'SUGAR_FREE' | 'LOW_CALORIE' | 'VEGETARIAN' }
->
+] satisfies QuickTypeFilter[]
+
+function isMealQuickFilter(type: QuickTypeFilter): type is MealQuickFilter {
+  return 'meal' in type
+}
+
+function updateListFilter(
+  filters: FilterState,
+  key: 'mealCategories' | 'diets' | 'difficulty' | 'ingredientTags',
+  value: string
+) {
+  return {
+    ...filters,
+    [key]: toggleItem(filters[key], value),
+  }
+}
+
+function updateBooleanFilter(
+  filters: FilterState,
+  key: 'fast' | 'onlyFavorites',
+  checked: boolean
+) {
+  return {
+    ...filters,
+    [key]: checked,
+  }
+}
+
+function applyQuickTypeFilter(filters: FilterState, type: QuickTypeFilter) {
+  if (isMealQuickFilter(type)) {
+    return updateListFilter(filters, 'mealCategories', type.meal)
+  }
+
+  return updateListFilter(filters, 'diets', type.diet)
+}
+
+function isQuickTypeSelected(filters: FilterState, type: QuickTypeFilter) {
+  if (isMealQuickFilter(type)) {
+    return filters.mealCategories.includes(type.meal)
+  }
+
+  return filters.diets.includes(type.diet)
+}
+
+function removeQuickFilters(filters: FilterState) {
+  return {
+    ...filters,
+    mealCategories: filters.mealCategories.filter(isNotQuickMealFilter),
+    diets: filters.diets.filter(isNotQuickDietFilter),
+  }
+}
+
+function isNotQuickMealFilter(meal: string) {
+  return !typeFilters.some(
+    item => isMealQuickFilter(item) && item.meal === meal
+  )
+}
+
+function isNotQuickDietFilter(diet: string) {
+  return !typeFilters.some(
+    item => !isMealQuickFilter(item) && item.diet === diet
+  )
+}
 
 const mealOptions = [
   { value: 'BREAKFAST', label: 'Завтрак' },
@@ -113,18 +197,36 @@ export function RecipesScreen() {
   const toggleFavorite = userRecipesApi.recipes.toggleFavorite.useMutation({
     onError: err => toast.error(err.message),
     onSuccess: res => {
-      toast.success(res.favorite ? 'Добавлено в избранное' : 'Удалено из избранного')
+      toast.success(
+        res.favorite ? 'Добавлено в избранное' : 'Удалено из избранного'
+      )
       listQuery.refetch()
     },
   })
 
-  const applyQuickType = (type: (typeof typeFilters)[number]) => {
-    setFilters(prev => ({
-      ...prev,
-      mealCategories: type.meal ? [type.meal] : prev.mealCategories,
-      diets: type.diet ? [type.diet] : prev.diets,
-    }))
-  }
+  const handleResetFilters = () => setFilters(defaultFilters)
+  const handleToggleMealCategory = (value: string) =>
+    setFilters(prev => updateListFilter(prev, 'mealCategories', value))
+  const handleToggleDiet = (value: string) =>
+    setFilters(prev => updateListFilter(prev, 'diets', value))
+  const handleToggleDifficulty = (value: string) =>
+    setFilters(prev => updateListFilter(prev, 'difficulty', value))
+  const handleToggleIngredientTag = (value: string) =>
+    setFilters(prev => updateListFilter(prev, 'ingredientTags', value))
+  const handleFastChange = (checked: boolean) =>
+    setFilters(prev => updateBooleanFilter(prev, 'fast', Boolean(checked)))
+  const handleOnlyFavoritesChange = (checked: boolean) =>
+    setFilters(prev =>
+      updateBooleanFilter(prev, 'onlyFavorites', Boolean(checked))
+    )
+  const handleApplyQuickType = (type: QuickTypeFilter) =>
+    setFilters(prev => applyQuickTypeFilter(prev, type))
+  const isQuickTypeActive = (type: QuickTypeFilter) =>
+    isQuickTypeSelected(filters, type)
+
+  const hasActiveQuickFilters = typeFilters.some(isQuickTypeActive)
+
+  const handleResetQuickFilters = () => setFilters(removeQuickFilters)
 
   const recipes = listQuery.data ?? []
   const isEmpty = !listQuery.isLoading && recipes.length === 0
@@ -135,218 +237,332 @@ export function RecipesScreen() {
         <div className="flex items-center justify-between gap-2">
           <h1 className="text-2xl font-semibold leading-tight">Рецепты</h1>
 
-          <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Filter className="h-4 w-4" />
-                Фильтр
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="top" className="max-h-[85vh] overflow-y-auto">
-              <SheetHeader className="flex flex-row items-center justify-between">
-                <SheetTitle>Фильтры</SheetTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setFilters(defaultFilters)}
-                >
-                  Сброс
-                </Button>
-              </SheetHeader>
-              <div className="space-y-4 py-4">
-                <FilterGroup
-                  title="Приём пищи"
-                  options={mealOptions}
-                  values={filters.mealCategories}
-                  onToggle={value =>
-                    setFilters(prev => ({
-                      ...prev,
-                      mealCategories: toggleItem(prev.mealCategories, value),
-                    }))
-                  }
-                />
-                <FilterGroup
-                  title="Диета"
-                  options={dietOptions}
-                  values={filters.diets}
-                  onToggle={value =>
-                    setFilters(prev => ({
-                      ...prev,
-                      diets: toggleItem(prev.diets, value),
-                    }))
-                  }
-                />
-                <FilterGroup
-                  title="Сложность"
-                  options={cookingOptions}
-                  values={filters.difficulty}
-                  onToggle={value =>
-                    setFilters(prev => ({
-                      ...prev,
-                      difficulty: toggleItem(prev.difficulty, value),
-                    }))
-                  }
-                />
-                <FilterGroup
-                  title="Ингредиенты"
-                  options={ingredientOptions}
-                  values={filters.ingredientTags}
-                  onToggle={value =>
-                    setFilters(prev => ({
-                      ...prev,
-                      ingredientTags: toggleItem(prev.ingredientTags, value),
-                    }))
-                  }
-                  columns="grid-cols-2 sm:grid-cols-3"
-                />
-                <div className="flex items-center justify-between rounded-md border px-3 py-2">
-                  <div>
-                    <p className="text-sm font-medium">Быстро</p>
-                    <p className="text-xs text-muted-foreground">
-                      Время приготовления до 20 минут
-                    </p>
-                  </div>
-                  <Switch
-                    checked={filters.fast}
-                    onCheckedChange={checked =>
-                      setFilters(prev => ({ ...prev, fast: Boolean(checked) }))
-                    }
-                  />
-                </div>
-                <div className="flex items-center justify-between rounded-md border px-3 py-2">
-                  <div>
-                    <p className="text-sm font-medium">Только избранные</p>
-                    <p className="text-xs text-muted-foreground">
-                      Показывать только любимые рецепты
-                    </p>
-                  </div>
-                  <Switch
-                    checked={filters.onlyFavorites}
-                    onCheckedChange={checked =>
-                      setFilters(prev => ({
-                        ...prev,
-                        onlyFavorites: Boolean(checked),
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-              <SheetFooter>
-                <Button className="w-full" onClick={() => setFilterOpen(false)}>
-                  Применить
-                </Button>
-              </SheetFooter>
-            </SheetContent>
-          </Sheet>
+          <FiltersSheet
+            filterOpen={filterOpen}
+            filters={filters}
+            onOpenChange={setFilterOpen}
+            onReset={handleResetFilters}
+            onToggleMealCategory={handleToggleMealCategory}
+            onToggleDiet={handleToggleDiet}
+            onToggleDifficulty={handleToggleDifficulty}
+            onToggleIngredientTag={handleToggleIngredientTag}
+            onFastChange={handleFastChange}
+            onOnlyFavoritesChange={handleOnlyFavoritesChange}
+          />
         </div>
       </header>
 
-      <div className="flex flex-wrap gap-2">
-        {typeFilters.map(item => (
-          <Button
-            key={item.label}
-            variant="secondary"
-            size="sm"
-            onClick={() => applyQuickType(item)}
-          >
-            {item.label}
-          </Button>
-        ))}
-      </div>
+      <QuickFiltersBar
+        hasActiveQuickFilters={hasActiveQuickFilters}
+        isQuickTypeActive={isQuickTypeActive}
+        onApplyQuickType={handleApplyQuickType}
+        onResetQuickFilters={handleResetQuickFilters}
+      />
 
-      {renderRecipesState({ listQuery, isEmpty, recipes, toggleFavorite })}
+      <RecipesState
+        isEmpty={isEmpty}
+        listQuery={listQuery}
+        recipes={recipes}
+        toggleFavorite={toggleFavorite}
+      />
     </section>
   )
 }
 
-function renderRecipesState({
+function FiltersSheet({
+  filterOpen,
+  filters,
+  onOpenChange,
+  onReset,
+  onToggleMealCategory,
+  onToggleDiet,
+  onToggleDifficulty,
+  onToggleIngredientTag,
+  onFastChange,
+  onOnlyFavoritesChange,
+}: Readonly<{
+  filterOpen: boolean
+  filters: FilterState
+  onOpenChange: (open: boolean) => void
+  onReset: () => void
+  onToggleMealCategory: (value: string) => void
+  onToggleDiet: (value: string) => void
+  onToggleDifficulty: (value: string) => void
+  onToggleIngredientTag: (value: string) => void
+  onFastChange: (checked: boolean) => void
+  onOnlyFavoritesChange: (checked: boolean) => void
+}>) {
+  const handleApply = () => onOpenChange(false)
+
+  return (
+    <Sheet open={filterOpen} onOpenChange={onOpenChange}>
+      <SheetTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-2">
+          <Filter className="h-4 w-4" />
+          Фильтр
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="top" className="max-h-[85vh] overflow-y-auto">
+        <SheetHeader className="flex flex-row items-center justify-between">
+          <SheetTitle>Фильтры</SheetTitle>
+          <Button variant="ghost" size="sm" onClick={onReset}>
+            Сброс
+          </Button>
+        </SheetHeader>
+        <div className="space-y-4 py-4">
+          <FilterGroup
+            title="Приём пищи"
+            options={mealOptions}
+            values={filters.mealCategories}
+            onToggle={onToggleMealCategory}
+          />
+          <FilterGroup
+            title="Диета"
+            options={dietOptions}
+            values={filters.diets}
+            onToggle={onToggleDiet}
+          />
+          <FilterGroup
+            title="Сложность"
+            options={cookingOptions}
+            values={filters.difficulty}
+            onToggle={onToggleDifficulty}
+          />
+          <FilterGroup
+            title="Ингредиенты"
+            options={ingredientOptions}
+            values={filters.ingredientTags}
+            onToggle={onToggleIngredientTag}
+            columns="grid-cols-2 sm:grid-cols-3"
+          />
+          <FilterSwitchRow
+            checked={filters.fast}
+            description="Время приготовления до 20 минут"
+            title="Быстро"
+            onCheckedChange={onFastChange}
+          />
+          <FilterSwitchRow
+            checked={filters.onlyFavorites}
+            description="Показывать только любимые рецепты"
+            title="Только избранные"
+            onCheckedChange={onOnlyFavoritesChange}
+          />
+        </div>
+        <SheetFooter>
+          <Button className="w-full" onClick={handleApply}>
+            Применить
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+function QuickFiltersBar({
+  hasActiveQuickFilters,
+  isQuickTypeActive,
+  onApplyQuickType,
+  onResetQuickFilters,
+}: Readonly<{
+  hasActiveQuickFilters: boolean
+  isQuickTypeActive: (type: QuickTypeFilter) => boolean
+  onApplyQuickType: (type: QuickTypeFilter) => void
+  onResetQuickFilters: () => void
+}>) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {typeFilters.map(item => (
+        <QuickFilterButton
+          key={item.label}
+          filter={item}
+          isActive={isQuickTypeActive(item)}
+          onClick={onApplyQuickType}
+        />
+      ))}
+      {hasActiveQuickFilters ? (
+        <Button variant="outline" size="sm" onClick={onResetQuickFilters}>
+          Сбросить
+        </Button>
+      ) : null}
+    </div>
+  )
+}
+
+function QuickFilterButton({
+  filter,
+  isActive,
+  onClick,
+}: Readonly<{
+  filter: QuickTypeFilter
+  isActive: boolean
+  onClick: (type: QuickTypeFilter) => void
+}>) {
+  const handleClick = () => onClick(filter)
+
+  return (
+    <Button
+      variant={isActive ? 'default' : 'secondary'}
+      size="sm"
+      onClick={handleClick}
+      className={isActive ? 'shadow-sm' : undefined}
+    >
+      {filter.label}
+    </Button>
+  )
+}
+
+function RecipesState({
   listQuery,
   isEmpty,
   recipes,
   toggleFavorite,
-}: {
-  listQuery: ReturnType<typeof userRecipesApi.recipes.list.useQuery>
+}: Readonly<{
+  listQuery: RecipesListQuery
   isEmpty: boolean
-  recipes: any[]
-  toggleFavorite: ReturnType<typeof userRecipesApi.recipes.toggleFavorite.useMutation>
-}) {
+  recipes: RecipeListItem[]
+  toggleFavorite: ToggleFavoriteMutation
+}>) {
   if (listQuery.isLoading) {
-    return (
-      <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
-        <SmallSpinner isLoading />
-        <span>Загрузка рецептов...</span>
-      </div>
-    )
+    return <RecipesLoadingState />
   }
 
   if (listQuery.error) {
-    return (
-      <Card>
-        <CardContent className="py-10 text-center text-destructive">
-          {listQuery.error.message || 'Ошибка загрузки рецептов'}
-        </CardContent>
-      </Card>
-    )
+    return <RecipesErrorState message={listQuery.error.message} />
   }
 
   if (isEmpty) {
-    return (
-      <Card>
-        <CardContent className="py-10 text-center text-muted-foreground">
-          Ничего не найдено. Попробуйте изменить фильтры.
-        </CardContent>
-      </Card>
-    )
+    return <RecipesEmptyState />
+  }
+
+  return <RecipesGrid recipes={recipes} toggleFavorite={toggleFavorite} />
+}
+
+function RecipesLoadingState() {
+  return (
+    <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
+      <SmallSpinner isLoading />
+      <span>Загрузка рецептов...</span>
+    </div>
+  )
+}
+
+function RecipesErrorState({ message }: Readonly<{ message?: string }>) {
+  return (
+    <Card>
+      <CardContent className="py-10 text-center text-destructive">
+        {message || 'Ошибка загрузки рецептов'}
+      </CardContent>
+    </Card>
+  )
+}
+
+function RecipesEmptyState() {
+  return (
+    <Card>
+      <CardContent className="py-10 text-center text-muted-foreground">
+        Ничего не найдено. Попробуйте изменить фильтры.
+      </CardContent>
+    </Card>
+  )
+}
+
+function RecipesGrid({
+  recipes,
+  toggleFavorite,
+}: Readonly<{
+  recipes: RecipeListItem[]
+  toggleFavorite: ToggleFavoriteMutation
+}>) {
+  const handleToggleFavorite = (recipeId: string) => {
+    toggleFavorite.mutate({ recipeId })
   }
 
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-      {recipes.map((recipe: any) => (
-        <Card
+      {recipes.map(recipe => (
+        <RecipeCard
           key={recipe.id}
-          className="overflow-hidden border-border/80 transition hover:shadow-lg py-0 gap-2"
-        >
-          <div className="relative h-32 w-full bg-muted md:h-40">
-            {recipe.imageUrl ? (
-              <AppImage
-                src={recipe.imageUrl}
-                alt={recipe.title}
-                fill
-                className="object-cover"
-              />
-            ) : null}
-            <button
-              className="absolute right-2 top-2 rounded-full bg-background/80 p-2 shadow-sm transition hover:scale-105"
-              onClick={() => toggleFavorite.mutate({ recipeId: recipe.id })}
-              aria-label="Переключить избранное"
-            >
-              {recipe.isFavorite ? (
-                <Heart className="h-4 w-4 fill-red-500 text-red-500" />
-              ) : (
-                <Heart className="h-4 w-4 text-muted-foreground" />
-              )}
-            </button>
-          </div>
-          <CardHeader className="space-y-1 px-3">
-            <CardTitle className="line-clamp-2 wrap-break-word text-base leading-snug md:text-lg">
-              {recipe.title}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 p-3 pt-0">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground md:text-sm">
-              <Clock className="h-4 w-4" />
-              <span>{recipe.preparationTimeMinutes} мин</span>
-            </div>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground md:text-sm">
-              <Flame className="h-4 w-4" />
-              <span>{recipe.calories ?? '—'} ккал</span>
-            </div>
-            <Button asChild variant="link" className="h-auto px-0 text-primary">
-              <Link href={`/platform/recipes/${recipe.slug}`}>Подробнее</Link>
-            </Button>
-          </CardContent>
-        </Card>
+          recipe={recipe}
+          onToggleFavorite={handleToggleFavorite}
+        />
       ))}
+    </div>
+  )
+}
+
+function RecipeCard({
+  recipe,
+  onToggleFavorite,
+}: Readonly<{
+  recipe: RecipeListItem
+  onToggleFavorite: (recipeId: string) => void
+}>) {
+  const handleFavoriteClick = () => onToggleFavorite(recipe.id)
+
+  return (
+    <Card className="overflow-hidden border-border/80 py-0 gap-2 transition hover:shadow-lg">
+      <div className="relative h-32 w-full bg-muted md:h-40">
+        <RecipeImage imageUrl={recipe.imageUrl} title={recipe.title} />
+        <button
+          className="absolute right-2 top-2 rounded-full bg-background/80 p-2 shadow-sm transition hover:scale-105"
+          onClick={handleFavoriteClick}
+          aria-label="Переключить избранное"
+        >
+          <FavoriteIcon isFavorite={recipe.isFavorite} />
+        </button>
+      </div>
+      <CardHeader className="space-y-1 px-3">
+        <CardTitle className="line-clamp-2 wrap-break-word text-base leading-snug md:text-lg">
+          {recipe.title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2 p-3 pt-0">
+        <RecipeMeta
+          icon={Clock}
+          value={`${recipe.preparationTimeMinutes} мин`}
+        />
+        <RecipeMeta icon={Flame} value={`${recipe.calories ?? '—'} ккал`} />
+        <Button asChild variant="link" className="h-auto px-0 text-primary">
+          <Link href={`/platform/recipes/${recipe.slug}`}>Подробнее</Link>
+        </Button>
+      </CardContent>
+    </Card>
+  )
+}
+
+function RecipeImage({
+  imageUrl,
+  title,
+}: Readonly<{
+  imageUrl: string | null | undefined
+  title: string
+}>) {
+  if (!imageUrl) {
+    return null
+  }
+
+  return <AppImage src={imageUrl} alt={title} fill className="object-cover" />
+}
+
+function FavoriteIcon({ isFavorite }: Readonly<{ isFavorite: boolean }>) {
+  if (isFavorite) {
+    return <Heart className="h-4 w-4 fill-red-500 text-red-500" />
+  }
+
+  return <Heart className="h-4 w-4 text-muted-foreground" />
+}
+
+function RecipeMeta({
+  icon: Icon,
+  value,
+}: Readonly<{
+  icon: typeof Clock
+  value: string
+}>) {
+  return (
+    <div className="flex items-center gap-1 text-xs text-muted-foreground md:text-sm">
+      <Icon className="h-4 w-4" />
+      <span>{value}</span>
     </div>
   )
 }
@@ -369,25 +585,66 @@ function FilterGroup({
     <div className="space-y-2">
       <p className="text-sm font-semibold">{title}</p>
       <div className={`grid gap-2 ${gridClass}`}>
-        {options.map(option => {
-          const active = values.includes(option.value)
-          return (
-            <Button
-              key={option.value}
-              variant={active ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => onToggle(option.value)}
-              className="justify-start"
-            >
-              {option.label}
-            </Button>
-          )
-        })}
+        {options.map(option => (
+          <FilterGroupOptionButton
+            key={option.value}
+            isActive={values.includes(option.value)}
+            onToggle={onToggle}
+            option={option}
+          />
+        ))}
       </div>
     </div>
   )
 }
 
+function FilterGroupOptionButton({
+  isActive,
+  onToggle,
+  option,
+}: Readonly<{
+  isActive: boolean
+  onToggle: (value: string) => void
+  option: { value: string; label: string }
+}>) {
+  const handleClick = () => onToggle(option.value)
+
+  return (
+    <Button
+      variant={isActive ? 'default' : 'outline'}
+      size="sm"
+      onClick={handleClick}
+      className="justify-start"
+    >
+      {option.label}
+    </Button>
+  )
+}
+
+function FilterSwitchRow({
+  checked,
+  description,
+  title,
+  onCheckedChange,
+}: Readonly<{
+  checked: boolean
+  description: string
+  title: string
+  onCheckedChange: (checked: boolean) => void
+}>) {
+  return (
+    <div className="flex items-center justify-between rounded-md border px-3 py-2">
+      <div>
+        <p className="text-sm font-medium">{title}</p>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </div>
+      <Switch checked={checked} onCheckedChange={onCheckedChange} />
+    </div>
+  )
+}
+
 function toggleItem(list: string[], value: string) {
-  return list.includes(value) ? list.filter(item => item !== value) : [...list, value]
+  return list.includes(value)
+    ? list.filter(item => item !== value)
+    : [...list, value]
 }

@@ -30,6 +30,15 @@ Refactor the target TypeScript/React file to comply with these Sonar rules while
 - If the limit is exceeded, extract parts into small local subcomponents/helpers.
 - Preserve behavior while splitting: no UI/logic side-effect changes.
 
+### 5) Nested functions depth (typescript:S2004)
+- Do **not** exceed maximum allowed nested function depth.
+- Default maximum depth: **4 levels**.
+- If nesting is too deep:
+  - Extract inner functions to module scope.
+  - Split complex logic into small pure helpers.
+  - Replace nested closures with flat composition where possible.
+- Avoid layered closures that increase cognitive load.
+
 ## Scope fence
 - Refactor only the specified file (and at most: tiny local helpers in the same file if needed).
 - **No behavior changes** (UI, business logic, side effects) beyond refactor.
