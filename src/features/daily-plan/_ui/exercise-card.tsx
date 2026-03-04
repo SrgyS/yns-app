@@ -142,7 +142,7 @@ export function ExerciseCard({
   }
 
   return (
-    <Card className="min-h-[400px] md:min-h-[480px] rounded-lg gap-4 py-3 sm:rounded-xl sm:gap-5 sm:py-4 max-[400px]:gap-3 max-[400px]:py-2">
+    <Card className="min-h-min rounded-lg gap-4 py-3 sm:rounded-xl sm:gap-5 sm:py-4 max-[400px]:gap-3 max-[400px]:py-2">
       <CardContent className="px-3 sm:px-4">
         <h3 className="text-base font-medium sm:text-lg mb-1">{title}</h3>
         {workout?.videoId && (

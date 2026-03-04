@@ -8,10 +8,11 @@ import { Card, CardContent } from '@/shared/ui/card'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/shared/ui/dialog'
 import { Separator } from '@/shared/ui/separator'
 import { AppImage } from '@/shared/ui/app-image'
-import { Clock, Flame, ChefHat, Minus, Plus, ArrowLeft, Heart, HeartOff } from 'lucide-react'
+import { Clock, Flame, ChefHat, Minus, Plus, Heart, HeartOff } from 'lucide-react'
 import { SmallSpinner } from '@/shared/ui/small-spinner'
 import { userRecipesApi } from '../_api'
 import { toast } from 'sonner'
+import { BackButton } from '@/shared/ui/back-button'
 
 type RecipeDetailProps = {
   slug: string
@@ -65,12 +66,9 @@ export function RecipeDetail({ slug }: Readonly<RecipeDetailProps>) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 py-4">
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="mr-1 h-4 w-4" />
-          Назад
-        </Button>
+        <BackButton onClick={() => router.back()} />
         <Button
           variant="ghost"
           size="icon"

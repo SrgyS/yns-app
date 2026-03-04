@@ -207,7 +207,7 @@ export function SupportChatUserPage() {
         cardClassName="h-full min-w-0 overflow-hidden flex flex-col border-none p-0 gap-1"
         headerClassName="space-y-2 px-1"
         title={title}
-        backButton={{ mode: 'link', label: 'Назад', href: '/platform/profile' }}
+        backButton={{ mode: 'link', label: '', href: '/platform/profile' }}
         hasMoreMessages={hasMoreMessages}
         isFetchingMoreMessages={isFetchingMoreMessages}
         onFetchMoreMessages={() => fetchMoreMessages()}

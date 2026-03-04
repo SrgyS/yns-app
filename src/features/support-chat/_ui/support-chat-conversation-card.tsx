@@ -1,6 +1,4 @@
 'use client'
-
-import Link from 'next/link'
 import {
   useEffect,
   useRef,
@@ -9,7 +7,6 @@ import {
   type RefObject,
 } from 'react'
 import {
-  ArrowLeft,
   CheckCheck,
   EllipsisVertical,
   Paperclip,
@@ -40,6 +37,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/shared/ui/tooltip'
+import { BackButton } from '@/shared/ui/back-button'
 
 type FormSubmitEvent = Parameters<
   NonNullable<ComponentProps<'form'>['onSubmit']>
@@ -323,12 +321,7 @@ function mergeSelectedFiles(
 }
 
 function getFileSignature(file: File) {
-  return [
-    file.name,
-    file.size,
-    file.lastModified,
-    file.type,
-  ].join(':')
+  return [file.name, file.size, file.lastModified, file.type].join(':')
 }
 
 type SupportChatConversationHeaderProps = {
@@ -387,9 +380,7 @@ function SupportChatConversationTitle({
   }
 
   return (
-    <CardTitle className="text-fluid-base min-w-0 truncate">
-      {title}
-    </CardTitle>
+    <CardTitle className="text-fluid-base min-w-0 truncate">{title}</CardTitle>
   )
 }
 
@@ -511,11 +502,7 @@ function SupportChatMessagesStatus({
     return null
   }
 
-  return (
-    <p className="text-fluid-sm text-muted-foreground">
-      {emptyStateText}
-    </p>
-  )
+  return <p className="text-fluid-sm text-muted-foreground">{emptyStateText}</p>
 }
 
 type SupportChatMessageListItemProps = {
@@ -548,8 +535,7 @@ function SupportChatMessageListItem({
   outgoingSenderType,
 }: Readonly<SupportChatMessageListItemProps>) {
   const shouldShowDateBadge =
-    !previousItem ||
-    !isSameCalendarDate(previousItem.createdAt, item.createdAt)
+    !previousItem || !isSameCalendarDate(previousItem.createdAt, item.createdAt)
 
   return (
     <div>
@@ -627,10 +613,7 @@ function SupportChatComposer({
   onRemoveFile,
 }: Readonly<SupportChatComposerProps>) {
   return (
-    <form
-      className="shrink-0 space-y-2 border-t pt-3 mb-1"
-      onSubmit={onSubmit}
-    >
+    <form className="shrink-0 space-y-2 border-t pt-3 mb-1" onSubmit={onSubmit}>
       <div className="relative">
         <Textarea
           ref={messageTextareaRef}
@@ -661,10 +644,7 @@ function SupportChatComposer({
         />
       </div>
 
-      <SupportChatDraftAttachments
-        files={files}
-        onRemoveFile={onRemoveFile}
-      />
+      <SupportChatDraftAttachments files={files} onRemoveFile={onRemoveFile} />
     </form>
   )
 }
@@ -738,13 +718,8 @@ function SupportChatDraftAttachments({
   return (
     <div className="flex flex-wrap items-center gap-2">
       {files.map((file, index) => (
-        <Badge
-          key={getFileSignature(file)}
-          className="max-w-40 gap-1 pr-1"
-        >
-          <span className="block min-w-0 flex-1 truncate">
-            {file.name}
-          </span>
+        <Badge key={getFileSignature(file)} className="max-w-40 gap-1 pr-1">
+          <span className="block min-w-0 flex-1 truncate">{file.name}</span>
           <Button
             type="button"
             variant="ghost"
@@ -768,31 +743,26 @@ function SupportChatBackButtonView({
 }>) {
   if (backButton.mode === 'link') {
     return (
-      <Button
+      <BackButton
+        href={backButton.href}
+        label={backButton.label}
         variant="ghost"
         size="sm"
+        iconOnly={false}
         className={backButton.className ?? 'has-[>svg]:ps-0'}
-        asChild
-      >
-        <Link href={backButton.href}>
-          <ArrowLeft className="mr-1 h-4 w-4" />
-          {backButton.label}
-        </Link>
-      </Button>
+      />
     )
   }
 
   return (
-    <Button
-      type="button"
+    <BackButton
+      onClick={backButton.onClick}
+      label={backButton.label}
       variant="ghost"
       size="sm"
+      iconOnly={false}
       className={backButton.className ?? 'has-[>svg]:ps-0'}
-      onClick={backButton.onClick}
-    >
-      <ArrowLeft className="mr-1 h-4 w-4" />
-      {backButton.label}
-    </Button>
+    />
   )
 }
 

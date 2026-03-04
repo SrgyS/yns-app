@@ -1,10 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowLeft } from 'lucide-react'
 import type { PracticeType } from '../_domain/practice-types'
-import { Button } from '@/shared/ui/button'
 import { AppImage } from '@/shared/ui/app-image'
+import { BackButton } from '@/shared/ui/back-button'
 
 type PracticeSectionHeroProps = {
   practiceType: PracticeType
@@ -30,16 +29,13 @@ export function PracticeSectionHero({
           onError={() => setIsImageError(true)}
         />
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/40 via-primary/30 to-primary/20" />
+        <div className="absolute inset-0 bg-linear-to-r from-primary/40 via-primary/30 to-primary/20" />
       )}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-black/20" />
+      <div className="absolute inset-0 bg-linear-to-r from-black/70 via-black/40 to-black/20" />
 
       <div className="relative z-10 flex flex-col gap-6 px-6 pb-6 pt-6 md:pt-8">
         <div>
-          <Button type="button" onClick={onBack} size="icon" variant="outline">
-            <ArrowLeft className="size-4" />
-            <span className="sr-only">Назад</span>
-          </Button>
+          <BackButton onClick={onBack} />
         </div>
 
         <div className="flex flex-col gap-2 text-white">

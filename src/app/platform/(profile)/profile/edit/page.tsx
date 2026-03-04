@@ -1,11 +1,9 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
 
 import { UpdateProfileForm } from '@/features/update-profile/update-profile-form'
 import { SessionService } from '@/kernel/lib/next-auth/module'
 import { server } from '@/app/server'
-import { Button } from '@/shared/ui/button'
+import { BackButton } from '@/shared/ui/back-button'
 
 export default async function EditProfilePage({
   searchParams,
@@ -26,20 +24,11 @@ export default async function EditProfilePage({
   const id = session.user.id
 
   return (
-    <section className="container space-y-8 py-14 max-w-[600px]">
-      <div className="flex items-center">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href={returnTo} className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Назад
-          </Link>
-        </Button>
+    <section className="container space-y-8 md:py-14 max-w-150">
+      <div className="flex items-center justify-start gap-2 md:gap-4">
+        <BackButton href={returnTo} />
+        <h1 className="text-fluid-lg font-semibold">Редактирование профиля</h1>
       </div>
-
-      <div className="text-center">
-        <h1 className="text-2xl font-semibold">Редактирование профиля</h1>
-      </div>
-
       <div className="bg-card rounded-lg border p-6">
         <UpdateProfileForm userId={id} callbackUrl={returnTo} />
       </div>

@@ -64,7 +64,7 @@ export function KnowledgeView({
       </header>
 
       {hasData ? (
-        <div className="rounded-xl border bg-card/50 p-4">
+        <div className="">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {allCategories.map(({ category, courseId }) => (
               <KnowledgeCategoryCard
@@ -95,7 +95,7 @@ function KnowledgeCategoryCard({
   courseId: string
 }>) {
   return (
-    <Card className="relative border border-border/70 bg-card/80 transition hover:shadow-md hover:border-primary/40">
+    <Card className="relative border border-border/70 bg-card/80 transition hover:shadow-md hover:border-primary/40 pt-0">
       <div className="aspect-4/3 w-full rounded-t-lg bg-linear-to-br from-slate-900 via-slate-700 to-slate-500 flex items-end justify-start px-4 pb-3">
         <span className="text-white text-lg font-semibold line-clamp-2">
           {category.title}
@@ -113,7 +113,9 @@ function KnowledgeCategoryCard({
           size="sm"
           className="gap-2 justify-start"
         >
-          <Link href={`/platform/knowledge/${category.id}?courseId=${courseId}`}>
+          <Link
+            href={`/platform/knowledge/${category.id}?courseId=${courseId}`}
+          >
             Открыть
             <ArrowRight className="h-4 w-4" />
           </Link>

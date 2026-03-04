@@ -11,8 +11,6 @@ import { Button } from '@/shared/ui/button'
 import { AccessesTable } from './tables/accesses'
 import { PaymentsTable } from './tables/payments'
 import { GrantAccessDialog } from './grant-access-dialog'
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
 import { FullPageSpinner } from '@/shared/ui/full-page-spinner'
 import { AdminUserProfile } from './admin-user-profile'
 import { ActivityTable } from './tables/activity'
@@ -30,6 +28,7 @@ import { Calendar } from '@/shared/ui/calendar'
 import { Label } from '@/shared/ui/label'
 import { Spinner } from '@/shared/ui/spinner'
 import { Card, CardContent, CardFooter } from '@/shared/ui/card'
+import { BackButton } from '@/shared/ui/back-button'
 
 export function AdminUserDetailPage({ userId }: Readonly<{ userId: string }>) {
   const { data, isLoading } = useAdminUserDetail(userId)
@@ -92,11 +91,7 @@ export function AdminUserDetailPage({ userId }: Readonly<{ userId: string }>) {
 
   return (
     <>
-      <Button variant="outline" size="sm" asChild className="mb-2">
-        <Link href="/admin/users">
-          <ArrowLeft className="size-4" />
-        </Link>
-      </Button>
+      <BackButton href="/admin/users" className="mb-2" />
       <div className="grid gap-8 md:grid-cols-[300px_1fr]">
         <aside className="space-y-4 min-w-0">
           <AdminUserProfile
