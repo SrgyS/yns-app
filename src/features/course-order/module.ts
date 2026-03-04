@@ -20,4 +20,6 @@ export const CourseOrderModule = new ContainerModule(context => {
   bind(ProdamusService).toSelf()
 })
 
-export { ReceiveOrderWebhookService }
+export { ReceiveOrderWebhookService } from './_services/receive-order-webhook'
+
+export {StartCourseOrderService} from './_services/start-course-order'
