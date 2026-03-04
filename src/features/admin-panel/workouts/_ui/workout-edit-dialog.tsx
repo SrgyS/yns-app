@@ -11,7 +11,7 @@ import {
 import { toast } from 'sonner'
 
 import { Button } from '@/shared/ui/button'
-import { Input } from '@/shared/ui/input'
+import { Checkbox } from '@/shared/ui/checkbox'
 import { Label } from '@/shared/ui/label'
 import { Textarea } from '@/shared/ui/textarea'
 import {
@@ -30,6 +30,8 @@ import {
   subsectionsBySection,
   subsectionLabels,
 } from '../_constants'
+import { WorkoutEquipmentField } from './workout-equipment-field'
+import { Input } from '@/shared/ui/input'
 
 type EditState = {
   id?: string
@@ -40,7 +42,7 @@ type EditState = {
   difficulty: WorkoutDifficulty
   muscles: MuscleGroup[]
   subsections: WorkoutSubsection[]
-  equipment: string
+  equipment: string[]
 }
 
 type WorkoutEditDialogProps = {
@@ -105,7 +107,7 @@ export function WorkoutEditDialog({
             allowedSubsections.includes(subsection)
           )
         : workoutSubsections,
-      equipment: (workout.equipment ?? []).join(', '),
+      equipment: workout.equipment ?? [],
     })
   }, [workoutDetailQuery.data, open])
 
@@ -121,12 +123,7 @@ export function WorkoutEditDialog({
       difficulty: editState.difficulty,
       muscles: editState.muscles,
       subsections: editState.subsections,
-      equipment: editState.equipment
-        ? editState.equipment
-            .split(',')
-            .map((s: string) => s.trim())
-            .filter(Boolean)
-        : [],
+      equipment: editState.equipment,
     })
   }
 
@@ -209,16 +206,17 @@ export function WorkoutEditDialog({
                   return (
                     <label
                       key={option}
-                      className="flex items-center gap-1 rounded border px-2 py-1 text-xs"
+                      className="flex items-center gap-2 rounded border px-2 py-1 text-xs"
                     >
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={checked}
-                        onChange={e => {
+                        onCheckedChange={checkedState => {
                           setEditState(prev => {
                             if (!prev) return prev
+
                             const next = new Set(prev.subsections)
-                            if (e.target.checked) {
+
+                            if (checkedState === true) {
                               next.add(option)
                             } else {
                               next.delete(option)
@@ -271,16 +269,17 @@ export function WorkoutEditDialog({
                 return (
                   <label
                     key={option}
-                    className="flex items-center gap-1 rounded border px-2 py-1 text-xs"
+                    className="flex items-center gap-2 rounded border px-2 py-1 text-xs"
                   >
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={checked}
-                      onChange={e => {
+                      onCheckedChange={checkedState => {
                         setEditState(prev => {
                           if (!prev) return prev
+
                           const next = new Set(prev.muscles)
-                          if (e.target.checked) {
+
+                          if (checkedState === true) {
                             next.add(option)
                           } else {
                             next.delete(option)
@@ -295,18 +294,14 @@ export function WorkoutEditDialog({
               })}
             </div>
           </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label>Инвентарь (через запятую)</Label>
-            <Input
-              value={editState.equipment}
-              onChange={e =>
-                setEditState(
-                  prev => prev && { ...prev, equipment: e.target.value }
-                )
-              }
-              placeholder="коврик, резинка"
-            />
-          </div>
+          <WorkoutEquipmentField
+            value={editState.equipment}
+            onChange={nextEquipment =>
+              setEditState(
+                prev => prev && { ...prev, equipment: nextEquipment }
+              )
+            }
+          />
         </div>
         <DialogFooter className="justify-start space-x-2">
           <Button onClick={handleSave} disabled={upsertMutation.isPending}>

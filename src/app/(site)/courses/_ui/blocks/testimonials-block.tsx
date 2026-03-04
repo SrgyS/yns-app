@@ -59,9 +59,6 @@ export function TestimonialsBlockComponent({
       >
         <div className="space-y-4 md:space-y-10">
           <div className="space-y-3">
-            <Badge variant="outline" className="text-sm font-normal">
-              Отзывы
-            </Badge>
             <h2 className="text-2xl font-semibold sm:text-3xl lg:text-4xl">
               {title || 'Отзывы участниц'}
             </h2>
