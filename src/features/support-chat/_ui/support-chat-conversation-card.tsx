@@ -7,7 +7,6 @@ import {
   type RefObject,
 } from 'react'
 import {
-  AlertCircle,
   CheckCheck,
   Clock,
   EllipsisVertical,
@@ -816,7 +815,7 @@ function SupportChatMessageBubble({
     (item.canEdit || item.canDelete)
   const containerClass = isOutgoing ? 'justify-end' : 'justify-start'
   const bubbleClass = isOutgoing
-    ? 'bg-primary text-primary-foreground'
+    ? 'bg-primary/10 text-foreground'
     : 'bg-muted text-foreground'
 
   return (
@@ -892,8 +891,10 @@ function SupportChatMessageBubbleContent({
   onCancelEdit,
   onSubmitEdit,
 }: Readonly<SupportChatMessageBubbleContentProps>) {
+  const isTextUnchanged = editingText.trim() === (item.text ?? '').trim()
+
   if (item.deletedAt) {
-    return <p className="italic opacity-80">Сообщение удалено</p>
+    return <p className="opacity-80">Сообщение удалено</p>
   }
 
   return (
@@ -904,7 +905,7 @@ function SupportChatMessageBubbleContent({
             value={editingText}
             onChange={event => onEditingTextChange(event.target.value)}
             rows={3}
-            className="bg-background text-foreground"
+            className=" text-foreground"
           />
           <div className="flex items-center justify-end gap-2">
             <Button
@@ -920,7 +921,7 @@ function SupportChatMessageBubbleContent({
               type="button"
               size="sm"
               onClick={onSubmitEdit}
-              disabled={isEditingMessage}
+              disabled={isEditingMessage || isTextUnchanged}
             >
               {isEditingMessage ? 'Сохранение...' : 'Сохранить'}
             </Button>
@@ -1040,7 +1041,6 @@ function SupportChatMessageActions({
         ) : null}
         {item.canDelete ? (
           <DropdownMenuItem
-            variant="destructive"
             onClick={() => onDelete(item.id)}
             disabled={isDeletingMessage}
           >
