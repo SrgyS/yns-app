@@ -820,14 +820,15 @@ function SupportChatMessageBubble({
 
   return (
     <div className={`min-w-0 flex ${containerClass}`}>
-      <div className="relative min-w-0 max-w-[80%]">
+      <div className="relative min-w-0 max-w-[80%] flex flex-col">
         <SupportChatMessageAttachments
           dialogId={item.dialogId}
           attachments={item.attachments}
+          isOutgoing={isOutgoing}
         />
         {shouldRenderTextBubble ? (
           <div
-            className={`text-fluid-sm min-w-0 rounded-2xl px-3 py-2 ${bubbleClass}`}
+            className={`text-fluid-sm min-w-0 rounded-2xl px-2 py-2 ${bubbleClass}`}
           >
             <SupportChatMessageBubbleContent
               item={item}
@@ -838,35 +839,41 @@ function SupportChatMessageBubble({
               onCancelEdit={onCancelEdit}
               onSubmitEdit={onSubmitEdit}
             />
-            <SupportChatMessageMeta
-              item={item}
-              isOutgoing={isOutgoing}
-              hasMessageActions={hasMessageActions}
-              onRetryFailedMessage={onRetryFailedMessage}
-              onCancelFailedMessage={onCancelFailedMessage}
-            />
+            <div className="flex items-end justify-end gap-1">
+              <SupportChatMessageMeta
+                item={item}
+                isOutgoing={isOutgoing}
+                onRetryFailedMessage={onRetryFailedMessage}
+                onCancelFailedMessage={onCancelFailedMessage}
+              />
+              {hasMessageActions ? (
+                <SupportChatMessageActions
+                  item={item}
+                  isDeletingMessage={isDeletingMessage}
+                  onStartEdit={onStartEdit}
+                  onDelete={onDelete}
+                />
+              ) : null}
+            </div>
           </div>
         ) : (
-          <div className="flex justify-end">
+          <div className="flex items-end justify-end gap-1">
             <SupportChatMessageMeta
               item={item}
               isOutgoing={isOutgoing}
-              hasMessageActions={hasMessageActions}
               onRetryFailedMessage={onRetryFailedMessage}
               onCancelFailedMessage={onCancelFailedMessage}
             />
+            {hasMessageActions ? (
+              <SupportChatMessageActions
+                item={item}
+                isDeletingMessage={isDeletingMessage}
+                onStartEdit={onStartEdit}
+                onDelete={onDelete}
+              />
+            ) : null}
           </div>
         )}
-        {hasMessageActions ? (
-          <div className="absolute bottom-0 right-0">
-            <SupportChatMessageActions
-              item={item}
-              isDeletingMessage={isDeletingMessage}
-              onStartEdit={onStartEdit}
-              onDelete={onDelete}
-            />
-          </div>
-        ) : null}
       </div>
     </div>
   )
@@ -938,7 +945,6 @@ function SupportChatMessageBubbleContent({
 type SupportChatMessageMetaProps = {
   item: SupportChatMessageItem
   isOutgoing: boolean
-  hasMessageActions: boolean
   onRetryFailedMessage?: (message: SupportChatMessageItem) => void
   onCancelFailedMessage?: (message: SupportChatMessageItem) => void
 }
@@ -946,11 +952,10 @@ type SupportChatMessageMetaProps = {
 function SupportChatMessageMeta({
   item,
   isOutgoing,
-  hasMessageActions,
   onRetryFailedMessage,
   onCancelFailedMessage,
 }: Readonly<SupportChatMessageMetaProps>) {
-   const metaText = item.editedAt
+  const metaText = item.editedAt
     ? `изменено ${formatMessageTime(item.editedAt)}`
     : formatMessageTime(item.createdAt)
 
@@ -961,19 +966,13 @@ function SupportChatMessageMeta({
     isReadByCounterparty(item)
 
   return (
-    <div
-      className={`relative flex flex-col items-end justify-end gap-2 ${
-        hasMessageActions ? 'pr-2' : ''
-      }`}
-    >
+    <div className="relative flex flex-col items-end justify-end gap-2">
       <div className="flex items-center gap-1 text-[11px] leading-none opacity-75">
         <p>{metaText}</p>
         {item.status === 'sending' ? (
           <Clock className="h-4 w-4 opacity-80" />
         ) : null}
-        {item.status === 'failed' ? (
-          <span>Сообщение не отправлено</span>
-        ) : null}
+        {item.status === 'failed' ? <span>Сообщение не отправлено</span> : null}
         {shouldShowReadIcon ? (
           <CheckCheck className="h-3 w-3 opacity-80 text-primary" />
         ) : null}
