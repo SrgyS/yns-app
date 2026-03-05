@@ -19,7 +19,10 @@ import { useAdminAbility } from '@/features/admin-panel/users/_hooks/use-admin-a
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
-import { SupportChatConversationCard } from '../../_ui/support-chat-conversation-card'
+import {
+  SupportChatConversationCard,
+  type SupportChatMessageItem,
+} from '../../_ui/support-chat-conversation-card'
 import { toSupportChatAttachments } from '../../_ui/support-chat-attachments-upload'
 import { resolveSupportChatClientErrorMessage } from '../../_domain/client-error-message'
 
@@ -92,6 +95,7 @@ export function SupportChatAdminInboxPage() {
   const {
     openStaffDialogForUser,
     sendMessage,
+    cancelFailedMessage,
     markDialogRead,
     editMessage,
     deleteMessage,
@@ -188,6 +192,7 @@ export function SupportChatAdminInboxPage() {
         dialogId: selectedDialogId,
         text: textPayload,
         attachments,
+        optimisticSenderType: 'STAFF',
       })
 
       setMessage('')
@@ -235,7 +240,7 @@ export function SupportChatAdminInboxPage() {
       })
       setEditingMessageId(null)
       setEditingText('')
-      toast.success('Сообщение изменено (изменено)')
+      toast.success('Сообщение изменено')
     } catch (error) {
       toastSupportChatActionError(error, 'Не удалось изменить сообщение')
     }
@@ -260,6 +265,49 @@ export function SupportChatAdminInboxPage() {
   const handleCancelEdit = () => {
     setEditingMessageId(null)
     setEditingText('')
+  }
+
+  const handleRetryFailedMessage = async (
+    messageItem: SupportChatMessageItem
+  ) => {
+    if (!selectedDialogId) {
+      return
+    }
+
+    const clientMessageId = messageItem.clientMessageId
+    if (!clientMessageId) {
+      return
+    }
+
+    try {
+      await sendMessage({
+        dialogId: selectedDialogId,
+        text: messageItem.text ?? undefined,
+        attachments: messageItem.pendingAttachments,
+        clientMessageId,
+        optimisticSenderType: 'STAFF',
+      })
+    } catch (error) {
+      toastSupportChatActionError(error, 'Не удалось повторно отправить ответ')
+    }
+  }
+
+  const handleCancelFailedMessage = (
+    messageItem: SupportChatMessageItem
+  ) => {
+    if (!selectedDialogId) {
+      return
+    }
+
+    const clientMessageId = messageItem.clientMessageId
+    if (!clientMessageId) {
+      return
+    }
+
+    cancelFailedMessage({
+      dialogId: selectedDialogId,
+      clientMessageId,
+    })
   }
 
   const handleMessageChange = (value: string) => {
@@ -339,6 +387,8 @@ export function SupportChatAdminInboxPage() {
         onFilesChange={handleFilesChange}
         onRemoveFile={handleRemoveFile}
         files={files}
+        onRetryFailedMessage={handleRetryFailedMessage}
+        onCancelFailedMessage={handleCancelFailedMessage}
         handleSubmit={handleSubmit}
         isSubmitting={isSendingMessage}
         isSubmitDisabled={
@@ -467,16 +517,14 @@ function SupportChatAdminDialogListItem({
               {dialog.user.name ?? dialog.user.id}
             </span>
           </Link>
-          {dialog.isUnanswered ? (
+          {dialog.unreadCount > 0 ? (
             <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
           ) : null}
         </div>
       </div>
 
       {dialog.hasUnansweredIncoming ? (
-        <Badge variant="destructive" className="mt-2">
-          Не отвечено
-        </Badge>
+        <Badge className="mt-2">Не отвечено</Badge>
       ) : null}
 
       <p className="text-fluid-sm mt-2 text-muted-foreground">
@@ -509,6 +557,8 @@ type SupportChatAdminConversationCardProps = {
   onFilesChange: (files: File[]) => void
   onRemoveFile: (index: number) => void
   files: File[]
+  onRetryFailedMessage: (message: SupportChatMessageItem) => void
+  onCancelFailedMessage: (message: SupportChatMessageItem) => void
   handleSubmit: (event: FormSubmitEvent) => void
   isSubmitting: boolean
   isSubmitDisabled: boolean
@@ -537,6 +587,8 @@ function SupportChatAdminConversationCard({
   onFilesChange,
   onRemoveFile,
   files,
+  onRetryFailedMessage,
+  onCancelFailedMessage,
   handleSubmit,
   isSubmitting,
   isSubmitDisabled,
@@ -589,7 +641,7 @@ function SupportChatAdminConversationCard({
       messages={messages}
       selectedDialogKey={selectedDialog.dialogId}
       isLoadingMessages={isMessagesLoading}
-      emptyStateText="Нет сообщений в диалоге."
+      emptyStateText="Нет сообщений в чате."
       editingMessageId={editingMessageId}
       editingText={editingText}
       isEditingMessage={isEditingMessage}
@@ -599,6 +651,8 @@ function SupportChatAdminConversationCard({
       onSubmitEdit={handleEditSubmit}
       onStartEdit={startEditMessage}
       onDelete={handleDeleteMessage}
+      onRetryFailedMessage={onRetryFailedMessage}
+      onCancelFailedMessage={onCancelFailedMessage}
       message={message}
       onMessageChange={onMessageChange}
       onFilesChange={onFilesChange}

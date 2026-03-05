@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { ChatMessageSenderType } from '@prisma/client'
 
 import { CACHE_SETTINGS } from '@/shared/lib/cache/cache-constants'
@@ -13,8 +13,90 @@ type SupportChatAttachmentInput = {
   base64: string
 }
 
+export type SupportChatMessageStatus = 'sending' | 'sent' | 'failed'
+
+type SupportChatMessageCreatedSsePayload = {
+  type: 'message.created'
+  dialogId: string
+  message?: {
+    id: string
+    clientMessageId: string | null
+    text: string | null
+    senderType: 'USER' | 'STAFF'
+    createdAt: string
+  }
+}
+
 const SUPPORT_CHAT_LIMIT = 20
 type SupportChatDialogScope = 'user' | 'staff'
+
+const createClientMessageId = () => {
+  const randomValue =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID().replaceAll('-', '')
+      : `${Date.now()}${Math.floor(Math.random() * 10_000_000)}`
+
+  return `tmp_${randomValue.slice(0, 24)}`
+}
+
+type SupportChatMessagesCache = {
+  pages: Array<{
+    items: Array<{
+      id: string
+      dialogId: string
+      senderType: ChatMessageSenderType
+      text: string | null
+      attachments?: unknown
+      editedAt: string | null
+      deletedAt: string | null
+      deletedBy: string | null
+      canEdit: boolean
+      canDelete: boolean
+      createdAt: string
+      readAt: string | null
+      clientMessageId: string | null
+      status?: SupportChatMessageStatus
+      pendingAttachments?: SupportChatAttachmentInput[]
+    }>
+    nextCursor?: string
+  }>
+  pageParams: Array<string | null>
+}
+
+const updateCachedDialogMessages = (
+  current: SupportChatMessagesCache | undefined,
+  update: (items: SupportChatMessagesCache['pages'][number]['items']) => {
+    items: SupportChatMessagesCache['pages'][number]['items']
+    changed: boolean
+  }
+): SupportChatMessagesCache | undefined => {
+  if (!current) {
+    return current
+  }
+
+  let hasChanges = false
+  const nextPages = current.pages.map(page => {
+    const result = update(page.items)
+    if (!result.changed) {
+      return page
+    }
+
+    hasChanges = true
+    return {
+      ...page,
+      items: result.items,
+    }
+  })
+
+  if (!hasChanges) {
+    return current
+  }
+
+  return {
+    ...current,
+    pages: nextPages,
+  }
+}
 
 export function useUserDialogs() {
   const query = supportChatApi.supportChat.userListDialogs.useInfiniteQuery(
@@ -57,7 +139,20 @@ export function useDialogMessages(dialogId?: string) {
 
   const messages = useMemo(() => {
     const pages = query.data?.pages ?? []
-    const merged = pages.flatMap(page => page.items)
+    const merged = pages.flatMap(page =>
+      page.items.map(item => {
+        const itemStatus = (item as { status?: SupportChatMessageStatus }).status
+        const status = itemStatus ?? 'sent'
+        const itemClientMessageId = (
+          item as { clientMessageId?: string | null }
+        ).clientMessageId
+        return {
+          ...item,
+          clientMessageId: itemClientMessageId ?? null,
+          status,
+        }
+      })
+    )
     return [...merged].sort(
       (left, right) =>
         new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
@@ -101,11 +196,87 @@ function useSupportChatEventsSse(
         .catch(() => undefined)
     }
 
+    const applyMessageCreatedReconcile = (
+      payload: SupportChatMessageCreatedSsePayload
+    ) => {
+      if (!dialogId) {
+        return
+      }
+
+      if (payload.dialogId !== dialogId) {
+        return
+      }
+
+      const messagePayload = payload.message
+      if (!messagePayload?.clientMessageId) {
+        return
+      }
+
+      utils.supportChat.userGetMessages.setInfiniteData(
+        {
+          dialogId,
+          limit: SUPPORT_CHAT_LIMIT,
+        },
+        current => {
+          if (!current) {
+            return current
+          }
+
+          let hasChanges = false
+          const nextPages = current.pages.map(page => {
+            const nextItems = page.items.map(item => {
+              if (item.clientMessageId !== messagePayload.clientMessageId) {
+                return item
+              }
+
+              hasChanges = true
+              return {
+                ...item,
+                id: messagePayload.id,
+                text: messagePayload.text,
+                senderType: messagePayload.senderType,
+                createdAt: messagePayload.createdAt,
+                clientMessageId: messagePayload.clientMessageId,
+                status: 'sent',
+                pendingAttachments: undefined,
+              }
+            })
+
+            return {
+              ...page,
+              items: nextItems,
+            }
+          })
+
+          if (hasChanges) {
+            return {
+              ...current,
+              pages: nextPages,
+            }
+          }
+
+          return current
+        }
+      )
+    }
+
     const handleDialogCreated = () => {
       invalidateDialogs()
     }
 
-    const handleMessageCreated = () => {
+    const handleMessageCreated = (event: Event) => {
+      const messageEvent = event as MessageEvent<string>
+      try {
+        const payload = JSON.parse(
+          messageEvent.data
+        ) as SupportChatMessageCreatedSsePayload
+        if (payload.type === 'message.created') {
+          applyMessageCreatedReconcile(payload)
+        }
+      } catch {
+        // ignore malformed payload and keep fallback invalidation flow
+      }
+
       invalidateDialogs()
       invalidateMessages()
     }
@@ -178,6 +349,9 @@ export function useSupportChatUnansweredCount() {
 
 export function useSupportChatActions() {
   const utils = supportChatApi.useUtils()
+  const optimisticSenderTypeByClientMessageIdRef = useRef(
+    new Map<string, ChatMessageSenderType>()
+  )
 
   const staffOpenDialogForUserMutation =
     supportChatApi.supportChat.staffOpenDialogForUser.useMutation({
@@ -197,13 +371,188 @@ export function useSupportChatActions() {
   })
 
   const sendMessageMutation = supportChatApi.supportChat.sendMessage.useMutation({
-    onSuccess: (_result, variables) => {
+    onMutate: async variables => {
+      const optimisticClientMessageId = variables.clientMessageId
+      if (!optimisticClientMessageId) {
+        return {
+          clientMessageId: undefined,
+        }
+      }
+
+      await utils.supportChat.userGetMessages.cancel({
+        dialogId: variables.dialogId,
+      })
+
+      utils.supportChat.userGetMessages.setInfiniteData(
+        {
+          dialogId: variables.dialogId,
+          limit: SUPPORT_CHAT_LIMIT,
+        },
+        (current: SupportChatMessagesCache | undefined) => {
+          const optimisticMessage = {
+            id: optimisticClientMessageId,
+            dialogId: variables.dialogId,
+            senderType:
+              optimisticSenderTypeByClientMessageIdRef.current.get(
+                optimisticClientMessageId
+              ) ?? 'USER',
+            text: variables.text ?? null,
+            attachments:
+              variables.attachments?.map((attachment, index) => ({
+                id: `${optimisticClientMessageId}_${index}`,
+                name: attachment.filename,
+                path: attachment.base64,
+                type: attachment.mimeType,
+                sizeBytes: attachment.sizeBytes,
+              })) ?? [],
+            editedAt: null,
+            deletedAt: null,
+            deletedBy: null,
+            canEdit: true,
+            canDelete: true,
+            createdAt: new Date().toISOString(),
+            readAt: null,
+            clientMessageId: optimisticClientMessageId,
+            status: 'sending' as const,
+            pendingAttachments: variables.attachments,
+          }
+
+          if (!current) {
+            return {
+              pages: [
+                {
+                  items: [optimisticMessage],
+                  nextCursor: undefined,
+                },
+              ],
+              pageParams: [null],
+            }
+          }
+
+          const firstPage = current.pages[0]
+          if (!firstPage) {
+            return {
+              ...current,
+              pages: [
+                {
+                  items: [optimisticMessage],
+                  nextCursor: undefined,
+                },
+              ],
+            }
+          }
+
+          const firstPageHasMessage = firstPage.items.some(
+            item => item.clientMessageId === optimisticClientMessageId
+          )
+          if (firstPageHasMessage) {
+            return current
+          }
+
+          const nextFirstPage = {
+            ...firstPage,
+            items: [...firstPage.items, optimisticMessage],
+          }
+
+          return {
+            ...current,
+            pages: [nextFirstPage, ...current.pages.slice(1)],
+          }
+        }
+      )
+
+      return {
+        clientMessageId: optimisticClientMessageId,
+      }
+    },
+    onSuccess: (result, variables, context) => {
+      const resolvedClientMessageId = context?.clientMessageId
+      if (resolvedClientMessageId) {
+        optimisticSenderTypeByClientMessageIdRef.current.delete(
+          resolvedClientMessageId
+        )
+        utils.supportChat.userGetMessages.setInfiniteData(
+          {
+            dialogId: variables.dialogId,
+            limit: SUPPORT_CHAT_LIMIT,
+          },
+          (current: SupportChatMessagesCache | undefined) => {
+            return updateCachedDialogMessages(current, items => {
+              let changed = false
+              const nextItems = items.map(item => {
+                if (item.clientMessageId !== resolvedClientMessageId) {
+                  return item
+                }
+
+                changed = true
+                return {
+                  ...item,
+                  id: result.message.id,
+                  text: result.message.text,
+                  attachments: result.message.attachments,
+                  senderType: result.message.senderType,
+                  createdAt: result.message.createdAt,
+                  clientMessageId: result.message.clientMessageId,
+                  status: 'sent' as const,
+                  canEdit: true,
+                  canDelete: true,
+                  pendingAttachments: undefined,
+                }
+              })
+
+              return {
+                items: nextItems,
+                changed,
+              }
+            })
+          }
+        )
+      }
+
       utils.supportChat.userListDialogs.invalidate().catch(() => undefined)
       utils.supportChat.staffListDialogs.invalidate().catch(() => undefined)
       utils.supportChat.getUnansweredDialogsCount.invalidate().catch(() => undefined)
       utils.supportChat.userGetMessages
         .invalidate({ dialogId: variables.dialogId })
         .catch(() => undefined)
+    },
+    onError: (_error, variables, context) => {
+      const resolvedClientMessageId = context?.clientMessageId
+      if (!resolvedClientMessageId) {
+        return
+      }
+
+      optimisticSenderTypeByClientMessageIdRef.current.delete(
+        resolvedClientMessageId
+      )
+
+      utils.supportChat.userGetMessages.setInfiniteData(
+        {
+          dialogId: variables.dialogId,
+          limit: SUPPORT_CHAT_LIMIT,
+        },
+        (current: SupportChatMessagesCache | undefined) => {
+          return updateCachedDialogMessages(current, items => {
+            let changed = false
+            const nextItems = items.map(item => {
+              if (item.clientMessageId !== resolvedClientMessageId) {
+                return item
+              }
+
+              changed = true
+              return {
+                ...item,
+                status: 'failed' as const,
+              }
+            })
+
+            return {
+              items: nextItems,
+              changed,
+            }
+          })
+        }
+      )
     },
   })
 
@@ -256,8 +605,43 @@ export function useSupportChatActions() {
     dialogId: string
     text?: string
     attachments?: SupportChatAttachmentInput[]
+    clientMessageId?: string
+    optimisticSenderType?: ChatMessageSenderType
   }) => {
-    return await sendMessageMutation.mutateAsync(params)
+    const resolvedClientMessageId = params.clientMessageId ?? createClientMessageId()
+    optimisticSenderTypeByClientMessageIdRef.current.set(
+      resolvedClientMessageId,
+      params.optimisticSenderType ?? 'USER'
+    )
+    return await sendMessageMutation.mutateAsync({
+      dialogId: params.dialogId,
+      text: params.text,
+      attachments: params.attachments,
+      clientMessageId: resolvedClientMessageId,
+    })
+  }
+
+  const cancelFailedMessage = (params: {
+    dialogId: string
+    clientMessageId: string
+  }) => {
+    utils.supportChat.userGetMessages.setInfiniteData(
+      {
+        dialogId: params.dialogId,
+        limit: SUPPORT_CHAT_LIMIT,
+      },
+      (current: SupportChatMessagesCache | undefined) => {
+        return updateCachedDialogMessages(current, items => {
+          const nextItems = items.filter(
+            item => item.clientMessageId !== params.clientMessageId
+          )
+          return {
+            items: nextItems,
+            changed: nextItems.length !== items.length,
+          }
+        })
+      }
+    )
   }
 
   const markDialogRead = async (params: {
@@ -289,6 +673,7 @@ export function useSupportChatActions() {
     markDialogRead,
     editMessage,
     deleteMessage,
+    cancelFailedMessage,
     isOpeningStaffDialog: staffOpenDialogForUserMutation.isPending,
     isCreatingDialog: createDialogMutation.isPending,
     isSendingMessage: sendMessageMutation.isPending,

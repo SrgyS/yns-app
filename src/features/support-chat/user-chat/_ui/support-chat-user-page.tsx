@@ -4,7 +4,10 @@ import { useEffect, useRef, useState, type ComponentProps } from 'react'
 import { toast } from 'sonner'
 
 import { ProfileAvatar } from '@/entities/user/_ui/profile-avatar'
-import { SupportChatConversationCard } from '../../_ui/support-chat-conversation-card'
+import {
+  SupportChatConversationCard,
+  type SupportChatMessageItem,
+} from '../../_ui/support-chat-conversation-card'
 import { toSupportChatAttachments } from '../../_ui/support-chat-attachments-upload'
 import { resolveSupportChatClientErrorMessage } from '../../_domain/client-error-message'
 import {
@@ -54,6 +57,7 @@ export function SupportChatUserPage() {
   const {
     createDialog,
     sendMessage,
+    cancelFailedMessage,
     markDialogRead,
     editMessage,
     deleteMessage,
@@ -104,6 +108,7 @@ export function SupportChatUserPage() {
           dialogId: effectiveSelectedDialogId,
           text: textPayload,
           attachments,
+          optimisticSenderType: 'USER',
         })
       } else {
         const created = await createDialog({
@@ -144,7 +149,7 @@ export function SupportChatUserPage() {
       })
       setEditingMessageId(null)
       setEditingText('')
-      toast.success('Сообщение изменено (изменено)')
+      toast.success('Сообщение изменено')
     } catch (error) {
       toastSupportChatActionError(error, 'Не удалось изменить сообщение')
     }
@@ -164,6 +169,47 @@ export function SupportChatUserPage() {
     } catch (error) {
       toastSupportChatActionError(error, 'Не удалось удалить сообщение')
     }
+  }
+
+  const handleRetryFailedMessage = async (
+    messageItem: SupportChatMessageItem
+  ) => {
+    if (!effectiveSelectedDialogId) {
+      return
+    }
+
+    const clientMessageId = messageItem.clientMessageId
+    if (!clientMessageId) {
+      return
+    }
+
+    try {
+      await sendMessage({
+        dialogId: effectiveSelectedDialogId,
+        text: messageItem.text ?? undefined,
+        attachments: messageItem.pendingAttachments,
+        clientMessageId,
+        optimisticSenderType: 'USER',
+      })
+    } catch (error) {
+      toastSupportChatActionError(error, 'Не удалось повторно отправить сообщение')
+    }
+  }
+
+  const handleCancelFailedMessage = (messageItem: SupportChatMessageItem) => {
+    if (!effectiveSelectedDialogId) {
+      return
+    }
+
+    const clientMessageId = messageItem.clientMessageId
+    if (!clientMessageId) {
+      return
+    }
+
+    cancelFailedMessage({
+      dialogId: effectiveSelectedDialogId,
+      clientMessageId,
+    })
   }
 
   const handleCancelEdit = () => {
@@ -224,6 +270,8 @@ export function SupportChatUserPage() {
         onSubmitEdit={handleEditSubmit}
         onStartEdit={startEditMessage}
         onDelete={handleDeleteMessage}
+        onRetryFailedMessage={handleRetryFailedMessage}
+        onCancelFailedMessage={handleCancelFailedMessage}
         message={message}
         onMessageChange={handleMessageChange}
         onFilesChange={handleFilesChange}

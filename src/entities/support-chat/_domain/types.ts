@@ -15,6 +15,7 @@ export type ChatDialogEntity = {
 export type ChatMessageEntity = {
   id: string
   dialogId: string
+  clientMessageId: string | null
   senderType: ChatMessageSenderType
   senderUserId: string | null
   senderStaffId: string | null

@@ -6,6 +6,7 @@ import { ChatMessageEntity } from '../_domain/types'
 
 type CreateChatMessageInput = {
   dialogId: string
+  clientMessageId?: string | null
   senderType: ChatMessageSenderType
   senderUserId?: string | null
   senderStaffId?: string | null
@@ -33,6 +34,7 @@ export class ChatMessageRepository {
     const record = await db.chatMessage.create({
       data: {
         dialogId: input.dialogId,
+        clientMessageId: input.clientMessageId ?? null,
         senderType: input.senderType,
         senderUserId: input.senderUserId ?? null,
         senderStaffId: input.senderStaffId ?? null,
@@ -50,7 +52,10 @@ export class ChatMessageRepository {
   ): Promise<ListChatMessagesResult> {
     const limit = input.limit ?? 30
     const records = await db.chatMessage.findMany({
-      where: { dialogId: input.dialogId },
+      where: {
+        dialogId: input.dialogId,
+        deletedAt: null,
+      },
       orderBy: { createdAt: 'desc' },
       take: limit + 1,
       ...(input.cursor
@@ -69,6 +74,25 @@ export class ChatMessageRepository {
       items: pageItems.map(record => this.toEntity(record)),
       nextCursor,
     }
+  }
+
+  async findByDialogAndClientMessageId(
+    dialogId: string,
+    clientMessageId: string,
+    db: DbClient = dbClient
+  ): Promise<ChatMessageEntity | null> {
+    const record = await db.chatMessage.findFirst({
+      where: {
+        dialogId,
+        clientMessageId,
+      },
+    })
+
+    if (!record) {
+      return null
+    }
+
+    return this.toEntity(record)
   }
 
   async countDialogUnreadMessages(
@@ -91,6 +115,7 @@ export class ChatMessageRepository {
   private toEntity(record: {
     id: string
     dialogId: string
+    clientMessageId: string | null
     senderType: ChatMessageSenderType
     senderUserId: string | null
     senderStaffId: string | null
@@ -104,6 +129,7 @@ export class ChatMessageRepository {
     return {
       id: record.id,
       dialogId: record.dialogId,
+      clientMessageId: record.clientMessageId,
       senderType: record.senderType,
       senderUserId: record.senderUserId,
       senderStaffId: record.senderStaffId,

@@ -8,6 +8,7 @@ import {
 } from 'react'
 import {
   CheckCheck,
+  Clock,
   EllipsisVertical,
   Paperclip,
   Pencil,
@@ -31,12 +32,6 @@ import { Textarea } from '@/shared/ui/textarea'
 import { MAX_ATTACHMENTS_PER_MESSAGE } from '../_domain/attachment-schema'
 import { SUPPORT_CHAT_ATTACHMENT_ACCEPT } from './support-chat-attachments-upload'
 import { SupportChatMessageAttachments } from './support-chat-message-attachments'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/shared/ui/tooltip'
 import { BackButton } from '@/shared/ui/back-button'
 
 type FormSubmitEvent = Parameters<
@@ -46,14 +41,25 @@ type InputChangeEvent = Parameters<
   NonNullable<ComponentProps<'input'>['onChange']>
 >[0]
 
-type SupportChatMessageItem = {
+export type SupportChatPendingAttachmentInput = {
+  filename: string
+  mimeType: string
+  sizeBytes: number
+  base64: string
+}
+
+export type SupportChatMessageItem = {
   id: string
   dialogId: string
   senderType: string
+  clientMessageId?: string | null
+  status?: 'sending' | 'sent' | 'failed'
+  pendingAttachments?: SupportChatPendingAttachmentInput[]
   text: string | null
   attachments?: unknown
   editedAt: string | null
   deletedAt: string | null
+  deletedBy?: string | null
   canEdit: boolean
   canDelete: boolean
   createdAt: string
@@ -97,6 +103,8 @@ type SupportChatConversationCardProps = {
   onSubmitEdit: () => void
   onStartEdit: (messageId: string, text: string | null) => void
   onDelete: (messageId: string) => void
+  onRetryFailedMessage?: (message: SupportChatMessageItem) => void
+  onCancelFailedMessage?: (message: SupportChatMessageItem) => void
   message: string
   onMessageChange: (value: string) => void
   onFilesChange: (files: File[]) => void
@@ -137,6 +145,8 @@ export function SupportChatConversationCard({
   onSubmitEdit,
   onStartEdit,
   onDelete,
+  onRetryFailedMessage,
+  onCancelFailedMessage,
   message,
   onMessageChange,
   onFilesChange,
@@ -269,6 +279,8 @@ export function SupportChatConversationCard({
           onSubmitEdit={onSubmitEdit}
           onStartEdit={onStartEdit}
           onDelete={onDelete}
+          onRetryFailedMessage={onRetryFailedMessage}
+          onCancelFailedMessage={onCancelFailedMessage}
           outgoingSenderType={outgoingSenderType}
         />
 
@@ -424,6 +436,8 @@ type SupportChatMessagesViewportProps = {
   onSubmitEdit: () => void
   onStartEdit: (messageId: string, text: string | null) => void
   onDelete: (messageId: string) => void
+  onRetryFailedMessage?: (message: SupportChatMessageItem) => void
+  onCancelFailedMessage?: (message: SupportChatMessageItem) => void
   outgoingSenderType: SupportChatSenderType
 }
 
@@ -441,6 +455,8 @@ const SupportChatMessagesViewport = ({
   onSubmitEdit,
   onStartEdit,
   onDelete,
+  onRetryFailedMessage,
+  onCancelFailedMessage,
   outgoingSenderType,
 }: Readonly<SupportChatMessagesViewportProps>) => {
   return (
@@ -470,6 +486,8 @@ const SupportChatMessagesViewport = ({
               onSubmitEdit={onSubmitEdit}
               onStartEdit={onStartEdit}
               onDelete={onDelete}
+              onRetryFailedMessage={onRetryFailedMessage}
+              onCancelFailedMessage={onCancelFailedMessage}
               outgoingSenderType={outgoingSenderType}
             />
           )
@@ -517,6 +535,8 @@ type SupportChatMessageListItemProps = {
   onSubmitEdit: () => void
   onStartEdit: (messageId: string, text: string | null) => void
   onDelete: (messageId: string) => void
+  onRetryFailedMessage?: (message: SupportChatMessageItem) => void
+  onCancelFailedMessage?: (message: SupportChatMessageItem) => void
   outgoingSenderType: SupportChatSenderType
 }
 
@@ -532,6 +552,8 @@ function SupportChatMessageListItem({
   onSubmitEdit,
   onStartEdit,
   onDelete,
+  onRetryFailedMessage,
+  onCancelFailedMessage,
   outgoingSenderType,
 }: Readonly<SupportChatMessageListItemProps>) {
   const shouldShowDateBadge =
@@ -554,6 +576,8 @@ function SupportChatMessageListItem({
         onSubmitEdit={onSubmitEdit}
         onStartEdit={onStartEdit}
         onDelete={onDelete}
+        onRetryFailedMessage={onRetryFailedMessage}
+        onCancelFailedMessage={onCancelFailedMessage}
         outgoingSenderType={outgoingSenderType}
       />
     </div>
@@ -655,23 +679,16 @@ function SupportChatAttachButton({
   onClick: () => void
 }>) {
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="absolute bottom-1 left-2 h-8 w-8 rounded-full"
-            aria-label="Прикрепить файл"
-            onClick={onClick}
-          >
-            <Paperclip className="h-4 w-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Прикрепить файл</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Button
+      type="button"
+      variant="outline"
+      size="icon"
+      className="absolute bottom-1 left-2 h-8 w-8 rounded-full"
+      aria-label="Прикрепить файл"
+      onClick={onClick}
+    >
+      <Paperclip className="h-4 w-4" />
+    </Button>
   )
 }
 
@@ -683,24 +700,15 @@ function SupportChatSubmitButton({
   isSubmitDisabled: boolean
 }>) {
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            type="submit"
-            size="icon"
-            className="absolute bottom-1 right-2 h-8 w-8 rounded-full"
-            aria-label={isSubmitting ? 'Отправка...' : 'Отправить'}
-            disabled={isSubmitDisabled}
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          {isSubmitting ? 'Отправка...' : 'Отправить'}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Button
+      type="submit"
+      size="icon"
+      className="absolute bottom-1 right-2 h-8 w-8 rounded-full"
+      aria-label={isSubmitting ? 'Отправка...' : 'Отправить'}
+      disabled={isSubmitDisabled}
+    >
+      <Send className="h-4 w-4" />
+    </Button>
   )
 }
 
@@ -777,6 +785,8 @@ type SupportChatMessageBubbleProps = {
   onSubmitEdit: () => void
   onStartEdit: (messageId: string, text: string | null) => void
   onDelete: (messageId: string) => void
+  onRetryFailedMessage?: (message: SupportChatMessageItem) => void
+  onCancelFailedMessage?: (message: SupportChatMessageItem) => void
   outgoingSenderType: SupportChatSenderType
 }
 
@@ -791,20 +801,26 @@ function SupportChatMessageBubble({
   onSubmitEdit,
   onStartEdit,
   onDelete,
+  onRetryFailedMessage,
+  onCancelFailedMessage,
   outgoingSenderType,
 }: Readonly<SupportChatMessageBubbleProps>) {
   const isOutgoing = item.senderType === outgoingSenderType
   const isEditing = editingMessageId === item.id
   const hasText = Boolean(item.text && item.text.trim().length > 0)
   const shouldRenderTextBubble = isEditing || Boolean(item.deletedAt) || hasText
+  const hasMessageActions =
+    item.status !== 'sending' &&
+    item.status !== 'failed' &&
+    (item.canEdit || item.canDelete)
   const containerClass = isOutgoing ? 'justify-end' : 'justify-start'
   const bubbleClass = isOutgoing
-    ? 'bg-primary text-primary-foreground'
+    ? 'bg-primary/10 text-foreground'
     : 'bg-muted text-foreground'
 
   return (
     <div className={`min-w-0 flex ${containerClass}`}>
-      <div className="min-w-0 max-w-[80%]">
+      <div className="relative min-w-0 max-w-[80%]">
         <SupportChatMessageAttachments
           dialogId={item.dialogId}
           attachments={item.attachments}
@@ -825,22 +841,32 @@ function SupportChatMessageBubble({
             <SupportChatMessageMeta
               item={item}
               isOutgoing={isOutgoing}
-              isDeletingMessage={isDeletingMessage}
-              onStartEdit={onStartEdit}
-              onDelete={onDelete}
+              hasMessageActions={hasMessageActions}
+              onRetryFailedMessage={onRetryFailedMessage}
+              onCancelFailedMessage={onCancelFailedMessage}
             />
           </div>
         ) : (
-          <div className="mt-1 flex justify-end">
+          <div className="flex justify-end">
             <SupportChatMessageMeta
               item={item}
               isOutgoing={isOutgoing}
+              hasMessageActions={hasMessageActions}
+              onRetryFailedMessage={onRetryFailedMessage}
+              onCancelFailedMessage={onCancelFailedMessage}
+            />
+          </div>
+        )}
+        {hasMessageActions ? (
+          <div className="absolute bottom-0 right-0">
+            <SupportChatMessageActions
+              item={item}
               isDeletingMessage={isDeletingMessage}
               onStartEdit={onStartEdit}
               onDelete={onDelete}
             />
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   )
@@ -865,8 +891,10 @@ function SupportChatMessageBubbleContent({
   onCancelEdit,
   onSubmitEdit,
 }: Readonly<SupportChatMessageBubbleContentProps>) {
+  const isTextUnchanged = editingText.trim() === (item.text ?? '').trim()
+
   if (item.deletedAt) {
-    return <p className="italic opacity-80">Сообщение удалено</p>
+    return <p className="opacity-80">Сообщение удалено</p>
   }
 
   return (
@@ -877,14 +905,15 @@ function SupportChatMessageBubbleContent({
             value={editingText}
             onChange={event => onEditingTextChange(event.target.value)}
             rows={3}
-            className="bg-background text-foreground"
+            className=" text-foreground"
           />
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-2 mb-2">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={onCancelEdit}
+              className="text-foreground"
             >
               Отмена
             </Button>
@@ -892,7 +921,7 @@ function SupportChatMessageBubbleContent({
               type="button"
               size="sm"
               onClick={onSubmitEdit}
-              disabled={isEditingMessage}
+              disabled={isEditingMessage || isTextUnchanged}
             >
               {isEditingMessage ? 'Сохранение...' : 'Сохранить'}
             </Button>
@@ -909,42 +938,77 @@ function SupportChatMessageBubbleContent({
 type SupportChatMessageMetaProps = {
   item: SupportChatMessageItem
   isOutgoing: boolean
-  isDeletingMessage: boolean
-  onStartEdit: (messageId: string, text: string | null) => void
-  onDelete: (messageId: string) => void
+  hasMessageActions: boolean
+  onRetryFailedMessage?: (message: SupportChatMessageItem) => void
+  onCancelFailedMessage?: (message: SupportChatMessageItem) => void
 }
 
 function SupportChatMessageMeta({
   item,
   isOutgoing,
-  isDeletingMessage,
-  onStartEdit,
-  onDelete,
+  hasMessageActions,
+  onRetryFailedMessage,
+  onCancelFailedMessage,
 }: Readonly<SupportChatMessageMetaProps>) {
-  const metaText = item.editedAt
+   const metaText = item.editedAt
     ? `изменено ${formatMessageTime(item.editedAt)}`
     : formatMessageTime(item.createdAt)
 
+  const shouldShowReadIcon =
+    isOutgoing &&
+    item.status !== 'sending' &&
+    item.status !== 'failed' &&
+    isReadByCounterparty(item)
+
   return (
-    <div className="mt-1 flex items-end justify-end gap-1">
+    <div
+      className={`relative flex flex-col items-end justify-end gap-2 ${
+        hasMessageActions ? 'pr-2' : ''
+      }`}
+    >
       <div className="flex items-center gap-1 text-[11px] leading-none opacity-75">
-        <p className={item.editedAt ? 'italic' : ''}>{metaText}</p>
-        {isOutgoing && isReadByCounterparty(item) ? (
-          <CheckCheck className="h-3 w-3 opacity-80" />
+        <p>{metaText}</p>
+        {item.status === 'sending' ? (
+          <Clock className="h-4 w-4 opacity-80" />
+        ) : null}
+        {item.status === 'failed' ? (
+          <span>Сообщение не отправлено</span>
+        ) : null}
+        {shouldShowReadIcon ? (
+          <CheckCheck className="h-3 w-3 opacity-80 text-primary" />
         ) : null}
       </div>
-      <SupportChatMessageActions
-        item={item}
-        isDeletingMessage={isDeletingMessage}
-        onStartEdit={onStartEdit}
-        onDelete={onDelete}
-      />
+      {item.status === 'failed' ? (
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            className="h-6 px-2 text-[11px]"
+            onClick={() => onRetryFailedMessage?.(item)}
+          >
+            Повторить
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-6 px-2 text-[11px]"
+            onClick={() => onCancelFailedMessage?.(item)}
+          >
+            Отмена
+          </Button>
+        </div>
+      ) : null}
     </div>
   )
 }
 
 type SupportChatMessageActionsProps = {
-  item: Pick<SupportChatMessageItem, 'id' | 'text' | 'canEdit' | 'canDelete'>
+  item: Pick<
+    SupportChatMessageItem,
+    'id' | 'text' | 'canEdit' | 'canDelete' | 'status'
+  >
   isDeletingMessage: boolean
   onStartEdit: (messageId: string, text: string | null) => void
   onDelete: (messageId: string) => void
@@ -956,6 +1020,10 @@ function SupportChatMessageActions({
   onStartEdit,
   onDelete,
 }: Readonly<SupportChatMessageActionsProps>) {
+  if (item.status === 'sending' || item.status === 'failed') {
+    return null
+  }
+
   if (!item.canEdit && !item.canDelete) {
     return null
   }
@@ -963,8 +1031,8 @@ function SupportChatMessageActions({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-5 w-5">
-          <EllipsisVertical className="h-3.5 w-3.5" />
+        <Button variant="ghost" size="icon" className="h-5 w-5 text-foreground">
+          <EllipsisVertical className="h-3 w-3" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -976,7 +1044,6 @@ function SupportChatMessageActions({
         ) : null}
         {item.canDelete ? (
           <DropdownMenuItem
-            variant="destructive"
             onClick={() => onDelete(item.id)}
             disabled={isDeletingMessage}
           >

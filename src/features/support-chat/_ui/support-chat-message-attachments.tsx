@@ -15,7 +15,15 @@ type SupportChatMessageAttachmentsProps = {
   attachments: unknown
 }
 
-const buildAttachmentUrl = (dialogId: string, attachmentId: string) => {
+const buildAttachmentUrl = (
+  dialogId: string,
+  attachmentId: string,
+  attachmentPath: string
+) => {
+  if (attachmentPath.startsWith('data:')) {
+    return attachmentPath
+  }
+
   return `/api/support-chat/attachments/${dialogId}/${attachmentId}`
 }
 
@@ -58,7 +66,11 @@ function SupportChatAttachmentPreview({
   dialogId: string
   attachment: StoredSupportChatAttachment
 }>) {
-  const attachmentUrl = buildAttachmentUrl(dialogId, attachment.id)
+  const attachmentUrl = buildAttachmentUrl(
+    dialogId,
+    attachment.id,
+    attachment.path
+  )
   const sizeLabel = formatAttachmentSize(attachment.sizeBytes)
   const sizeBadgeClassName =
     'absolute right-2 top-2 rounded-md bg-black/55 px-2 py-0.5 text-[10px] font-medium text-white'
@@ -186,17 +198,17 @@ export function SupportChatMessageAttachments({
     <div className="mb-2 space-y-2">
       {items.map(attachment => {
         return (
-              <div
-                key={attachment.id}
-                className="space-y-2 rounded-md border-2 border-primary text-xs overflow-hidden"
-              >
-                <SupportChatAttachmentPreview
-                  dialogId={dialogId}
-                  attachment={attachment}
-                />
-              </div>
-            )
-          })}
+          <div
+            key={attachment.id}
+            className="space-y-2 overflow-hidden rounded-md border-2 border-primary text-xs"
+          >
+            <SupportChatAttachmentPreview
+              dialogId={dialogId}
+              attachment={attachment}
+            />
+          </div>
+        )
+      })}
     </div>
   )
 }

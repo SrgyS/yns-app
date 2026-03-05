@@ -76,6 +76,7 @@ export class SupportChatReadService {
         where: {
           dialogId,
           senderType: 'USER',
+          deletedAt: null,
         },
         orderBy: {
           createdAt: 'desc',
@@ -88,6 +89,7 @@ export class SupportChatReadService {
         where: {
           dialogId,
           senderType: 'STAFF',
+          deletedAt: null,
         },
         orderBy: {
           createdAt: 'desc',

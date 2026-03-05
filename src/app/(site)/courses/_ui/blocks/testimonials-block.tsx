@@ -5,7 +5,6 @@ import { TestimonialsBlock } from '@/kernel/domain/course-page'
 import { Card, CardContent } from '@/shared/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/ui/avatar'
 import { UserRound } from 'lucide-react'
-import { Badge } from '@/shared/ui/badge'
 import {
   Carousel,
   CarouselContent,

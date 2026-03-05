@@ -1,15 +1,31 @@
+import { ChatMessageSenderType } from '@prisma/client'
+
 type SupportChatEventType =
   | 'dialog.created'
   | 'message.created'
   | 'message.updated'
   | 'read.updated'
 
-export type SupportChatEvent = {
-  type: SupportChatEventType
+type SupportChatEventBase = {
   dialogId: string
   userId: string
   occurredAt: string
 }
+
+export type SupportChatEvent =
+  | (SupportChatEventBase & {
+      type: Exclude<SupportChatEventType, 'message.created'>
+    })
+  | (SupportChatEventBase & {
+      type: 'message.created'
+      message: {
+        id: string
+        clientMessageId: string | null
+        text: string | null
+        senderType: ChatMessageSenderType
+        createdAt: string
+      }
+    })
 
 type Listener = (event: SupportChatEvent) => void
 

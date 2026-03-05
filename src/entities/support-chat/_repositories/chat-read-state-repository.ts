@@ -91,6 +91,7 @@ export class ChatReadStateRepository {
       where: {
         dialogId,
         senderType,
+        deletedAt: null,
         ...(readAt ? { createdAt: { gt: readAt } } : {}),
       },
     })
