@@ -1,5 +1,8 @@
 import { z } from 'zod'
-import { supportChatAttachmentSchema } from './attachment-schema'
+import {
+  MAX_ATTACHMENTS_PER_MESSAGE,
+  supportChatAttachmentSchema,
+} from './attachment-schema'
 
 const paginationSchema = z.object({
   cursor: z.string().optional(),
@@ -16,11 +19,18 @@ export const staffListDialogsInputSchema = paginationSchema.extend({
   hasUnansweredIncoming: z.boolean().optional(),
 })
 
+export const staffOpenDialogForUserInputSchema = z.object({
+  userId: z.string().min(1),
+})
+
 export const sendMessageInputSchema = z
   .object({
     dialogId: z.string().min(1),
     text: z.string().trim().max(4000).optional(),
-    attachments: z.array(supportChatAttachmentSchema).max(10).optional(),
+    attachments: z
+      .array(supportChatAttachmentSchema)
+      .max(MAX_ATTACHMENTS_PER_MESSAGE)
+      .optional(),
   })
   .superRefine((value, ctx) => {
     const hasText = Boolean(value.text && value.text.length > 0)
@@ -57,7 +67,10 @@ export const createDialogInputSchema = z
   .object({
     topic: z.string().trim().max(200).optional(),
     initialMessage: z.string().trim().max(4000),
-    attachments: z.array(supportChatAttachmentSchema).max(10).optional(),
+    attachments: z
+      .array(supportChatAttachmentSchema)
+      .max(MAX_ATTACHMENTS_PER_MESSAGE)
+      .optional(),
   })
   .superRefine((value, ctx) => {
     const hasText = value.initialMessage.length > 0

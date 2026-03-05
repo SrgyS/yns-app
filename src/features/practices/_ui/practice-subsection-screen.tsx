@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
 import { WorkoutSection, WorkoutSubsection } from '@prisma/client'
 
 import { Badge } from '@/shared/ui/badge'
@@ -15,7 +14,7 @@ import { NoAccessCallout } from '@/features/course-enrollment/_ui/no-access-call
 import { useWorkoutFavorites } from '@/features/daily-plan/_vm/use-workout-favorites'
 
 import { PracticeWorkoutCard } from './practice-workout-card'
-import { Button } from '@/shared/ui/button'
+import { BackButton } from '@/shared/ui/back-button'
 
 type PracticeSubsectionScreenProps = {
   section: WorkoutSection
@@ -110,15 +109,7 @@ export function PracticeSubsectionScreen({
   return (
     <div className="space-y-6 py-4 sm:pt-14 mx-auto max-w-2xl">
       <div className="flex items-center gap-3">
-        <Button
-          type="button"
-          onClick={handleBack}
-          size="icon"
-          variant="outline"
-        >
-          <ArrowLeft className="size-4" />
-          <span className="sr-only">Назад</span>
-        </Button>
+        <BackButton onClick={handleBack} />
         <div className="flex flex-col">
           <span className="text-xs uppercase text-muted-foreground">
             {sectionTitle}

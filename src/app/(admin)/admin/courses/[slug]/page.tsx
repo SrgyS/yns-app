@@ -13,8 +13,8 @@ export default async function AdminCoursePage({ params }: PageProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col align-baseline items-center gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">
+      <div className="flex md:justify-between flex-col md:flex-row items-start md:items-center gap-3">
+        <h1 className="text-fluid-lg font-semibold tracking-tight">
           Редактирование курса
         </h1>
         <div className="flex gap-2">
@@ -23,7 +23,7 @@ export default async function AdminCoursePage({ params }: PageProps) {
             </Button> */}
           <Button asChild>
             <Link href={`/admin/courses/${slug}/daily-plan`}>
-              Перейти к тренировкам
+              Настройка тренировок
             </Link>
           </Button>
         </div>

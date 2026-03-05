@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 
 import { adminCoursesApi } from '../_api'
 import { Button } from '@/shared/ui/button'
+import { BackButton } from '@/shared/ui/back-button'
 import {
   Card,
   CardContent,
@@ -360,24 +361,25 @@ export function DailyPlanEditor({ slug }: Readonly<{ slug: string }>) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            План тренировок
-          </h1>
-          <p className="text-muted-foreground">
+      <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-start">
+        <div className="min-w-0">
+          <div className="flex items-center gap-3">
+            <BackButton onClick={() => router.push(`/admin/courses/${slug}`)} />
+            <h1 className="min-w-0 text-fluid-lg font-semibold tracking-tight">
+              План тренировок
+            </h1>
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground md:line-clamp-2">
             Недели и дни курса «{course?.title ?? ''}». Максимум тренировок в
-            неделю: {maxAllowedWorkoutDays || '—'}.
+            неделю: {maxAllowedWorkoutDays ?? '—'}.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="md:justify-self-end">
           <Button
-            variant="outline"
-            onClick={() => router.push(`/admin/courses/${slug}`)}
+            onClick={saveWeek}
+            disabled={isSaving || isLoading}
+            className="w-full md:w-auto"
           >
-            Назад
-          </Button>
-          <Button onClick={saveWeek} disabled={isSaving || isLoading}>
             {isSaving && <Spinner className="mr-2 h-4 w-4" />}
             Сохранить неделю
           </Button>

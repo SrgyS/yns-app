@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ClientSafeProvider, signIn } from 'next-auth/react'
 import { Github, Globe } from 'lucide-react'
 import { DEAFAULT_LOGIN_REDIRECT } from '@/shared/config/public'
@@ -13,6 +13,19 @@ export function ProviderButton({ provider }: { provider: ClientSafeProvider }) {
   const searchParams = useSearchParams()
 
   const callBackUrl = searchParams.get('callbackUrl')
+
+  useEffect(() => {
+    const resetLoading = () => {
+      setIsLoading(false)
+    }
+
+    window.addEventListener('pageshow', resetLoading)
+
+    return () => {
+      window.removeEventListener('pageshow', resetLoading)
+    }
+  }, [])
+
   const getIcon = (provider: ClientSafeProvider) => {
     switch (provider.id) {
       case 'github':

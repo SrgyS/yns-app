@@ -109,7 +109,7 @@ export function PublicMobileNavClient({
             >
               <Link href={profileHref}>
                 <User className="size-5" />
-                <span>Кабинет</span>
+                <span>Профиль</span>
               </Link>
             </Button>
           ) : (

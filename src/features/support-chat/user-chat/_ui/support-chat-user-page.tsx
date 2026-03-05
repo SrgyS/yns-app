@@ -179,6 +179,12 @@ export function SupportChatUserPage() {
     setFiles(nextFiles)
   }
 
+  const handleRemoveFile = (indexToRemove: number) => {
+    setFiles(currentFiles => {
+      return currentFiles.filter((_, index) => index !== indexToRemove)
+    })
+  }
+
   const title = effectiveSelectedDialogId
     ? (
         <div className="inline-flex max-w-full items-center gap-2">
@@ -201,7 +207,7 @@ export function SupportChatUserPage() {
         cardClassName="h-full min-w-0 overflow-hidden flex flex-col border-none p-0 gap-1"
         headerClassName="space-y-2 px-1"
         title={title}
-        backButton={{ mode: 'link', label: 'Назад', href: '/platform/profile' }}
+        backButton={{ mode: 'link', label: '', href: '/platform/profile' }}
         hasMoreMessages={hasMoreMessages}
         isFetchingMoreMessages={isFetchingMoreMessages}
         onFetchMoreMessages={() => fetchMoreMessages()}
@@ -221,6 +227,7 @@ export function SupportChatUserPage() {
         message={message}
         onMessageChange={handleMessageChange}
         onFilesChange={handleFilesChange}
+        onRemoveFile={handleRemoveFile}
         files={files}
         onSubmit={handleSubmit}
         isSubmitting={isSendingMessage || isCreatingDialog}

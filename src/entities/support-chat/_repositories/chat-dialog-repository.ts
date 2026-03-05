@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client'
 import { injectable } from 'inversify'
 
 import { dbClient, type DbClient } from '@/shared/lib/db'
@@ -49,6 +50,58 @@ export class ChatDialogRepository {
     })
 
     return records.map(record => this.toEntity(record))
+  }
+
+  async findByUserIdUnique(
+    userId: string,
+    db: DbClient = dbClient
+  ): Promise<ChatDialogEntity | null> {
+    const record = await db.chatDialog.findFirst({
+      where: { userId },
+    })
+
+    if (record) {
+      return this.toEntity(record)
+    }
+
+    return null
+  }
+
+  async createOrReturnCanonical(
+    input: CreateChatDialogInput,
+    db: DbClient = dbClient
+  ): Promise<{ dialog: ChatDialogEntity; created: boolean }> {
+    const existing = await this.findByUserIdUnique(input.userId, db)
+    if (existing) {
+      return {
+        dialog: existing,
+        created: false,
+      }
+    }
+
+    try {
+      const dialog = await this.create(input, db)
+      return {
+        dialog,
+        created: true,
+      }
+    } catch (error) {
+      const isUniqueConflict =
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+
+      if (isUniqueConflict) {
+        const canonical = await this.findByUserIdUnique(input.userId, db)
+        if (canonical) {
+          return {
+            dialog: canonical,
+            created: false,
+          }
+        }
+      }
+
+      throw error
+    }
   }
 
   async touchLastMessageAt(

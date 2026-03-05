@@ -8,17 +8,21 @@ import { toast } from 'sonner'
 export function StartOrder() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const searchParamsString = searchParams.toString()
 
   const createPaymentLink = courseOrderApi.courseOrder.start.useMutation()
 
-  const hasStarted = useRef(false)
+  const lastStartedQuery = useRef<string | null>(null)
 
   useEffect(() => {
-    if (hasStarted.current) return
-    hasStarted.current = true
+    if (lastStartedQuery.current === searchParamsString) {
+      return
+    }
+
+    lastStartedQuery.current = searchParamsString
 
     const res = createCourseOrderSchema.safeParse(
-      Object.fromEntries(searchParams.entries())
+      Object.fromEntries(new URLSearchParams(searchParamsString).entries())
     )
 
     if (res.success) {
@@ -35,13 +39,14 @@ export function StartOrder() {
           router.replace(res.data.urlReturn)
         },
       })
-    } else {
-      toast.error('Что-то пошло не так', {
-        description: 'Ошибка параметров покупки курса 1',
-      })
-      router.back()
+      return
     }
-  }, [createPaymentLink, router, searchParams])
+
+    toast.error('Что-то пошло не так', {
+      description: 'Ошибка параметров покупки курса 1',
+    })
+    router.back()
+  }, [createPaymentLink, router, searchParamsString])
 
   return null
 }

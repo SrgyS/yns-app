@@ -79,3 +79,13 @@ export const equipmentItems: EquipmentItem[] = [
     },
   },
 ]
+
+export const equipmentItemIds = Object.freeze(
+  equipmentItems.map(item => item.id)
+)
+
+const equipmentItemIdLookup = new Set(equipmentItemIds)
+
+export function isEquipmentItemId(value: string) {
+  return equipmentItemIdLookup.has(value)
+}

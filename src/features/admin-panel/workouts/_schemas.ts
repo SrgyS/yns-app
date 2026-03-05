@@ -5,6 +5,7 @@ import {
   WorkoutSection,
   WorkoutSubsection,
 } from '@prisma/client'
+import { isEquipmentItemId } from '@/shared/lib/equipment'
 
 export const workoutUpsertInputSchema = z.object({
   id: z.string().optional(),
@@ -14,7 +15,13 @@ export const workoutUpsertInputSchema = z.object({
   section: z.nativeEnum(WorkoutSection),
   subsections: z.array(z.nativeEnum(WorkoutSubsection)).default([]),
   muscles: z.array(z.nativeEnum(MuscleGroup)).default([]),
-  equipment: z.array(z.string().trim()).default([]),
+  equipment: z
+    .array(
+      z.string().trim().refine(isEquipmentItemId, {
+        message: 'Invalid equipment item id',
+      })
+    )
+    .default([]),
   difficulty: z.nativeEnum(WorkoutDifficulty),
 })
 

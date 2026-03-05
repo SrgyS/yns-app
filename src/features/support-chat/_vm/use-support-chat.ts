@@ -179,6 +179,16 @@ export function useSupportChatUnansweredCount() {
 export function useSupportChatActions() {
   const utils = supportChatApi.useUtils()
 
+  const staffOpenDialogForUserMutation =
+    supportChatApi.supportChat.staffOpenDialogForUser.useMutation({
+      onSuccess: () => {
+        utils.supportChat.staffListDialogs.invalidate().catch(() => undefined)
+        utils.supportChat.getUnansweredDialogsCount.invalidate().catch(
+          () => undefined
+        )
+      },
+    })
+
   const createDialogMutation = supportChatApi.supportChat.createDialog.useMutation({
     onSuccess: () => {
       utils.supportChat.userListDialogs.invalidate().catch(() => undefined)
@@ -238,6 +248,10 @@ export function useSupportChatActions() {
     return await createDialogMutation.mutateAsync(params)
   }
 
+  const openStaffDialogForUser = async (params: { userId: string }) => {
+    return await staffOpenDialogForUserMutation.mutateAsync(params)
+  }
+
   const sendMessage = async (params: {
     dialogId: string
     text?: string
@@ -269,11 +283,13 @@ export function useSupportChatActions() {
   }
 
   return {
+    openStaffDialogForUser,
     createDialog,
     sendMessage,
     markDialogRead,
     editMessage,
     deleteMessage,
+    isOpeningStaffDialog: staffOpenDialogForUserMutation.isPending,
     isCreatingDialog: createDialogMutation.isPending,
     isSendingMessage: sendMessageMutation.isPending,
     isMarkingRead: markReadMutation.isPending,

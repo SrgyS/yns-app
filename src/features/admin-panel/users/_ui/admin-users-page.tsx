@@ -1,17 +1,27 @@
 'use client'
 
+import { useMemo } from 'react'
 import { useAdminUsers } from '../_hooks/use-admin-users'
 import {
-  adminUsersColumns,
+  createAdminUsersColumns,
   UsersTable,
 } from './tables/users'
 import { AdminUsersPagination } from './admin-users-pagination'
 import { AdminUsersSortButton } from './admin-users-sort-button'
 import { FullPageSpinner } from '@/shared/ui/full-page-spinner'
+import { useAdminAbility } from '../_hooks/use-admin-ability'
 
 export function AdminUsersPage() {
   const { data, isLoading, isFetching, filters, setFilter, setSorting } =
     useAdminUsers()
+  const abilityQuery = useAdminAbility()
+  const canManageSupportChats = Boolean(
+    abilityQuery.data?.canManageSupportChats
+  )
+  const columns = useMemo(
+    () => createAdminUsersColumns(canManageSupportChats),
+    [canManageSupportChats]
+  )
 
   if (!data) {
     return (
@@ -45,7 +55,7 @@ export function AdminUsersPage() {
         </div>
       </div>
       <UsersTable
-        columns={adminUsersColumns}
+        columns={columns}
         data={data.items}
         filters={filters}
         onFilterChange={(key, value) => setFilter(key, value)}

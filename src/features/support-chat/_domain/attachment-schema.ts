@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 const MAX_ATTACHMENT_SIZE_BYTES = 25 * 1024 * 1024
+const MAX_ATTACHMENTS_PER_MESSAGE = 5
 
 const ALLOWED_ATTACHMENT_MIME_TYPES = new Set([
   'image/jpeg',
@@ -9,6 +10,7 @@ const ALLOWED_ATTACHMENT_MIME_TYPES = new Set([
   'image/gif',
   'video/mp4',
   'video/webm',
+  'video/quicktime',
   'application/pdf',
   'text/plain',
 ])
@@ -51,4 +53,8 @@ export const assertAttachmentMimeType = (mimeType: string) => {
   throw new Error('Unsupported attachment mime type')
 }
 
-export { MAX_ATTACHMENT_SIZE_BYTES, ALLOWED_ATTACHMENT_MIME_TYPES }
+export {
+  MAX_ATTACHMENT_SIZE_BYTES,
+  MAX_ATTACHMENTS_PER_MESSAGE,
+  ALLOWED_ATTACHMENT_MIME_TYPES,
+}

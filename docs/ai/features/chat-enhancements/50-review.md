@@ -21,7 +21,6 @@ feature: chat-enhancements
 ## Design compliance
 - Matches design: Yes
 - Deviations:
-- D1: `react-doctor` skill command could not be completed in this environment.
 
 ## Code quality
 - Layering rules: Pass

@@ -118,17 +118,18 @@ export class StartCourseOrderService {
     const isProdamusConfigured = Boolean(
       privateConfig.PRODAMUS_URL && privateConfig.PRODAMUS_KEY
     )
+    const shouldUseMockPaymentPage = publicConfig.isDev || !isProdamusConfigured
 
     const orderId = `${payment.paymentId}-${payment.products
       .map(product => product.name)
       .join(',')}`
 
-    if (!isProdamusConfigured) {
+    if (shouldUseMockPaymentPage) {
       // TODO(prod-integr): remove fallback redirect once Prodamus integration is live
       const fallbackUrl = `/platform/order/temp-prodamus-order/${course.slug}?orderId=${encodeURIComponent(
         orderId
       )}&urlReturn=${encodeURIComponent(command.urlReturn)}`
-      console.log('PRODAMUS IS NOT CONFIGURED, REDIRECT TO', fallbackUrl)
+      console.log('USE MOCK PAYMENT PAGE, REDIRECT TO', fallbackUrl)
 
       return {
         url: fallbackUrl,

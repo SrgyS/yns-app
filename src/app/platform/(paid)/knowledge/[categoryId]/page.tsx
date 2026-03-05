@@ -4,10 +4,11 @@ import { GetUserKnowledgeService } from '@/features/knowledge/module'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Button } from '@/shared/ui/button'
 import { Badge } from '@/shared/ui/badge'
-import { ArrowLeft, FileText } from 'lucide-react'
+import { FileText } from 'lucide-react'
 import { MdxCode } from '@/shared/lib/mdx'
 import { compileMDX } from '@/shared/lib/mdx/server'
 import { formatDuration } from '@/shared/lib/format-duration'
+import { BackButton } from '@/shared/ui/back-button'
 
 type Props = {
   params: Promise<{ categoryId: string }>
@@ -31,13 +32,8 @@ export default async function KnowledgeCategoryPage({
 
   if (!categoryData) {
     return (
-      <div className="space-y-4">
-        <Button asChild variant="ghost" className="gap-2 max-w-fit">
-          <Link href="/platform/knowledge">
-            <ArrowLeft className="h-4 w-4" />
-            Назад
-          </Link>
-        </Button>
+      <div className="space-y-4 py-4">
+        <BackButton href="/platform/knowledge" />
         <Card>
           <CardContent className="py-10 text-center text-muted-foreground">
             Материал не найден или недоступен.
@@ -62,22 +58,14 @@ export default async function KnowledgeCategoryPage({
   )
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-start flex-col gap-3">
-        <Button asChild variant="ghost" className="gap-2 max-w-fit">
-          <Link href={`/platform/knowledge?courseId=${categoryData.courseId}`}>
-            <ArrowLeft className="h-4 w-4" />
-            Назад
-          </Link>
-        </Button>
-        <div className="space-y-1">
-          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-            Тема
-          </p>
-          <h1 className="text-xl font-semibold leading-tight">
-            {category.title}
-          </h1>
-        </div>
+    <div className="space-y-6 py-4">
+      <div className="flex justify-start align-center gap-3">
+        <BackButton
+          href={`/platform/knowledge?courseId=${categoryData.courseId}`}
+        />
+        <h1 className="text-fluid-lg font-semibold leading-tight">
+          {category.title}
+        </h1>
       </div>
 
       {category.description ? (
@@ -91,7 +79,7 @@ export default async function KnowledgeCategoryPage({
         </Card>
       ) : null}
 
-      <div className=" grid gap-3">
+      <div className="grid gap-3">
         {articlesWithMdx.map(article => (
           <Card key={article.id} className="border border-border/70 bg-card/80">
             <CardHeader className="flex flex-row items-start justify-between space-y-0">

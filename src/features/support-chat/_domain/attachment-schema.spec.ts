@@ -1,4 +1,6 @@
 import {
+  assertAttachmentMimeType,
+  MAX_ATTACHMENTS_PER_MESSAGE,
   parseStoredSupportChatAttachments,
   storedSupportChatAttachmentSchema,
 } from './attachment-schema'
@@ -40,5 +42,13 @@ describe('support chat attachment schema', () => {
     })
 
     expect(parsed.success).toBe(false)
+  })
+
+  test('accepts mov attachments by quicktime mime type', () => {
+    expect(() => assertAttachmentMimeType('video/quicktime')).not.toThrow()
+  })
+
+  test('limits attachments per message to five files', () => {
+    expect(MAX_ATTACHMENTS_PER_MESSAGE).toBe(5)
   })
 })

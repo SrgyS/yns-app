@@ -37,7 +37,7 @@ export default async function Layout({
         <div className="mx-1 mt-1 shrink-0">
           <SidebarTrigger className="cursor-pointer" />
         </div>
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-2 pt-2">
+        <div className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto px-2 pb-2 pt-2">
           {children}
         </div>
       </SidebarInset>
