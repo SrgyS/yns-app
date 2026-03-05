@@ -568,6 +568,50 @@ export function useSupportChatActions() {
   })
 
   const editMessageMutation = supportChatApi.supportChat.editMessage.useMutation({
+    onMutate: async variables => {
+      await utils.supportChat.userGetMessages.cancel({
+        dialogId: variables.dialogId,
+      })
+
+      const previousMessages = utils.supportChat.userGetMessages.getInfiniteData({
+        dialogId: variables.dialogId,
+        limit: SUPPORT_CHAT_LIMIT,
+      })
+
+      const optimisticEditedAt = new Date().toISOString()
+      utils.supportChat.userGetMessages.setInfiniteData(
+        {
+          dialogId: variables.dialogId,
+          limit: SUPPORT_CHAT_LIMIT,
+        },
+        (current: SupportChatMessagesCache | undefined) => {
+          return updateCachedDialogMessages(current, items => {
+            let changed = false
+            const nextItems = items.map(item => {
+              if (item.id !== variables.messageId) {
+                return item
+              }
+
+              changed = true
+              return {
+                ...item,
+                text: variables.text,
+                editedAt: optimisticEditedAt,
+              }
+            })
+
+            return {
+              items: nextItems,
+              changed,
+            }
+          })
+        }
+      )
+
+      return {
+        previousMessages,
+      }
+    },
     onSuccess: (_result, variables) => {
       utils.supportChat.userListDialogs.invalidate().catch(() => undefined)
       utils.supportChat.staffListDialogs.invalidate().catch(() => undefined)
@@ -575,6 +619,19 @@ export function useSupportChatActions() {
       utils.supportChat.userGetMessages
         .invalidate({ dialogId: variables.dialogId })
         .catch(() => undefined)
+    },
+    onError: (_error, variables, context) => {
+      if (!context?.previousMessages) {
+        return
+      }
+
+      utils.supportChat.userGetMessages.setInfiniteData(
+        {
+          dialogId: variables.dialogId,
+          limit: SUPPORT_CHAT_LIMIT,
+        },
+        context.previousMessages
+      )
     },
   })
 
