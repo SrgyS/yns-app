@@ -4,6 +4,7 @@ import {
   ChatMessageSenderType,
   SupportReadType,
 } from '@prisma/client'
+import { createId } from '@paralleldrive/cuid2'
 import { injectable } from 'inversify'
 
 import {
@@ -48,6 +49,7 @@ type StaffListDialogsInput = ListDialogsInput & {
 type SendMessageInput = {
   actor: SupportChatActor
   dialogId: string
+  clientMessageId?: string
   text?: string
   attachments?: SupportChatAttachmentInput[]
 }
@@ -144,6 +146,7 @@ export class SupportChatService {
           dbClient.chatMessage.findFirst({
             where: {
               dialogId: dialog.id,
+              deletedAt: null,
             },
             orderBy: {
               createdAt: 'desc',
@@ -153,7 +156,6 @@ export class SupportChatService {
               senderType: true,
               text: true,
               createdAt: true,
-              deletedAt: true,
             },
           }),
           this.readService.countUnreadForUser(dialog.id, input.actor.id),
@@ -197,7 +199,7 @@ export class SupportChatService {
         return {
           dialogId: dialog.id,
           title: 'Диалог с поддержкой',
-          lastMessagePreview: lastMessage?.deletedAt ? 'Сообщение удалено' : lastMessage?.text ?? null,
+          lastMessagePreview: lastMessage?.text ?? null,
           unreadCount,
           isUnanswered,
           updatedAt: dialog.updatedAt,
@@ -247,6 +249,7 @@ export class SupportChatService {
       return {
         id: item.id,
         dialogId: item.dialogId,
+        clientMessageId: item.clientMessageId,
         senderType: item.senderType,
         text: item.text,
         attachments: item.attachments,
@@ -304,6 +307,7 @@ export class SupportChatService {
           dbClient.chatMessage.findFirst({
             where: {
               dialogId: dialog.id,
+              deletedAt: null,
             },
             orderBy: {
               createdAt: 'desc',
@@ -313,7 +317,6 @@ export class SupportChatService {
               senderType: true,
               text: true,
               createdAt: true,
-              deletedAt: true,
             },
           }),
         ])
@@ -333,7 +336,7 @@ export class SupportChatService {
           unreadCount,
           hasUnansweredIncoming: isUnanswered,
           isUnanswered,
-          lastMessagePreview: lastMessage?.deletedAt ? 'Сообщение удалено' : lastMessage?.text ?? null,
+          lastMessagePreview: lastMessage?.text ?? null,
           lastMessageAt: dialog.lastMessageAt,
         }
       })
@@ -365,6 +368,21 @@ export class SupportChatService {
       throw createSupportChatError('INVALID_MESSAGE')
     }
 
+    const resolvedClientMessageId = this.resolveClientMessageId(input.clientMessageId)
+    const existingMessage = await this.messageRepository.findByDialogAndClientMessageId(
+      dialog.id,
+      resolvedClientMessageId
+    )
+    if (existingMessage) {
+      return await this.buildSendMessageResult({
+        dialogId: dialog.id,
+        dialogUserId: dialog.userId,
+        actorId: input.actor.id,
+        updatedAt: dialog.updatedAt,
+        message: existingMessage,
+      })
+    }
+
     const uploadedAttachments = await this.uploadAttachments(
       input.attachments,
       dialog.id,
@@ -377,6 +395,7 @@ export class SupportChatService {
       senderType: this.resolveParticipantType(input.actor.role),
       senderUserId: input.actor.role === 'USER' ? input.actor.id : null,
       senderStaffId: input.actor.role === 'USER' ? null : input.actor.id,
+      clientMessageId: resolvedClientMessageId,
       text: normalizedText ?? null,
       attachments: uploadedAttachments as Prisma.InputJsonValue,
     })
@@ -388,35 +407,26 @@ export class SupportChatService {
 
     await this.conversationRepository.touchLastMessageAt(dialog.id, now)
 
-    const [userUnread, staffUnread] = await Promise.all([
-      this.readService.countUnreadForUser(dialog.id, dialog.userId),
-      this.readService.countUnreadForStaff(dialog.id, input.actor.id),
-    ])
-
-    const result = {
-      message: {
-        id: message.id,
-        dialogId: message.dialogId,
-        senderType: message.senderType,
-        text: message.text,
-        attachments: message.attachments,
-        createdAt: message.createdAt,
-      },
-      dialog: {
-        dialogId: dialog.id,
-        updatedAt: now,
-      },
-      unread: {
-        user: userUnread,
-        staff: staffUnread,
-      },
-    }
+    const result = await this.buildSendMessageResult({
+      dialogId: dialog.id,
+      dialogUserId: dialog.userId,
+      actorId: input.actor.id,
+      updatedAt: now,
+      message,
+    })
 
     publishSupportChatEvent({
       type: 'message.created',
       dialogId: dialog.id,
       userId: dialog.userId,
       occurredAt: now.toISOString(),
+      message: {
+        id: result.message.id,
+        clientMessageId: result.message.clientMessageId,
+        text: result.message.text,
+        senderType: result.message.senderType,
+        createdAt: result.message.createdAt.toISOString(),
+      },
     })
 
     if (message.senderType === 'USER') {
@@ -438,6 +448,56 @@ export class SupportChatService {
     }
 
     return result
+  }
+
+  private resolveClientMessageId(clientMessageId?: string): string {
+    const normalized = clientMessageId?.trim()
+    if (normalized) {
+      return normalized
+    }
+
+    return `srv_${createId()}`
+  }
+
+  private async buildSendMessageResult(input: {
+    dialogId: string
+    dialogUserId: string
+    actorId: string
+    updatedAt: Date
+    message: {
+      id: string
+      dialogId: string
+      clientMessageId: string | null
+      senderType: ChatMessageSenderType
+      text: string | null
+      attachments: unknown
+      createdAt: Date
+    }
+  }) {
+    const [userUnread, staffUnread] = await Promise.all([
+      this.readService.countUnreadForUser(input.dialogId, input.dialogUserId),
+      this.readService.countUnreadForStaff(input.dialogId, input.actorId),
+    ])
+
+    return {
+      message: {
+        id: input.message.id,
+        dialogId: input.message.dialogId,
+        clientMessageId: input.message.clientMessageId,
+        senderType: input.message.senderType,
+        text: input.message.text,
+        attachments: input.message.attachments,
+        createdAt: input.message.createdAt,
+      },
+      dialog: {
+        dialogId: input.dialogId,
+        updatedAt: input.updatedAt,
+      },
+      unread: {
+        user: userUnread,
+        staff: staffUnread,
+      },
+    }
   }
 
   async staffOpenDialogForUser(input: StaffOpenDialogForUserInput) {
@@ -550,6 +610,7 @@ export class SupportChatService {
             "senderType",
             "createdAt"
           FROM "ChatMessage"
+          WHERE "deletedAt" IS NULL
           ORDER BY "dialogId", "createdAt" DESC
         ),
         user_reads AS (
@@ -586,6 +647,7 @@ export class SupportChatService {
           "senderType",
           "createdAt"
         FROM "ChatMessage"
+        WHERE "deletedAt" IS NULL
         ORDER BY "dialogId", "createdAt" DESC
       ),
       staff_reads AS (
@@ -718,12 +780,17 @@ export class SupportChatService {
     }
 
     const deletedAt = new Date()
+    const messageAttachments = await this.attachmentRepository.listByMessage({
+      dialogId: dialog.id,
+      messageId: message.id,
+    })
     const updated = await dbClient.chatMessage.update({
       where: {
         id: message.id,
       },
       data: {
         text: null,
+        attachments: [],
         deletedAt,
         deletedBy: input.actor.id,
       },
@@ -734,6 +801,15 @@ export class SupportChatService {
         deletedBy: true,
       },
     })
+    await this.deleteAttachmentsOnMessageDelete(
+      messageAttachments.map(attachment => ({
+        id: attachment.id,
+        name: attachment.originalName,
+        path: attachment.storagePath,
+        type: attachment.mimeType,
+        sizeBytes: attachment.sizeBytes,
+      }))
+    )
 
     publishSupportChatEvent({
       type: 'message.updated',
@@ -770,6 +846,7 @@ export class SupportChatService {
       dialogId: dialog.id,
       senderType: 'USER',
       senderUserId: input.actor.id,
+      clientMessageId: this.resolveClientMessageId(),
       text: hasText ? normalizedMessage : null,
       attachments: uploadedAttachments as Prisma.InputJsonValue,
     })
@@ -797,6 +874,13 @@ export class SupportChatService {
       dialogId: result.dialogId,
       userId: input.actor.id,
       occurredAt,
+      message: {
+        id: message.id,
+        clientMessageId: message.clientMessageId,
+        text: message.text,
+        senderType: message.senderType,
+        createdAt: message.createdAt.toISOString(),
+      },
     })
 
     this.telegramSupportNotifier
@@ -894,7 +978,6 @@ export class SupportChatService {
       senderType: ChatMessageSenderType
       text: string | null
       createdAt: Date
-      deletedAt: Date | null
     } | null
   }): Promise<boolean> {
     if (!input.lastMessage) {
@@ -1019,6 +1102,32 @@ export class SupportChatService {
     }
 
     return userReadState.readAt >= input.createdAt
+  }
+
+  private async deleteAttachmentsOnMessageDelete(
+    attachments: UploadedChatAttachment[]
+  ): Promise<void> {
+    if (attachments.length === 0) {
+      return
+    }
+
+    await Promise.all(
+      attachments.map(async attachment => {
+        try {
+          await fileStorage.deleteByPath(attachment.path)
+        } catch (error) {
+          logger.warn({
+            msg: 'Failed to delete support chat attachment from storage',
+            attachmentId: attachment.id,
+            path: attachment.path,
+            error,
+          })
+        }
+      })
+    )
+
+    const attachmentIds = attachments.map(attachment => attachment.id)
+    await this.attachmentRepository.deleteByIds(attachmentIds)
   }
 
   private async uploadAttachments(

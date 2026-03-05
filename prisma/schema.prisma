@@ -563,6 +563,7 @@ model ChatMessage {
   senderStaffId String?
   senderStaff  User?                    @relation("ChatMessageSenderStaff", fields: [senderStaffId], references: [id], onDelete: SetNull)
   text         String?
+  clientMessageId String?
   attachments  Json?
   attachmentItems ChatAttachment[]   @relation("ChatMessageAttachments")
   editedAt     DateTime?
@@ -570,6 +571,7 @@ model ChatMessage {
   deletedBy    String?
   createdAt    DateTime                 @default(now())
 
+  @@unique([dialogId, clientMessageId])
   @@index([dialogId, createdAt])
   @@index([senderType, createdAt])
 }

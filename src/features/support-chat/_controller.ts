@@ -18,6 +18,8 @@ import {
 } from './_domain/errors'
 import { mapSupportChatDomainErrorToTrpc } from './_domain/error-mapping'
 import { SupportChatService } from './_services/support-chat-service'
+import { publicConfig } from '@/shared/config/public'
+import { isTrustedRequestOrigin } from '@/shared/lib/security/trusted-origin'
 
 @injectable()
 export class SupportChatController extends Controller {
@@ -73,8 +75,9 @@ export class SupportChatController extends Controller {
         ),
       staffOpenDialogForUser: authorizedProcedure
         .input(staffOpenDialogForUserInputSchema)
-        .mutation(async ({ ctx, input }) =>
-          this.runWithErrorMapping(() =>
+        .mutation(async ({ ctx, input }) => {
+          this.assertTrustedMutationRequest(ctx)
+          return this.runWithErrorMapping(() =>
             this.supportChatService.staffOpenDialogForUser({
               actor: {
                 id: ctx.session.user.id,
@@ -83,26 +86,29 @@ export class SupportChatController extends Controller {
               userId: input.userId,
             })
           )
-        ),
+        }),
       sendMessage: authorizedProcedure
         .input(sendMessageInputSchema)
-        .mutation(async ({ ctx, input }) =>
-          this.runWithErrorMapping(() =>
+        .mutation(async ({ ctx, input }) => {
+          this.assertTrustedMutationRequest(ctx)
+          return this.runWithErrorMapping(() =>
             this.supportChatService.sendMessage({
               actor: {
                 id: ctx.session.user.id,
                 role: ctx.session.user.role,
               },
               dialogId: input.dialogId,
+              clientMessageId: input.clientMessageId,
               text: input.text,
               attachments: input.attachments,
             })
           )
-        ),
+        }),
       markDialogRead: authorizedProcedure
         .input(markDialogReadInputSchema)
-        .mutation(async ({ ctx, input }) =>
-          this.runWithErrorMapping(() =>
+        .mutation(async ({ ctx, input }) => {
+          this.assertTrustedMutationRequest(ctx)
+          return this.runWithErrorMapping(() =>
             this.supportChatService.markDialogRead({
               actor: {
                 id: ctx.session.user.id,
@@ -112,7 +118,7 @@ export class SupportChatController extends Controller {
               lastReadMessageId: input.lastReadMessageId,
             })
           )
-        ),
+        }),
       getUnansweredDialogsCount: authorizedProcedure.query(async ({ ctx }) =>
         this.runWithErrorMapping(() =>
           this.supportChatService.getUnansweredDialogsCount({
@@ -125,8 +131,9 @@ export class SupportChatController extends Controller {
       ),
       editMessage: authorizedProcedure
         .input(editMessageInputSchema)
-        .mutation(async ({ ctx, input }) =>
-          this.runWithErrorMapping(() =>
+        .mutation(async ({ ctx, input }) => {
+          this.assertTrustedMutationRequest(ctx)
+          return this.runWithErrorMapping(() =>
             this.supportChatService.editMessage({
               actor: {
                 id: ctx.session.user.id,
@@ -137,11 +144,12 @@ export class SupportChatController extends Controller {
               text: input.text,
             })
           )
-        ),
+        }),
       deleteMessage: authorizedProcedure
         .input(deleteMessageInputSchema)
-        .mutation(async ({ ctx, input }) =>
-          this.runWithErrorMapping(() =>
+        .mutation(async ({ ctx, input }) => {
+          this.assertTrustedMutationRequest(ctx)
+          return this.runWithErrorMapping(() =>
             this.supportChatService.deleteMessage({
               actor: {
                 id: ctx.session.user.id,
@@ -151,11 +159,12 @@ export class SupportChatController extends Controller {
               messageId: input.messageId,
             })
           )
-        ),
+        }),
       createDialog: authorizedProcedure
         .input(createDialogInputSchema)
-        .mutation(async ({ ctx, input }) =>
-          this.runWithErrorMapping(() =>
+        .mutation(async ({ ctx, input }) => {
+          this.assertTrustedMutationRequest(ctx)
+          return this.runWithErrorMapping(() =>
             this.supportChatService.createDialog({
               actor: {
                 id: ctx.session.user.id,
@@ -166,7 +175,7 @@ export class SupportChatController extends Controller {
               attachments: input.attachments,
             })
           )
-        ),
+        }),
     }),
   })
 
@@ -184,5 +193,36 @@ export class SupportChatController extends Controller {
 
       throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' })
     }
+  }
+
+  private assertTrustedMutationRequest(ctx: {
+    requestMeta?: {
+      requestUrl?: string | null
+      origin?: string | null
+      referer?: string | null
+      host?: string | null
+      forwardedHost?: string | null
+      forwardedProto?: string | null
+    }
+  }) {
+    const requestMeta = ctx.requestMeta
+    const isTrusted = isTrustedRequestOrigin({
+      requestUrl: requestMeta?.requestUrl ?? undefined,
+      originHeader: requestMeta?.origin,
+      refererHeader: requestMeta?.referer,
+      hostHeader: requestMeta?.host,
+      forwardedHostHeader: requestMeta?.forwardedHost,
+      forwardedProtoHeader: requestMeta?.forwardedProto,
+      publicAppUrl: publicConfig.PUBLIC_URL,
+    })
+
+    if (isTrusted) {
+      return
+    }
+
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'Invalid request origin',
+    })
   }
 }

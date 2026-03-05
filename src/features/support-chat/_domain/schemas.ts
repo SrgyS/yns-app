@@ -26,6 +26,13 @@ export const staffOpenDialogForUserInputSchema = z.object({
 export const sendMessageInputSchema = z
   .object({
     dialogId: z.string().min(1),
+    clientMessageId: z
+      .string()
+      .trim()
+      .min(1)
+      .max(128)
+      .regex(/^[A-Za-z0-9_-]+$/)
+      .optional(),
     text: z.string().trim().max(4000).optional(),
     attachments: z
       .array(supportChatAttachmentSchema)

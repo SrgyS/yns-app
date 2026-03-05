@@ -18,12 +18,22 @@ const session = {
   expires: '2099-01-01T00:00:00.000Z',
 }
 
+const requestMeta = {
+  requestUrl: 'https://app.local/api/trpc',
+  method: 'POST',
+  origin: 'https://app.local',
+  referer: 'https://app.local/platform',
+  host: 'app.local',
+  forwardedHost: null,
+  forwardedProto: 'https',
+}
+
 describe('trpc auth procedures', () => {
   test('authorizedProcedure rejects when session is missing', async () => {
     const testRouter = router({
       authed: authorizedProcedure.query(() => 'ok'),
     })
-    const caller = testRouter.createCaller({ session: null })
+    const caller = testRouter.createCaller({ session: null, requestMeta })
 
     let code: string | null = null
     try {
@@ -42,7 +52,7 @@ describe('trpc auth procedures', () => {
         check: ability => ability.can,
       }).query(() => 'ok'),
     })
-    const caller = testRouter.createCaller({ session })
+    const caller = testRouter.createCaller({ session, requestMeta })
 
     let code: string | null = null
     try {
@@ -62,7 +72,7 @@ describe('trpc auth procedures', () => {
         check: (ability, input) => ability.userId === input.ownerId,
       }).query(({ input }) => input.ownerId),
     })
-    const caller = testRouter.createCaller({ session })
+    const caller = testRouter.createCaller({ session, requestMeta })
 
     const allowed = await caller.abilityInput({ ownerId: 'user-1' })
     expect(allowed).toBe('user-1')

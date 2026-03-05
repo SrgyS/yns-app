@@ -21,6 +21,7 @@ jest.mock('@/shared/lib/db', () => ({
 jest.mock('@/shared/lib/file-storage/file-storage', () => ({
   fileStorage: {
     uploadFile: jest.fn(),
+    deleteByPath: jest.fn(),
   },
 }))
 
@@ -46,6 +47,8 @@ describe('SupportChatService', () => {
   const attachmentRepository = {
     createUploaded: jest.fn(),
     linkToMessage: jest.fn(),
+    listByMessage: jest.fn(),
+    deleteByIds: jest.fn(),
   }
   const conversationRepository = {
     findById: jest.fn(),
@@ -56,6 +59,7 @@ describe('SupportChatService', () => {
   }
   const messageRepository = {
     create: jest.fn(),
+    findByDialogAndClientMessageId: jest.fn(),
     listByDialog: jest.fn(),
   }
   const readStateRepository = {
@@ -87,12 +91,15 @@ describe('SupportChatService', () => {
   beforeEach(() => {
     attachmentRepository.createUploaded.mockReset()
     attachmentRepository.linkToMessage.mockReset()
+    attachmentRepository.listByMessage.mockReset()
+    attachmentRepository.deleteByIds.mockReset()
     conversationRepository.findById.mockReset()
     conversationRepository.findByUserIdUnique.mockReset()
     conversationRepository.createOrReturnCanonical.mockReset()
     conversationRepository.touchLastMessageAt.mockReset()
     conversationRepository.create.mockReset()
     messageRepository.create.mockReset()
+    messageRepository.findByDialogAndClientMessageId.mockReset()
     messageRepository.listByDialog.mockReset()
     readStateRepository.findByDialogAndReader.mockReset()
     readStateRepository.upsert.mockReset()
@@ -101,6 +108,8 @@ describe('SupportChatService', () => {
     readService.hasUnansweredIncoming.mockReset()
     notifier.notifyNewUserMessage.mockClear()
     userRepository.findUserById.mockReset()
+    ;(fileStorage.uploadFile as jest.Mock).mockReset()
+    ;(fileStorage.deleteByPath as jest.Mock).mockReset()
     ;(dbClient.chatMessage.findFirst as jest.Mock).mockReset()
     ;(dbClient.chatMessage.update as jest.Mock).mockReset()
     ;(dbClient.supportReadState.findFirst as jest.Mock).mockReset()
@@ -286,6 +295,7 @@ describe('SupportChatService', () => {
     messageRepository.create.mockResolvedValue({
       id: 'message-1',
       dialogId: 'dialog-1',
+      clientMessageId: 'srv_1',
       senderType: 'USER',
       text: 'hello',
       attachments: [],
@@ -357,6 +367,7 @@ describe('SupportChatService', () => {
     })
     expect(messageRepository.create).toHaveBeenCalledWith(
       expect.objectContaining({
+        clientMessageId: expect.any(String),
         attachments: [
           expect.objectContaining({
             id: 'attachment-1',
@@ -366,6 +377,48 @@ describe('SupportChatService', () => {
       })
     )
     expect(result.message.id).toBe('message-1')
+    expect(result.message.clientMessageId).toBeTruthy()
+  })
+
+  test('sendMessage returns existing message for repeated clientMessageId', async () => {
+    conversationRepository.findById.mockResolvedValue({
+      id: 'dialog-1',
+      userId: 'user-1',
+      updatedAt: new Date('2026-03-05T08:00:00.000Z'),
+    })
+    messageRepository.findByDialogAndClientMessageId.mockResolvedValue({
+      id: 'message-existing',
+      dialogId: 'dialog-1',
+      clientMessageId: 'tmp_abc123',
+      senderType: 'USER',
+      senderUserId: 'user-1',
+      senderStaffId: null,
+      text: 'hello',
+      attachments: [],
+      editedAt: null,
+      deletedAt: null,
+      deletedBy: null,
+      createdAt: new Date('2026-03-05T08:00:00.000Z'),
+    })
+    readService.countUnreadForUser.mockResolvedValue(1)
+    readService.countUnreadForStaff.mockResolvedValue(0)
+
+    const result = await service.sendMessage({
+      actor: { id: 'user-1', role: 'USER' },
+      dialogId: 'dialog-1',
+      text: 'hello',
+      clientMessageId: 'tmp_abc123',
+    })
+
+    expect(messageRepository.findByDialogAndClientMessageId).toHaveBeenCalledWith(
+      'dialog-1',
+      'tmp_abc123'
+    )
+    expect(messageRepository.create).not.toHaveBeenCalled()
+    expect(fileStorage.uploadFile).not.toHaveBeenCalled()
+    expect(publishSupportChatEvent).not.toHaveBeenCalled()
+    expect(result.message.id).toBe('message-existing')
+    expect(result.message.clientMessageId).toBe('tmp_abc123')
   })
 
   test('editMessage rejects when counterparty has already read message', async () => {
@@ -411,6 +464,17 @@ describe('SupportChatService', () => {
       deletedAt: null,
     })
     ;(dbClient.supportReadState.findFirst as jest.Mock).mockResolvedValue(null)
+    attachmentRepository.listByMessage.mockResolvedValue([
+      {
+        id: 'attachment-1',
+        originalName: 'file.png',
+        storagePath: 'private/support-chat/user-1/file.png',
+        mimeType: 'image/png',
+        sizeBytes: 123,
+      },
+    ])
+    ;(fileStorage.deleteByPath as jest.Mock).mockResolvedValue(undefined)
+    attachmentRepository.deleteByIds.mockResolvedValue(1)
     ;(dbClient.chatMessage.update as jest.Mock).mockResolvedValue({
       id: 'message-1',
       dialogId: 'dialog-1',
@@ -429,6 +493,14 @@ describe('SupportChatService', () => {
         where: { id: 'message-1' },
       })
     )
+    expect(attachmentRepository.listByMessage).toHaveBeenCalledWith({
+      dialogId: 'dialog-1',
+      messageId: 'message-1',
+    })
+    expect(fileStorage.deleteByPath).toHaveBeenCalledWith(
+      'private/support-chat/user-1/file.png'
+    )
+    expect(attachmentRepository.deleteByIds).toHaveBeenCalledWith(['attachment-1'])
     expect(publishSupportChatEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         type: 'message.updated',

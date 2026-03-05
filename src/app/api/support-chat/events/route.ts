@@ -2,69 +2,25 @@ import { server } from '@/app/server'
 import { NextAuthConfig } from '@/kernel/lib/next-auth/module'
 import { dbClient } from '@/shared/lib/db'
 import { logger } from '@/shared/lib/logger'
+import { publicConfig } from '@/shared/config/public'
+import { isTrustedRequestOrigin } from '@/shared/lib/security/trusted-origin'
 import { getServerSession } from 'next-auth'
 
 import {
   subscribeToSupportChatEvents,
   type SupportChatEvent,
 } from '@/features/support-chat/_integrations/support-chat-events'
-
-const encoder = new TextEncoder()
+import {
+  assertSseRateLimit,
+  decrementSseConnectionCounters,
+  hasExceededSseConnectionLimits,
+  incrementSseConnectionCounters,
+  toSseChunk,
+} from '@/features/support-chat/_integrations/support-chat-sse-security'
 
 const SSE_HEARTBEAT_INTERVAL_MS = 20_000
 const SSE_MAX_DURATION_MS = 10 * 60_000
 const SSE_IDLE_TIMEOUT_MS = 60_000
-const SSE_RATE_LIMIT_WINDOW_MS = 60_000
-const SSE_RATE_LIMIT_MAX_REQUESTS = 20
-const SSE_RATE_LIMIT_CLEANUP_INTERVAL_MS = 60_000
-const SSE_MAX_CONNECTIONS_PER_USER = 3
-const SSE_MAX_CONNECTIONS_PER_IP = 20
-
-const ALLOWED_SSE_EVENTS = new Set<string>([
-  'connected',
-  'heartbeat',
-  'dialog.created',
-  'message.created',
-  'message.updated',
-  'read.updated',
-])
-
-const requestHitsByKey = new Map<string, number[]>()
-const activeConnectionsByUser = new Map<string, number>()
-const activeConnectionsByIp = new Map<string, number>()
-let lastRateLimitCleanupAt = 0
-
-const sanitizeSseEventName = (event: string) => {
-  if (ALLOWED_SSE_EVENTS.has(event)) {
-    return event
-  }
-
-  return 'message.created'
-}
-
-const stringifySseData = (data: unknown): string | null => {
-  try {
-    return JSON.stringify(data, (_key, value) => {
-      if (typeof value === 'bigint') {
-        return value.toString()
-      }
-
-      return value
-    })
-  } catch {
-    return null
-  }
-}
-
-const toSseChunk = (event: string, data: unknown): Uint8Array | null => {
-  const payload = stringifySseData(data)
-  if (payload === null) {
-    return null
-  }
-
-  const safeEventName = sanitizeSseEventName(event)
-  return encoder.encode(`event: ${safeEventName}\ndata: ${payload}\n\n`)
-}
 
 const getClientIp = (request: Request) => {
   const forwardedFor = request.headers.get('x-forwarded-for')
@@ -81,51 +37,6 @@ const getClientIp = (request: Request) => {
   }
 
   return 'unknown'
-}
-
-const incrementMapCounter = (map: Map<string, number>, key: string) => {
-  const next = (map.get(key) ?? 0) + 1
-  map.set(key, next)
-  return next
-}
-
-const decrementMapCounter = (map: Map<string, number>, key: string) => {
-  const current = map.get(key)
-  if (!current || current <= 1) {
-    map.delete(key)
-    return
-  }
-
-  map.set(key, current - 1)
-}
-
-const assertRateLimit = (key: string): boolean => {
-  const now = Date.now()
-  if (now - lastRateLimitCleanupAt >= SSE_RATE_LIMIT_CLEANUP_INTERVAL_MS) {
-    requestHitsByKey.forEach((timestamps, mapKey) => {
-      const active = timestamps.filter(ts => now - ts < SSE_RATE_LIMIT_WINDOW_MS)
-      if (active.length > 0) {
-        requestHitsByKey.set(mapKey, active)
-        return
-      }
-
-      requestHitsByKey.delete(mapKey)
-    })
-    lastRateLimitCleanupAt = now
-  }
-
-  const recent = (requestHitsByKey.get(key) ?? []).filter(
-    ts => now - ts < SSE_RATE_LIMIT_WINDOW_MS
-  )
-
-  if (recent.length >= SSE_RATE_LIMIT_MAX_REQUESTS) {
-    requestHitsByKey.set(key, recent)
-    return false
-  }
-
-  recent.push(now)
-  requestHitsByKey.set(key, recent)
-  return true
 }
 
 const canAccessSupportChatEvents = async (
@@ -164,11 +75,27 @@ const shouldSendEvent = (
   return true
 }
 
+const isTrustedEventsRequestOrigin = (request: Request) => {
+  return isTrustedRequestOrigin({
+    requestUrl: request.url,
+    originHeader: request.headers.get('origin'),
+    refererHeader: request.headers.get('referer'),
+    hostHeader: request.headers.get('host'),
+    forwardedHostHeader: request.headers.get('x-forwarded-host'),
+    forwardedProtoHeader: request.headers.get('x-forwarded-proto'),
+    publicAppUrl: publicConfig.PUBLIC_URL,
+  })
+}
+
 export async function GET(request: Request) {
   const session = await getServerSession(server.get(NextAuthConfig).options)
 
   if (!session?.user?.id) {
     return new Response('Unauthorized', { status: 401 })
+  }
+
+  if (!isTrustedEventsRequestOrigin(request)) {
+    return new Response('Forbidden', { status: 403 })
   }
 
   const role = session.user.role
@@ -183,7 +110,7 @@ export async function GET(request: Request) {
   }
 
   const rateLimitKey = `${userId}:${clientIp}`
-  if (!assertRateLimit(rateLimitKey)) {
+  if (!assertSseRateLimit(rateLimitKey)) {
     return new Response('Too Many Requests', {
       status: 429,
       headers: {
@@ -192,18 +119,13 @@ export async function GET(request: Request) {
     })
   }
 
-  const userConnections = incrementMapCounter(activeConnectionsByUser, userId)
-  const ipConnections = incrementMapCounter(activeConnectionsByIp, clientIp)
+  const { userConnections, ipConnections } = incrementSseConnectionCounters(
+    userId,
+    clientIp
+  )
 
-  if (userConnections > SSE_MAX_CONNECTIONS_PER_USER) {
-    decrementMapCounter(activeConnectionsByUser, userId)
-    decrementMapCounter(activeConnectionsByIp, clientIp)
-    return new Response('Too Many Connections', { status: 429 })
-  }
-
-  if (ipConnections > SSE_MAX_CONNECTIONS_PER_IP) {
-    decrementMapCounter(activeConnectionsByUser, userId)
-    decrementMapCounter(activeConnectionsByIp, clientIp)
+  if (hasExceededSseConnectionLimits(userConnections, ipConnections)) {
+    decrementSseConnectionCounters(userId, clientIp)
     return new Response('Too Many Connections', { status: 429 })
   }
 
@@ -236,8 +158,7 @@ export async function GET(request: Request) {
         }
 
         unsubscribe()
-        decrementMapCounter(activeConnectionsByUser, userId)
-        decrementMapCounter(activeConnectionsByIp, clientIp)
+        decrementSseConnectionCounters(userId, clientIp)
 
         try {
           controller.close()

@@ -21,6 +21,11 @@ type LinkChatAttachmentToMessageInput = {
   messageId: string
 }
 
+type ListByMessageInput = {
+  dialogId: string
+  messageId: string
+}
+
 @injectable()
 export class ChatAttachmentRepository {
   async createUploaded(
@@ -92,6 +97,23 @@ export class ChatAttachmentRepository {
     }
 
     return this.toEntity(record)
+  }
+
+  async listByMessage(
+    input: ListByMessageInput,
+    db: DbClient = dbClient
+  ): Promise<ChatAttachmentEntity[]> {
+    const records = await db.chatAttachment.findMany({
+      where: {
+        dialogId: input.dialogId,
+        messageId: input.messageId,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    })
+
+    return records.map(record => this.toEntity(record))
   }
 
   async listStaleUploaded(
