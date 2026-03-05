@@ -517,16 +517,14 @@ function SupportChatAdminDialogListItem({
               {dialog.user.name ?? dialog.user.id}
             </span>
           </Link>
-          {dialog.isUnanswered ? (
+          {dialog.unreadCount > 0 ? (
             <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
           ) : null}
         </div>
       </div>
 
       {dialog.hasUnansweredIncoming ? (
-        <Badge variant="destructive" className="mt-2">
-          Не отвечено
-        </Badge>
+        <Badge className="mt-2">Не отвечено</Badge>
       ) : null}
 
       <p className="text-fluid-sm mt-2 text-muted-foreground">

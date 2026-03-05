@@ -1005,16 +1005,7 @@ export class SupportChatService {
       return false
     }
 
-    const readState = await this.readStateRepository.findByDialogAndReader(
-      input.dialogId,
-      'STAFF',
-      input.actor.id
-    )
-    if (!readState?.readAt) {
-      return true
-    }
-
-    return input.lastMessage.createdAt > readState.readAt
+    return await this.readService.hasUnansweredIncoming(input.dialogId)
   }
 
   private async getCounterpartyReadAt(input: {

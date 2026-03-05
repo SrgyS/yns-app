@@ -907,7 +907,7 @@ function SupportChatMessageBubbleContent({
             rows={3}
             className=" text-foreground"
           />
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-2 mb-2">
             <Button
               type="button"
               variant="outline"
@@ -950,7 +950,10 @@ function SupportChatMessageMeta({
   onRetryFailedMessage,
   onCancelFailedMessage,
 }: Readonly<SupportChatMessageMetaProps>) {
-  const metaText = formatMessageTime(item.editedAt ?? item.createdAt)
+   const metaText = item.editedAt
+    ? `изменено ${formatMessageTime(item.editedAt)}`
+    : formatMessageTime(item.createdAt)
+
   const shouldShowReadIcon =
     isOutgoing &&
     item.status !== 'sending' &&
@@ -959,20 +962,20 @@ function SupportChatMessageMeta({
 
   return (
     <div
-      className={`relative flex items-end justify-end gap-1 ${
+      className={`relative flex flex-col items-end justify-end gap-2 ${
         hasMessageActions ? 'pr-2' : ''
       }`}
     >
       <div className="flex items-center gap-1 text-[11px] leading-none opacity-75">
-        <p className="italic">{metaText}</p>
+        <p>{metaText}</p>
         {item.status === 'sending' ? (
           <Clock className="h-4 w-4 opacity-80" />
         ) : null}
         {item.status === 'failed' ? (
-          <AlertCircle className="h-4 w-4 text-black" />
+          <span>Сообщение не отправлено</span>
         ) : null}
         {shouldShowReadIcon ? (
-          <CheckCheck className="h-3 w-3 opacity-80" />
+          <CheckCheck className="h-3 w-3 opacity-80 text-primary" />
         ) : null}
       </div>
       {item.status === 'failed' ? (
@@ -1028,7 +1031,7 @@ function SupportChatMessageActions({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-5 w-5 text-black">
+        <Button variant="ghost" size="icon" className="h-5 w-5 text-foreground">
           <EllipsisVertical className="h-3 w-3" />
         </Button>
       </DropdownMenuTrigger>

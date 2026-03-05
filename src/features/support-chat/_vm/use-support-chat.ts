@@ -408,8 +408,8 @@ export function useSupportChatActions() {
             editedAt: null,
             deletedAt: null,
             deletedBy: null,
-            canEdit: false,
-            canDelete: false,
+            canEdit: true,
+            canDelete: true,
             createdAt: new Date().toISOString(),
             readAt: null,
             clientMessageId: optimisticClientMessageId,
@@ -494,6 +494,8 @@ export function useSupportChatActions() {
                   createdAt: result.message.createdAt,
                   clientMessageId: result.message.clientMessageId,
                   status: 'sent' as const,
+                  canEdit: true,
+                  canDelete: true,
                   pendingAttachments: undefined,
                 }
               })

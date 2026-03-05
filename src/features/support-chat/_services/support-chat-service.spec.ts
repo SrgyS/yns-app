@@ -163,6 +163,44 @@ describe('SupportChatService', () => {
     })
   })
 
+  test('staffListDialogs marks unanswered based on latest user vs staff message', async () => {
+    ;(dbClient.staffPermission.findUnique as jest.Mock).mockResolvedValue({
+      canManageSupportChats: true,
+    })
+    ;(dbClient.chatDialog.findMany as jest.Mock).mockResolvedValue([
+      {
+        id: 'dialog-1',
+        user: {
+          id: 'user-1',
+          name: 'User One',
+          image: null,
+        },
+        lastMessageAt: new Date('2026-03-05T10:00:00.000Z'),
+      },
+    ])
+    ;(dbClient.chatMessage.findFirst as jest.Mock).mockResolvedValue({
+      id: 'msg-1',
+      senderType: 'USER',
+      text: 'Need help',
+      createdAt: new Date('2026-03-05T10:00:00.000Z'),
+    })
+    readService.countUnreadForStaff.mockResolvedValue(0)
+    readService.hasUnansweredIncoming.mockResolvedValue(true)
+
+    const result = await service.staffListDialogs({
+      actor: { id: 'staff-1', role: 'STAFF' },
+    })
+
+    expect(readService.hasUnansweredIncoming).toHaveBeenCalledWith('dialog-1')
+    expect(result.items).toEqual([
+      expect.objectContaining({
+        dialogId: 'dialog-1',
+        hasUnansweredIncoming: true,
+        isUnanswered: true,
+      }),
+    ])
+  })
+
   test('staffOpenDialogForUser reuses existing canonical dialog', async () => {
     ;(dbClient.staffPermission.findUnique as jest.Mock).mockResolvedValue({
       canManageSupportChats: true,
