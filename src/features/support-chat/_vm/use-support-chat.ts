@@ -397,24 +397,31 @@ function useSupportChatEventsSse(
 
     const applyMessageCreatedReconcile = (
       payload: SupportChatMessageCreatedSsePayload
-    ) => {
+    ): boolean => {
       if (!dialogId) {
-        return
+        return false
       }
 
       if (payload.dialogId !== dialogId) {
-        return
+        return false
       }
 
       const messagePayload = payload.message
       if (!messagePayload?.clientMessageId) {
-        return
+        return false
       }
 
+      let wasReconciled = false
       utils.supportChat.userGetMessages.setInfiniteData(
         getMessagesCacheInput(dialogId),
-        current => reconcileCreatedMessageInCache(current, messagePayload)
+        current => {
+          const next = reconcileCreatedMessageInCache(current, messagePayload)
+          wasReconciled = next !== current
+          return next
+        }
       )
+
+      return wasReconciled
     }
 
     const handleDialogCreated = () => {
@@ -423,19 +430,25 @@ function useSupportChatEventsSse(
 
     const handleMessageCreated = (event: Event) => {
       const messageEvent = event as MessageEvent<string>
+      let shouldInvalidateMessages = true
       try {
         const payload = JSON.parse(
           messageEvent.data
         ) as SupportChatMessageCreatedSsePayload
         if (payload.type === 'message.created') {
-          applyMessageCreatedReconcile(payload)
+          const reconciled = applyMessageCreatedReconcile(payload)
+          if (reconciled) {
+            shouldInvalidateMessages = false
+          }
         }
       } catch {
         // ignore malformed payload and keep fallback invalidation flow
       }
 
       invalidateDialogs()
-      invalidateMessages()
+      if (shouldInvalidateMessages) {
+        invalidateMessages()
+      }
     }
 
     const handleReadUpdated = () => {
@@ -600,8 +613,8 @@ export function useSupportChatActions() {
               ) ?? 'USER',
             text: variables.text ?? null,
             attachments:
-              optimisticPendingAttachments?.map((attachment, index) => ({
-                id: `${optimisticClientMessageId}_${index}`,
+              optimisticPendingAttachments?.map(attachment => ({
+                id: attachment.attachmentId,
                 name: attachment.name,
                 path:
                   resolveAttachmentPreviewUrl(attachment) ??
@@ -672,10 +685,6 @@ export function useSupportChatActions() {
     onSuccess: (result, variables, context) => {
       const resolvedClientMessageId = context?.clientMessageId
       if (resolvedClientMessageId) {
-        cleanupPendingAttachments(resolvedClientMessageId)
-        optimisticSenderTypeByClientMessageIdRef.current.delete(
-          resolvedClientMessageId
-        )
         setMessagesInfiniteData(
           variables.dialogId,
           (current: SupportChatMessagesCache | undefined) => {
@@ -687,6 +696,10 @@ export function useSupportChatActions() {
               })
             )
           }
+        )
+        cleanupPendingAttachments(resolvedClientMessageId)
+        optimisticSenderTypeByClientMessageIdRef.current.delete(
+          resolvedClientMessageId
         )
       }
 
