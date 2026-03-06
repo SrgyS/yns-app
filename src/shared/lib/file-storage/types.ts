@@ -21,3 +21,8 @@ export type StoredFileStreamDownload = {
 }
 
 export type StorageAccessLevel = 'public' | 'private'
+
+export type UploadFileOptions = {
+  signal?: AbortSignal
+  onProgress?: () => void
+}

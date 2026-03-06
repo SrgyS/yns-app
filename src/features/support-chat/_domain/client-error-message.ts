@@ -1,4 +1,7 @@
+import { MAX_ATTACHMENT_SIZE_BYTES } from './attachment-schema'
+
 const DEFAULT_ERROR_MESSAGE = 'Произошла ошибка. Попробуйте позже'
+const MAX_ATTACHMENT_SIZE_MB = MAX_ATTACHMENT_SIZE_BYTES / (1024 * 1024)
 
 const MESSAGE_BY_CODE: Record<string, string> = {
   INTERNAL_SERVER_ERROR: 'Ошибка сервера. Попробуйте позже',
@@ -6,6 +9,9 @@ const MESSAGE_BY_CODE: Record<string, string> = {
   BAD_REQUEST: 'Проверьте введенные данные и попробуйте снова',
   NOT_FOUND: 'Запрошенные данные не найдены',
   UNAUTHORIZED: 'Требуется авторизация',
+  REQUEST_TIMEOUT: 'Загрузка файла заняла слишком много времени. Попробуйте снова',
+  ATTACHMENT_TOO_LARGE: `Размер файла превышает допустимый лимит (${MAX_ATTACHMENT_SIZE_MB} MB)`,
+  ATTACHMENT_UNSUPPORTED_TYPE: 'Этот тип файла не поддерживается',
 }
 
 export const resolveSupportChatClientErrorMessage = (
@@ -27,4 +33,3 @@ export const resolveSupportChatClientErrorMessage = (
 
   return DEFAULT_ERROR_MESSAGE
 }
-

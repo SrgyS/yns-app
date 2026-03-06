@@ -5,6 +5,7 @@ import {
   StoredFileDownload,
   StoredFileStreamDownload,
   StorageAccessLevel,
+  UploadFileOptions,
 } from '../types'
 import { createId } from '@paralleldrive/cuid2'
 
@@ -22,9 +23,10 @@ export class SupabaseStorage {
     file: File,
     tag: string,
     userId: string,
-    accessLevel: StorageAccessLevel = 'public'
+    accessLevel: StorageAccessLevel = 'public',
+    options?: UploadFileOptions
   ) {
-    return this.upload(file, tag, userId, accessLevel)
+    return this.upload(file, tag, userId, accessLevel, options)
   }
 
   async downloadByPath(path: string): Promise<StoredFileDownload> {
@@ -90,24 +92,81 @@ export class SupabaseStorage {
     file: File,
     tag: string,
     userId: string,
-    accessLevel: StorageAccessLevel
+    accessLevel: StorageAccessLevel,
+    options?: UploadFileOptions
   ): Promise<StoredFile> {
     const fileExt = file.name.split('.').pop()
     const bucket = this.resolveBucket(accessLevel)
     const key = `${tag}/${userId}/${Date.now()}.${fileExt}`
 
-    const { error } = await this.supabase.storage
-      .from(bucket)
-      .upload(key, file, {
-        upsert: true,
-        contentType: file.type,
-        cacheControl: '3600',
-        metadata: {
-          owner: userId, // если используется RLS-политика
-        },
-      })
+    if (options?.signal?.aborted) {
+      throw new Error('Upload aborted')
+    }
 
-    if (error) throw error
+    let isAborted = false
+    let abortPromiseReject: ((reason?: unknown) => void) | null = null
+    const abortPromise = new Promise<never>((_, reject) => {
+      abortPromiseReject = reject
+    })
+    const abortListener = () => {
+      isAborted = true
+      abortPromiseReject?.(new Error('Upload aborted'))
+    }
+    options?.signal?.addEventListener('abort', abortListener)
+
+    const uploadPromise = this.supabase.storage.from(bucket).upload(key, file, {
+      upsert: true,
+      contentType: file.type,
+      cacheControl: '3600',
+      metadata: {
+        owner: userId, // если используется RLS-политика
+      },
+    })
+
+    const handleAbortAfterUpload = async () => {
+      if (!isAborted) {
+        return
+      }
+
+      await this.safeDeleteObject(bucket, key)
+      throw new Error('Upload aborted')
+    }
+
+    const handleAbortDuringUpload = async (): Promise<never> => {
+      try {
+        const uploadResult = await uploadPromise
+        if (!uploadResult.error) {
+          await this.safeDeleteObject(bucket, key)
+        }
+      } catch {
+        // Upload request can fail because of abort/network issues. In this path
+        // there is no committed object to remove.
+      }
+
+      throw new Error('Upload aborted')
+    }
+
+    let error: Error | null = null
+    try {
+      const result = await Promise.race([uploadPromise, abortPromise]).catch(
+        async error => {
+          if (!isAborted) {
+            throw error
+          }
+
+          return handleAbortDuringUpload()
+        }
+      )
+      error = result.error
+    } finally {
+      options?.signal?.removeEventListener('abort', abortListener)
+    }
+
+    if (error) {
+      throw error
+    }
+
+    await handleAbortAfterUpload()
 
     return {
       id: createId(),
@@ -115,6 +174,14 @@ export class SupabaseStorage {
       type: file.type,
       path: `${bucket}/${key}`,
       prefix: '/storage',
+    }
+  }
+
+  private async safeDeleteObject(bucket: string, key: string): Promise<void> {
+    try {
+      await this.supabase.storage.from(bucket).remove([key])
+    } catch {
+      // best effort cleanup for aborted/failed uploads
     }
   }
 

@@ -7,10 +7,14 @@ import { CACHE_SETTINGS } from '@/shared/lib/cache/cache-constants'
 import { supportChatApi } from '../_api'
 
 type SupportChatAttachmentInput = {
-  filename: string
+  attachmentId: string
+  name: string
   mimeType: string
   sizeBytes: number
-  base64: string
+}
+
+export type SupportChatPendingAttachmentInput = SupportChatAttachmentInput & {
+  previewUrl?: string
 }
 
 export type SupportChatMessageStatus = 'sending' | 'sent' | 'failed'
@@ -30,7 +34,16 @@ type SupportChatMessageCreatedSsePayload = {
 const SUPPORT_CHAT_LIMIT = 20
 type SupportChatDialogScope = 'user' | 'staff'
 
-const createClientMessageId = () => {
+const ignoreAsyncError = (promise: Promise<unknown>) => {
+  promise.catch(() => undefined)
+}
+
+const getMessagesCacheInput = (dialogId: string) => ({
+  dialogId,
+  limit: SUPPORT_CHAT_LIMIT,
+})
+
+export const createClientMessageId = () => {
   const randomValue =
     typeof crypto !== 'undefined' && 'randomUUID' in crypto
       ? crypto.randomUUID().replaceAll('-', '')
@@ -56,11 +69,37 @@ type SupportChatMessagesCache = {
       readAt: string | null
       clientMessageId: string | null
       status?: SupportChatMessageStatus
-      pendingAttachments?: SupportChatAttachmentInput[]
+      pendingAttachments?: SupportChatPendingAttachmentInput[]
     }>
     nextCursor?: string
   }>
   pageParams: Array<string | null>
+}
+
+type SupportChatMessageItem = SupportChatMessagesCache['pages'][number]['items'][number]
+
+const revokeAttachmentPreviewUrls = (
+  attachments: SupportChatPendingAttachmentInput[] | undefined
+) => {
+  if (!attachments) {
+    return
+  }
+
+  attachments.forEach(attachment => {
+    if (attachment.previewUrl) {
+      URL.revokeObjectURL(attachment.previewUrl)
+    }
+  })
+}
+
+const resolveAttachmentPreviewUrl = (
+  attachment: SupportChatAttachmentInput | SupportChatPendingAttachmentInput
+) => {
+  if ('previewUrl' in attachment) {
+    return attachment.previewUrl
+  }
+
+  return undefined
 }
 
 const updateCachedDialogMessages = (
@@ -95,6 +134,168 @@ const updateCachedDialogMessages = (
   return {
     ...current,
     pages: nextPages,
+  }
+}
+
+const reconcileCreatedMessageInCache = (
+  current: SupportChatMessagesCache | undefined,
+  messagePayload: NonNullable<SupportChatMessageCreatedSsePayload['message']>
+) => {
+  if (!current) {
+    return current
+  }
+
+  let hasChanges = false
+  const nextPages = current.pages.map(page => {
+    let pageChanged = false
+    const nextItems: typeof page.items = []
+
+    for (const item of page.items) {
+      if (item.clientMessageId !== messagePayload.clientMessageId) {
+        nextItems.push(item)
+        continue
+      }
+
+      pageChanged = true
+      hasChanges = true
+      nextItems.push({
+        ...item,
+        id: messagePayload.id,
+        text: messagePayload.text,
+        senderType: messagePayload.senderType,
+        createdAt: messagePayload.createdAt,
+        clientMessageId: messagePayload.clientMessageId,
+        status: 'sent',
+        pendingAttachments: undefined,
+      })
+    }
+
+    if (!pageChanged) {
+      return page
+    }
+
+    return {
+      ...page,
+      items: nextItems,
+    }
+  })
+
+  if (!hasChanges) {
+    return current
+  }
+
+  return {
+    ...current,
+    pages: nextPages,
+  }
+}
+
+const markMessageSent = (params: {
+  items: SupportChatMessageItem[]
+  clientMessageId: string
+  message: {
+    id: string
+    text: string | null
+    attachments?: unknown
+    senderType: ChatMessageSenderType
+    createdAt: string
+    clientMessageId: string | null
+  }
+}) => {
+  let changed = false
+  const nextItems: SupportChatMessageItem[] = []
+
+  for (const item of params.items) {
+    if (item.clientMessageId !== params.clientMessageId) {
+      nextItems.push(item)
+      continue
+    }
+
+    changed = true
+    nextItems.push({
+      ...item,
+      id: params.message.id,
+      text: params.message.text,
+      attachments: params.message.attachments ?? item.attachments,
+      senderType: params.message.senderType,
+      createdAt: params.message.createdAt,
+      clientMessageId: params.message.clientMessageId,
+      status: 'sent',
+      canEdit: true,
+      canDelete: true,
+      pendingAttachments: undefined,
+    })
+  }
+
+  return {
+    items: nextItems,
+    changed,
+  }
+}
+
+const markMessageFailed = (
+  items: SupportChatMessageItem[],
+  clientMessageId: string
+) => {
+  let changed = false
+  const nextItems: SupportChatMessageItem[] = []
+
+  for (const item of items) {
+    if (item.clientMessageId !== clientMessageId) {
+      nextItems.push(item)
+      continue
+    }
+
+    changed = true
+    nextItems.push({
+      ...item,
+      status: 'failed',
+    })
+  }
+
+  return {
+    items: nextItems,
+    changed,
+  }
+}
+
+const markMessageEdited = (
+  items: SupportChatMessageItem[],
+  messageId: string,
+  text: string,
+  editedAt: string
+) => {
+  let changed = false
+  const nextItems: SupportChatMessageItem[] = []
+
+  for (const item of items) {
+    if (item.id !== messageId) {
+      nextItems.push(item)
+      continue
+    }
+
+    changed = true
+    nextItems.push({
+      ...item,
+      text,
+      editedAt,
+    })
+  }
+
+  return {
+    items: nextItems,
+    changed,
+  }
+}
+
+const removeMessageByClientMessageId = (
+  items: SupportChatMessageItem[],
+  clientMessageId: string
+) => {
+  const nextItems = items.filter(item => item.clientMessageId !== clientMessageId)
+  return {
+    items: nextItems,
+    changed: nextItems.length !== items.length,
   }
 }
 
@@ -176,14 +377,14 @@ function useSupportChatEventsSse(
 
     const invalidateDialogs = () => {
       if (dialogScope === 'user') {
-        utils.supportChat.userListDialogs.invalidate().catch(() => undefined)
+        ignoreAsyncError(utils.supportChat.userListDialogs.invalidate())
       }
 
       if (dialogScope === 'staff') {
-        utils.supportChat.staffListDialogs.invalidate().catch(() => undefined)
+        ignoreAsyncError(utils.supportChat.staffListDialogs.invalidate())
       }
 
-      utils.supportChat.getUnansweredDialogsCount.invalidate().catch(() => undefined)
+      ignoreAsyncError(utils.supportChat.getUnansweredDialogsCount.invalidate())
     }
 
     const invalidateMessages = () => {
@@ -191,73 +392,36 @@ function useSupportChatEventsSse(
         return
       }
 
-      utils.supportChat.userGetMessages
-        .invalidate({ dialogId })
-        .catch(() => undefined)
+      ignoreAsyncError(utils.supportChat.userGetMessages.invalidate({ dialogId }))
     }
 
     const applyMessageCreatedReconcile = (
       payload: SupportChatMessageCreatedSsePayload
-    ) => {
+    ): boolean => {
       if (!dialogId) {
-        return
+        return false
       }
 
       if (payload.dialogId !== dialogId) {
-        return
+        return false
       }
 
       const messagePayload = payload.message
       if (!messagePayload?.clientMessageId) {
-        return
+        return false
       }
 
+      let wasReconciled = false
       utils.supportChat.userGetMessages.setInfiniteData(
-        {
-          dialogId,
-          limit: SUPPORT_CHAT_LIMIT,
-        },
+        getMessagesCacheInput(dialogId),
         current => {
-          if (!current) {
-            return current
-          }
-
-          let hasChanges = false
-          const nextPages = current.pages.map(page => {
-            const nextItems = page.items.map(item => {
-              if (item.clientMessageId !== messagePayload.clientMessageId) {
-                return item
-              }
-
-              hasChanges = true
-              return {
-                ...item,
-                id: messagePayload.id,
-                text: messagePayload.text,
-                senderType: messagePayload.senderType,
-                createdAt: messagePayload.createdAt,
-                clientMessageId: messagePayload.clientMessageId,
-                status: 'sent',
-                pendingAttachments: undefined,
-              }
-            })
-
-            return {
-              ...page,
-              items: nextItems,
-            }
-          })
-
-          if (hasChanges) {
-            return {
-              ...current,
-              pages: nextPages,
-            }
-          }
-
-          return current
+          const next = reconcileCreatedMessageInCache(current, messagePayload)
+          wasReconciled = next !== current
+          return next
         }
       )
+
+      return wasReconciled
     }
 
     const handleDialogCreated = () => {
@@ -266,19 +430,25 @@ function useSupportChatEventsSse(
 
     const handleMessageCreated = (event: Event) => {
       const messageEvent = event as MessageEvent<string>
+      let shouldInvalidateMessages = true
       try {
         const payload = JSON.parse(
           messageEvent.data
         ) as SupportChatMessageCreatedSsePayload
         if (payload.type === 'message.created') {
-          applyMessageCreatedReconcile(payload)
+          const reconciled = applyMessageCreatedReconcile(payload)
+          if (reconciled) {
+            shouldInvalidateMessages = false
+          }
         }
       } catch {
         // ignore malformed payload and keep fallback invalidation flow
       }
 
       invalidateDialogs()
-      invalidateMessages()
+      if (shouldInvalidateMessages) {
+        invalidateMessages()
+      }
     }
 
     const handleReadUpdated = () => {
@@ -352,21 +522,66 @@ export function useSupportChatActions() {
   const optimisticSenderTypeByClientMessageIdRef = useRef(
     new Map<string, ChatMessageSenderType>()
   )
+  const pendingAttachmentsByClientMessageIdRef = useRef(
+    new Map<string, SupportChatPendingAttachmentInput[]>()
+  )
+
+  useEffect(() => {
+    const pendingAttachmentsByClientMessageId =
+      pendingAttachmentsByClientMessageIdRef.current
+
+    return () => {
+      pendingAttachmentsByClientMessageId.forEach(attachments => {
+        revokeAttachmentPreviewUrls(attachments)
+      })
+      pendingAttachmentsByClientMessageId.clear()
+    }
+  }, [])
+
+  const invalidateDialogLists = () => {
+    ignoreAsyncError(utils.supportChat.userListDialogs.invalidate())
+    ignoreAsyncError(utils.supportChat.staffListDialogs.invalidate())
+    ignoreAsyncError(utils.supportChat.getUnansweredDialogsCount.invalidate())
+  }
+
+  const invalidateMessages = (dialogId: string) => {
+    ignoreAsyncError(utils.supportChat.userGetMessages.invalidate({ dialogId }))
+  }
+
+  const cleanupPendingAttachments = (clientMessageId: string) => {
+    const pendingAttachments =
+      pendingAttachmentsByClientMessageIdRef.current.get(clientMessageId)
+    revokeAttachmentPreviewUrls(pendingAttachments)
+    pendingAttachmentsByClientMessageIdRef.current.delete(clientMessageId)
+  }
+
+  const setMessagesInfiniteData = (
+    dialogId: string,
+    updater:
+      | SupportChatMessagesCache
+      | undefined
+      | ((
+          current: SupportChatMessagesCache | undefined
+        ) => SupportChatMessagesCache | undefined)
+  ) => {
+    utils.supportChat.userGetMessages.setInfiniteData(
+      getMessagesCacheInput(dialogId),
+      updater
+    )
+  }
 
   const staffOpenDialogForUserMutation =
     supportChatApi.supportChat.staffOpenDialogForUser.useMutation({
       onSuccess: () => {
-        utils.supportChat.staffListDialogs.invalidate().catch(() => undefined)
-        utils.supportChat.getUnansweredDialogsCount.invalidate().catch(
-          () => undefined
-        )
+        ignoreAsyncError(utils.supportChat.staffListDialogs.invalidate())
+        ignoreAsyncError(utils.supportChat.getUnansweredDialogsCount.invalidate())
       },
     })
 
   const createDialogMutation = supportChatApi.supportChat.createDialog.useMutation({
     onSuccess: () => {
-      utils.supportChat.userListDialogs.invalidate().catch(() => undefined)
-      utils.supportChat.getUnansweredDialogsCount.invalidate().catch(() => undefined)
+      ignoreAsyncError(utils.supportChat.userListDialogs.invalidate())
+      ignoreAsyncError(utils.supportChat.getUnansweredDialogsCount.invalidate())
     },
   })
 
@@ -379,15 +594,15 @@ export function useSupportChatActions() {
         }
       }
 
-      await utils.supportChat.userGetMessages.cancel({
-        dialogId: variables.dialogId,
-      })
+      const optimisticPendingAttachments =
+        pendingAttachmentsByClientMessageIdRef.current.get(
+          optimisticClientMessageId
+        ) ?? variables.attachments
 
-      utils.supportChat.userGetMessages.setInfiniteData(
-        {
-          dialogId: variables.dialogId,
-          limit: SUPPORT_CHAT_LIMIT,
-        },
+      await utils.supportChat.userGetMessages.cancel({ dialogId: variables.dialogId })
+
+      setMessagesInfiniteData(
+        variables.dialogId,
         (current: SupportChatMessagesCache | undefined) => {
           const optimisticMessage = {
             id: optimisticClientMessageId,
@@ -398,10 +613,12 @@ export function useSupportChatActions() {
               ) ?? 'USER',
             text: variables.text ?? null,
             attachments:
-              variables.attachments?.map((attachment, index) => ({
-                id: `${optimisticClientMessageId}_${index}`,
-                name: attachment.filename,
-                path: attachment.base64,
+              optimisticPendingAttachments?.map(attachment => ({
+                id: attachment.attachmentId,
+                name: attachment.name,
+                path:
+                  resolveAttachmentPreviewUrl(attachment) ??
+                  `/api/support-chat/attachments/${variables.dialogId}/${attachment.attachmentId}`,
                 type: attachment.mimeType,
                 sizeBytes: attachment.sizeBytes,
               })) ?? [],
@@ -414,7 +631,7 @@ export function useSupportChatActions() {
             readAt: null,
             clientMessageId: optimisticClientMessageId,
             status: 'sending' as const,
-            pendingAttachments: variables.attachments,
+            pendingAttachments: optimisticPendingAttachments,
           }
 
           if (!current) {
@@ -468,53 +685,26 @@ export function useSupportChatActions() {
     onSuccess: (result, variables, context) => {
       const resolvedClientMessageId = context?.clientMessageId
       if (resolvedClientMessageId) {
+        setMessagesInfiniteData(
+          variables.dialogId,
+          (current: SupportChatMessagesCache | undefined) => {
+            return updateCachedDialogMessages(current, items =>
+              markMessageSent({
+                items,
+                clientMessageId: resolvedClientMessageId,
+                message: result.message,
+              })
+            )
+          }
+        )
+        cleanupPendingAttachments(resolvedClientMessageId)
         optimisticSenderTypeByClientMessageIdRef.current.delete(
           resolvedClientMessageId
         )
-        utils.supportChat.userGetMessages.setInfiniteData(
-          {
-            dialogId: variables.dialogId,
-            limit: SUPPORT_CHAT_LIMIT,
-          },
-          (current: SupportChatMessagesCache | undefined) => {
-            return updateCachedDialogMessages(current, items => {
-              let changed = false
-              const nextItems = items.map(item => {
-                if (item.clientMessageId !== resolvedClientMessageId) {
-                  return item
-                }
-
-                changed = true
-                return {
-                  ...item,
-                  id: result.message.id,
-                  text: result.message.text,
-                  attachments: result.message.attachments,
-                  senderType: result.message.senderType,
-                  createdAt: result.message.createdAt,
-                  clientMessageId: result.message.clientMessageId,
-                  status: 'sent' as const,
-                  canEdit: true,
-                  canDelete: true,
-                  pendingAttachments: undefined,
-                }
-              })
-
-              return {
-                items: nextItems,
-                changed,
-              }
-            })
-          }
-        )
       }
 
-      utils.supportChat.userListDialogs.invalidate().catch(() => undefined)
-      utils.supportChat.staffListDialogs.invalidate().catch(() => undefined)
-      utils.supportChat.getUnansweredDialogsCount.invalidate().catch(() => undefined)
-      utils.supportChat.userGetMessages
-        .invalidate({ dialogId: variables.dialogId })
-        .catch(() => undefined)
+      invalidateDialogLists()
+      invalidateMessages(variables.dialogId)
     },
     onError: (_error, variables, context) => {
       const resolvedClientMessageId = context?.clientMessageId
@@ -526,31 +716,12 @@ export function useSupportChatActions() {
         resolvedClientMessageId
       )
 
-      utils.supportChat.userGetMessages.setInfiniteData(
-        {
-          dialogId: variables.dialogId,
-          limit: SUPPORT_CHAT_LIMIT,
-        },
+      setMessagesInfiniteData(
+        variables.dialogId,
         (current: SupportChatMessagesCache | undefined) => {
-          return updateCachedDialogMessages(current, items => {
-            let changed = false
-            const nextItems = items.map(item => {
-              if (item.clientMessageId !== resolvedClientMessageId) {
-                return item
-              }
-
-              changed = true
-              return {
-                ...item,
-                status: 'failed' as const,
-              }
-            })
-
-            return {
-              items: nextItems,
-              changed,
-            }
-          })
+          return updateCachedDialogMessages(current, items =>
+            markMessageFailed(items, resolvedClientMessageId)
+          )
         }
       )
     },
@@ -558,12 +729,8 @@ export function useSupportChatActions() {
 
   const markReadMutation = supportChatApi.supportChat.markDialogRead.useMutation({
     onSuccess: (_result, variables) => {
-      utils.supportChat.userListDialogs.invalidate().catch(() => undefined)
-      utils.supportChat.staffListDialogs.invalidate().catch(() => undefined)
-      utils.supportChat.getUnansweredDialogsCount.invalidate().catch(() => undefined)
-      utils.supportChat.userGetMessages
-        .invalidate({ dialogId: variables.dialogId })
-        .catch(() => undefined)
+      invalidateDialogLists()
+      invalidateMessages(variables.dialogId)
     },
   })
 
@@ -573,38 +740,22 @@ export function useSupportChatActions() {
         dialogId: variables.dialogId,
       })
 
-      const previousMessages = utils.supportChat.userGetMessages.getInfiniteData({
-        dialogId: variables.dialogId,
-        limit: SUPPORT_CHAT_LIMIT,
-      })
+      const previousMessages = utils.supportChat.userGetMessages.getInfiniteData(
+        getMessagesCacheInput(variables.dialogId)
+      )
 
       const optimisticEditedAt = new Date().toISOString()
-      utils.supportChat.userGetMessages.setInfiniteData(
-        {
-          dialogId: variables.dialogId,
-          limit: SUPPORT_CHAT_LIMIT,
-        },
+      setMessagesInfiniteData(
+        variables.dialogId,
         (current: SupportChatMessagesCache | undefined) => {
-          return updateCachedDialogMessages(current, items => {
-            let changed = false
-            const nextItems = items.map(item => {
-              if (item.id !== variables.messageId) {
-                return item
-              }
-
-              changed = true
-              return {
-                ...item,
-                text: variables.text,
-                editedAt: optimisticEditedAt,
-              }
-            })
-
-            return {
-              items: nextItems,
-              changed,
-            }
-          })
+          return updateCachedDialogMessages(current, items =>
+            markMessageEdited(
+              items,
+              variables.messageId,
+              variables.text,
+              optimisticEditedAt
+            )
+          )
         }
       )
 
@@ -613,36 +764,22 @@ export function useSupportChatActions() {
       }
     },
     onSuccess: (_result, variables) => {
-      utils.supportChat.userListDialogs.invalidate().catch(() => undefined)
-      utils.supportChat.staffListDialogs.invalidate().catch(() => undefined)
-      utils.supportChat.getUnansweredDialogsCount.invalidate().catch(() => undefined)
-      utils.supportChat.userGetMessages
-        .invalidate({ dialogId: variables.dialogId })
-        .catch(() => undefined)
+      invalidateDialogLists()
+      invalidateMessages(variables.dialogId)
     },
     onError: (_error, variables, context) => {
       if (!context?.previousMessages) {
         return
       }
 
-      utils.supportChat.userGetMessages.setInfiniteData(
-        {
-          dialogId: variables.dialogId,
-          limit: SUPPORT_CHAT_LIMIT,
-        },
-        context.previousMessages
-      )
+      setMessagesInfiniteData(variables.dialogId, context.previousMessages)
     },
   })
 
   const deleteMessageMutation = supportChatApi.supportChat.deleteMessage.useMutation({
     onSuccess: (_result, variables) => {
-      utils.supportChat.userListDialogs.invalidate().catch(() => undefined)
-      utils.supportChat.staffListDialogs.invalidate().catch(() => undefined)
-      utils.supportChat.getUnansweredDialogsCount.invalidate().catch(() => undefined)
-      utils.supportChat.userGetMessages
-        .invalidate({ dialogId: variables.dialogId })
-        .catch(() => undefined)
+      invalidateDialogLists()
+      invalidateMessages(variables.dialogId)
     },
   })
 
@@ -662,6 +799,7 @@ export function useSupportChatActions() {
     dialogId: string
     text?: string
     attachments?: SupportChatAttachmentInput[]
+    pendingAttachments?: SupportChatPendingAttachmentInput[]
     clientMessageId?: string
     optimisticSenderType?: ChatMessageSenderType
   }) => {
@@ -670,6 +808,14 @@ export function useSupportChatActions() {
       resolvedClientMessageId,
       params.optimisticSenderType ?? 'USER'
     )
+
+    if (params.pendingAttachments && params.pendingAttachments.length > 0) {
+      pendingAttachmentsByClientMessageIdRef.current.set(
+        resolvedClientMessageId,
+        params.pendingAttachments
+      )
+    }
+
     return await sendMessageMutation.mutateAsync({
       dialogId: params.dialogId,
       text: params.text,
@@ -682,21 +828,14 @@ export function useSupportChatActions() {
     dialogId: string
     clientMessageId: string
   }) => {
-    utils.supportChat.userGetMessages.setInfiniteData(
-      {
-        dialogId: params.dialogId,
-        limit: SUPPORT_CHAT_LIMIT,
-      },
+    cleanupPendingAttachments(params.clientMessageId)
+
+    setMessagesInfiniteData(
+      params.dialogId,
       (current: SupportChatMessagesCache | undefined) => {
-        return updateCachedDialogMessages(current, items => {
-          const nextItems = items.filter(
-            item => item.clientMessageId !== params.clientMessageId
-          )
-          return {
-            items: nextItems,
-            changed: nextItems.length !== items.length,
-          }
-        })
+        return updateCachedDialogMessages(current, items =>
+          removeMessageByClientMessageId(items, params.clientMessageId)
+        )
       }
     )
   }

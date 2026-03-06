@@ -53,31 +53,32 @@ export class ChatAttachmentRepository {
     input: LinkChatAttachmentToMessageInput,
     db: DbClient = dbClient
   ): Promise<ChatAttachmentEntity | null> {
-    const record = await db.chatAttachment.findUnique({
+    const updated = await db.chatAttachment.updateMany({
       where: {
         id: input.id,
-      },
-    })
-
-    if (!record) {
-      return null
-    }
-
-    if (record.dialogId !== input.dialogId) {
-      return null
-    }
-
-    const updated = await db.chatAttachment.update({
-      where: {
-        id: input.id,
+        dialogId: input.dialogId,
+        status: 'UPLOADED',
+        messageId: null,
       },
       data: {
         messageId: input.messageId,
         status: 'LINKED',
       },
     })
+    if (updated.count === 0) {
+      return null
+    }
 
-    return this.toEntity(updated)
+    const record = await db.chatAttachment.findUnique({
+      where: {
+        id: input.id,
+      },
+    })
+    if (!record) {
+      return null
+    }
+
+    return this.toEntity(record)
   }
 
   async findByDialogAndId(
@@ -123,7 +124,16 @@ export class ChatAttachmentRepository {
   ): Promise<ChatAttachmentEntity[]> {
     const records = await db.chatAttachment.findMany({
       where: {
-        status: 'UPLOADED',
+        messageId: null,
+        OR: [
+          {
+            status: 'UPLOADED',
+          },
+          {
+            // `LINKED` with null messageId is a cleanup claim marker.
+            status: 'LINKED',
+          },
+        ],
         createdAt: {
           lt: olderThan,
         },
@@ -150,6 +160,77 @@ export class ChatAttachmentRepository {
         id: {
           in: ids,
         },
+      },
+    })
+
+    return result.count
+  }
+
+  async deleteUnlinkedUploadedByIds(
+    ids: string[],
+    db: DbClient = dbClient
+  ): Promise<number> {
+    if (ids.length === 0) {
+      return 0
+    }
+
+    const result = await db.chatAttachment.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+        status: 'UPLOADED',
+        messageId: null,
+      },
+    })
+
+    return result.count
+  }
+
+  async claimUploadedForCleanup(
+    id: string,
+    db: DbClient = dbClient
+  ): Promise<boolean> {
+    const updated = await db.chatAttachment.updateMany({
+      where: {
+        id,
+        status: 'UPLOADED',
+        messageId: null,
+      },
+      data: {
+        // Marker: claimed by cleanup, not user-linked.
+        status: 'LINKED',
+      },
+    })
+
+    return updated.count > 0
+  }
+
+  async restoreCleanupClaim(
+    id: string,
+    db: DbClient = dbClient
+  ): Promise<void> {
+    await db.chatAttachment.updateMany({
+      where: {
+        id,
+        status: 'LINKED',
+        messageId: null,
+      },
+      data: {
+        status: 'UPLOADED',
+      },
+    })
+  }
+
+  async deleteCleanupClaimedById(
+    id: string,
+    db: DbClient = dbClient
+  ): Promise<number> {
+    const result = await db.chatAttachment.deleteMany({
+      where: {
+        id,
+        status: 'LINKED',
+        messageId: null,
       },
     })
 

@@ -7,6 +7,7 @@ import {
   type RefObject,
 } from 'react'
 import {
+  Check,
   CheckCheck,
   Clock,
   EllipsisVertical,
@@ -42,10 +43,11 @@ type InputChangeEvent = Parameters<
 >[0]
 
 export type SupportChatPendingAttachmentInput = {
-  filename: string
+  attachmentId: string
+  name: string
   mimeType: string
   sizeBytes: number
-  base64: string
+  previewUrl?: string
 }
 
 export type SupportChatMessageItem = {
@@ -91,6 +93,7 @@ type SupportChatConversationCardProps = {
   isFetchingMoreMessages: boolean
   onFetchMoreMessages: () => void
   messages: SupportChatMessageItem[]
+  sendingMessages?: SupportChatMessageItem[]
   selectedDialogKey?: string
   isLoadingMessages?: boolean
   emptyStateText: string
@@ -133,6 +136,7 @@ export function SupportChatConversationCard({
   isFetchingMoreMessages,
   onFetchMoreMessages,
   messages,
+  sendingMessages = [],
   selectedDialogKey,
   isLoadingMessages = false,
   emptyStateText,
@@ -268,6 +272,7 @@ export function SupportChatConversationCard({
         <SupportChatMessagesViewport
           containerRef={messagesContainerRef}
           messages={messages}
+          sendingMessages={sendingMessages}
           isLoadingMessages={isLoadingMessages}
           emptyStateText={emptyStateText}
           editingMessageId={editingMessageId}
@@ -425,6 +430,7 @@ function SupportChatLoadMoreButton({
 type SupportChatMessagesViewportProps = {
   containerRef: RefObject<HTMLDivElement | null>
   messages: SupportChatMessageItem[]
+  sendingMessages: SupportChatMessageItem[]
   isLoadingMessages: boolean
   emptyStateText: string
   editingMessageId: string | null
@@ -444,6 +450,7 @@ type SupportChatMessagesViewportProps = {
 const SupportChatMessagesViewport = ({
   containerRef,
   messages,
+  sendingMessages,
   isLoadingMessages,
   emptyStateText,
   editingMessageId,
@@ -472,9 +479,13 @@ const SupportChatMessagesViewport = ({
 
       <div className="space-y-2">
         {messages.map((item, index) => {
+          const messageKey = item.clientMessageId
+            ? `client-${item.clientMessageId}`
+            : `id-${item.id}`
+
           return (
             <SupportChatMessageListItem
-              key={item.id}
+              key={messageKey}
               item={item}
               previousItem={messages[index - 1]}
               editingMessageId={editingMessageId}
@@ -490,6 +501,28 @@ const SupportChatMessagesViewport = ({
               onCancelFailedMessage={onCancelFailedMessage}
               outgoingSenderType={outgoingSenderType}
             />
+          )
+        })}
+
+        {sendingMessages.map((item, index) => {
+          const messageKey = `sending-${item.clientMessageId ?? item.id}`
+          return (
+            <div key={messageKey} className="opacity-60 transition-opacity">
+              <SupportChatMessageListItem
+                item={item}
+                previousItem={index === 0 ? messages.at(-1) : sendingMessages[index - 1]}
+                editingMessageId={null}
+                editingText={''}
+                isEditingMessage={false}
+                isDeletingMessage={false}
+                onEditingTextChange={() => {}}
+                onCancelEdit={() => {}}
+                onSubmitEdit={() => {}}
+                onStartEdit={() => {}}
+                onDelete={() => {}}
+                outgoingSenderType={outgoingSenderType}
+              />
+            </div>
           )
         })}
       </div>
@@ -964,6 +997,10 @@ function SupportChatMessageMeta({
     item.status !== 'sending' &&
     item.status !== 'failed' &&
     isReadByCounterparty(item)
+  const shouldShowSentIcon =
+    isOutgoing &&
+    item.status === 'sent' &&
+    !isReadByCounterparty(item)
 
   return (
     <div className="relative flex flex-col items-end justify-end gap-2">
@@ -973,6 +1010,9 @@ function SupportChatMessageMeta({
           <Clock className="h-4 w-4 opacity-80" />
         ) : null}
         {item.status === 'failed' ? <span>Сообщение не отправлено</span> : null}
+        {shouldShowSentIcon ? (
+          <Check className="h-3 w-3 opacity-80 text-primary" />
+        ) : null}
         {shouldShowReadIcon ? (
           <CheckCheck className="h-3 w-3 opacity-80 text-primary" />
         ) : null}

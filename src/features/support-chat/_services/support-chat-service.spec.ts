@@ -45,7 +45,7 @@ import { publishSupportChatEvent } from '../_integrations/support-chat-events'
 
 describe('SupportChatService', () => {
   const attachmentRepository = {
-    createUploaded: jest.fn(),
+    findByDialogAndId: jest.fn(),
     linkToMessage: jest.fn(),
     listByMessage: jest.fn(),
     deleteByIds: jest.fn(),
@@ -89,7 +89,7 @@ describe('SupportChatService', () => {
   )
 
   beforeEach(() => {
-    attachmentRepository.createUploaded.mockReset()
+    attachmentRepository.findByDialogAndId.mockReset()
     attachmentRepository.linkToMessage.mockReset()
     attachmentRepository.listByMessage.mockReset()
     attachmentRepository.deleteByIds.mockReset()
@@ -319,7 +319,7 @@ describe('SupportChatService', () => {
     })
   })
 
-  test('sendMessage persists uploaded attachments and links them to message', async () => {
+  test('sendMessage links uploaded attachment refs to created message', async () => {
     conversationRepository.findById.mockResolvedValue({
       id: 'dialog-1',
       userId: 'user-1',
@@ -339,15 +339,7 @@ describe('SupportChatService', () => {
       attachments: [],
       createdAt: new Date(),
     })
-    ;(fileStorage.uploadFile as jest.Mock).mockResolvedValue({
-      id: 'storage-file-1',
-      name: 'image.png',
-      type: 'image/png',
-      path: 'private/support-chat/user-1/file.png',
-      prefix: '/storage',
-      eTag: 'etag-1',
-    })
-    attachmentRepository.createUploaded.mockResolvedValue({
+    attachmentRepository.findByDialogAndId.mockResolvedValue({
       id: 'attachment-1',
       dialogId: 'dialog-1',
       messageId: null,
@@ -384,19 +376,17 @@ describe('SupportChatService', () => {
       text: 'hello',
       attachments: [
         {
-          filename: 'image.png',
+          attachmentId: 'attachment-1',
+          name: 'image.png',
           mimeType: 'image/png',
           sizeBytes: 4,
-          base64: Buffer.from([1, 2, 3, 4]).toString('base64'),
         },
       ],
     })
 
-    expect(attachmentRepository.createUploaded).toHaveBeenCalledWith(
-      expect.objectContaining({
-        dialogId: 'dialog-1',
-        createdByUserId: 'user-1',
-      })
+    expect(attachmentRepository.findByDialogAndId).toHaveBeenCalledWith(
+      'dialog-1',
+      'attachment-1'
     )
     expect(attachmentRepository.linkToMessage).toHaveBeenCalledWith({
       id: 'attachment-1',
@@ -416,6 +406,47 @@ describe('SupportChatService', () => {
     )
     expect(result.message.id).toBe('message-1')
     expect(result.message.clientMessageId).toBeTruthy()
+  })
+
+  test('sendMessage rejects foreign attachment ref', async () => {
+    conversationRepository.findById.mockResolvedValue({
+      id: 'dialog-1',
+      userId: 'user-1',
+    })
+    messageRepository.findByDialogAndClientMessageId.mockResolvedValue(null)
+    attachmentRepository.findByDialogAndId.mockResolvedValue({
+      id: 'attachment-1',
+      dialogId: 'dialog-1',
+      messageId: null,
+      storagePath: 'private/support-chat/user-2/file.png',
+      mimeType: 'image/png',
+      sizeBytes: 4,
+      originalName: 'image.png',
+      createdByUserId: 'user-2',
+      status: 'UPLOADED',
+      etag: 'etag-1',
+      lastModified: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+
+    await expect(
+      service.sendMessage({
+        actor: { id: 'user-1', role: 'USER' },
+        dialogId: 'dialog-1',
+        text: 'hello',
+        attachments: [
+          {
+            attachmentId: 'attachment-1',
+            name: 'image.png',
+            mimeType: 'image/png',
+            sizeBytes: 4,
+          },
+        ],
+      })
+    ).rejects.toMatchObject<Partial<SupportChatDomainError>>({
+      code: 'INVALID_MESSAGE',
+    })
   })
 
   test('sendMessage returns existing message for repeated clientMessageId', async () => {
@@ -453,7 +484,6 @@ describe('SupportChatService', () => {
       'tmp_abc123'
     )
     expect(messageRepository.create).not.toHaveBeenCalled()
-    expect(fileStorage.uploadFile).not.toHaveBeenCalled()
     expect(publishSupportChatEvent).not.toHaveBeenCalled()
     expect(result.message.id).toBe('message-existing')
     expect(result.message.clientMessageId).toBe('tmp_abc123')

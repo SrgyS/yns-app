@@ -8,10 +8,13 @@ import {
   SupportChatConversationCard,
   type SupportChatMessageItem,
 } from '../../_ui/support-chat-conversation-card'
-import { toSupportChatAttachments } from '../../_ui/support-chat-attachments-upload'
+import {
+  toSupportChatAttachments,
+} from '../../_ui/support-chat-attachments-upload'
 import { resolveSupportChatClientErrorMessage } from '../../_domain/client-error-message'
 import {
   isIncomingChatMessageForUser,
+  createClientMessageId,
   useDialogMessages,
   useSupportChatActions,
   useSupportChatSse,
@@ -39,6 +42,7 @@ export function SupportChatUserPage() {
   const [selectedDialogId, setSelectedDialogId] = useState<string | undefined>()
   const [message, setMessage] = useState('')
   const [files, setFiles] = useState<File[]>([])
+  const [sendingMessages, setSendingMessages] = useState<SupportChatMessageItem[]>([])
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
   const [editingText, setEditingText] = useState('')
 
@@ -100,14 +104,65 @@ export function SupportChatUserPage() {
     const textPayload = hasText ? trimmedMessage : undefined
     const initialMessageText = hasText ? trimmedMessage : ''
 
+    const optimisticClientMessageId = createClientMessageId()
+    const fakePendingAttachments = files.map((file, i) => ({
+      attachmentId: `sending_${optimisticClientMessageId}_${i}`,
+      name: file.name,
+      mimeType: file.type,
+      sizeBytes: file.size,
+      previewUrl: file.type.startsWith('image/') || file.type.startsWith('video/')
+        ? URL.createObjectURL(file)
+        : undefined,
+    }))
+
+    const sendingMsg: SupportChatMessageItem = {
+      id: optimisticClientMessageId,
+      dialogId: effectiveSelectedDialogId ?? 'new',
+      senderType: 'USER',
+      text: textPayload ?? null,
+      attachments: fakePendingAttachments.length > 0 ? fakePendingAttachments.map(a => ({
+        id: a.attachmentId,
+        name: a.name,
+        path: a.previewUrl ?? '',
+        type: a.mimeType,
+        sizeBytes: a.sizeBytes,
+      })) : [],
+      status: 'sending',
+      createdAt: new Date().toISOString(),
+      canEdit: false,
+      canDelete: false,
+      readAt: null,
+      deletedAt: null,
+      deletedBy: null,
+      editedAt: null,
+    }
+
+    setSendingMessages(prev => [...prev, sendingMsg])
+    setMessage('')
+    setFiles([])
+
+    let hasDelegatedPreviewLifecycle = false
+
     try {
-      const attachments = await toSupportChatAttachments(files)
+      const attachments = await toSupportChatAttachments({
+        files,
+        dialogId: effectiveSelectedDialogId,
+        newDialog: !effectiveSelectedDialogId,
+      })
+      const pendingAttachments = attachments
+        ? attachments.map((att, i) => ({
+            ...att,
+            previewUrl: fakePendingAttachments[i]?.previewUrl,
+          }))
+        : undefined
 
       if (effectiveSelectedDialogId) {
+        hasDelegatedPreviewLifecycle = true
         await sendMessage({
           dialogId: effectiveSelectedDialogId,
           text: textPayload,
           attachments,
+          pendingAttachments,
           optimisticSenderType: 'USER',
         })
       } else {
@@ -118,10 +173,17 @@ export function SupportChatUserPage() {
         setSelectedDialogId(created.dialogId)
       }
 
-      setMessage('')
-      setFiles([])
     } catch (error) {
       toastSupportChatActionError(error, 'Не удалось отправить сообщение')
+    } finally {
+      setSendingMessages(prev => prev.filter(m => m.id !== optimisticClientMessageId))
+      if (!hasDelegatedPreviewLifecycle) {
+        fakePendingAttachments.forEach(attachment => {
+          if (attachment.previewUrl) {
+            URL.revokeObjectURL(attachment.previewUrl)
+          }
+        })
+      }
     }
   }
 
@@ -258,6 +320,7 @@ export function SupportChatUserPage() {
         isFetchingMoreMessages={isFetchingMoreMessages}
         onFetchMoreMessages={() => fetchMoreMessages()}
         messages={messages}
+        sendingMessages={sendingMessages}
         selectedDialogKey={effectiveSelectedDialogId}
         isLoadingMessages={isDialogsLoading || isCurrentDialogMessagesLoading}
         emptyStateText="Сообщений пока нет."
