@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-const MAX_ATTACHMENT_SIZE_BYTES = 25 * 1024 * 1024
+const MAX_ATTACHMENT_SIZE_BYTES = 100 * 1024 * 1024
 const MAX_ATTACHMENTS_PER_MESSAGE = 5
 
 const ALLOWED_ATTACHMENT_MIME_TYPES = new Set([
@@ -16,10 +16,10 @@ const ALLOWED_ATTACHMENT_MIME_TYPES = new Set([
 ])
 
 export const supportChatAttachmentSchema = z.object({
-  filename: z.string().min(1).max(255),
+  attachmentId: z.string().min(1),
+  name: z.string().min(1).max(255),
   mimeType: z.string().min(1),
   sizeBytes: z.number().int().positive().max(MAX_ATTACHMENT_SIZE_BYTES),
-  base64: z.string().min(1),
 })
 
 export const storedSupportChatAttachmentSchema = z.object({

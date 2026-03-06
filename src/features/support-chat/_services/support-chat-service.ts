@@ -3,6 +3,7 @@ import {
   ROLE,
   ChatMessageSenderType,
   SupportReadType,
+  ChatAttachmentStatus,
 } from '@prisma/client'
 import { createId } from '@paralleldrive/cuid2'
 import { injectable } from 'inversify'
@@ -15,11 +16,13 @@ import {
 } from '@/entities/support-chat/module'
 import { UserRepository } from '@/entities/user/_repositories/user'
 import { dbClient } from '@/shared/lib/db'
-import { sanitizeFileName } from '@/shared/lib/file-storage/utils'
 import { fileStorage } from '@/shared/lib/file-storage/file-storage'
 import { logger } from '@/shared/lib/logger'
 import { createSupportChatError } from '../_domain/errors'
-import { assertAttachmentMimeType } from '../_domain/attachment-schema'
+import {
+  assertAttachmentMimeType,
+  MAX_ATTACHMENT_SIZE_BYTES,
+} from '../_domain/attachment-schema'
 import { SupportChatReadService } from './support-chat-read-service'
 import { TelegramSupportNotifier } from '../_integrations/telegram-support-notifier'
 import { publishSupportChatEvent } from '../_integrations/support-chat-events'
@@ -86,10 +89,10 @@ type CreateDialogInput = {
 }
 
 type SupportChatAttachmentInput = {
-  filename: string
+  attachmentId: string
+  name: string
   mimeType: string
   sizeBytes: number
-  base64: string
 }
 
 type UploadedChatAttachment = {
@@ -383,10 +386,10 @@ export class SupportChatService {
       })
     }
 
-    const uploadedAttachments = await this.uploadAttachments(
+    const uploadedAttachments = await this.resolveUploadedAttachments(
       input.attachments,
       dialog.id,
-      dialog.userId
+      input.actor.id
     )
 
     const now = new Date()
@@ -833,11 +836,12 @@ export class SupportChatService {
     }
 
     const now = new Date()
-    const dialog = await this.conversationRepository.create({
+    const canonicalDialog = await this.conversationRepository.createOrReturnCanonical({
       userId: input.actor.id,
       lastMessageAt: now,
     })
-    const uploadedAttachments = await this.uploadAttachments(
+    const dialog = canonicalDialog.dialog
+    const uploadedAttachments = await this.resolveUploadedAttachments(
       input.attachments,
       dialog.id,
       input.actor.id
@@ -863,12 +867,14 @@ export class SupportChatService {
     }
 
     const occurredAt = result.createdAt.toISOString()
-    publishSupportChatEvent({
-      type: 'dialog.created',
-      dialogId: result.dialogId,
-      userId: input.actor.id,
-      occurredAt,
-    })
+    if (canonicalDialog.created) {
+      publishSupportChatEvent({
+        type: 'dialog.created',
+        dialogId: result.dialogId,
+        userId: input.actor.id,
+        occurredAt,
+      })
+    }
     publishSupportChatEvent({
       type: 'message.created',
       dialogId: result.dialogId,
@@ -1121,16 +1127,16 @@ export class SupportChatService {
     await this.attachmentRepository.deleteByIds(attachmentIds)
   }
 
-  private async uploadAttachments(
+  private async resolveUploadedAttachments(
     attachments: SupportChatAttachmentInput[] | undefined,
     dialogId: string,
-    ownerUserId: string
+    actorId: string
   ): Promise<UploadedChatAttachment[]> {
     if (!attachments || attachments.length === 0) {
       return []
     }
 
-    const uploaded = await Promise.all(
+    return await Promise.all(
       attachments.map(async attachment => {
         try {
           assertAttachmentMimeType(attachment.mimeType)
@@ -1138,47 +1144,45 @@ export class SupportChatService {
           throw createSupportChatError('INVALID_MESSAGE')
         }
 
-        const bytes = this.decodeAttachment(attachment.base64)
-        if (bytes.byteLength !== attachment.sizeBytes) {
+        if (attachment.sizeBytes > MAX_ATTACHMENT_SIZE_BYTES) {
           throw createSupportChatError('INVALID_MESSAGE')
         }
 
-        const safeName =
-          sanitizeFileName(attachment.filename) === attachment.filename
-            ? attachment.filename
-            : sanitizeFileName(attachment.filename)
-        const file = new File([bytes], safeName, {
-          type: attachment.mimeType,
-        })
-
-        const stored = await fileStorage.uploadFile(
-          file,
-          'support-chat',
-          ownerUserId,
-          'private'
-        )
-        const uploadedAttachment = await this.attachmentRepository.createUploaded({
+        const uploadedAttachment = await this.attachmentRepository.findByDialogAndId(
           dialogId,
-          storagePath: stored.path,
-          mimeType: attachment.mimeType,
-          sizeBytes: attachment.sizeBytes,
-          originalName: safeName,
-          createdByUserId: ownerUserId,
-          etag: stored.eTag ?? null,
-          lastModified: null,
-        })
+          attachment.attachmentId
+        )
+        if (!uploadedAttachment) {
+          throw createSupportChatError('INVALID_MESSAGE')
+        }
+        if (uploadedAttachment.createdByUserId !== actorId) {
+          throw createSupportChatError('INVALID_MESSAGE')
+        }
+        if (uploadedAttachment.status !== ChatAttachmentStatus.UPLOADED) {
+          throw createSupportChatError('INVALID_MESSAGE')
+        }
+        if (uploadedAttachment.messageId) {
+          throw createSupportChatError('INVALID_MESSAGE')
+        }
+        if (uploadedAttachment.mimeType !== attachment.mimeType) {
+          throw createSupportChatError('INVALID_MESSAGE')
+        }
+        if (uploadedAttachment.sizeBytes !== attachment.sizeBytes) {
+          throw createSupportChatError('INVALID_MESSAGE')
+        }
+        if (uploadedAttachment.originalName !== attachment.name) {
+          throw createSupportChatError('INVALID_MESSAGE')
+        }
 
         return {
           id: uploadedAttachment.id,
-          name: stored.name,
-          path: stored.path,
-          type: stored.type,
-          sizeBytes: attachment.sizeBytes,
+          name: uploadedAttachment.originalName,
+          path: uploadedAttachment.storagePath,
+          type: uploadedAttachment.mimeType,
+          sizeBytes: uploadedAttachment.sizeBytes,
         }
       })
     )
-
-    return uploaded
   }
 
   private async linkUploadedAttachmentsToMessage(
@@ -1205,19 +1209,4 @@ export class SupportChatService {
     )
   }
 
-  private decodeAttachment(base64Data: string): ArrayBuffer {
-    try {
-      const commaIndex = base64Data.indexOf(',')
-      const normalized = commaIndex >= 0 ? base64Data.slice(commaIndex + 1) : base64Data
-      const buffer = Buffer.from(normalized, 'base64')
-      const arrayBuffer = buffer.buffer.slice(
-        buffer.byteOffset,
-        buffer.byteOffset + buffer.byteLength
-      )
-
-      return arrayBuffer
-    } catch {
-      throw createSupportChatError('INVALID_MESSAGE')
-    }
-  }
 }

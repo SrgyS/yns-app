@@ -8,7 +8,10 @@ import {
   SupportChatConversationCard,
   type SupportChatMessageItem,
 } from '../../_ui/support-chat-conversation-card'
-import { toSupportChatAttachments } from '../../_ui/support-chat-attachments-upload'
+import {
+  toPendingSupportChatAttachments,
+  toSupportChatAttachments,
+} from '../../_ui/support-chat-attachments-upload'
 import { resolveSupportChatClientErrorMessage } from '../../_domain/client-error-message'
 import {
   isIncomingChatMessageForUser,
@@ -101,13 +104,21 @@ export function SupportChatUserPage() {
     const initialMessageText = hasText ? trimmedMessage : ''
 
     try {
-      const attachments = await toSupportChatAttachments(files)
+      const attachments = await toSupportChatAttachments({
+        files,
+        dialogId: effectiveSelectedDialogId,
+        newDialog: !effectiveSelectedDialogId,
+      })
+      const pendingAttachments = attachments
+        ? toPendingSupportChatAttachments(files, attachments)
+        : undefined
 
       if (effectiveSelectedDialogId) {
         await sendMessage({
           dialogId: effectiveSelectedDialogId,
           text: textPayload,
           attachments,
+          pendingAttachments,
           optimisticSenderType: 'USER',
         })
       } else {

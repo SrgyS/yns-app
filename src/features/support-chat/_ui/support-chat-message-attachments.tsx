@@ -20,13 +20,18 @@ const ATTACHMENT_PREVIEW_WIDTH_CLASS =
   'w-[min(22rem,calc(100vw-7rem))] max-w-full'
 
 const MAX_PREVIEW_VIEWPORT_HEIGHT_CLASS = 'max-h-[60vh]'
+const MAX_INLINE_VIDEO_PREVIEW_SIZE_BYTES = 10 * 1024 * 1024
+
+const isTemporaryPreviewPath = (path: string) => {
+  return path.startsWith('blob:')
+}
 
 const buildAttachmentUrl = (
   dialogId: string,
   attachmentId: string,
   attachmentPath: string
 ) => {
-  if (attachmentPath.startsWith('data:')) {
+  if (isTemporaryPreviewPath(attachmentPath)) {
     return attachmentPath
   }
 
@@ -198,6 +203,18 @@ function SupportChatAttachmentPreview({
   }
 
   if (isVideoAttachment(attachment)) {
+    if (attachment.sizeBytes > MAX_INLINE_VIDEO_PREVIEW_SIZE_BYTES) {
+      return (
+        <SupportChatFileCard
+          attachmentUrl={attachmentUrl}
+          attachment={attachment}
+          sizeLabel={sizeLabel}
+          label="Видео"
+          surfaceClassName={surfaceClassName}
+        />
+      )
+    }
+
     return (
       <div
         className={`relative overflow-hidden rounded-2xl ${surfaceClassName} ${ATTACHMENT_PREVIEW_WIDTH_CLASS}`}

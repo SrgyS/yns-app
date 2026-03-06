@@ -11,6 +11,7 @@ import {
   StoredFileDownload,
   StoredFileStreamDownload,
   StorageAccessLevel,
+  UploadFileOptions,
 } from '../types'
 
 export class MinioStorage {
@@ -32,9 +33,10 @@ export class MinioStorage {
     file: File,
     tag: string,
     userId: string,
-    accessLevel: StorageAccessLevel = 'public'
+    accessLevel: StorageAccessLevel = 'public',
+    options?: UploadFileOptions
   ) {
-    return this.upload(file, tag, userId, accessLevel)
+    return this.upload(file, tag, userId, accessLevel, options)
   }
 
   async downloadByPath(path: string): Promise<StoredFileDownload> {
@@ -163,7 +165,8 @@ export class MinioStorage {
     file: File,
     tag: string,
     userId: string,
-    accessLevel: StorageAccessLevel
+    accessLevel: StorageAccessLevel,
+    options?: UploadFileOptions
   ): Promise<StoredFile> {
     const bucket = this.resolveBucket(accessLevel)
     const key = `${tag}/${userId}/${Date.now().toString()}-${file.name}`
@@ -174,7 +177,7 @@ export class MinioStorage {
           ? 'application/pdf'
           : 'application/octet-stream'
 
-    const res = await new Upload({
+    const uploadTask = new Upload({
       client: this.s3Client,
       params: {
         Bucket: bucket,
@@ -186,7 +189,43 @@ export class MinioStorage {
       queueSize: 4, // optional concurrency configuration
       partSize: 1024 * 1024 * 5, // optional size of each part, in bytes, at least 5MB
       leavePartsOnError: false, // optional manually handle dropped parts
-    }).done()
+    })
+
+    if (options?.onProgress) {
+      const progressAwareUpload = uploadTask as {
+        on?: (event: string, listener: () => void) => void
+      }
+      progressAwareUpload.on?.('httpUploadProgress', () => {
+        options.onProgress?.()
+      })
+    }
+
+    const abortAwareUpload = uploadTask as {
+      abort?: () => void | Promise<void>
+    }
+    const abortUpload = () => {
+      abortAwareUpload.abort?.()
+    }
+
+    if (options?.signal?.aborted) {
+      abortUpload()
+      throw new Error('Upload aborted')
+    }
+
+    options?.signal?.addEventListener('abort', abortUpload)
+
+    let res: { ETag?: string } | undefined
+    try {
+      res = await uploadTask.done()
+    } catch (error) {
+      if (options?.signal?.aborted) {
+        await this.safeDeleteObject(bucket, key)
+        throw new Error('Upload aborted')
+      }
+      throw error
+    } finally {
+      options?.signal?.removeEventListener('abort', abortUpload)
+    }
 
     return {
       id: createId(),
@@ -195,6 +234,19 @@ export class MinioStorage {
       path: `${bucket}/${key}`,
       prefix: '/storage',
       eTag: res.ETag,
+    }
+  }
+
+  private async safeDeleteObject(bucket: string, key: string): Promise<void> {
+    try {
+      await this.s3Client.send(
+        new DeleteObjectCommand({
+          Bucket: bucket,
+          Key: key,
+        })
+      )
+    } catch {
+      // best effort cleanup for aborted/failed uploads
     }
   }
 

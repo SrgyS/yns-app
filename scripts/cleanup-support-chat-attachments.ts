@@ -63,6 +63,7 @@ async function main() {
   let totalDeletedStorage = 0
   let totalDeletedRows = 0
   let totalStorageErrors = 0
+  let totalSkippedDbDelete = 0
 
   try {
     while (true) {
@@ -75,48 +76,68 @@ async function main() {
       }
 
       totalSelected += staleAttachments.length
-      const idsToDeleteFromDb: string[] = []
 
       for (const attachment of staleAttachments) {
         if (isDryRun) {
           console.info(
             `[support-chat-cleanup][dry-run] would delete id=${attachment.id} path=${attachment.storagePath}`
           )
-          idsToDeleteFromDb.push(attachment.id)
+          totalDeletedRows += 1
           continue
         }
 
+        const isClaimedInPreviousRun =
+          attachment.status === 'LINKED' && attachment.messageId === null
+        let claimedForCleanup = isClaimedInPreviousRun
+
         try {
+          if (!claimedForCleanup) {
+            claimedForCleanup = await attachmentRepository.claimUploadedForCleanup(
+              attachment.id
+            )
+            if (!claimedForCleanup) {
+              totalSkippedDbDelete += 1
+              continue
+            }
+          }
+
           await fileStorage.deleteByPath(attachment.storagePath)
-          idsToDeleteFromDb.push(attachment.id)
+          const deletedRows = await attachmentRepository.deleteCleanupClaimedById(
+            attachment.id
+          )
+          if (deletedRows === 0) {
+            totalSkippedDbDelete += 1
+            continue
+          }
           totalDeletedStorage += 1
+          totalDeletedRows += deletedRows
         } catch (error) {
           totalStorageErrors += 1
+
+          if (claimedForCleanup) {
+            try {
+              await attachmentRepository.restoreCleanupClaim(attachment.id)
+            } catch (restoreError) {
+              console.warn(
+                `[support-chat-cleanup] failed to restore claimed row id=${attachment.id}`,
+                restoreError
+              )
+            }
+          }
+
           console.warn(
             `[support-chat-cleanup] storage delete failed id=${attachment.id} path=${attachment.storagePath}`,
             error
           )
         }
       }
-
-      if (idsToDeleteFromDb.length === 0) {
-        continue
-      }
-
-      if (isDryRun) {
-        totalDeletedRows += idsToDeleteFromDb.length
-        continue
-      }
-
-      const deletedRows = await attachmentRepository.deleteByIds(idsToDeleteFromDb)
-      totalDeletedRows += deletedRows
     }
   } finally {
     await releaseCleanupLock(lockKey)
   }
 
   console.info(
-    `[support-chat-cleanup] done selected=${totalSelected} storageDeleted=${totalDeletedStorage} rowsDeleted=${totalDeletedRows} storageErrors=${totalStorageErrors} dryRun=${isDryRun}`
+    `[support-chat-cleanup] done selected=${totalSelected} storageDeleted=${totalDeletedStorage} rowsDeleted=${totalDeletedRows} skippedDbDelete=${totalSkippedDbDelete} storageErrors=${totalStorageErrors} dryRun=${isDryRun}`
   )
 }
 
@@ -128,4 +149,3 @@ main()
   .finally(async () => {
     await dbClient.$disconnect()
   })
-

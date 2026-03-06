@@ -42,10 +42,11 @@ type InputChangeEvent = Parameters<
 >[0]
 
 export type SupportChatPendingAttachmentInput = {
-  filename: string
+  attachmentId: string
+  name: string
   mimeType: string
   sizeBytes: number
-  base64: string
+  previewUrl?: string
 }
 
 export type SupportChatMessageItem = {

@@ -23,7 +23,10 @@ import {
   SupportChatConversationCard,
   type SupportChatMessageItem,
 } from '../../_ui/support-chat-conversation-card'
-import { toSupportChatAttachments } from '../../_ui/support-chat-attachments-upload'
+import {
+  toPendingSupportChatAttachments,
+  toSupportChatAttachments,
+} from '../../_ui/support-chat-attachments-upload'
 import { resolveSupportChatClientErrorMessage } from '../../_domain/client-error-message'
 
 import {
@@ -186,12 +189,19 @@ export function SupportChatAdminInboxPage() {
     const textPayload = hasText ? trimmedMessage : undefined
 
     try {
-      const attachments = await toSupportChatAttachments(files)
+      const attachments = await toSupportChatAttachments({
+        files,
+        dialogId: selectedDialogId,
+      })
+      const pendingAttachments = attachments
+        ? toPendingSupportChatAttachments(files, attachments)
+        : undefined
 
       await sendMessage({
         dialogId: selectedDialogId,
         text: textPayload,
         attachments,
+        pendingAttachments,
         optimisticSenderType: 'STAFF',
       })
 
