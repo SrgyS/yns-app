@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 
 import { SupportChatMessageAttachments } from './support-chat-message-attachments'
+import { MAX_ATTACHMENTS_PER_MESSAGE } from '../_domain/attachment-schema'
 
 jest.mock('next/image', () => {
   return function MockNextImage(props: { alt?: string; src?: string }) {
@@ -53,5 +54,28 @@ describe('SupportChatMessageAttachments', () => {
     )
 
     expect(container.querySelector('video')).toBeInTheDocument()
+  })
+
+  test('renders image previews up to MAX_ATTACHMENTS_PER_MESSAGE', () => {
+    const attachments = Array.from(
+      { length: MAX_ATTACHMENTS_PER_MESSAGE + 1 },
+      (_, index) => ({
+        id: `att-image-${index}`,
+        name: `image-${index}.png`,
+        path: `private/support-chat/image-${index}.png`,
+        type: 'image/png',
+        sizeBytes: 100_000,
+      })
+    )
+
+    render(
+      <SupportChatMessageAttachments
+        dialogId="dialog-1"
+        attachments={attachments}
+        isOutgoing={false}
+      />
+    )
+
+    expect(screen.getAllByRole('img')).toHaveLength(MAX_ATTACHMENTS_PER_MESSAGE)
   })
 })

@@ -5,6 +5,7 @@ import { FileText } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 
 import {
+  MAX_ATTACHMENTS_PER_MESSAGE,
   parseStoredSupportChatAttachments,
   type StoredSupportChatAttachment,
 } from '../_domain/attachment-schema'
@@ -110,7 +111,7 @@ function SupportChatImagesGrid({
   images: StoredSupportChatAttachment[]
   surfaceClassName: string
 }>) {
-  const visibleImages = images.slice(0, 4)
+  const visibleImages = images.slice(0, MAX_ATTACHMENTS_PER_MESSAGE)
   const isOddVisibleCount = visibleImages.length % 2 === 1
 
   return (
