@@ -43,7 +43,7 @@ const getMessagesCacheInput = (dialogId: string) => ({
   limit: SUPPORT_CHAT_LIMIT,
 })
 
-const createClientMessageId = () => {
+export const createClientMessageId = () => {
   const randomValue =
     typeof crypto !== 'undefined' && 'randomUUID' in crypto
       ? crypto.randomUUID().replaceAll('-', '')
