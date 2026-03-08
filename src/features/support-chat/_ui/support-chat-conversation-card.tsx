@@ -787,9 +787,6 @@ function SupportChatBackButtonView({
       <BackButton
         href={backButton.href}
         label={backButton.label}
-        variant="ghost"
-        size="sm"
-        iconOnly={false}
         className={backButton.className ?? 'has-[>svg]:ps-0'}
       />
     )
@@ -799,9 +796,6 @@ function SupportChatBackButtonView({
     <BackButton
       onClick={backButton.onClick}
       label={backButton.label}
-      variant="ghost"
-      size="sm"
-      iconOnly={false}
       className={backButton.className ?? 'has-[>svg]:ps-0'}
     />
   )

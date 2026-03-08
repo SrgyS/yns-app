@@ -74,6 +74,8 @@ export function SupportChatAdminInboxPage() {
   const [showMobileChat, setShowMobileChat] = useState(false)
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
   const [editingText, setEditingText] = useState('')
+  const [isSubmitInFlight, setIsSubmitInFlight] = useState(false)
+  const submitLockRef = useRef(false)
 
   const dialogsQuery = useStaffDialogs(onlyUnanswered ? true : undefined)
   const dialogs = dialogsQuery.dialogs
@@ -173,6 +175,10 @@ export function SupportChatAdminInboxPage() {
   const handleSubmit = async (event: FormSubmitEvent) => {
     event.preventDefault()
 
+    if (submitLockRef.current) {
+      return
+    }
+
     if (!selectedDialogId) {
       toast.error('Выберите диалог для ответа')
       return
@@ -187,6 +193,9 @@ export function SupportChatAdminInboxPage() {
     }
 
     const textPayload = hasText ? trimmedMessage : undefined
+
+    submitLockRef.current = true
+    setIsSubmitInFlight(true)
 
     try {
       const attachments = await toSupportChatAttachments({
@@ -209,6 +218,9 @@ export function SupportChatAdminInboxPage() {
       setFiles([])
     } catch (error) {
       toastSupportChatActionError(error, 'Не удалось отправить ответ')
+    } finally {
+      submitLockRef.current = false
+      setIsSubmitInFlight(false)
     }
   }
 
@@ -400,9 +412,10 @@ export function SupportChatAdminInboxPage() {
         onRetryFailedMessage={handleRetryFailedMessage}
         onCancelFailedMessage={handleCancelFailedMessage}
         handleSubmit={handleSubmit}
-        isSubmitting={isSendingMessage}
+        isSubmitting={isSendingMessage || isSubmitInFlight}
         isSubmitDisabled={
           isSendingMessage ||
+          isSubmitInFlight ||
           isOpeningStaffDialog ||
           (!hasDraftText && !hasDraftFiles)
         }

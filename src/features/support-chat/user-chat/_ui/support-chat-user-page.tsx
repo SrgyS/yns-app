@@ -45,6 +45,8 @@ export function SupportChatUserPage() {
   const [sendingMessages, setSendingMessages] = useState<SupportChatMessageItem[]>([])
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
   const [editingText, setEditingText] = useState('')
+  const [isSubmitInFlight, setIsSubmitInFlight] = useState(false)
+  const submitLockRef = useRef(false)
 
   const effectiveSelectedDialogId = selectedDialogId ?? dialogs[0]?.dialogId
   const selectedDialog = dialogs.find(dialog => dialog.dialogId === effectiveSelectedDialogId)
@@ -93,6 +95,10 @@ export function SupportChatUserPage() {
   const handleSubmit = async (event: FormSubmitEvent) => {
     event.preventDefault()
 
+    if (submitLockRef.current) {
+      return
+    }
+
     const hasText = hasDraftText
     const hasFiles = hasDraftFiles
 
@@ -103,6 +109,9 @@ export function SupportChatUserPage() {
 
     const textPayload = hasText ? trimmedMessage : undefined
     const initialMessageText = hasText ? trimmedMessage : ''
+
+    submitLockRef.current = true
+    setIsSubmitInFlight(true)
 
     const optimisticClientMessageId = createClientMessageId()
     const fakePendingAttachments = files.map((file, i) => ({
@@ -184,6 +193,8 @@ export function SupportChatUserPage() {
           }
         })
       }
+      submitLockRef.current = false
+      setIsSubmitInFlight(false)
     }
   }
 
@@ -341,10 +352,11 @@ export function SupportChatUserPage() {
         onRemoveFile={handleRemoveFile}
         files={files}
         onSubmit={handleSubmit}
-        isSubmitting={isSendingMessage || isCreatingDialog}
+        isSubmitting={isSendingMessage || isCreatingDialog || isSubmitInFlight}
         isSubmitDisabled={
           isSendingMessage ||
           isCreatingDialog ||
+          isSubmitInFlight ||
           (!hasDraftText && !hasDraftFiles)
         }
         outgoingSenderType="USER"

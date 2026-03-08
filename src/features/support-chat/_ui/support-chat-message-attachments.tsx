@@ -166,7 +166,7 @@ function SupportChatAttachmentPreview({
   )
   const sizeLabel = formatAttachmentSize(attachment.sizeBytes)
   const sizeBadgeClassName =
-    'absolute right-2 top-2 rounded-md bg-foreground px-2 py-0.5 text-[10px] font-medium text-white'
+    'absolute right-2 top-2 rounded-md bg-foreground/80 px-2 py-0.5 text-[10px] font-medium text-secondary'
   const [isLoadingPreview, setIsLoadingPreview] = useState(
     isImageAttachment(attachment) || isVideoAttachment(attachment)
   )
