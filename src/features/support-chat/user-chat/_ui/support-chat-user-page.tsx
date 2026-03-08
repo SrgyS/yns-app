@@ -146,7 +146,10 @@ export function SupportChatUserPage() {
       editedAt: null,
     }
 
-    setSendingMessages(prev => [...prev, sendingMsg])
+    const shouldRenderLocalSendingMessage = !effectiveSelectedDialogId
+    if (shouldRenderLocalSendingMessage) {
+      setSendingMessages(prev => [...prev, sendingMsg])
+    }
     setMessage('')
     setFiles([])
 
@@ -185,7 +188,9 @@ export function SupportChatUserPage() {
     } catch (error) {
       toastSupportChatActionError(error, 'Не удалось отправить сообщение')
     } finally {
-      setSendingMessages(prev => prev.filter(m => m.id !== optimisticClientMessageId))
+      if (shouldRenderLocalSendingMessage) {
+        setSendingMessages(prev => prev.filter(m => m.id !== optimisticClientMessageId))
+      }
       if (!hasDelegatedPreviewLifecycle) {
         fakePendingAttachments.forEach(attachment => {
           if (attachment.previewUrl) {

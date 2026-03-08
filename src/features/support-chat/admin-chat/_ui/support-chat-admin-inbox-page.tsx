@@ -193,17 +193,21 @@ export function SupportChatAdminInboxPage() {
     }
 
     const textPayload = hasText ? trimmedMessage : undefined
+    const draftMessage = message
+    const draftFiles = [...files]
 
     submitLockRef.current = true
     setIsSubmitInFlight(true)
+    setMessage('')
+    setFiles([])
 
     try {
       const attachments = await toSupportChatAttachments({
-        files,
+        files: draftFiles,
         dialogId: selectedDialogId,
       })
       const pendingAttachments = attachments
-        ? toPendingSupportChatAttachments(files, attachments)
+        ? toPendingSupportChatAttachments(draftFiles, attachments)
         : undefined
 
       await sendMessage({
@@ -213,10 +217,9 @@ export function SupportChatAdminInboxPage() {
         pendingAttachments,
         optimisticSenderType: 'STAFF',
       })
-
-      setMessage('')
-      setFiles([])
     } catch (error) {
+      setMessage(draftMessage)
+      setFiles(draftFiles)
       toastSupportChatActionError(error, 'Не удалось отправить ответ')
     } finally {
       submitLockRef.current = false
