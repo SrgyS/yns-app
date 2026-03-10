@@ -216,7 +216,7 @@ export function TariffsBlockComponent({
   title,
   course,
   tariffPresentation,
-}: TariffsBlockComponentProps) {
+}: Readonly<TariffsBlockComponentProps>) {
   const resolvedTitle = title || 'Тарифы'
 
   const urlReturn = getCoursePublicPath(course.slug)

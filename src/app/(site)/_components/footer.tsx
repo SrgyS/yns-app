@@ -1,60 +1,21 @@
 import { Logo } from '@/features/headers/top-bar/_ui/logo'
+import { getPublicNavigation } from '@/features/navigation/_services/get-public-navigation'
 import { Separator } from '@/shared/ui/separator'
 import Link from 'next/link'
 import { Button } from '@/shared/ui/button'
 import { SocialsRow } from '@/shared/ui/socials-row'
 import { cn } from '@/shared/ui/utils'
 
-const footerSections = [
-  {
-    title: 'Курсы и предложения',
-    links: [
-      {
-        title: 'Перезагрузка движения',
-        href: '/courses/reload/',
-      },
-      {
-        title: 'Тело без отеков',
-        href: '/courses/noedema/',
-      },
-      {
-        title: 'Антикорка',
-        href: '/courses/antikork/',
-      },
-      {
-        title: 'Клуб "Я на спорте"',
-        href: '/courses/club/',
-      },
-      {
-        title: 'Персональная работа',
-        href: '/#individual',
-      },
-    ],
-  },
-  {
-    title: 'Другие страницы',
-    links: [
-      {
-        title: 'Главная',
-        href: '/',
-      },
-      {
-        title: 'Обо мне',
-        href: '/about',
-      },
-      {
-        title: 'Результаты и отзывы клиентов',
-        href: '/results',
-      },
-      {
-        title: 'Оборудование для тренировок',
-        href: '/equipment',
-      },
-    ],
-  },
-]
+export const Footer = async ({ className }: { className?: string }) => {
+  const publicNavigation = await getPublicNavigation()
+  const footerSections = publicNavigation.footerSections.map(section => ({
+    title: section.title,
+    links: section.links.map(link => ({
+      title: link.label,
+      href: link.href,
+    })),
+  }))
 
-export const Footer = ({ className }: { className?: string }) => {
   return (
     <footer className={cn('bg-black text-white py-8 w-full', className)}>
       <div className="px-1.5 min-[375px]:container">
