@@ -11,15 +11,19 @@ const footerSections = [
     links: [
       {
         title: 'Перезагрузка движения',
-        href: '/#programs',
+        href: '/courses/reload/',
       },
       {
         title: 'Тело без отеков',
-        href: '/#programs',
+        href: '/courses/noedema/',
       },
       {
         title: 'Антикорка',
-        href: '/#programs',
+        href: '/courses/antikork/',
+      },
+      {
+        title: 'Клуб "Я на спорте"',
+        href: '/courses/club/',
       },
       {
         title: 'Персональная работа',
