@@ -47,7 +47,7 @@ export function HeroBlockComponent({
 
   return (
     <div className="space-y-4">
-      <section className="relative overflow-hidden rounded-3xl border">
+      <section className="relative overflow-hidden border">
         {/* Background Image */}
         <div className="absolute inset-0">
           {finalImage && (
