@@ -4,6 +4,7 @@ import { CalendarTabs } from '@/features/daily-plan/_ui/calendar-tabs'
 import { Suspense, useEffect } from 'react'
 import { Skeleton } from '@/shared/ui/skeleton/skeleton'
 import { CourseBanner } from '@/features/daily-plan/_ui/course-banner'
+import { DayPageSkeleton } from '@/features/daily-plan/_ui/day-page-skeleton'
 import {
   isCourseAccessState,
   useCheckAccessByCourseSlugQuery,
@@ -76,12 +77,7 @@ export function DayPageClient({ courseSlug }: { courseSlug: CourseSlug }) {
   }, [shouldRedirectToSetup, enrollmentCourseId, router])
 
   if (shouldShowInitialLoading) {
-    return (
-      <div className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
-        <Skeleton className="h-6 w-[300px]" />
-        <Skeleton className="h-[200px] w-full" />
-      </div>
-    )
+    return <DayPageSkeleton />
   }
 
   if (!hasAccess || !enrollment) {
@@ -98,12 +94,7 @@ export function DayPageClient({ courseSlug }: { courseSlug: CourseSlug }) {
   }
 
   if (shouldRedirectToSetup) {
-    return (
-      <section className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 py-4 sm:px-4 md:px-6">
-        <Skeleton className="h-6 w-[300px]" />
-        <Skeleton className="h-[200px] w-full" />
-      </section>
-    )
+    return <DayPageSkeleton />
   }
 
   return (

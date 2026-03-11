@@ -22,7 +22,7 @@ type BlockRendererProps = {
   course: Course
 }
 
-export function BlockRenderer({ blocks, course }: BlockRendererProps) {
+export function BlockRenderer({ blocks, course }: Readonly<BlockRendererProps>) {
   if (!blocks || blocks.length === 0) {
     return null
   }
@@ -38,9 +38,9 @@ export function BlockRenderer({ blocks, course }: BlockRendererProps) {
     }
 
     const nextBlock = visibleBlocks[index + 1]
-    if (!nextBlock || nextBlock.type !== 'video') {
-      return undefined
-    }
+   if (nextBlock?.type !== 'video') {
+     return undefined
+   }
 
     return nextBlock
   }

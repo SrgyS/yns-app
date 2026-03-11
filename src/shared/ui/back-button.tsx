@@ -1,9 +1,9 @@
-import Link from 'next/link'
 import { type ComponentProps } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { type VariantProps } from 'class-variance-authority'
 
 import { Button, buttonVariants } from '@/shared/ui/button'
+import { SmartLink } from '@/shared/ui/smart-link'
 
 type BackButtonVariant = VariantProps<typeof buttonVariants>['variant']
 type BackButtonSize = VariantProps<typeof buttonVariants>['size']
@@ -37,7 +37,7 @@ export function BackButton({
   if (href) {
     return (
       <Button variant={variant} size={size} className={className} asChild>
-        <Link href={href}>{content}</Link>
+        <SmartLink href={href}>{content}</SmartLink>
       </Button>
     )
   }

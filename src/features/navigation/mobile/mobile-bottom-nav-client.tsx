@@ -1,10 +1,11 @@
 'use client'
 
-import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import { LogIn } from 'lucide-react'
 import { PLATFORM_NAV_ITEMS } from '@/features/navigation/nav-items'
+import { startNavigationFeedback } from '@/shared/lib/navigation/navigation-feedback'
+import { SmartLink } from '@/shared/ui/smart-link'
 import { cn } from '@/shared/ui/utils'
 import { SignInButton } from '@/features/auth/_ui/sign-in-button'
 
@@ -110,7 +111,8 @@ export function MobileBottomNavClient({
 
           return (
             <li key={item.key} className="flex flex-1 justify-center">
-              <Link
+              <SmartLink
+                disableNavigationFeedback
                 href={href}
                 className={cn(
                   'group flex flex-col items-center justify-start gap-1 rounded-md px-1 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground max-[370px]:gap-0.5 max-[370px]:px-1.5 max-[370px]:py-0.5',
@@ -126,6 +128,7 @@ export function MobileBottomNavClient({
                   if (!isPending) {
                     lastPendingHref = href
                     setPendingHref(href)
+                    startNavigationFeedback()
                   }
                 }}
               >
@@ -137,7 +140,7 @@ export function MobileBottomNavClient({
                   aria-hidden="true"
                 />
                 <span className="text-center">{item.label}</span>
-              </Link>
+              </SmartLink>
             </li>
           )
         })}

@@ -17,7 +17,7 @@ export default function ErrorPage({
   }, [error])
 
   return (
-    <section className="flex flex-col justify-center space-y-6 py-14 container max-w-[800px]">
+    <section className="flex flex-col justify-center space-y-6 py-14 container max-w-200">
       <div className="text-center">
         <h1 className="text-2xl font-bold">Что-то пошло не так</h1>
         <p className="mt-4">

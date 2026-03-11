@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/shared/ui/dropdown-menu'
+import { SmartLink } from '@/shared/ui/smart-link'
 import { cn } from '@/shared/ui/utils'
 import { useCallback, useEffect, useState } from 'react'
 
@@ -37,6 +38,7 @@ type DesktopNavLinkProps = {
   pendingHref: string | null
   isActive: ActiveHrefMatcher
   onNavigate: (href: string) => void
+  useSmartLink: boolean
 }
 
 type CoursesDropdownProps = {
@@ -89,18 +91,39 @@ function DesktopNavLink({
   pendingHref,
   isActive,
   onNavigate,
+  useSmartLink,
 }: Readonly<DesktopNavLinkProps>) {
   const isCurrentRoute = isActive(item.href)
   const isPending = pendingHref === item.href
   const active = pendingHref ? isPending : isCurrentRoute
   const isDisabled = !pendingHref && isCurrentRoute
+  const linkClassName = cn(
+    'text-foreground/60 transition-colors hover:text-foreground/80',
+    active && 'text-foreground font-semibold'
+  )
+
+  if (useSmartLink) {
+    return (
+      <SmartLink
+        className={linkClassName}
+        href={item.href}
+        onClick={event => {
+          if (isDisabled) {
+            event.preventDefault()
+            return
+          }
+
+          onNavigate(item.href)
+        }}
+      >
+        {item.label}
+      </SmartLink>
+    )
+  }
 
   return (
     <Link
-      className={cn(
-        'text-foreground/60 transition-colors hover:text-foreground/80',
-        active && 'text-foreground font-semibold'
-      )}
+      className={linkClassName}
       href={item.href}
       onClick={event => {
         if (isDisabled) {
@@ -193,6 +216,7 @@ export function MainNavClient({
           pendingHref={pendingHref}
           isActive={isActive}
           onNavigate={handleNavigate}
+          useSmartLink={variant === 'private'}
         />
       ))}
       {variant === 'public' && desktopCoursesMenu ? (
