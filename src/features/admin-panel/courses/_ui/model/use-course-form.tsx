@@ -10,6 +10,11 @@ import { adminCoursesApi } from '../../_api'
 import type { CourseUpsertInput } from '../../_schemas'
 import { courseFormSchema, CourseFormValues } from './schema'
 import { CourseTariff } from '@/kernel/domain/course'
+import {
+  createDefaultSubscriptionTariffMatrix,
+  flattenSubscriptionTariffMatrix,
+  mapTariffsToSubscriptionMatrix,
+} from './subscription-tariffs'
 
 export function useCourseForm(editSlug?: string) {
   const router = useRouter()
@@ -50,6 +55,7 @@ export function useCourseForm(editSlug?: string) {
           feedback: false,
         },
       ],
+      subscriptionTariffs: createDefaultSubscriptionTariffMatrix(),
       durationWeeks: 4,
       allowedWorkoutDaysPerWeek: [5],
       thumbnail: '',
@@ -92,6 +98,11 @@ export function useCourseForm(editSlug?: string) {
             },
           ]
 
+    const subscriptionTariffs =
+      courseData.contentType === CourseContentType.SUBSCRIPTION
+        ? mapTariffsToSubscriptionMatrix(tariffsWithId)
+        : createDefaultSubscriptionTariffMatrix()
+
     const existingWeeks =
       courseData.weeks?.map(week => ({
         id: week.id,
@@ -115,6 +126,7 @@ export function useCourseForm(editSlug?: string) {
       shortDescription: courseData.shortDescription ?? '',
       contentType: courseData.contentType as CourseContentType,
       tariffs: tariffsFormValues,
+      subscriptionTariffs,
       durationWeeks: courseData.durationWeeks,
       allowedWorkoutDaysPerWeek: courseData.allowedWorkoutDaysPerWeek ?? [5],
       thumbnail: courseData.thumbnail ?? '',
@@ -141,16 +153,17 @@ export function useCourseForm(editSlug?: string) {
             warmupId: plan.warmupId || null,
           })) ?? []
 
-        const tariffs: CourseUpsertInput['tariffs'] = data.tariffs.map(
-          tariff => {
-            return {
-              access: 'paid',
-              price: Number(tariff.price),
-              durationDays: Number(tariff.durationDays),
-              feedback: tariff.feedback ?? false,
-            }
-          }
-        )
+        const tariffs: CourseUpsertInput['tariffs'] =
+          data.contentType === CourseContentType.SUBSCRIPTION
+            ? flattenSubscriptionTariffMatrix(data.subscriptionTariffs)
+            : data.tariffs.map(tariff => {
+                return {
+                  access: 'paid',
+                  price: Number(tariff.price),
+                  durationDays: Number(tariff.durationDays),
+                  feedback: tariff.feedback ?? false,
+                }
+              })
 
         // Prepare weeks based on current state
         // data.weeks is already populated via useFieldArray in the UI

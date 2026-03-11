@@ -1,6 +1,7 @@
 'use client'
 
 import { Course, UserCourseEnrollmentApi } from '@/entities/course'
+import { startNavigationFeedback } from '@/shared/lib/navigation/navigation-feedback'
 import { Button } from '@/shared/ui/button'
 import {
   Card,
@@ -13,7 +14,7 @@ import { CalendarDays, CheckCircle, Snowflake } from 'lucide-react'
 import { Badge } from '@/shared/ui/badge'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import React from 'react'
+import React, { useTransition } from 'react'
 import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
 import { SmallSpinner } from '@/shared/ui/small-spinner'
 import { EditWorkoutDaysField } from './edit-workout-days-field'
@@ -41,6 +42,8 @@ export function UserCourseItem({
   const courseEnrollmentUtils = courseEnrollmentApi.useUtils()
   const workoutUtils = workoutApi.useUtils()
   const router = useRouter()
+  const [isWorkoutNavigationPending, startWorkoutNavigationTransition] =
+    useTransition()
 
   const handleActivate = async () => {
     if (freezeUntil) {
@@ -55,20 +58,22 @@ export function UserCourseItem({
   }
 
   // Обработчик для перехода к тренировкам с инвалидацией кеша
-  const handleGoToWorkouts = async (e: React.MouseEvent) => {
+  const handleGoToWorkouts = (event: React.MouseEvent) => {
     if (freezeUntil) {
-      e.preventDefault()
+      event.preventDefault()
       return
     }
-    e.preventDefault()
 
-    // Инвалидируем конкретные запросы вместо всего кеша
-    await courseEnrollmentUtils.course.getEnrollmentByCourseSlug.invalidate()
-    await workoutUtils.getUserDailyPlan.invalidate()
-    await courseEnrollmentUtils.course.getEnrollment.invalidate()
+    event.preventDefault()
 
-    // Переходим на страницу тренировок
-    router.push(`/platform/day/${course.slug}`)
+    startWorkoutNavigationTransition(async () => {
+      await courseEnrollmentUtils.course.getEnrollmentByCourseSlug.invalidate()
+      await workoutUtils.getUserDailyPlan.invalidate()
+      await courseEnrollmentUtils.course.getEnrollment.invalidate()
+
+      startNavigationFeedback()
+      router.push(`/platform/day/${course.slug}`)
+    })
   }
 
   const startDateFormatted = format(
@@ -123,13 +128,17 @@ export function UserCourseItem({
       </CardContent>
       <CardFooter className="flex justify-between">
         {enrollment.active ? (
-          <Button onClick={handleGoToWorkouts} disabled={!!freezeUntil}>
+          <Button
+            onClick={handleGoToWorkouts}
+            disabled={Boolean(freezeUntil) || isWorkoutNavigationPending}
+          >
+            <SmallSpinner isLoading={isWorkoutNavigationPending} />
             Перейти к тренировкам
           </Button>
         ) : (
           <Button
             onClick={handleActivate}
-            disabled={isActivating || !!freezeUntil}
+            disabled={isActivating || Boolean(freezeUntil)}
             variant="secondary"
           >
             <CheckCircle className="mr-2 h-4 w-4" />

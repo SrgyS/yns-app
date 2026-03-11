@@ -1,11 +1,13 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { useCourseEnrollment } from '@/features/course-enrollment/_vm/use-course-enrollment'
+import { startNavigationFeedback } from '@/shared/lib/navigation/navigation-feedback'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
+import { SmallSpinner } from '@/shared/ui/small-spinner'
 
 type CourseActivationOptionProps = {
   courseSlug: string
@@ -22,6 +24,7 @@ export function CourseActivationOption({
 }: CourseActivationOptionProps) {
   const router = useRouter()
   const { activateEnrollment, isActivating } = useCourseEnrollment()
+  const [isNavigationPending, startNavigationTransition] = useTransition()
 
   const expiresAtLabel = useMemo(() => {
     if (!accessExpiresAt) {
@@ -38,14 +41,19 @@ export function CourseActivationOption({
     }).format(date)
   }, [accessExpiresAt])
 
-  const handleSelect = async () => {
-    try {
-      await activateEnrollment(enrollmentId)
-      router.push(`/platform/day/${courseSlug}`)
-    } catch (error) {
-      console.error('Ошибка при активации курса:', error)
-    }
+  const handleSelect = () => {
+    startNavigationTransition(async () => {
+      try {
+        await activateEnrollment(enrollmentId)
+        startNavigationFeedback()
+        router.push(`/platform/day/${courseSlug}`)
+      } catch (error) {
+        console.error('Ошибка при активации курса:', error)
+      }
+    })
   }
+
+  const isPending = isActivating || isNavigationPending
 
   return (
     <Card>
@@ -58,7 +66,8 @@ export function CourseActivationOption({
             Доступ действует до {expiresAtLabel}
           </p>
         )}
-        <Button onClick={handleSelect} disabled={isActivating}>
+        <Button onClick={handleSelect} disabled={isPending}>
+          <SmallSpinner isLoading={isPending} />
           Сделать активным
         </Button>
       </CardContent>

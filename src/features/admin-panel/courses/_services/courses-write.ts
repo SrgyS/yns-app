@@ -1,5 +1,5 @@
 import { injectable, inject } from 'inversify'
-import { Prisma, AccessType } from '@prisma/client'
+import { Prisma, AccessType, CourseContentType } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 import { dbClient } from '@/shared/lib/db'
 import {
@@ -173,6 +173,47 @@ export class CoursesWriteService {
           })
         }
       }
+    }
+
+    if (input.contentType === CourseContentType.SUBSCRIPTION) {
+      this.validateSubscriptionTariffs(input.tariffs)
+    }
+  }
+
+  private validateSubscriptionTariffs(tariffs: CourseUpsertInput['tariffs']) {
+    if (tariffs.length !== 6) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message:
+          'Для подписки требуется ровно 6 тарифов: по 3 с обратной связью и без неё',
+      })
+    }
+
+    const withoutFeedback = tariffs.filter(tariff => !tariff.feedback)
+    const withFeedback = tariffs.filter(tariff => tariff.feedback)
+
+    if (withoutFeedback.length !== 3 || withFeedback.length !== 3) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message:
+          'Для подписки требуется ровно 3 тарифа без обратной связи и 3 тарифа с обратной связью',
+      })
+    }
+
+    const combinations = new Set<string>()
+
+    for (const tariff of tariffs) {
+      const combinationKey = `${tariff.feedback}:${tariff.durationDays}`
+
+      if (combinations.has(combinationKey)) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message:
+            'Для подписки длительность доступа должна быть уникальной внутри каждой группы тарифов',
+        })
+      }
+
+      combinations.add(combinationKey)
     }
   }
 

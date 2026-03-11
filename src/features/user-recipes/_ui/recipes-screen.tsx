@@ -14,8 +14,8 @@ import {
   SheetFooter,
 } from '@/shared/ui/sheet'
 import { Switch } from '@/shared/ui/switch'
-import { SmallSpinner } from '@/shared/ui/small-spinner'
 import { AppImage } from '@/shared/ui/app-image'
+import { Skeleton } from '@/shared/ui/skeleton/skeleton'
 import { userRecipesApi } from '../_api'
 import { toast } from 'sonner'
 
@@ -439,9 +439,20 @@ function RecipesState({
 
 function RecipesLoadingState() {
   return (
-    <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
-      <SmallSpinner isLoading />
-      <span>Загрузка рецептов...</span>
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+      {Array.from({ length: 8 }).map((_, index) => (
+        <div
+          key={index}
+          className="overflow-hidden rounded-xl border border-border/80 bg-card"
+        >
+          <Skeleton className="h-32 w-full rounded-none md:h-40" />
+          <div className="space-y-3 p-3">
+            <Skeleton className="h-5 w-4/5" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

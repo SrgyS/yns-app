@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { KinescopePlayer, type PlayerHandle } from './kinescope-player'
 import { Timer } from 'lucide-react'
 import { Badge } from '@/shared/ui/badge'
@@ -59,10 +59,13 @@ export function ExerciseCard({
     isToggling: isTogglingFavorite,
   } = useWorkoutFavorites({ enabled: Boolean(session?.user?.id) })
 
-  const playerOptions = {
-    size: { width: '100%', height: '100%' },
-    autoplay: false,
-  }
+  const playerOptions = useMemo(
+    () => ({
+      size: { width: '100%', height: '100%' },
+      autoplay: false,
+    }),
+    []
+  )
 
   const durationMinutes = getDurationMinutes(workout?.durationSec ?? null)
 
@@ -142,7 +145,7 @@ export function ExerciseCard({
   }
 
   return (
-    <Card className="min-h-min rounded-lg gap-4 py-3 sm:rounded-xl sm:gap-5 sm:py-4 max-[400px]:gap-3 max-[400px]:py-2">
+    <Card className="min-h-75 rounded-lg gap-4 py-3 sm:rounded-xl sm:gap-5 sm:py-4 max-[400px]:gap-3 max-[400px]:py-2">
       <CardContent className="px-3 sm:px-4">
         <h3 className="text-base font-medium sm:text-lg mb-1">{title}</h3>
         {workout?.videoId && (
@@ -152,6 +155,7 @@ export function ExerciseCard({
               ref={playerRef}
               videoId={workout.videoId}
               options={playerOptions}
+              completionState={isCompleted}
               onEnded={handleVideoCompleted}
               onPlay={handleVideoPlay}
               onPause={handleVideoPause}

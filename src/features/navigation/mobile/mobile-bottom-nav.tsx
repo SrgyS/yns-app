@@ -1,8 +1,7 @@
 import { getNavigationContext } from '@/features/navigation/nav-context'
 import { MobileBottomNavClient } from './mobile-bottom-nav-client'
 import { PublicMobileNavClient } from './public-mobile-nav-client'
-import { server } from '@/app/server'
-import { GetCoursesListService } from '@/entities/course/module'
+import { getPublicNavigation } from '@/features/navigation/_services/get-public-navigation'
 
 export async function MobileBottomNav({
   variant,
@@ -14,13 +13,13 @@ export async function MobileBottomNav({
   }
 
   if (variant === 'public') {
-    const coursesService = server.get(GetCoursesListService)
-    const courses = await coursesService.exec()
+    const publicNavigation = await getPublicNavigation()
     const navigationContext = await getNavigationContext()
 
     return (
       <PublicMobileNavClient
-        courses={courses}
+        menuItems={publicNavigation.mobileMenuItems}
+        courseItems={publicNavigation.courseItems}
         profileHref={navigationContext.profileHref}
         isAuthenticated={navigationContext.isAuthenticated}
       />

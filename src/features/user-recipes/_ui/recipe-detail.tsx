@@ -15,10 +15,10 @@ import {
 import { Separator } from '@/shared/ui/separator'
 import { AppImage } from '@/shared/ui/app-image'
 import { Clock, Flame, ChefHat, Minus, Plus, Heart } from 'lucide-react'
-import { SmallSpinner } from '@/shared/ui/small-spinner'
 import { userRecipesApi } from '../_api'
 import { toast } from 'sonner'
 import { BackButton } from '@/shared/ui/back-button'
+import { Skeleton } from '@/shared/ui/skeleton/skeleton'
 
 type RecipeDetailProps = {
   slug: string
@@ -56,9 +56,56 @@ export function RecipeDetail({ slug }: Readonly<RecipeDetailProps>) {
 
   if (detailQuery.isLoading) {
     return (
-      <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
-        <SmallSpinner isLoading />
-        <span>Загрузка рецепта...</span>
+      <div className="relative">
+        <div className="fixed inset-x-0 top-0 z-0 px-3 sm:top-14 sm:px-6">
+          <div className="relative mx-auto h-88 w-full max-w-xl overflow-hidden bg-muted sm:h-104">
+            <Skeleton className="h-full w-full rounded-none" />
+          </div>
+        </div>
+
+        <div className="relative z-10 pt-80 sm:pt-96">
+          <div className="mx-auto w-full max-w-xl rounded-t-4xl bg-background px-4 pb-8 pt-6 shadow-[0_-12px_32px_rgba(0,0,0,0.08)]">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-2/3" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <Skeleton key={index} className="h-6 w-20 rounded-full" />
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              <Skeleton className="h-7 w-40" />
+              <div className="space-y-2 rounded-md border p-3">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start justify-between gap-4"
+                  >
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-4 w-40" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              <Skeleton className="h-7 w-44" />
+              <div className="space-y-3 rounded-md border p-3">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="space-y-2">
+                    <Skeleton className="h-5 w-24" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-5/6" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
@@ -76,7 +123,7 @@ export function RecipeDetail({ slug }: Readonly<RecipeDetailProps>) {
   return (
     <div className="relative">
       <div className="fixed inset-x-0 top-0 z-0 px-3 sm:top-14 sm:px-6">
-        <div className="relative mx-auto h-[22rem] w-full max-w-xl overflow-hidden bg-muted sm:h-[26rem]">
+        <div className="relative mx-auto h-88 w-full max-w-xl overflow-hidden bg-muted sm:h-104">
           {recipe.imageUrl ? (
             <AppImage
               src={recipe.imageUrl}
@@ -85,7 +132,7 @@ export function RecipeDetail({ slug }: Readonly<RecipeDetailProps>) {
               className="object-cover"
             />
           ) : null}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/10 to-black/45" />
+          <div className="absolute inset-0 bg-linear-to-b from-black/35 via-black/10 to-black/45" />
         </div>
       </div>
 
@@ -111,8 +158,8 @@ export function RecipeDetail({ slug }: Readonly<RecipeDetailProps>) {
         </div>
       </div>
 
-      <div className="relative z-10 pt-[20rem] sm:pt-[24rem]">
-        <div className="mx-auto w-full max-w-xl rounded-t-[2rem] bg-background px-4 pb-8 pt-6 shadow-[0_-12px_32px_rgba(0,0,0,0.08)]">
+      <div className="relative z-10 pt-80 sm:pt-96">
+        <div className="mx-auto w-full max-w-xl rounded-t-4xl bg-background px-4 pb-8 pt-6 shadow-[0_-12px_32px_rgba(0,0,0,0.08)]">
           <div className="space-y-4">
             <div className="space-y-2">
               <h1 className="text-2xl font-semibold">{recipe.title}</h1>

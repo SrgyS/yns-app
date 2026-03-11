@@ -2,11 +2,17 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { ChevronDown } from 'lucide-react'
+import { PLATFORM_NAV_ITEMS } from '@/features/navigation/nav-items'
+import type { PublicCoursesMenu } from '@/features/navigation/_services/get-public-navigation'
+import type { PublicNavigationLink } from '@/features/navigation/public-navigation-config'
 import {
-  PLATFORM_NAV_ITEMS,
-  PUBLIC_NAV_ITEMS,
-  type NavigationItem,
-} from '@/features/navigation/nav-items'
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/shared/ui/dropdown-menu'
+import { SmartLink } from '@/shared/ui/smart-link'
 import { cn } from '@/shared/ui/utils'
 import { useCallback, useEffect, useState } from 'react'
 
@@ -15,97 +21,207 @@ type MainNavClientProps = {
   planUrl?: string
   hasActiveCourse?: boolean
   hasAnyCourses?: boolean
+  desktopItems?: PublicNavigationLink[]
+  desktopCoursesMenu?: PublicCoursesMenu
 }
 
-let lastPendingHref: string | null = null
+type DesktopNavItem = {
+  key: string
+  label: string
+  href: string
+}
+
+type ActiveHrefMatcher = (href: string) => boolean
+
+type DesktopNavLinkProps = {
+  item: DesktopNavItem
+  pendingHref: string | null
+  isActive: ActiveHrefMatcher
+  onNavigate: (href: string) => void
+  useSmartLink: boolean
+}
+
+type CoursesDropdownProps = {
+  menu: PublicCoursesMenu
+  isActive: ActiveHrefMatcher
+}
+
+function resolveDesktopItems(
+  variant: MainNavClientProps['variant'],
+  desktopItems: PublicNavigationLink[],
+  planUrl?: string
+): DesktopNavItem[] {
+  if (variant === 'public') {
+    return desktopItems
+  }
+
+  return PLATFORM_NAV_ITEMS.filter(item => item.targets.includes('desktop')).map(
+    item => ({
+      key: item.key,
+      label: item.label,
+      href: item.key === 'plan' && planUrl ? planUrl : item.href,
+    })
+  )
+}
+
+function isPathActive(pathname: string, href: string) {
+  const currentPath = pathname === '' ? '/' : pathname
+
+  if (href === '/') {
+    return currentPath === '/'
+  }
+
+  if (currentPath === href) {
+    return true
+  }
+
+  const normalizedHref = href.endsWith('/') ? href.slice(0, -1) : href
+  if (!normalizedHref) {
+    return false
+  }
+
+  return (
+    currentPath === normalizedHref ||
+    currentPath.startsWith(`${normalizedHref}/`)
+  )
+}
+
+function DesktopNavLink({
+  item,
+  pendingHref,
+  isActive,
+  onNavigate,
+  useSmartLink,
+}: Readonly<DesktopNavLinkProps>) {
+  const isCurrentRoute = isActive(item.href)
+  const isPending = pendingHref === item.href
+  const active = pendingHref ? isPending : isCurrentRoute
+  const isDisabled = !pendingHref && isCurrentRoute
+  const linkClassName = cn(
+    'text-foreground/60 transition-colors hover:text-foreground/80',
+    active && 'text-foreground font-semibold'
+  )
+
+  if (useSmartLink) {
+    return (
+      <SmartLink
+        className={linkClassName}
+        href={item.href}
+        onClick={event => {
+          if (isDisabled) {
+            event.preventDefault()
+            return
+          }
+
+          onNavigate(item.href)
+        }}
+      >
+        {item.label}
+      </SmartLink>
+    )
+  }
+
+  return (
+    <Link
+      className={linkClassName}
+      href={item.href}
+      onClick={event => {
+        if (isDisabled) {
+          event.preventDefault()
+          return
+        }
+
+        onNavigate(item.href)
+      }}
+    >
+      {item.label}
+    </Link>
+  )
+}
+
+function CoursesDropdown({ menu, isActive }: Readonly<CoursesDropdownProps>) {
+  const isDropdownActive = menu.links.some(link => isActive(link.href))
+
+  return (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger
+        className={cn(
+          'flex items-center gap-1 text-foreground/60 transition-colors outline-hidden hover:text-foreground/80',
+          isDropdownActive && 'text-foreground font-semibold'
+        )}
+      >
+        <span>{menu.label}</span>
+        <ChevronDown className="size-4" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-56 rounded-xl p-2">
+        {menu.links.map(link => {
+          const active = isActive(link.href)
+
+          return (
+            <DropdownMenuItem
+              key={link.key}
+              asChild
+              className={cn(
+                'cursor-pointer rounded-lg px-3 py-2',
+                active && 'bg-accent text-accent-foreground'
+              )}
+            >
+              <Link href={link.href}>{link.label}</Link>
+            </DropdownMenuItem>
+          )
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
 export function MainNavClient({
   variant,
   planUrl,
+  desktopItems = [],
+  desktopCoursesMenu,
   // hasActiveCourse,
   // hasAnyCourses,
-}: MainNavClientProps) {
-  const items: NavigationItem[] =
-    variant === 'public' ? PUBLIC_NAV_ITEMS : PLATFORM_NAV_ITEMS
+}: Readonly<MainNavClientProps>) {
   const pathname = usePathname() ?? ''
-  const desktopItems = items.filter(item => item.targets.includes('desktop'))
-  // const planStateClass = hasActiveCourse
-  //   ? 'text-foreground/60'
-  //   : hasAnyCourses
-  //     ? 'text-amber-500 font-semibold'
-  //     : 'text-foreground/40'
+  const resolvedDesktopItems = resolveDesktopItems(variant, desktopItems, planUrl)
 
-  const [pendingHref, setPendingHref] = useState<string | null>(
-    () => lastPendingHref
-  )
+  const [pendingHref, setPendingHref] = useState<string | null>(null)
 
   const isActive = useCallback(
-    (href: string) => {
-      const currentPath = pathname === '' ? '/' : pathname
-
-      if (href === '/') {
-        return currentPath === '/'
-      }
-
-      if (currentPath === href) {
-        return true
-      }
-
-      const normalizedHref = href.endsWith('/') ? href.slice(0, -1) : href
-      if (!normalizedHref) {
-        return false
-      }
-
-      return (
-        currentPath === normalizedHref ||
-        currentPath.startsWith(`${normalizedHref}/`)
-      )
-    },
+    (href: string) => isPathActive(pathname, href),
     [pathname]
   )
 
+  const handleNavigate = useCallback((href: string) => {
+    if (pendingHref === href) {
+      return
+    }
+
+    setPendingHref(href)
+  }, [pendingHref])
+
   useEffect(() => {
     if (pendingHref && isActive(pendingHref)) {
-      lastPendingHref = null
       setPendingHref(null)
     }
   }, [pathname, pendingHref, isActive])
 
   return (
     <nav className="flex flex-row items-center gap-6 text-sm font-medium">
-      {desktopItems.map(item => {
-        const href =
-          item.key === 'plan' && planUrl ? planUrl : item.href
-        const isCurrentRoute = isActive(href)
-        const isPending = pendingHref === href
-        const active = pendingHref ? isPending : isCurrentRoute
-        const isDisabled = !pendingHref && isCurrentRoute
-
-        return (
-          <Link
-            key={item.key}
-            className={cn(
-              'transition-colors hover:text-foreground/80 text-foreground/60',
-              // item.key === 'plan' && planStateClass,
-              active && 'text-foreground font-semibold'
-            )}
-            href={href}
-            onClick={event => {
-              if (isDisabled) {
-                event.preventDefault()
-                return
-              }
-
-              if (!isPending) {
-                lastPendingHref = href
-                setPendingHref(href)
-              }
-            }}
-          >
-            {item.label}
-          </Link>
-        )
-      })}
+      {resolvedDesktopItems.map(item => (
+        <DesktopNavLink
+          key={item.key}
+          item={item}
+          pendingHref={pendingHref}
+          isActive={isActive}
+          onNavigate={handleNavigate}
+          useSmartLink={variant === 'private'}
+        />
+      ))}
+      {variant === 'public' && desktopCoursesMenu ? (
+        <CoursesDropdown menu={desktopCoursesMenu} isActive={isActive} />
+      ) : null}
     </nav>
   )
 }

@@ -50,41 +50,18 @@ const DEFAULT_TARIFF_PRESENTATION_OPTIONS: NonNullable<
   },
 ]
 
-const getDurationMonths = (durationDays: number | undefined) => {
+const getRoundedDurationMonths = (durationDays: number | undefined) => {
   if (!durationDays || durationDays <= 0) {
     return null
   }
 
-  if (durationDays % 30 === 0) {
-    return durationDays / 30
-  }
-
-  return null
-}
-
-const getMonthsLabel = (months: number) => {
-  const mod10 = months % 10
-  const mod100 = months % 100
-
-  if (mod10 === 1 && mod100 !== 11) {
-    return `${months} месяц`
-  }
-
-  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) {
-    return `${months} месяца`
-  }
-
-  return `${months} месяцев`
+  return Math.round(durationDays / 30)
 }
 
 const getDurationLabel = (durationDays: number | undefined) => {
-  const durationMonths = getDurationMonths(durationDays)
+  const durationMonths = getRoundedDurationMonths(durationDays)
   if (durationMonths) {
-    return getMonthsLabel(durationMonths)
-  }
-
-  if (durationDays && durationDays > 0) {
-    return `Доступ на ${durationDays} дней`
+    return `${durationMonths} мес`
   }
 
   return 'Без ограничения по сроку'
@@ -212,11 +189,84 @@ const renderTariffCard = ({
   )
 }
 
+const renderSubscriptionTariffCard = ({
+  course,
+  tariffs,
+  title,
+  badge,
+  urlReturn,
+  includes,
+  highlighted,
+}: {
+  course: Course
+  tariffs: Course['tariffs']
+  title: string
+  badge: string
+  urlReturn: string
+  includes: string[]
+  highlighted: boolean
+}) => {
+  return (
+    <Card
+      key={badge}
+      className="flex h-full flex-col rounded-3xl border bg-background"
+    >
+      <CardHeader className="space-y-2 p-4 md:space-y-3 md:p-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant={highlighted ? 'default' : 'secondary'}>
+            {badge}
+          </Badge>
+        </div>
+        <CardTitle className="text-lg">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4 p-4 pt-0 text-sm text-foreground/80 md:p-6 md:pt-0">
+        <div className="space-y-2">
+          {includes.map(item => (
+            <div key={`${badge}-${item}`} className="flex items-start gap-2">
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <span>{item}</span>
+            </div>
+          ))}
+        </div>
+        <div className="space-y-3">
+          {tariffs.map(tariff => {
+            const durationLabel = getDurationLabel(tariff.durationDays)
+            const price = CURRENCY_FORMATTER.format(tariff.price ?? 0)
+
+            return (
+              <div
+                key={tariff.id}
+                className="flex flex-col gap-3 rounded-2xl border bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="space-y-1">
+                  <div className="text-sm font-medium text-foreground">
+                    {durationLabel}
+                  </div>
+                  <div className="text-base font-semibold text-foreground">
+                    {price}
+                  </div>
+                </div>
+                <Button size="lg" className="sm:min-w-40" asChild>
+                  <Link
+                    href={getCourseOrderPath(course.slug, urlReturn, '', tariff.id)}
+                  >
+                    Купить
+                  </Link>
+                </Button>
+              </div>
+            )
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 export function TariffsBlockComponent({
   title,
   course,
   tariffPresentation,
-}: TariffsBlockComponentProps) {
+}: Readonly<TariffsBlockComponentProps>) {
   const resolvedTitle = title || 'Тарифы'
 
   const urlReturn = getCoursePublicPath(course.slug)
@@ -230,11 +280,73 @@ export function TariffsBlockComponent({
 
   const withoutFeedbackTariffs = paidTariffs.filter(tariff => !tariff.feedback)
   const withFeedbackTariffs = paidTariffs.filter(tariff => tariff.feedback)
+  const isSubscriptionCourse = course.contentType === 'SUBSCRIPTION'
   const groupTitles = tariffPresentation?.groupTitles
   const shouldGroupByFeedback = Boolean(groupTitles)
   const withoutFeedbackTitle =
     groupTitles?.withoutFeedback || 'Без обратной связи'
   const withFeedbackTitle = groupTitles?.withFeedback || 'С обратной связью'
+
+  if (isSubscriptionCourse) {
+    const withoutFeedbackPresentation = resolveTariffPresentation({
+      tariffPresentation,
+      feedback: false,
+    })
+    const withFeedbackPresentation = resolveTariffPresentation({
+      tariffPresentation,
+      feedback: true,
+    })
+
+    return (
+      <section className="space-y-3 md:space-y-4" id="tariffs">
+        <h2 className="mb-0 text-2xl font-semibold tracking-tight">
+          {resolvedTitle}
+        </h2>
+        <div className="text-lg font-semibold tracking-tight text-primary md:text-2xl">
+          {course.title}
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 md:gap-4">
+          {withoutFeedbackTariffs.length > 0
+            ? renderSubscriptionTariffCard({
+                course,
+                tariffs: withoutFeedbackTariffs,
+                title:
+                  withoutFeedbackPresentation?.cardTitle ||
+                  withoutFeedbackTitle,
+                badge:
+                  withoutFeedbackPresentation?.badge || withoutFeedbackTitle,
+                urlReturn,
+                includes:
+                  withoutFeedbackPresentation?.includes?.map(item =>
+                    interpolateTariffTemplate({
+                      text: item,
+                      durationLabel: 'выбранный срок',
+                    })
+                  ) ?? [],
+                highlighted: false,
+              })
+            : null}
+          {withFeedbackTariffs.length > 0
+            ? renderSubscriptionTariffCard({
+                course,
+                tariffs: withFeedbackTariffs,
+                title: withFeedbackPresentation?.cardTitle || withFeedbackTitle,
+                badge: withFeedbackPresentation?.badge || withFeedbackTitle,
+                urlReturn,
+                includes:
+                  withFeedbackPresentation?.includes?.map(item =>
+                    interpolateTariffTemplate({
+                      text: item,
+                      durationLabel: 'выбранный срок',
+                    })
+                  ) ?? [],
+                highlighted: true,
+              })
+            : null}
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="space-y-3 md:space-y-4" id="tariffs">

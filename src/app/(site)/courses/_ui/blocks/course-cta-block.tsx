@@ -9,27 +9,27 @@ const PROGRAM_SELECTION_URL = '/individual-support'
 export function CourseCtaBlock() {
   return (
     <section className="pt-5 md:pt-8">
-      <Card className="overflow-hidden rounded-3xl bg-foreground text-background shadow-sm">
+      <Card className="overflow-hidden rounded-3xl border-primary/15 bg-primary/10 text-foreground shadow-sm">
         <CardContent className="p-5 md:p-8">
           <div className="grid items-start gap-6 md:grid-cols-12 md:gap-8">
             <div className="md:col-span-7">
               <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
                 Если остались вопросы
               </h2>
-              <p className="mt-3 max-w-xl text-sm opacity-80">
+              <p className="mt-3 max-w-xl text-sm text-muted-foreground">
                 Напишите нам, подскажем по формату, доступу и программе.
               </p>
 
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <LeadRequestDialog source="site:course-page-cta:telegram">
-                  <Button className="h-12 rounded-2xl bg-background text-foreground hover:bg-background/90">
+                  <Button className="h-12 rounded-2xl bg-primary px-6 text-primary-foreground shadow-[0_10px_30px_-12px_color-mix(in_oklab,var(--primary)_45%,transparent)] transition-colors hover:bg-primary/90">
                     Telegram
                   </Button>
                 </LeadRequestDialog>
                 <Button
                   asChild
                   variant="outline"
-                  className="h-12 rounded-2xl border-white/20 bg-transparent text-background hover:bg-white/10 hover:text-secondary"
+                  className="h-12 rounded-2xl border-border bg-background/70 px-6 text-foreground transition-colors hover:border-primary/30 hover:bg-background dark:bg-card/70 dark:hover:border-primary/30"
                 >
                   <Link href={`mailto:${SUPPORT_EMAIL}`}>Email</Link>
                 </Button>
@@ -39,22 +39,23 @@ export function CourseCtaBlock() {
                 <h3 className="text-xl font-semibold tracking-tight">
                   Готовы начать?
                 </h3>
-                <p className="max-w-xl text-sm opacity-80">
-                  Выберите тариф или напишите если нужна помощь с выбором программы.
+                <p className="max-w-xl text-sm text-muted-foreground">
+                  Выберите тариф или напишите если нужна помощь с выбором
+                  программы.
                 </p>
               </div>
 
               <div className="mt-3 flex flex-col gap-3 sm:flex-row">
                 <Button
                   asChild
-                  className="h-12 rounded-2xl bg-background text-foreground hover:bg-background/90"
+                  className="h-12 rounded-2xl bg-primary px-6 text-primary-foreground shadow-[0_10px_30px_-12px_color-mix(in_oklab,var(--primary)_45%,transparent)] transition-colors hover:bg-primary/90"
                 >
                   <Link href="#tariffs">Выбрать тариф</Link>
                 </Button>
                 <Button
                   asChild
                   variant="outline"
-                  className="h-12 rounded-2xl border-white/20 bg-transparent text-background hover:bg-white/10 hover:text-secondary"
+                  className="h-12 rounded-2xl border-border bg-background/70 px-6 text-foreground transition-colors hover:border-primary/30 hover:bg-background dark:bg-card/70 dark:hover:border-primary/30"
                 >
                   <Link href={PROGRAM_SELECTION_URL}>Подобрать программу</Link>
                 </Button>
