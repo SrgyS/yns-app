@@ -139,64 +139,73 @@ export function AdminCoursesPage({ courses }: Readonly<AdminCoursesPageProps>) {
 
             return (
               <Card key={course.id} className="flex flex-col overflow-hidden">
-                <div className="relative h-40 w-full bg-muted flex items-center justify-center">
-                  {hasThumb ? (
-                    <AppImage
-                      src={thumbnailImgSrc}
-                      alt={course.title}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, 33vw"
-                      priority
-                    />
-                  ) : (
-                    <span className="text-sm text-muted-foreground">
-                      Миниатюра не загружена
-                    </span>
-                  )}
-                </div>
-                <CardHeader className="space-y-2">
-                  <CardTitle className="line-clamp-2">
-                    {course.title}{' '}
+                <CardHeader className="space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <CardTitle className="line-clamp-2 text-lg leading-snug">
+                      {course.title}
+                    </CardTitle>
                     {course.draft ? (
-                      <Badge variant="destructive">Черновик</Badge>
+                      <Badge variant="destructive" className="shrink-0">
+                        Черновик
+                      </Badge>
                     ) : null}
-                  </CardTitle>
+                  </div>
                 </CardHeader>
                 <CardContent className="mt-auto space-y-3">
-                  <div className="rounded-md border bg-muted/50 p-2 text-xs leading-tight space-y-1">
-                    <div>
-                      <span className="text-muted-foreground">Миниатюра: </span>
-                      {hasThumb ? (
-                        <span className="break-all text-foreground">
-                          {thumbnailImgSrc}
-                        </span>
-                      ) : (
-                        <span className="text-destructive">не загружено</span>
-                      )}
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">
-                        Основное изображение:{' '}
+                  <div className="grid gap-3 md:grid-cols-[1.4fr_0.9fr]">
+                    <div className="space-y-2">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        Карточка курса
                       </span>
-                      {hasMain ? (
-                        <span className="break-all text-foreground">
-                          {mainImgSrc}
-                        </span>
-                      ) : (
-                        <span className="text-destructive">не загружено</span>
-                      )}
-                    </div>
-                    {hasMain && (
-                      <div className="mt-2 relative w-full aspect-4/3 max-h-40 overflow-hidden rounded bg-background">
-                        <AppImage
-                          src={mainImgSrc}
-                          alt={`${course.title} основное изображение`}
-                          fill
-                          className="object-contain"
-                        />
+                      <div className="relative aspect-[4/5] overflow-hidden rounded-xl border bg-muted">
+                        {hasThumb ? (
+                          <AppImage
+                            src={thumbnailImgSrc}
+                            alt={course.title}
+                            fill
+                            className="object-cover object-center"
+                            sizes="(max-width: 768px) 100vw, 20vw"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center p-4 text-center text-sm text-muted-foreground">
+                            Миниатюра не загружена
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
+                    <div className="space-y-2">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        Превью страницы
+                      </span>
+                      <div className="relative aspect-[4/3] overflow-hidden rounded-xl border bg-muted">
+                        {hasMain ? (
+                          <AppImage
+                            src={mainImgSrc}
+                            alt={`${course.title} основное изображение`}
+                            fill
+                            className="object-cover object-center"
+                            sizes="(max-width: 768px) 100vw, 16vw"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center p-4 text-center text-sm text-muted-foreground">
+                            Основное изображение не загружено
+                          </div>
+                        )}
+                      </div>
+                      <div className="rounded-xl border bg-muted/30 p-3">
+                        <div className="space-y-1.5 rounded-lg border bg-background/80 p-3">
+                          <span className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                            Hero
+                          </span>
+                          <p className="line-clamp-2 text-sm font-semibold leading-snug">
+                            {course.title}
+                          </p>
+                          <div className="text-xs text-muted-foreground">
+                            Уменьшенное превью блока страницы курса
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Badge
