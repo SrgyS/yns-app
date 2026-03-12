@@ -6,15 +6,11 @@ import { GetAccessibleEnrollmentsService } from '@/features/course-enrollment/_s
 import { toUserCourseEnrollmentApi } from '@/features/course-enrollment/_lib/map-user-course-enrollment'
 import type { PaidAccessState } from '@/features/course-enrollment/_vm/paid-access-types'
 import { PaidAccessProviderClient } from '@/features/course-enrollment/_vm/paid-access-provider-client'
-import { NoAccessCallout } from '@/features/course-enrollment/_ui/no-access-callout'
 import { PaidActivityFlag } from '@/features/activity-tracker/paid-activity-flag'
 import { UserFreezeRepository } from '@/entities/user-access/_repository/user-freeze'
 import { PlatformHeader } from '@/features/headers/platform-header'
-import { MobileBottomNav } from '@/features/navigation/mobile/mobile-bottom-nav'
-import { format } from 'date-fns'
-import { ru } from 'date-fns/locale'
 
-export default async function PlatformLayout({
+export default async function PlatformProfileLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
@@ -68,38 +64,6 @@ export default async function PlatformLayout({
     accessibleCourses,
   }
 
-  if (!hasAccess) {
-    const title = activeFreeze ? 'Доступ заморожен' : 'У вас нет доступных курсов'
-    const description = activeFreeze
-      ? `Период заморозки: ${format(activeFreeze.start, 'dd MMMM yyyy', { locale: ru })} — ${format(activeFreeze.end, 'dd MMMM yyyy', { locale: ru })}`
-      : 'Оформите подписку или приобретите курс, чтобы получить доступ к платному контенту.'
-    const ctaLabel = activeFreeze
-      ? 'Вернуться в профиль'
-      : 'Выбрать курс или оформить подписку'
-
-    return (
-      <PaidAccessProviderClient initialState={paidAccessState}>
-        <PaidActivityFlag />
-        <div className="min-h-screen flex flex-col bg-background">
-          <div className="hidden md:block">
-            <PlatformHeader />
-          </div>
-          <main className="flex-1 flex items-start justify-center md:pt-14">
-            <div className="w-full max-w-180 px-4 sm:px-6 py-4">
-              <NoAccessCallout
-                title={title}
-                description={description}
-                ctaHref="/"
-                ctaLabel={ctaLabel}
-              />
-            </div>
-          </main>
-          <MobileBottomNav variant="private" />
-        </div>
-      </PaidAccessProviderClient>
-    )
-  }
-
   return (
     <PaidAccessProviderClient initialState={paidAccessState}>
       <PaidActivityFlag />
@@ -107,10 +71,9 @@ export default async function PlatformLayout({
         <div className="hidden md:block">
           <PlatformHeader />
         </div>
-        <main className="flex-1 container pb-17 md:pb-0 px-3 sm:px-6 sm:pt-14">
+        <main className="flex-1 container pb-17 md:pb-0 px-3 sm:px-6 py-6 overflow-auto">
           {children}
         </main>
-        <MobileBottomNav variant="private" />
       </div>
     </PaidAccessProviderClient>
   )
