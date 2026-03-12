@@ -302,10 +302,13 @@ function FiltersSheet({
           Фильтр
         </Button>
       </SheetTrigger>
-      <SheetContent side="top" className="max-h-[85vh] overflow-y-auto">
+      <SheetContent
+        side="top"
+        className="container md:max-w-150 max-h-[85vh] overflow-y-auto"
+      >
         <SheetHeader className="flex flex-row items-center justify-between">
           <SheetTitle>Фильтры</SheetTitle>
-          <Button variant="ghost" size="sm" onClick={onReset}>
+          <Button variant="secondary" size="sm" onClick={onReset}>
             Сброс
           </Button>
         </SheetHeader>
@@ -333,7 +336,6 @@ function FiltersSheet({
             options={ingredientOptions}
             values={filters.ingredientTags}
             onToggle={onToggleIngredientTag}
-            columns="grid-cols-2 sm:grid-cols-3"
           />
           <FilterSwitchRow
             checked={filters.fast}
@@ -583,19 +585,16 @@ function FilterGroup({
   options,
   values,
   onToggle,
-  columns,
 }: Readonly<{
   title: string
   options: ReadonlyArray<{ value: string; label: string }>
   values: string[]
   onToggle: (value: string) => void
-  columns?: string
 }>) {
-  const gridClass = columns ?? 'grid-cols-2 sm:grid-cols-3'
   return (
     <div className="space-y-2">
       <p className="text-sm font-semibold">{title}</p>
-      <div className={`grid gap-2 ${gridClass}`}>
+      <div className="flex flex-wrap gap-2">
         {options.map(option => (
           <FilterGroupOptionButton
             key={option.value}
@@ -625,7 +624,7 @@ function FilterGroupOptionButton({
       variant={isActive ? 'default' : 'outline'}
       size="sm"
       onClick={handleClick}
-      className="justify-start"
+      className="justify-start w-fit"
     >
       {option.label}
     </Button>

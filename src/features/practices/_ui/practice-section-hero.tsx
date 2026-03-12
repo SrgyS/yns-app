@@ -38,10 +38,7 @@ export function PracticeSectionHero({
           <BackButton onClick={onBack} />
         </div>
 
-        <div className="flex flex-col gap-2 text-white">
-          <div className="text-xs uppercase tracking-wide text-white/70">
-            Раздел
-          </div>
+        <div className="text-white">
           <h2 className="text-2xl font-semibold">{practiceType.title}</h2>
           {practiceType.description && (
             <p className="text-sm text-white/80">{practiceType.description}</p>
