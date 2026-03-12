@@ -1,5 +1,4 @@
-
-import { DailyContentType } from '@prisma/client'
+import { DailyContentType } from '@/shared/lib/client-enums'
 import { workoutApi } from '../_api'
 import {
   useWorkoutCompletionStore,

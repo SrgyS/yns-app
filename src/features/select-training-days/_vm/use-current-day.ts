@@ -1,6 +1,6 @@
 'use client'
 
-import { DayOfWeek } from '@prisma/client'
+import { DayOfWeek } from '@/shared/lib/client-enums'
 import { DAY_LABELS } from '../constants'
 
 export function useCurrentDay(): DayOfWeek {

@@ -12,7 +12,7 @@ import {
   FormMessage,
 } from '@/shared/ui/form'
 import { Input } from '@/shared/ui/input'
-import { AccessType, CourseContentType } from '@prisma/client'
+import { AccessType, CourseContentType } from '@/shared/lib/client-enums'
 import {
   Select,
   SelectContent,

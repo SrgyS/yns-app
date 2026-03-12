@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { WorkoutSection } from '@prisma/client'
+import { WorkoutSection } from '@/shared/lib/client-enums'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 

@@ -4,7 +4,7 @@ import { Badge } from '@/shared/ui/badge'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { Label } from '@/shared/ui/label'
 import { DAY_LABELS } from '../constants'
-import { DayOfWeek } from '@prisma/client'
+import { DayOfWeek } from '@/shared/lib/client-enums'
 
 interface DayItemProps {
   day: DayOfWeek
@@ -22,7 +22,7 @@ export function DayItem({
   onToggle,
   selectedDays,
   disabled = false,
-}: DayItemProps) {
+}: Readonly<DayItemProps>) {
   return (
     <div
       key={day}

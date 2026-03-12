@@ -1,4 +1,4 @@
-import { WorkoutDifficulty, WorkoutSection } from '@prisma/client'
+import { WorkoutDifficulty, WorkoutSection } from '@/shared/lib/client-enums'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'

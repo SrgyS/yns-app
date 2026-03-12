@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from '@/shared/ui/select'
 import { Switch } from '@/shared/ui/switch'
-import { ROLE } from '@prisma/client'
+import { ROLE } from '@/shared/lib/client-enums'
 import { useMemo } from 'react'
 import { adminUsersApi } from '../_api'
 import { toast } from 'sonner'

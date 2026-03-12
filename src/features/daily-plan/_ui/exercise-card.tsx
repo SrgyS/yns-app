@@ -12,7 +12,7 @@ import { useWorkoutQuery } from '../_vm/use-workout'
 import { FavoriteButton } from '@/shared/ui/favorite-button'
 import { useWorkoutFavorites } from '../_vm/use-workout-favorites'
 import { cn } from '@/shared/ui/utils'
-import { DailyContentType } from '@prisma/client'
+import { DailyContentType } from '@/shared/lib/client-enums'
 import { toast } from 'sonner'
 import { TRPCClientError } from '@trpc/client'
 import {

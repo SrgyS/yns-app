@@ -7,7 +7,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/shared/ui/form'
-import { CourseContentType } from '@prisma/client'
+import { CourseContentType } from '@/shared/lib/client-enums'
 import { CourseFormValues } from '../model/schema'
 
 interface ScheduleSectionProps {
@@ -15,7 +15,10 @@ interface ScheduleSectionProps {
   disabled?: boolean
 }
 
-export function ScheduleSection({ control, disabled }: ScheduleSectionProps) {
+export function ScheduleSection({
+  control,
+  disabled,
+}: Readonly<ScheduleSectionProps>) {
   const contentType = useWatch({ control, name: 'contentType' })
   const isSubscription = contentType === CourseContentType.SUBSCRIPTION
 
@@ -31,7 +34,7 @@ export function ScheduleSection({ control, disabled }: ScheduleSectionProps) {
             return
           }
           if (current.includes(day)) {
-            field.onChange(current.filter((value) => value !== day))
+            field.onChange(current.filter(value => value !== day))
             return
           }
           field.onChange([...current, day].sort((a, b) => a - b))

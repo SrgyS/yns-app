@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { CourseContentType, AccessType } from '@prisma/client'
+import { CourseContentType, AccessType } from '@/shared/lib/client-enums'
 import {
   SUBSCRIPTION_TARIFF_SLOT_COUNT,
 } from './subscription-tariffs'

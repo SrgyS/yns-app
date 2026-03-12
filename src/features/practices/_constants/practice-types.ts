@@ -1,9 +1,7 @@
-import { WorkoutSection, WorkoutSubsection } from '@prisma/client'
+import { WorkoutSection, WorkoutSubsection } from '@/shared/lib/client-enums'
 
 import {
   type PracticeType,
-  type PracticeSubcategory,
-  type PracticeTypeKey,
   type PracticeGroup,
 } from '../_domain/practice-types'
 import { resolvePracticeImagePath } from '../_lib/image-path'
@@ -204,4 +202,4 @@ export {
   type PracticeTypeKey,
   type PracticeSubcategory,
   type PracticeGroup,
-}
+} from '../_domain/practice-types'

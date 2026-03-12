@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { DailyContentType } from '@prisma/client'
+import { DailyContentType } from '@/shared/lib/client-enums'
 
 // Функция для создания уникального ключа
 export const createCompletionKey = (

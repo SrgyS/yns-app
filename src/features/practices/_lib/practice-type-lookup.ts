@@ -1,4 +1,4 @@
-import { WorkoutSection, WorkoutSubsection } from '@prisma/client'
+import { WorkoutSection, WorkoutSubsection } from '@/shared/lib/client-enums'
 
 import type { PracticeSubcategory } from '../_domain/practice-types'
 import { PRACTICE_TYPES } from '../_constants/practice-types'

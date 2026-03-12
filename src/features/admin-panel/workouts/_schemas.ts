@@ -4,7 +4,7 @@ import {
   WorkoutDifficulty,
   WorkoutSection,
   WorkoutSubsection,
-} from '@prisma/client'
+} from '@/shared/lib/client-enums'
 import { isEquipmentItemId } from '@/shared/lib/equipment'
 
 export const workoutUpsertInputSchema = z.object({
