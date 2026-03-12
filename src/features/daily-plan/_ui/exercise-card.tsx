@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
-import { KinescopePlayer, type PlayerHandle } from './kinescope-player'
+import { useState, useEffect, useMemo } from 'react'
+import { KinescopePlayer } from './kinescope-player'
 import { Timer } from 'lucide-react'
 import { Badge } from '@/shared/ui/badge'
 import { Card, CardContent, CardFooter } from '@/shared/ui/card'
@@ -27,7 +27,6 @@ interface ExerciseCardProps {
   workoutId: string
   enrollmentId: string
   initialCompleted?: boolean
-  userDailyPlanId: string
   contentType: DailyContentType
   stepIndex: number
 }
@@ -37,15 +36,12 @@ export function ExerciseCard({
   workoutId,
   enrollmentId,
   initialCompleted = false,
-  userDailyPlanId,
   contentType,
   stepIndex,
 }: Readonly<ExerciseCardProps>) {
   const [isCompleted, setIsCompleted] = useState(initialCompleted)
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
   const { data: session } = useAppSession()
-
-  const playerRef = useRef<PlayerHandle | null>(null)
 
   const { data: workout } = useWorkoutQuery(workoutId)
 
@@ -63,6 +59,7 @@ export function ExerciseCard({
     () => ({
       size: { width: '100%', height: '100%' },
       autoplay: false,
+      behavior: { preload: 'metadata' as const },
     }),
     []
   )
@@ -151,8 +148,6 @@ export function ExerciseCard({
         {workout?.videoId && (
           <div className="relative w-full aspect-video">
             <KinescopePlayer
-              key={`${userDailyPlanId}-${workout.videoId}`}
-              ref={playerRef}
               videoId={workout.videoId}
               options={playerOptions}
               completionState={isCompleted}

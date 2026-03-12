@@ -18,6 +18,7 @@ import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { DailyContentType, DayOfWeek } from '@/shared/lib/client-enums'
 import { DAY_LABELS } from '@/features/select-training-days/constants'
 import { cn } from '@/shared/ui/utils'
+import { Skeleton } from '@/shared/ui/skeleton/skeleton'
 
 type DayTab = {
   key: DayOfWeek
@@ -186,9 +187,9 @@ function DayTabTrigger({ day, isSubscription }: Readonly<DayTabTriggerProps>) {
       value={day.key}
       disabled={day.isDisabled}
       className={cn(
-        'snap-sta text-left flex flex-col items-start min-w-[54px] flex-none cursor-pointer content-center justify-items-center gap-y-0 rounded-md border border-muted px-3  py-2   transition-colors sm:min-w-[72px] sm:text-xs',
+        'snap-sta text-left flex flex-col items-start min-w-13.5 flex-none cursor-pointer content-center justify-items-center gap-y-0 rounded-md border border-muted px-3  py-2   transition-colors sm:min-w-18 sm:text-xs',
         'data-[state=active]:bg-primary/10 data-[state=active]:border-primary dark:data-[state=active]:border-premium data-[state=active]:font-semibold',
-        'max-[360px]:min-w-[50px]',
+        'max-[360px]:min-w-12.5',
         day.isWorkoutDay && !day.isDisabled ? 'bg-muted/40' : '',
         day.isDisabled ? 'cursor-not-allowed opacity-50' : ''
       )}
@@ -214,8 +215,13 @@ function renderDailyPlanContent(params: {
 }): ReactNode {
   const { isLoading, enabled, plan, enrollmentId } = params
 
-  if (isLoading) {
-    return null
+  if (isLoading && !plan) {
+    return (
+      <div className="space-y-3">
+        <Skeleton className="h-72 w-full rounded-xl" />
+        <Skeleton className="h-72 w-full rounded-xl" />
+      </div>
+    )
   }
 
   if (!enabled || !plan) {
@@ -229,7 +235,6 @@ function renderDailyPlanContent(params: {
           title="Зарядка"
           workoutId={plan.warmupId}
           enrollmentId={enrollmentId}
-          userDailyPlanId={plan.id}
           contentType={DailyContentType.WARMUP}
           stepIndex={plan.warmupStepIndex}
         />
@@ -241,7 +246,6 @@ function renderDailyPlanContent(params: {
               title="Тренировка"
               workoutId={main.workoutId}
               enrollmentId={enrollmentId}
-              userDailyPlanId={plan.id ?? ''}
               contentType={DailyContentType.MAIN}
               stepIndex={main.stepIndex}
             />
@@ -382,7 +386,6 @@ export function DayTabs({
 
   return (
     <Tabs
-      key={`week-${weekNumber}`}
       value={selectedDay}
       onValueChange={setSelectedDay}
       className="space-y-2.5"
