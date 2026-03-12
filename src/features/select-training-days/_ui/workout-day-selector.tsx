@@ -1,18 +1,18 @@
 'use client'
 
 import { Button } from '@/shared/ui/button'
-import { DayOfWeek } from '@prisma/client'
+import { DayOfWeek } from '@/shared/lib/client-enums'
 import { useEffect, useState, useMemo } from 'react'
 import { toast } from 'sonner'
 import { useCurrentDay } from '../_vm/use-current-day'
 import { DayItem } from './day-item'
 
 interface WorkoutDaySelectorProps {
-  onSelectDays: (selectedDays: DayOfWeek[]) => void // Колбэк, который вызывается при подтверждении выбора
-  requiredDays: number // Точное количество тренировочных дней, которые нужно выбрать
-  isLoading?: boolean // Для состояния загрузки кнопки
-  initialSelectedDays?: DayOfWeek[]
-  disabled?: boolean
+  readonly onSelectDays: (selectedDays: DayOfWeek[]) => void // Колбэк, который вызывается при подтверждении выбора
+  readonly requiredDays: number // Точное количество тренировочных дней, которые нужно выбрать
+  readonly isLoading?: boolean // Для состояния загрузки кнопки
+  readonly initialSelectedDays?: DayOfWeek[]
+  readonly disabled?: boolean
 }
 
 export function WorkoutDaySelector({
@@ -21,7 +21,7 @@ export function WorkoutDaySelector({
   isLoading = false,
   initialSelectedDays = [],
   disabled = false,
-}: WorkoutDaySelectorProps) {
+}: Readonly<WorkoutDaySelectorProps>) {
   const [selectedDays, setSelectedDays] =
     useState<DayOfWeek[]>(initialSelectedDays)
 
@@ -36,8 +36,10 @@ export function WorkoutDaySelector({
     if (selectedDays.length !== initialSelectedDays.length) return true
 
     // Сортируем массивы для корректного сравнения
-    const sortedSelected = [...selectedDays].sort()
-    const sortedInitial = [...initialSelectedDays].sort()
+    const sortedSelected = [...selectedDays].sort((a, b) => a.localeCompare(b))
+    const sortedInitial = [...initialSelectedDays].sort((a, b) =>
+      a.localeCompare(b)
+    )
 
     // Сравниваем каждый элемент
     return sortedSelected.some((day, index) => day !== sortedInitial[index])
