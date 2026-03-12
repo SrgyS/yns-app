@@ -1,4 +1,4 @@
-import { AccessType } from '@prisma/client'
+import { AccessType } from '@/shared/lib/client-enums'
 import { CourseTariff } from '@/kernel/domain/course'
 import type { CourseUpsertInput } from '../../_schemas'
 

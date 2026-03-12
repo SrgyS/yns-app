@@ -39,6 +39,10 @@ Refactor the target TypeScript/React file to comply with these Sonar rules while
   - Replace nested closures with flat composition where possible.
 - Avoid layered closures that increase cognitive load.
 
+### 6) Existence checks should use ".includes()" instead of ".indexOf()" or ".lastIndexOf()" 
+
+### 7) React props should be read-only
+
 ## Scope fence
 - Refactor only the specified file (and at most: tiny local helpers in the same file if needed).
 - **No behavior changes** (UI, business logic, side effects) beyond refactor.

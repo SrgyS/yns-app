@@ -1,9 +1,7 @@
 'use client'
 
 import {
-  forwardRef,
   useEffect,
-  useImperativeHandle,
   useMemo,
   useRef,
   useState,
@@ -21,7 +19,8 @@ import { cn } from '@/shared/ui/utils'
 
 const WATCHED_PERCENT_THRESHOLD = 0.95
 const DEFAULT_HEIGHT = 300
-const LOADING_FALLBACK_TIMEOUT_MS = 15_000
+const INIT_RETRY_TIMEOUTS_MS = [2_000, 4_000]
+const MAX_INIT_RETRIES = INIT_RETRY_TIMEOUTS_MS.length
 
 type KinescopePlayerOptions = {
   url?: string
@@ -82,10 +81,6 @@ export type KinescopePlayerProps = {
   onPause?: () => void
 }
 
-export type PlayerHandle = {
-  getInstance: () => ReactKinescopePlayer | null
-}
-
 const toStyleSize = (
   value: number | string | undefined,
   fallback: string
@@ -120,26 +115,24 @@ const normalizePlayerError = (error: unknown): Error => {
   return new Error('Failed to initialize Kinescope player')
 }
 
-export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
-  (
-    {
-      videoId,
-      options,
-      completionState,
-      className,
-      style,
-      onEnded,
-      onWatched,
-      onError,
-      onPlay,
-      onPause,
-    },
-    ref
-  ) => {
-    const playerRef = useRef<ReactKinescopePlayer | null>(null)
+export function KinescopePlayer({
+  videoId,
+  options,
+  completionState,
+  className,
+  style,
+  onEnded,
+  onWatched,
+  onError,
+  onPlay,
+  onPause,
+}: Readonly<KinescopePlayerProps>) {
     const watchedReportedRef = useRef(false)
     const durationRef = useRef(0)
+    const isReadyRef = useRef(false)
+    const initRetryCountRef = useRef(0)
 
+    const [playerInstanceKey, setPlayerInstanceKey] = useState(0)
     const [isLoading, setIsLoading] = useState(false)
 
     const resolvedVideoId = useMemo(() => {
@@ -152,33 +145,50 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
       `${DEFAULT_HEIGHT}px`
     )
 
-    useImperativeHandle(
-      ref,
-      () => ({
-        getInstance() {
-          return playerRef.current
-        },
-      }),
-      []
-    )
-
     useEffect(() => {
       watchedReportedRef.current = false
       durationRef.current = 0
+      isReadyRef.current = false
+      initRetryCountRef.current = 0
       setIsLoading(Boolean(resolvedVideoId))
+      setPlayerInstanceKey(0)
+    }, [resolvedVideoId])
 
+    const restartPlayer = (): boolean => {
+      if (isReadyRef.current) {
+        return false
+      }
+
+      if (initRetryCountRef.current >= MAX_INIT_RETRIES) {
+        return false
+      }
+
+      initRetryCountRef.current += 1
+      isReadyRef.current = false
+      setIsLoading(true)
+      setPlayerInstanceKey(prev => prev + 1)
+      return true
+    }
+
+    useEffect(() => {
       if (!resolvedVideoId) {
         return
       }
 
       const fallbackTimeout = setTimeout(() => {
+        if (!isReadyRef.current) {
+          const restarted = restartPlayer()
+          if (restarted) {
+            return
+          }
+        }
         setIsLoading(false)
-      }, LOADING_FALLBACK_TIMEOUT_MS)
+      }, INIT_RETRY_TIMEOUTS_MS[initRetryCountRef.current] ?? 6_000)
 
       return () => {
         clearTimeout(fallbackTimeout)
       }
-    }, [resolvedVideoId])
+    }, [resolvedVideoId, playerInstanceKey])
 
     useEffect(() => {
       if (completionState === false) {
@@ -198,10 +208,12 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
 
     const handleReady = (event: EventReadyTypes) => {
       durationRef.current = event.duration
+      isReadyRef.current = true
       setIsLoading(false)
     }
 
     const handleInit = () => {
+      isReadyRef.current = true
       setIsLoading(false)
     }
 
@@ -223,6 +235,13 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
     }
 
     const handlePlayerError = (error: unknown) => {
+      if (!isReadyRef.current) {
+        const restarted = restartPlayer()
+        if (restarted) {
+          return
+        }
+      }
+
       const normalizedError = normalizePlayerError(error)
 
       setIsLoading(false)
@@ -243,7 +262,7 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
         }}
       >
         <ReactKinescopePlayer
-          ref={playerRef}
+          key={`${resolvedVideoId}-${playerInstanceKey}`}
           videoId={resolvedVideoId}
           width={options?.size?.width ?? '100%'}
           height={options?.size?.height ?? '100%'}
@@ -285,7 +304,6 @@ export const KinescopePlayer = forwardRef<PlayerHandle, KinescopePlayerProps>(
         )}
       </div>
     )
-  }
-)
+}
 
 KinescopePlayer.displayName = 'KinescopePlayer'

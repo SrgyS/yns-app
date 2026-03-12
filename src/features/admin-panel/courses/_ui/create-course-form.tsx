@@ -12,7 +12,7 @@ import { MediaSection } from './form-parts/media-section'
 import { AccessSection } from './form-parts/access-section'
 import { ScheduleSection } from './form-parts/schedule-section'
 import { WeeksManager } from './form-parts/weeks-manager'
-import { CourseContentType } from '@prisma/client'
+import { CourseContentType } from '@/shared/lib/client-enums'
 
 type CreateCourseFormProps = {
   editSlug?: string

@@ -7,7 +7,7 @@ import {
 } from 'react-hook-form'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
-import { CourseContentType } from '@prisma/client'
+import { CourseContentType } from '@/shared/lib/client-enums'
 import { CourseFormValues } from '../model/schema'
 import { FormControl, FormItem, FormField } from '@/shared/ui/form'
 

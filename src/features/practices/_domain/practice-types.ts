@@ -1,4 +1,4 @@
-import { WorkoutSection, WorkoutSubsection } from '@prisma/client'
+import { WorkoutSection, WorkoutSubsection } from '@/shared/lib/client-enums'
 
 export type PracticeTypeKey =
   | 'warmup'

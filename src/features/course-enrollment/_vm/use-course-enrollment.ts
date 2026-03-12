@@ -1,4 +1,4 @@
-import { DayOfWeek } from '@prisma/client'
+import { DayOfWeek } from '@/shared/lib/client-enums'
 import type {
   UserCourseEnrollment,
   UserCourseEnrollmentApi,
@@ -55,10 +55,16 @@ export function useActiveEnrollmentQuery(userId: string) {
 }
 
 export function useUserWorkoutDaysQuery(userId: string, courseId: string) {
-  return courseEnrollmentApi.course.getUserWorkoutDays.useQuery({ userId, courseId })
+  return courseEnrollmentApi.course.getUserWorkoutDays.useQuery({
+    userId,
+    courseId,
+  })
 }
 
-export function useEnrollmentByCourseSlugQuery(userId: string, courseSlug: string) {
+export function useEnrollmentByCourseSlugQuery(
+  userId: string,
+  courseSlug: string
+) {
   return courseEnrollmentApi.course.getEnrollmentByCourseSlug.useQuery(
     { userId, courseSlug },
     CACHE_SETTINGS.FREQUENT_UPDATE
@@ -158,6 +164,7 @@ export function useCourseEnrollment() {
       const result = await createEnrollmentMutation.mutateAsync(params)
       return result
     } catch (error) {
+      console.error('Error creating enrollment:', error)
       throw error
     }
   }

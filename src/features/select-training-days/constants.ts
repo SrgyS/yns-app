@@ -1,4 +1,4 @@
-import { DayOfWeek } from '@prisma/client'
+import { DayOfWeek } from '@/shared/lib/client-enums'
 
 export const DAY_LABELS: Record<DayOfWeek, string> = {
   MONDAY: 'пн',

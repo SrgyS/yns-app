@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { skipToken } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { CourseContentType, AccessType } from '@prisma/client'
+import { CourseContentType, AccessType } from '@/shared/lib/client-enums'
 
 import { adminCoursesApi } from '../../_api'
 import type { CourseUpsertInput } from '../../_schemas'

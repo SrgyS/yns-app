@@ -14,6 +14,10 @@ export function useDailyPlanQuery(
 
   return workoutApi.getUserDailyPlan.useQuery(
     { userId, enrollmentId, courseId, dayNumberInCourse },
-    { ...CACHE_SETTINGS.FREQUENT_UPDATE, enabled: isEnabled }
+    {
+      ...CACHE_SETTINGS.FREQUENT_UPDATE,
+      enabled: isEnabled,
+      placeholderData: previousData => previousData,
+    }
   )
 }

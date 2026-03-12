@@ -1,6 +1,6 @@
 'use client'
 
-import { DayOfWeek } from '@prisma/client'
+import { DayOfWeek } from '@/shared/lib/client-enums'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -15,11 +15,27 @@ import { Label } from '@/shared/ui/label'
 import type { PaidAccessState } from '@/features/course-enrollment/_vm/paid-access-types'
 
 interface SelectWorkoutDaysClientProps {
-  initialSelectedDays: DayOfWeek[]
-  allowedDayOptions?: number[]
+  readonly initialSelectedDays: DayOfWeek[]
+  readonly allowedDayOptions?: number[]
+  readonly courseId: CourseId
+  readonly courseSlug: CourseSlug
+  readonly courseContentType: ContentType
+}
+
+function findEnrollmentByCourseId(
+  data: PaidAccessState | undefined,
   courseId: CourseId
-  courseSlug: CourseSlug
-  courseContentType: ContentType
+): PaidAccessState['accessibleCourses'][number] | null {
+  if (!data || !('accessibleCourses' in data)) {
+    return null
+  }
+
+  const found = data.accessibleCourses.find(
+    (entry: PaidAccessState['accessibleCourses'][number]) =>
+      entry.enrollment.courseId === courseId
+  )
+
+  return found ?? null
 }
 
 export function SelectWorkoutDaysClient({
@@ -66,32 +82,13 @@ export function SelectWorkoutDaysClient({
 
     setIsSubmitting(true)
 
-    let existingEnrollment: PaidAccessState['accessibleCourses'][number] | null =
-      null
-    if (accessible && 'accessibleCourses' in accessible) {
-      existingEnrollment =
-        accessible.accessibleCourses.find(
-          (entry: PaidAccessState['accessibleCourses'][number]) =>
-            entry.enrollment.courseId === courseId
-        ) ?? null
-    }
+    let existingEnrollment = findEnrollmentByCourseId(accessible, courseId)
 
     try {
       if (!existingEnrollment) {
         const refreshed = await accessibleQuery.refetch()
         const refreshedData = refreshed.data as PaidAccessState | undefined
-        if (refreshedData) {
-          if ('accessibleCourses' in refreshedData) {
-            const found = refreshedData.accessibleCourses.find(
-              (entry: PaidAccessState['accessibleCourses'][number]) =>
-                entry.enrollment.courseId === courseId
-            )
-            existingEnrollment = null
-            if (found !== undefined) {
-              existingEnrollment = found
-            }
-          }
-        }
+        existingEnrollment = findEnrollmentByCourseId(refreshedData, courseId)
       }
 
       if (existingEnrollment) {
@@ -108,7 +105,6 @@ export function SelectWorkoutDaysClient({
           startDate: new Date(),
         })
       }
-      setIsSubmitting(false)
       toast.success('План тренировок готов!')
       router.push(`/platform/day/${courseSlug}`)
     } catch (error) {
@@ -117,8 +113,9 @@ export function SelectWorkoutDaysClient({
       if (error instanceof Error) {
         errorMessage = error.message
       }
-      setIsSubmitting(false)
       toast.error(errorMessage)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 

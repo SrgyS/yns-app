@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef } from 'react'
-import { ChatMessageSenderType } from '@prisma/client'
+import { ChatMessageSenderType } from '@/shared/lib/client-enums'
 
 import { CACHE_SETTINGS } from '@/shared/lib/cache/cache-constants'
 import { supportChatApi } from '../_api'

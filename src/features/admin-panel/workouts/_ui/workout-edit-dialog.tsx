@@ -7,7 +7,7 @@ import {
   WorkoutDifficulty,
   WorkoutSection,
   WorkoutSubsection,
-} from '@prisma/client'
+} from '@/shared/lib/client-enums'
 import { toast } from 'sonner'
 
 import { Button } from '@/shared/ui/button'
@@ -55,17 +55,18 @@ export function WorkoutEditDialog({
   workoutId,
   open,
   onOpenChange,
-}: WorkoutEditDialogProps) {
+}: Readonly<WorkoutEditDialogProps>) {
   const utils = adminWorkoutsApi.useUtils()
   const [editState, setEditState] = useState<EditState | null>(null)
 
-  const workoutDetailQuery = adminWorkoutsApi.adminWorkouts.workouts.get.useQuery(
-    workoutId ? { id: workoutId } : skipToken,
-    { enabled: Boolean(workoutId) }
-  )
+  const workoutDetailQuery =
+    adminWorkoutsApi.adminWorkouts.workouts.get.useQuery(
+      workoutId ? { id: workoutId } : skipToken,
+      { enabled: Boolean(workoutId) }
+    )
 
-  const upsertMutation = adminWorkoutsApi.adminWorkouts.workouts.upsert.useMutation(
-    {
+  const upsertMutation =
+    adminWorkoutsApi.adminWorkouts.workouts.upsert.useMutation({
       onSuccess: () => {
         toast('Тренировка сохранена')
         utils.adminWorkouts.workouts.list.invalidate()
@@ -74,8 +75,7 @@ export function WorkoutEditDialog({
       onError: (error: any) => {
         toast('Ошибка сохранения', { description: error?.message })
       },
-    }
-  )
+    })
 
   useEffect(() => {
     if (!open) {

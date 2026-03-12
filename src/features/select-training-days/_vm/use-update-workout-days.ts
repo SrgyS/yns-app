@@ -1,6 +1,6 @@
 'use client'
 
-import { DayOfWeek } from '@prisma/client'
+import { DayOfWeek } from '@/shared/lib/client-enums'
 import { courseEnrollmentApi } from '@/features/course-enrollment/_api'
 import { toast } from 'sonner'
 

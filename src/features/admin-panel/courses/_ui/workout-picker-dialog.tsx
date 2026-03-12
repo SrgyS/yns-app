@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { WorkoutSection } from '@prisma/client'
+import { WorkoutSection } from '@/shared/lib/client-enums'
 
 import { adminWorkoutsApi } from '@/features/admin-panel/workouts/_api'
 import { useDebounce } from '@/shared/hooks/use-debounce'

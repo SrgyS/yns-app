@@ -3,7 +3,7 @@ import {
   WorkoutDifficulty,
   WorkoutSection,
   WorkoutSubsection,
-} from '@prisma/client'
+} from '@/shared/lib/client-enums'
 import { PRACTICE_TYPES } from '@/features/practices/_constants/practice-types'
 
 export const enumOptions = {

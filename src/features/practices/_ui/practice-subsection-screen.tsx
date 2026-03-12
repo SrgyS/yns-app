@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { WorkoutSection, WorkoutSubsection } from '@prisma/client'
+import { WorkoutSection, WorkoutSubsection } from '@/shared/lib/client-enums'
 
 import { Badge } from '@/shared/ui/badge'
 import { Input } from '@/shared/ui/input'

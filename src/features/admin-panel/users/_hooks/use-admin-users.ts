@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import { adminUsersApi } from '../_api'
 import { AvatarFilter } from '../_domain/types'
-import { ROLE } from '@prisma/client'
+import { ROLE } from '@/shared/lib/client-enums'
 
 const DEFAULT_PAGE_SIZE = 20
 const DEFAULT_SORT_BY = 'createdAt'

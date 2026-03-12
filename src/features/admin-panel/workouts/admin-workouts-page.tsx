@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   WorkoutDifficulty,
   WorkoutSection,
-} from '@prisma/client'
+} from '@/shared/lib/client-enums'
 import { toast } from 'sonner'
 
 import { adminWorkoutsApi } from './_api'

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Timer } from 'lucide-react'
-import { WorkoutSection } from '@prisma/client'
+import { WorkoutSection } from '@/shared/lib/client-enums'
 
 import { Card, CardContent } from '@/shared/ui/card'
 import { Badge } from '@/shared/ui/badge'
@@ -42,7 +42,7 @@ type PracticeWorkoutCardProps = {
 export function PracticeWorkoutCard({
   workout,
   favoriteControls,
-}: PracticeWorkoutCardProps) {
+}: Readonly<PracticeWorkoutCardProps>) {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
 
   const {

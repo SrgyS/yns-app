@@ -1,6 +1,6 @@
 'use client'
 
-import { DayOfWeek } from '@prisma/client'
+import { DayOfWeek } from '@/shared/lib/client-enums'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { WorkoutDaySelector } from './workout-day-selector'
@@ -15,16 +15,16 @@ import { Checkbox } from '@/shared/ui/checkbox'
 import { Label } from '@/shared/ui/label'
 
 interface EditWorkoutDaysClientProps {
-  enrollmentId: string
-  initialSelectedDays: DayOfWeek[]
-  allowedDayOptions?: number[]
+  readonly enrollmentId: string
+  readonly initialSelectedDays: DayOfWeek[]
+  readonly allowedDayOptions?: number[]
 }
 
 export function EditWorkoutDaysClient({
   enrollmentId,
   initialSelectedDays,
   allowedDayOptions,
-}: EditWorkoutDaysClientProps) {
+}: Readonly<EditWorkoutDaysClientProps>) {
   const dayOptions =
     allowedDayOptions && allowedDayOptions.length > 0
       ? Array.from(new Set(allowedDayOptions)).sort((a, b) => a - b)
@@ -85,24 +85,15 @@ export function EditWorkoutDaysClient({
           keepProgress,
         })
 
-        // Инвалидируем весь кеш статусов выполнения тренировок
-        await workoutUtils.getWorkoutCompletionStatus.invalidate()
+        await Promise.all([
+          workoutUtils.getWorkoutCompletionStatus.invalidate(),
+          workoutUtils.getUserDailyPlan.invalidate(),
+          courseEnrollmentUtils.course.getEnrollment.invalidate(),
+          courseEnrollmentUtils.course.getEnrollmentByCourseSlug.invalidate(),
+        ])
 
-        // Инвалидируем кеш для getUserDailyPlan и getEnrollment
-        await workoutUtils.getUserDailyPlan.invalidate()
-        await courseEnrollmentUtils.course.getEnrollment.invalidate()
-        // Добавляем инвалидацию getEnrollmentByCourseSlug
-        await courseEnrollmentUtils.course.getEnrollmentByCourseSlug.invalidate()
-
-        // Если не сохраняем прогресс, очищаем стор
-        if (!keepProgress) {
-          // Очищаем стор с отметками о выполнении тренировок
-          useWorkoutCompletionStore.setState({ completions: {} })
-        } else {
-          // Если сохраняем прогресс, очищаем стор,
-          // чтобы состояние подтянулось из актуальных шагов расписания
-          useWorkoutCompletionStore.setState({ completions: {} })
-        }
+        // Очищаем стор, чтобы состояние подтянулось из актуального плана
+        useWorkoutCompletionStore.setState({ completions: {} })
       } else {
         console.error('ошибка при обновлении дней тренировок')
         toast.error('Не удалось обновить дни тренировок!')
