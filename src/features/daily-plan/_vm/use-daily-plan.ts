@@ -1,6 +1,7 @@
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { workoutApi } from '../_api'
 import { CACHE_SETTINGS } from '@/shared/lib/cache/cache-constants'
+import { shouldRetryQuery } from '@/shared/lib/query/errors'
 
 export function useDailyPlanQuery(
   enrollmentId: string,
@@ -18,6 +19,10 @@ export function useDailyPlanQuery(
       ...CACHE_SETTINGS.FREQUENT_UPDATE,
       enabled: isEnabled,
       placeholderData: previousData => previousData,
+      retry: shouldRetryQuery,
+      trpc: {
+        abortOnUnmount: true,
+      },
     }
   )
 }

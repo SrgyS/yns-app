@@ -4,64 +4,11 @@ import {
   useWorkoutCompletionStore,
   createCompletionKey,
 } from '@/shared/store/workout-completion-store'
+import { isAbortLikeError } from '@/shared/lib/query/errors'
 
 export function useWorkoutCompletions() {
   // Получаем утилиты для инвалидации кэша
   const utils = workoutApi.useUtils()
-
-  // Функция для получения статуса выполнения тренировки
-  const getWorkoutCompletionStatus = async (
-    userId: string,
-    workoutId: string,
-    enrollmentId: string,
-    contentType: DailyContentType,
-    stepIndex: number
-  ): Promise<boolean> => {
-    // Если какой-то из параметров отсутствует, возвращаем false
-    if (!userId || !enrollmentId || !workoutId) {
-      return false
-    }
-
-    // Создаем ключ для хранения в сторе
-    const key = createCompletionKey(
-      userId,
-      enrollmentId,
-      contentType,
-      stepIndex,
-      workoutId
-    )
-
-    // Проверяем, есть ли значение в сторе
-    const cachedValue = useWorkoutCompletionStore.getState().getCompletion(key)
-    if (cachedValue !== undefined) {
-      return cachedValue
-    }
-
-    try {
-      // Создаем ключ запроса
-      const queryKey = {
-        userId,
-        workoutId,
-        enrollmentId,
-        contentType,
-        stepIndex,
-      }
-
-      // Запрашиваем данные с сервера
-      const result = await utils.getWorkoutCompletionStatus.fetch(queryKey, {
-        staleTime: 5 * 60 * 1000, // 5 минут
-        gcTime: 10 * 60 * 1000, // 10 минут
-      })
-
-      // Сохраняем результат в сторе
-      useWorkoutCompletionStore.getState().setCompletion(key, result)
-
-      return result
-    } catch (error) {
-      console.error('Error getting workout completion status:', error)
-      return false
-    }
-  }
 
   // Мутация для обновления статуса выполнения тренировки
   const updateWorkoutCompletionMutation =
@@ -108,13 +55,16 @@ export function useWorkoutCompletions() {
       await updateWorkoutCompletionMutation.mutateAsync(params)
       return true
     } catch (error) {
+      if (isAbortLikeError(error)) {
+        return false
+      }
+
       console.error('Error updating workout completion status:', error)
       return false
     }
   }
 
   return {
-    getWorkoutCompletionStatus,
     updateWorkoutCompletion,
     isUpdating: updateWorkoutCompletionMutation.isPending,
   }

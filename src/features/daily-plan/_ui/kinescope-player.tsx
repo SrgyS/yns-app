@@ -77,6 +77,7 @@ export type KinescopePlayerProps = {
   onEnded?: () => void
   onWatched?: () => void
   onError?: (error: Error) => void
+  onReady?: () => void
   onPlay?: () => void
   onPause?: () => void
 }
@@ -124,11 +125,13 @@ export function KinescopePlayer({
   onEnded,
   onWatched,
   onError,
+  onReady,
   onPlay,
   onPause,
 }: Readonly<KinescopePlayerProps>) {
     const watchedReportedRef = useRef(false)
     const durationRef = useRef(0)
+    const isInitializedRef = useRef(false)
     const isReadyRef = useRef(false)
     const initRetryCountRef = useRef(0)
 
@@ -148,6 +151,7 @@ export function KinescopePlayer({
     useEffect(() => {
       watchedReportedRef.current = false
       durationRef.current = 0
+      isInitializedRef.current = false
       isReadyRef.current = false
       initRetryCountRef.current = 0
       setIsLoading(Boolean(resolvedVideoId))
@@ -155,7 +159,7 @@ export function KinescopePlayer({
     }, [resolvedVideoId])
 
     const restartPlayer = (): boolean => {
-      if (isReadyRef.current) {
+      if (isInitializedRef.current) {
         return false
       }
 
@@ -176,7 +180,7 @@ export function KinescopePlayer({
       }
 
       const fallbackTimeout = setTimeout(() => {
-        if (!isReadyRef.current) {
+        if (!isInitializedRef.current) {
           const restarted = restartPlayer()
           if (restarted) {
             return
@@ -208,13 +212,14 @@ export function KinescopePlayer({
 
     const handleReady = (event: EventReadyTypes) => {
       durationRef.current = event.duration
+      isInitializedRef.current = true
       isReadyRef.current = true
       setIsLoading(false)
+      onReady?.()
     }
 
     const handleInit = () => {
-      isReadyRef.current = true
-      setIsLoading(false)
+      isInitializedRef.current = true
     }
 
     const handleDurationChange = (event: EventDurationChangeTypes) => {
@@ -235,7 +240,7 @@ export function KinescopePlayer({
     }
 
     const handlePlayerError = (error: unknown) => {
-      if (!isReadyRef.current) {
+      if (!isInitializedRef.current) {
         const restarted = restartPlayer()
         if (restarted) {
           return

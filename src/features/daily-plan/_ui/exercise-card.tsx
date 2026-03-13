@@ -1,14 +1,15 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { KinescopePlayer } from './kinescope-player'
 import { Timer } from 'lucide-react'
 import { Badge } from '@/shared/ui/badge'
 import { Card, CardContent, CardFooter } from '@/shared/ui/card'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { useWorkoutCompletions } from '../_vm/use-workout-completions'
+import { useWorkoutCompletionStatusQuery } from '../_vm/use-workout-completion-status'
 import { useWorkoutQuery } from '../_vm/use-workout'
+import { KinescopePlayer } from './kinescope-player'
 import { FavoriteButton } from '@/shared/ui/favorite-button'
 import { useWorkoutFavorites } from '../_vm/use-workout-favorites'
 import { cn } from '@/shared/ui/utils'
@@ -42,11 +43,11 @@ export function ExerciseCard({
   const [isCompleted, setIsCompleted] = useState(initialCompleted)
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
   const { data: session } = useAppSession()
+  const userId = session?.user?.id || ''
 
   const { data: workout } = useWorkoutQuery(workoutId)
 
-  const { getWorkoutCompletionStatus, updateWorkoutCompletion } =
-    useWorkoutCompletions()
+  const { updateWorkoutCompletion } = useWorkoutCompletions()
 
   const {
     isFavorite: checkIsFavorite,
@@ -64,6 +65,14 @@ export function ExerciseCard({
     []
   )
 
+  const completionStatusQuery = useWorkoutCompletionStatusQuery({
+    workoutId,
+    enrollmentId,
+    contentType,
+    stepIndex,
+    enabled: Boolean(userId && enrollmentId && workoutId),
+  })
+
   const durationMinutes = getDurationMinutes(workout?.durationSec ?? null)
 
   const muscleBadges = formatMuscleLabels(workout?.muscles)
@@ -79,27 +88,20 @@ export function ExerciseCard({
   const difficultyLevel = getDifficultyLevel(workout?.difficulty)
 
   useEffect(() => {
-    if (session?.user?.id && enrollmentId) {
-      const fetchCompletionStatus = async () => {
-        const completionStatus = await getWorkoutCompletionStatus(
-          session.user.id,
-          workoutId,
-          enrollmentId,
-          contentType,
-          stepIndex
-        )
-        setIsCompleted(completionStatus)
-      }
-      fetchCompletionStatus()
+    if (completionStatusQuery.data === undefined) {
+      return
     }
-  }, [
-    session,
-    workoutId,
-    enrollmentId,
-    getWorkoutCompletionStatus,
-    contentType,
-    stepIndex,
-  ])
+
+    setIsCompleted(completionStatusQuery.data)
+  }, [completionStatusQuery.data])
+
+  useEffect(() => {
+    setIsCompleted(initialCompleted)
+  }, [initialCompleted])
+
+  useEffect(() => {
+    setIsVideoPlaying(false)
+  }, [workoutId])
 
   const handleVideoCompleted = () => {
     setIsVideoPlaying(false)
@@ -116,30 +118,52 @@ export function ExerciseCard({
     setIsVideoPlaying(false)
   }
 
-  // Убираем неиспользуемые обработчики
-
   const toggleCompleted = async () => {
-    if (!session?.user?.id) return
+    if (!userId) {
+      return
+    }
 
     const newCompletedState = !isCompleted
-    // Не обновляем состояние сразу, а только после успешного запроса
 
     try {
       await updateWorkoutCompletion({
-        userId: session.user.id,
+        userId,
         workoutId,
         enrollmentId,
         contentType,
         stepIndex,
         isCompleted: newCompletedState,
       })
-      // Обновляем состояние только после успешного запроса
       setIsCompleted(newCompletedState)
     } catch (error) {
       toast.error('Ошибка при обновлении статуса тренировки')
       console.error('Error updating workout completion status:', error)
     }
   }
+
+  const favoriteButton = (
+    <FavoriteButton
+      isFavorite={checkIsFavorite(workoutId)}
+      onToggle={async () => {
+        try {
+          await toggleFavorite(workoutId)
+        } catch (error) {
+          if (
+            error instanceof TRPCClientError &&
+            error.data?.code === 'FORBIDDEN'
+          ) {
+            toast.error('Нет активного доступа к тренировкам')
+          } else {
+            toast.error('Не удалось обновить избранное')
+          }
+        }
+      }}
+      disabled={!userId || !workoutId}
+      isLoading={favoritesLoading || isTogglingFavorite}
+    />
+  )
+
+  const shouldShowVideoOverlay = !isVideoPlaying
 
   return (
     <Card className="min-h-75 rounded-lg gap-4 py-3 sm:rounded-xl sm:gap-5 sm:py-4 max-[400px]:gap-3 max-[400px]:py-2">
@@ -159,13 +183,13 @@ export function ExerciseCard({
             <div
               className={cn(
                 'absolute inset-x-0 top-0 transition-opacity duration-200',
-                isVideoPlaying
-                  ? 'pointer-events-none opacity-0'
-                  : 'pointer-events-auto opacity-100'
+                shouldShowVideoOverlay
+                  ? 'pointer-events-auto opacity-100'
+                  : 'pointer-events-none opacity-0'
               )}
             >
               <div className="flex items-center justify-between p-2 sm:p-3">
-                {durationMinutes && (
+                {durationMinutes ? (
                   <Badge
                     variant="secondary"
                     className="bg-background px-2 py-0.5 text-[11px] sm:text-xs"
@@ -173,27 +197,11 @@ export function ExerciseCard({
                     <Timer className="size-3 inline-block mr-0.5" />
                     {durationMinutes} мин
                   </Badge>
+                ) : (
+                  <span />
                 )}
 
-                <FavoriteButton
-                  isFavorite={checkIsFavorite(workoutId)}
-                  onToggle={async () => {
-                    try {
-                      await toggleFavorite(workoutId)
-                    } catch (error) {
-                      if (
-                        error instanceof TRPCClientError &&
-                        error.data?.code === 'FORBIDDEN'
-                      ) {
-                        toast.error('Нет активного доступа к тренировкам')
-                      } else {
-                        toast.error('Не удалось обновить избранное')
-                      }
-                    }
-                  }}
-                  disabled={!session?.user?.id || !workoutId}
-                  isLoading={favoritesLoading || isTogglingFavorite}
-                />
+                {favoriteButton}
               </div>
             </div>
           </div>
