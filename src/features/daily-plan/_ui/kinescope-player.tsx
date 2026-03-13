@@ -14,13 +14,14 @@ import ReactKinescopePlayer, {
   type EventTimeUpdateTypes,
   type EventDurationChangeTypes,
 } from '@kinescope/react-kinescope-player'
-import { Skeleton } from '@/shared/ui/skeleton/skeleton'
+
 import { cn } from '@/shared/ui/utils'
+import { Spinner } from '@/shared/ui/spinner'
 
 const WATCHED_PERCENT_THRESHOLD = 0.95
 const DEFAULT_HEIGHT = 300
-const INIT_RETRY_TIMEOUTS_MS = [2_000, 4_000]
-const MAX_INIT_RETRIES = INIT_RETRY_TIMEOUTS_MS.length
+const PLAYER_READY_TIMEOUT_MS = 4_000
+const MAX_INIT_RETRIES = 1
 
 type KinescopePlayerOptions = {
   url?: string
@@ -131,9 +132,9 @@ export function KinescopePlayer({
 }: Readonly<KinescopePlayerProps>) {
     const watchedReportedRef = useRef(false)
     const durationRef = useRef(0)
-    const isInitializedRef = useRef(false)
     const isReadyRef = useRef(false)
-    const initRetryCountRef = useRef(0)
+    const retryCountRef = useRef(0)
+    const currentAttemptRef = useRef(0)
 
     const [playerInstanceKey, setPlayerInstanceKey] = useState(0)
     const [isLoading, setIsLoading] = useState(false)
@@ -151,26 +152,31 @@ export function KinescopePlayer({
     useEffect(() => {
       watchedReportedRef.current = false
       durationRef.current = 0
-      isInitializedRef.current = false
       isReadyRef.current = false
-      initRetryCountRef.current = 0
-      setIsLoading(Boolean(resolvedVideoId))
+      retryCountRef.current = 0
+      currentAttemptRef.current = 0
       setPlayerInstanceKey(0)
+      setIsLoading(Boolean(resolvedVideoId))
     }, [resolvedVideoId])
 
-    const restartPlayer = (): boolean => {
-      if (isInitializedRef.current) {
+    const retryPlayer = (attemptKey: number): boolean => {
+      if (attemptKey !== currentAttemptRef.current) {
         return false
       }
 
-      if (initRetryCountRef.current >= MAX_INIT_RETRIES) {
+      if (isReadyRef.current) {
         return false
       }
 
-      initRetryCountRef.current += 1
+      if (retryCountRef.current >= MAX_INIT_RETRIES) {
+        return false
+      }
+
+      retryCountRef.current += 1
+      currentAttemptRef.current += 1
       isReadyRef.current = false
       setIsLoading(true)
-      setPlayerInstanceKey(prev => prev + 1)
+      setPlayerInstanceKey(currentAttemptRef.current)
       return true
     }
 
@@ -179,20 +185,22 @@ export function KinescopePlayer({
         return
       }
 
-      const fallbackTimeout = setTimeout(() => {
-        if (!isInitializedRef.current) {
-          const restarted = restartPlayer()
-          if (restarted) {
-            return
-          }
+      const attemptKey = playerInstanceKey
+      const readyTimeout = setTimeout(() => {
+        const restarted = retryPlayer(attemptKey)
+        if (restarted) {
+          return
         }
-        setIsLoading(false)
-      }, INIT_RETRY_TIMEOUTS_MS[initRetryCountRef.current] ?? 6_000)
+
+        if (attemptKey === currentAttemptRef.current && !isReadyRef.current) {
+          setIsLoading(false)
+        }
+      }, PLAYER_READY_TIMEOUT_MS)
 
       return () => {
-        clearTimeout(fallbackTimeout)
+        clearTimeout(readyTimeout)
       }
-    }, [resolvedVideoId, playerInstanceKey])
+    }, [playerInstanceKey, resolvedVideoId])
 
     useEffect(() => {
       if (completionState === false) {
@@ -212,14 +220,14 @@ export function KinescopePlayer({
 
     const handleReady = (event: EventReadyTypes) => {
       durationRef.current = event.duration
-      isInitializedRef.current = true
       isReadyRef.current = true
       setIsLoading(false)
       onReady?.()
     }
 
     const handleInit = () => {
-      isInitializedRef.current = true
+      isReadyRef.current = true
+      setIsLoading(false)
     }
 
     const handleDurationChange = (event: EventDurationChangeTypes) => {
@@ -240,13 +248,6 @@ export function KinescopePlayer({
     }
 
     const handlePlayerError = (error: unknown) => {
-      if (!isInitializedRef.current) {
-        const restarted = restartPlayer()
-        if (restarted) {
-          return
-        }
-      }
-
       const normalizedError = normalizePlayerError(error)
 
       setIsLoading(false)
@@ -259,7 +260,11 @@ export function KinescopePlayer({
 
     return (
       <div
-        className={cn('relative', className)}
+        className={cn(
+          'relative overflow-hidden rounded-lg sm:rounded-xl',
+          isLoading ? 'border border-border/70' : '',
+          className
+        )}
         style={{
           width: widthStyle,
           height: heightStyle,
@@ -304,9 +309,11 @@ export function KinescopePlayer({
           }
         />
 
-        {isLoading && (
-          <Skeleton className="pointer-events-none absolute inset-0 z-20 h-full w-full" />
-        )}
+        {isLoading ? (
+          <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-background/35">
+            <Spinner />
+          </div>
+        ) : null}
       </div>
     )
 }

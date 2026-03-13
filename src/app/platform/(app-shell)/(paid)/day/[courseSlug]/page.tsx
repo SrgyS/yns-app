@@ -29,7 +29,7 @@ function serializeForQuery<T>(value: T): T {
   if (value === undefined) {
     return value
   }
-  return structuredClone(value) as T
+  return structuredClone(value)
 }
 
 interface DayPageProps {
@@ -38,7 +38,7 @@ interface DayPageProps {
   }>
 }
 
-export default async function DayPage({ params }: DayPageProps) {
+export default async function DayPage({ params }: Readonly<DayPageProps>) {
   const overallStart = Date.now()
   const { courseSlug } = await params
 

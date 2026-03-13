@@ -6,10 +6,7 @@ export const SmallSpinner = ({ isLoading }: { isLoading?: boolean }) => {
 
   if (show) {
     return (
-      <Spinner
-        className="mr-2 h-4 w-4 animate-spin"
-        aria-label="Обновление профиля"
-      />
+      <Spinner className="mr-2 h-4 w-4 animate-spin" aria-label="Загрузка" />
     )
   }
   return null
