@@ -10,7 +10,6 @@ import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { useWorkoutCompletions } from '../_vm/use-workout-completions'
 import { useWorkoutCompletionStatusQuery } from '../_vm/use-workout-completion-status'
 import { useWorkoutQuery } from '../_vm/use-workout'
-import { KinescopePlayer } from './kinescope-player'
 import { FavoriteButton } from '@/shared/ui/favorite-button'
 import { useWorkoutFavorites } from '../_vm/use-workout-favorites'
 import { cn } from '@/shared/ui/utils'
@@ -24,6 +23,7 @@ import {
   getDifficultyLevel,
   getDurationMinutes,
 } from '@/entities/workout/_lib/workout-formatters'
+import { KinescopePlayer } from './kinescope-player/kinescope-player'
 
 interface ExerciseCardProps {
   title: string
@@ -93,11 +93,14 @@ export function ExerciseCard({
     setIsVideoPlaying(false)
   }, [workoutId])
 
-  const handleVideoCompleted = () => {
-    setIsVideoPlaying(false)
+  const handleVideoWatched = () => {
     if (!isCompleted) {
       void toggleCompleted(true)
     }
+  }
+
+  const handleVideoEnded = () => {
+    setIsVideoPlaying(false)
   }
 
   const handleVideoPlay = () => {
@@ -169,7 +172,8 @@ export function ExerciseCard({
               videoId={workout.videoId}
               options={playerOptions}
               completionState={isCompleted}
-              onEnded={handleVideoCompleted}
+              onEnded={handleVideoEnded}
+              onWatched={handleVideoWatched}
               onPlay={handleVideoPlay}
               onPause={handleVideoPause}
               className="overflow-hidden rounded-lg sm:rounded-xl"
