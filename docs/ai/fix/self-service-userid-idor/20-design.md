@@ -118,6 +118,7 @@ sequenceDiagram
 - React Query keys for the affected self-service procedures change because `userId` is removed from input.
 - Server hydration in `src/app/platform/(app-shell)/(paid)/day/[courseSlug]/page.tsx` must set query data with the new input shapes so client and server cache keys match.
 - Invalidation calls can remain broad (`invalidate()` without input) where already used.
+- For workout completion UX, `getWorkoutCompletionStatus` should be the single client-side source of truth for `ExerciseCard`; optimistic UI should update that query cache via mutation lifecycle (`onMutate/onError/onSettled`) instead of duplicating completion state in local component state and external store.
 
 ## Security
 ### Threats

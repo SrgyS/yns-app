@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { CheckedState } from '@radix-ui/react-checkbox'
 import { Timer } from 'lucide-react'
 import { Badge } from '@/shared/ui/badge'
 import { Card, CardContent, CardFooter } from '@/shared/ui/card'
@@ -16,6 +17,7 @@ import { cn } from '@/shared/ui/utils'
 import { DailyContentType } from '@/shared/lib/client-enums'
 import { toast } from 'sonner'
 import { TRPCClientError } from '@trpc/client'
+import { isAbortLikeError } from '@/shared/lib/query/errors'
 import {
   formatEquipmentList,
   formatMuscleLabels,
@@ -40,14 +42,13 @@ export function ExerciseCard({
   contentType,
   stepIndex,
 }: Readonly<ExerciseCardProps>) {
-  const [isCompleted, setIsCompleted] = useState(initialCompleted)
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
   const { data: session } = useAppSession()
   const userId = session?.user?.id || ''
 
   const { data: workout } = useWorkoutQuery(workoutId)
 
-  const { updateWorkoutCompletion } = useWorkoutCompletions()
+  const { updateWorkoutCompletion, isUpdating } = useWorkoutCompletions()
 
   const {
     isFavorite: checkIsFavorite,
@@ -72,6 +73,7 @@ export function ExerciseCard({
     stepIndex,
     enabled: Boolean(userId && enrollmentId && workoutId),
   })
+  const isCompleted = completionStatusQuery.data ?? initialCompleted
 
   const durationMinutes = getDurationMinutes(workout?.durationSec ?? null)
 
@@ -88,25 +90,13 @@ export function ExerciseCard({
   const difficultyLevel = getDifficultyLevel(workout?.difficulty)
 
   useEffect(() => {
-    if (completionStatusQuery.data === undefined) {
-      return
-    }
-
-    setIsCompleted(completionStatusQuery.data)
-  }, [completionStatusQuery.data])
-
-  useEffect(() => {
-    setIsCompleted(initialCompleted)
-  }, [initialCompleted])
-
-  useEffect(() => {
     setIsVideoPlaying(false)
   }, [workoutId])
 
   const handleVideoCompleted = () => {
     setIsVideoPlaying(false)
     if (!isCompleted) {
-      toggleCompleted()
+      void toggleCompleted(true)
     }
   }
 
@@ -118,12 +108,14 @@ export function ExerciseCard({
     setIsVideoPlaying(false)
   }
 
-  const toggleCompleted = async () => {
+  const toggleCompleted = async (checked: CheckedState) => {
     if (!userId) {
       return
     }
 
-    const newCompletedState = !isCompleted
+    if (checked === 'indeterminate') {
+      return
+    }
 
     try {
       await updateWorkoutCompletion({
@@ -131,10 +123,13 @@ export function ExerciseCard({
         enrollmentId,
         contentType,
         stepIndex,
-        isCompleted: newCompletedState,
+        isCompleted: checked,
       })
-      setIsCompleted(newCompletedState)
     } catch (error) {
+      if (isAbortLikeError(error)) {
+        return
+      }
+
       toast.error('Ошибка при обновлении статуса тренировки')
       console.error('Error updating workout completion status:', error)
     }
@@ -284,6 +279,7 @@ export function ExerciseCard({
             id={`workout-completed-${workoutId}`}
             checked={isCompleted}
             onCheckedChange={toggleCompleted}
+            disabled={isUpdating}
             className="cursor-pointer"
           />
         </div>

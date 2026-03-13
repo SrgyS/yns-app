@@ -1,71 +1,69 @@
 import { DailyContentType } from '@/shared/lib/client-enums'
-import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { workoutApi } from '../_api'
-import {
-  useWorkoutCompletionStore,
-  createCompletionKey,
-} from '@/shared/store/workout-completion-store'
-import { isAbortLikeError } from '@/shared/lib/query/errors'
+
+type UpdateCompletionParams = {
+  workoutId: string
+  enrollmentId: string
+  contentType: DailyContentType
+  stepIndex: number
+  isCompleted: boolean
+}
+
+type UpdateCompletionContext = {
+  previousStatus?: boolean
+}
+
+function toCompletionStatusInput(params: Omit<UpdateCompletionParams, 'isCompleted'>) {
+  return {
+    workoutId: params.workoutId,
+    enrollmentId: params.enrollmentId,
+    contentType: params.contentType,
+    stepIndex: params.stepIndex,
+  }
+}
 
 export function useWorkoutCompletions() {
-  const { data: session } = useAppSession()
-  // Получаем утилиты для инвалидации кэша
   const utils = workoutApi.useUtils()
 
-  // Мутация для обновления статуса выполнения тренировки
   const updateWorkoutCompletionMutation =
     workoutApi.updateWorkoutCompletion.useMutation({
-      // При успешном обновлении инвалидируем кэш и обновляем стор
-      onSuccess: (_, variables) => {
-        const { enrollmentId, contentType, stepIndex, isCompleted } = variables
-        const workoutId = variables.workoutId
-        const userId = session?.user?.id
+      async onMutate(variables): Promise<UpdateCompletionContext> {
+        const queryInput = toCompletionStatusInput(variables)
 
-        // Создаем ключ для хранения в сторе
-        if (!userId) {
+        await utils.getWorkoutCompletionStatus.cancel(queryInput)
+
+        const previousStatus =
+          utils.getWorkoutCompletionStatus.getData(queryInput)
+
+        utils.getWorkoutCompletionStatus.setData(
+          queryInput,
+          variables.isCompleted
+        )
+
+        return { previousStatus }
+      },
+      onError: (_error, variables, context) => {
+        const queryInput = toCompletionStatusInput(variables)
+
+        if (context?.previousStatus !== undefined) {
+          utils.getWorkoutCompletionStatus.setData(
+            queryInput,
+            context.previousStatus
+          )
           return
         }
 
-        const key = createCompletionKey(
-          userId,
-          enrollmentId,
-          contentType,
-          stepIndex,
-          workoutId
+        utils.getWorkoutCompletionStatus.invalidate(queryInput)
+      },
+      onSettled: (_data, _error, variables) => {
+        utils.getWorkoutCompletionStatus.invalidate(
+          toCompletionStatusInput(variables)
         )
-
-        // Обновляем значение в сторе
-        useWorkoutCompletionStore.getState().setCompletion(key, isCompleted)
-
-        // Инвалидируем конкретный запрос в React Query
-        utils.getWorkoutCompletionStatus.invalidate({
-          workoutId,
-          enrollmentId,
-          contentType,
-          stepIndex,
-        })
       },
     })
 
-  // Функция для обновления статуса выполнения тренировки
-  const updateWorkoutCompletion = async (params: {
-    workoutId: string
-    enrollmentId: string
-    contentType: DailyContentType
-    stepIndex: number
-    isCompleted: boolean
-  }) => {
-    try {
-      await updateWorkoutCompletionMutation.mutateAsync(params)
-      return true
-    } catch (error) {
-      if (isAbortLikeError(error)) {
-        return false
-      }
-
-      console.error('Error updating workout completion status:', error)
-      return false
-    }
+  const updateWorkoutCompletion = async (params: UpdateCompletionParams) => {
+    await updateWorkoutCompletionMutation.mutateAsync(params)
   }
 
   return {

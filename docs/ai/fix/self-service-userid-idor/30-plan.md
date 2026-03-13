@@ -114,3 +114,27 @@ Local tests:
 Acceptance criteria:
 - Regression tests проходят.
 - Impl log и review заполнены по фактическому выполнению.
+
+## Phase 5: Optimistic completion status UX
+Goal:
+- Убрать perceptible delay в `ExerciseCard` при переключении статуса выполнения, используя React Query optimistic update как единственный source of truth.
+
+Files to change:
+- `src/features/daily-plan/_vm/use-workout-completions.ts`
+- `src/features/daily-plan/_ui/exercise-card.tsx`
+- `docs/ai/fix/self-service-userid-idor/40-impl-log.md`
+- `docs/ai/fix/self-service-userid-idor/50-review.md`
+
+Steps:
+1. Перевести `updateWorkoutCompletion` mutation на `onMutate/cancel/getData/setData/onError/onSettled`.
+2. Убрать дублирование состояния completion в `ExerciseCard`.
+3. Читать текущий completion из query cache с fallback на `initialCompleted`.
+4. Проверить, что optimistic state откатывается при mutation error и пересинхронизируется через invalidate.
+
+Local tests:
+- `npm run lint:types`
+- `npm run lint`
+
+Acceptance criteria:
+- UI обновляет статус completion сразу при клике, без ожидания network round-trip.
+- Источник истины для completion status в карточке один: React Query cache.

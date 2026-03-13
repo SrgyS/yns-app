@@ -155,3 +155,48 @@ npm run lint
 - Intermediate issues encountered:
   - Controller spec initially pulled real NextAuth/MDX/esbuild dependency chains and failed before hitting the tested logic.
   - Resolved by mocking `@/kernel/lib/trpc/module` and heavy imported modules in the spec; no production code change was needed for that issue.
+
+## 2026-03-13 - Phase 5
+
+### Lead
+- Scope: Phase 5 only.
+- Goal: remove noticeable completion-status delay in `ExerciseCard` using React Query optimistic update as the only UI source of truth.
+- DoD:
+  - `ExerciseCard` no longer waits for network round-trip to show completion toggle
+  - completion state is derived from `getWorkoutCompletionStatus` query cache
+  - mutation supports rollback on error and background revalidation on settle
+
+### Coder
+- Updated `src/features/daily-plan/_vm/use-workout-completions.ts`:
+  - removed write path to Zustand store for this flow
+  - added optimistic mutation lifecycle:
+    - `onMutate` -> cancel current status query, snapshot previous value, `setData` optimistic value
+    - `onError` -> rollback previous query value or invalidate when no snapshot exists
+    - `onSettled` -> invalidate specific status query for server reconciliation
+- Updated `src/features/daily-plan/_ui/exercise-card.tsx`:
+  - removed duplicated local `isCompleted` state
+  - now derives `isCompleted` from `completionStatusQuery.data ?? initialCompleted`
+  - keeps only local UI state unrelated to server data (`isVideoPlaying`)
+  - toggle handler no longer waits to set local completion state after mutation
+
+### Reviewer
+- Verdict: Pass
+- Notes:
+  - Pattern now matches existing optimistic-query usage in `use-workout-favorites`.
+  - Source of truth is simpler and more predictable than local state plus cache invalidation.
+
+### Security
+- Verdict: Pass
+- Notes:
+  - No auth/authz surface changed in this phase.
+  - Change is limited to client-side cache update behavior for an already protected mutation.
+
+### Tester
+- Commands run:
+```bash
+npm run lint:types
+npm run lint
+```
+- Results:
+  - `tsc --noEmit`: pass
+  - `eslint .`: pass

@@ -84,13 +84,15 @@ export class UserWorkoutCompletionRepository {
     db: DbClient = this.defaultDb
   ): Promise<void> {
     try {
-      await db.userWorkoutCompletion.deleteMany({
+      await db.userWorkoutCompletion.delete({
         where: {
-          userId,
-          enrollmentId,
-          contentType,
-          workoutId,
-          stepIndex,
+          userId_enrollmentId_contentType_workoutId_stepIndex: {
+            userId,
+            enrollmentId,
+            contentType,
+            workoutId,
+            stepIndex,
+          },
         },
       })
     } catch (error) {

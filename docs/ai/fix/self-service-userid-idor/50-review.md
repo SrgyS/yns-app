@@ -13,6 +13,7 @@ feature: self-service-userid-idor
 - Self-service `daily-plan` procedures no longer accept `userId` from the client.
 - `course.updateWorkoutDays` now rejects attempts to modify another user's enrollment.
 - Client hooks and day-page hydration were aligned to the new server contracts.
+- `ExerciseCard` completion status now uses optimistic React Query cache updates instead of waiting for mutation completion.
 - Regression coverage was added for the new ownership check and existing access-guard spec was updated.
 
 ## Design compliance
@@ -27,6 +28,9 @@ feature: self-service-userid-idor
 - DI wiring: Pass
 - Error handling: Pass
 - Caching strategy alignment: Pass
+- Client state ownership: Pass
+  - `ExerciseCard` no longer duplicates server-owned completion state in local component state
+  - optimistic update is handled at the query-cache layer with rollback/revalidation
 
 ## Security
 - AuthN (session via `authorizedProcedure`): Pass

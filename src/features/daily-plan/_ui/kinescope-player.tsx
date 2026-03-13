@@ -131,6 +131,7 @@ export function KinescopePlayer({
   onPause,
 }: Readonly<KinescopePlayerProps>) {
     const watchedReportedRef = useRef(false)
+    const playbackStartedRef = useRef(false)
     const durationRef = useRef(0)
     const isReadyRef = useRef(false)
     const retryCountRef = useRef(0)
@@ -151,6 +152,7 @@ export function KinescopePlayer({
 
     useEffect(() => {
       watchedReportedRef.current = false
+      playbackStartedRef.current = false
       durationRef.current = 0
       isReadyRef.current = false
       retryCountRef.current = 0
@@ -209,6 +211,10 @@ export function KinescopePlayer({
     }, [completionState])
 
     const reportWatched = () => {
+      if (!playbackStartedRef.current) {
+        return
+      }
+
       if (watchedReportedRef.current) {
         return
       }
@@ -234,11 +240,20 @@ export function KinescopePlayer({
       durationRef.current = event.duration
     }
 
+    const handlePlay = () => {
+      playbackStartedRef.current = true
+      onPlay?.()
+    }
+
     const handleTimeUpdate = (event: EventTimeUpdateTypes) => {
       const duration = durationRef.current
       const watchedPercent = duration > 0 ? event.currentTime / duration : 0
 
-      if (!duration || watchedReportedRef.current) {
+      if (
+        !duration ||
+        watchedReportedRef.current ||
+        !playbackStartedRef.current
+      ) {
         return
       }
 
@@ -296,7 +311,7 @@ export function KinescopePlayer({
           onInit={handleInit}
           onReady={handleReady}
           onDurationChange={handleDurationChange}
-          onPlay={onPlay}
+          onPlay={handlePlay}
           onPause={onPause}
           onEnded={reportWatched}
           onTimeUpdate={handleTimeUpdate}
