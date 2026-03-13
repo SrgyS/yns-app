@@ -200,3 +200,43 @@ npm run lint
 - Results:
   - `tsc --noEmit`: pass
   - `eslint .`: pass
+
+## 2026-03-13 - Phase 6
+
+### Lead
+- Scope: Phase 6 only.
+- Goal: remove obsolete Zustand workout completion store after confirming runtime flow no longer depends on it.
+- DoD:
+  - no remaining imports/usages of `useWorkoutCompletionStore` or `createCompletionKey`
+  - `edit-workout-days-client` relies on query invalidation only
+  - `keepProgress` behavior remains server-side
+
+### Coder
+- Removed `src/shared/store/workout-completion-store.ts`
+- Cleared re-export from `src/shared/store/index.ts`
+- Updated `src/features/select-training-days/_ui/edit-workout-days-client.tsx`:
+  - removed `useWorkoutCompletionStore` import
+  - removed store reset after successful `updateWorkoutDays`
+  - retained React Query invalidation for `getWorkoutCompletionStatus` and `getUserDailyPlan`
+
+### Reviewer
+- Verdict: Pass
+- Notes:
+  - Cleanup is safe because the only remaining runtime usage was a redundant reset after query invalidation.
+  - Server-side `keepProgress`/`deleteAllForEnrollment` logic remains the real source of truth.
+
+### Security
+- Verdict: Pass
+- Notes:
+  - No auth/authz behavior changed.
+  - Removing redundant client store reduces state divergence risk.
+
+### Tester
+- Commands run:
+```bash
+npm run lint:types
+npm run lint
+```
+- Results:
+  - `tsc --noEmit`: pass
+  - `eslint .`: pass

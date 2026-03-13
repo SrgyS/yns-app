@@ -14,6 +14,7 @@ feature: self-service-userid-idor
 - `course.updateWorkoutDays` now rejects attempts to modify another user's enrollment.
 - Client hooks and day-page hydration were aligned to the new server contracts.
 - `ExerciseCard` completion status now uses optimistic React Query cache updates instead of waiting for mutation completion.
+- Obsolete Zustand workout completion store was removed; completion flow now relies on server persistence plus React Query only.
 - Regression coverage was added for the new ownership check and existing access-guard spec was updated.
 
 ## Design compliance
@@ -31,6 +32,7 @@ feature: self-service-userid-idor
 - Client state ownership: Pass
   - `ExerciseCard` no longer duplicates server-owned completion state in local component state
   - optimistic update is handled at the query-cache layer with rollback/revalidation
+  - redundant Zustand store for completion status has been removed
 
 ## Security
 - AuthN (session via `authorizedProcedure`): Pass

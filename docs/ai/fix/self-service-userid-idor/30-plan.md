@@ -138,3 +138,28 @@ Local tests:
 Acceptance criteria:
 - UI обновляет статус completion сразу при клике, без ожидания network round-trip.
 - Источник истины для completion status в карточке один: React Query cache.
+
+## Phase 6: Remove obsolete workout completion store
+Goal:
+- Удалить Zustand store, который больше не участвует в runtime flow completion status.
+
+Files to change:
+- `src/shared/store/workout-completion-store.ts`
+- `src/shared/store/index.ts`
+- `src/features/select-training-days/_ui/edit-workout-days-client.tsx`
+- `docs/ai/fix/self-service-userid-idor/40-impl-log.md`
+- `docs/ai/fix/self-service-userid-idor/50-review.md`
+
+Steps:
+1. Проверить фактические usages `useWorkoutCompletionStore/createCompletionKey`.
+2. Удалить re-export и сам store file.
+3. Убрать reset store из `edit-workout-days-client.tsx`, оставив только query invalidation.
+4. Проверить, что server-side `keepProgress` flow не зависит от client store.
+
+Local tests:
+- `npm run lint:types`
+- `npm run lint`
+
+Acceptance criteria:
+- В репозитории не остается usages deleted workout completion store.
+- Смена дней тренировок продолжает опираться только на server-side completion persistence и query invalidation.
