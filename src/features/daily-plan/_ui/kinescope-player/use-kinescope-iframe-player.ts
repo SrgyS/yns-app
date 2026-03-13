@@ -42,6 +42,120 @@ type UseKinescopeIframePlayerResult = {
   sourceUrl?: string
 }
 
+const waitForPromise = async (promise: Promise<unknown> | null) => {
+  if (promise === null) {
+    return
+  }
+
+  await promise.catch(() => undefined)
+}
+
+const clearTimer = (timerId: number | null): number | null => {
+  if (timerId !== null) {
+    window.clearTimeout(timerId)
+  }
+
+  return null
+}
+
+const reasonToText = (reason: unknown): string => {
+  if (typeof reason === 'string') {
+    return reason
+  }
+
+  if (reason instanceof Error) {
+    return reason.message
+  }
+
+  return ''
+}
+
+const isKinescopeConnectTimeout = (reason: unknown): boolean => {
+  const reasonText = reasonToText(reason)
+
+  return (
+    reasonText.includes('Timeout of 7000ms exceeded') ||
+    reasonText.includes('create timeout (7000)')
+  )
+}
+
+type PlayerSubscriptionParams = {
+  player: IframePlayer
+  isStale: () => boolean
+  markLoaded: () => void
+  reportWatched: () => void
+  handlePlayerError: (error: unknown) => void
+  onEnded?: () => void
+  onPlay?: () => void
+  onPause?: () => void
+}
+
+const subscribeToPlayerEvents = ({
+  player,
+  isStale,
+  markLoaded,
+  reportWatched,
+  handlePlayerError,
+  onEnded,
+  onPlay,
+  onPause,
+}: Readonly<PlayerSubscriptionParams>) => {
+  const events = player.Events
+
+  player.on(events.Loaded, () => {
+    if (isStale()) {
+      return
+    }
+
+    markLoaded()
+  })
+
+  player.on(events.Play, () => {
+    if (isStale()) {
+      return
+    }
+
+    onPlay?.()
+  })
+
+  player.on(events.Pause, () => {
+    if (isStale()) {
+      return
+    }
+
+    onPause?.()
+  })
+
+  player.on(events.Ended, () => {
+    if (isStale()) {
+      return
+    }
+
+    onEnded?.()
+    reportWatched()
+  })
+
+  player.on(events.TimeUpdate, event => {
+    if (isStale()) {
+      return
+    }
+
+    if (event.data.percent < WATCHED_PERCENT_THRESHOLD) {
+      return
+    }
+
+    reportWatched()
+  })
+
+  player.on(events.Error, event => {
+    if (isStale()) {
+      return
+    }
+
+    handlePlayerError(event.data.error)
+  })
+}
+
 export const useKinescopeIframePlayer = ({
   videoId,
   options,
@@ -52,9 +166,10 @@ export const useKinescopeIframePlayer = ({
   onReady,
   onPlay,
   onPause,
-}: UseKinescopeIframePlayerParams): UseKinescopeIframePlayerResult => {
+}: Readonly<UseKinescopeIframePlayerParams>): UseKinescopeIframePlayerResult => {
   const hostRef = useRef<HTMLDivElement | null>(null)
   const playerRef = useRef<IframePlayer | null>(null)
+  const createPromiseRef = useRef<Promise<IframePlayer> | null>(null)
   const destroyPromiseRef = useRef<Promise<void> | null>(null)
   const generationRef = useRef(0)
 
@@ -70,6 +185,7 @@ export const useKinescopeIframePlayer = ({
   const playbackStartedRef = useRef(false)
   const readyRef = useRef(false)
   const retryCountRef = useRef(0)
+  const retryNonceRef = useRef(0)
 
   const [retryNonce, setRetryNonce] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
@@ -109,6 +225,7 @@ export const useKinescopeIframePlayer = ({
     playbackStartedRef.current = false
     readyRef.current = false
     retryCountRef.current = 0
+    retryNonceRef.current = 0
     setRetryNonce(0)
     setIsLoading(Boolean(sourceUrl))
   }, [sourceUrl, optionsKey])
@@ -123,42 +240,21 @@ export const useKinescopeIframePlayer = ({
     let readyTimeoutId: number | null = null
     let hideLoadingTimeoutId: number | null = null
 
-    const clearReadyTimeout = () => {
-      if (readyTimeoutId !== null) {
-        window.clearTimeout(readyTimeoutId)
-        readyTimeoutId = null
-      }
+    const isStale = () => {
+      return cancelled || generation !== generationRef.current
     }
 
-    const clearHideLoadingTimeout = () => {
-      if (hideLoadingTimeoutId !== null) {
-        window.clearTimeout(hideLoadingTimeoutId)
-        hideLoadingTimeoutId = null
-      }
+    const clearTimers = () => {
+      readyTimeoutId = clearTimer(readyTimeoutId)
+      hideLoadingTimeoutId = clearTimer(hideLoadingTimeoutId)
     }
 
-    const destroyCurrentPlayer = async () => {
-      clearReadyTimeout()
-      clearHideLoadingTimeout()
-
-      const currentPlayer = playerRef.current
-      playerRef.current = null
-      readyRef.current = false
-
-      if (!currentPlayer) {
-        hostRef.current?.replaceChildren()
+    const stopLoading = () => {
+      if (isStale()) {
         return
       }
 
-      const destroyPromise = currentPlayer.destroy().catch(() => undefined)
-      destroyPromiseRef.current = destroyPromise
-      await destroyPromise
-
-      if (destroyPromiseRef.current === destroyPromise) {
-        destroyPromiseRef.current = null
-      }
-
-      hostRef.current?.replaceChildren()
+      setIsLoading(false)
     }
 
     const reportWatched = () => {
@@ -174,9 +270,35 @@ export const useKinescopeIframePlayer = ({
       onWatchedRef.current?.()
     }
 
+    const markLoaded = () => {
+      if (isStale()) {
+        return
+      }
+
+      readyRef.current = true
+      readyTimeoutId = clearTimer(readyTimeoutId)
+      hideLoadingTimeoutId = clearTimer(hideLoadingTimeoutId)
+
+      hideLoadingTimeoutId = window.setTimeout(() => {
+        stopLoading()
+      }, HIDE_LOADING_DELAY_MS)
+
+      onReadyRef.current?.()
+    }
+
+    const handlePlayerError = (error: unknown) => {
+      if (isStale()) {
+        return
+      }
+
+      clearTimers()
+      stopLoading()
+      onErrorRef.current?.(normalizePlayerError(error))
+    }
+
     const startReadyTimeout = () => {
       readyTimeoutId = window.setTimeout(() => {
-        if (cancelled || generation !== generationRef.current) {
+        if (isStale()) {
           return
         }
 
@@ -185,144 +307,110 @@ export const useKinescopeIframePlayer = ({
         }
 
         if (retryCountRef.current >= MAX_INIT_RETRIES) {
-          setIsLoading(false)
+          stopLoading()
           return
         }
 
         retryCountRef.current += 1
-        setRetryNonce(current => current + 1)
+        retryNonceRef.current += 1
+        setRetryNonce(retryNonceRef.current)
       }, PLAYER_READY_TIMEOUT_MS)
     }
 
-    const markLoaded = () => {
-      if (cancelled || generation !== generationRef.current) {
+    const destroyCurrentPlayer = async () => {
+      clearTimers()
+      await waitForPromise(createPromiseRef.current)
+
+      const currentPlayer = playerRef.current
+      playerRef.current = null
+      readyRef.current = false
+
+      if (currentPlayer === null) {
+        hostRef.current?.replaceChildren()
         return
       }
 
-      readyRef.current = true
-      clearReadyTimeout()
-      clearHideLoadingTimeout()
+      const destroyPromise = currentPlayer.destroy().catch(() => undefined)
+      destroyPromiseRef.current = destroyPromise
+      await destroyPromise
 
-      hideLoadingTimeoutId = window.setTimeout(() => {
-        if (cancelled || generation !== generationRef.current) {
-          return
-        }
+      if (destroyPromiseRef.current === destroyPromise) {
+        destroyPromiseRef.current = null
+      }
 
-        setIsLoading(false)
-      }, HIDE_LOADING_DELAY_MS)
-
-      onReadyRef.current?.()
+      hostRef.current?.replaceChildren()
     }
 
     const initPlayer = async () => {
       try {
-        const pendingDestroy = destroyPromiseRef.current
-        if (pendingDestroy !== null) {
-          await pendingDestroy
-        }
-
+        await waitForPromise(destroyPromiseRef.current)
         await destroyCurrentPlayer()
 
-        if (
-          cancelled ||
-          generation !== generationRef.current ||
-          !hostRef.current
-        ) {
+        if (isStale() || !hostRef.current) {
           return
         }
 
         const iframe = createPlayerIframe(hostRef.current)
         const factory = await load()
 
-        if (cancelled || generation !== generationRef.current) {
+        if (isStale()) {
           return
         }
 
-        const player = await factory.create(
+        const createPromise = factory.create(
           iframe,
           buildCreateOptions(sourceUrl, stableOptions)
         )
+        createPromiseRef.current = createPromise
+        const player = await createPromise
 
-        if (cancelled || generation !== generationRef.current) {
+        if (createPromiseRef.current === createPromise) {
+          createPromiseRef.current = null
+        }
+
+        if (isStale()) {
           await player.destroy().catch(() => undefined)
           return
         }
 
         playerRef.current = player
-        const events = player.Events
 
-        player.on(events.Loaded, () => {
-          markLoaded()
-        })
-
-        player.on(events.Play, () => {
-          if (cancelled || generation !== generationRef.current) {
-            return
-          }
-
-          playbackStartedRef.current = true
-          onPlayRef.current?.()
-        })
-
-        player.on(events.Pause, () => {
-          if (cancelled || generation !== generationRef.current) {
-            return
-          }
-
-          onPauseRef.current?.()
-        })
-
-        player.on(events.Ended, () => {
-          if (cancelled || generation !== generationRef.current) {
-            return
-          }
-
-          onEndedRef.current?.()
-          reportWatched()
-        })
-
-        player.on(events.TimeUpdate, event => {
-          if (cancelled || generation !== generationRef.current) {
-            return
-          }
-
-          if (!playbackStartedRef.current || watchedReportedRef.current) {
-            return
-          }
-
-          if (event.data.percent >= WATCHED_PERCENT_THRESHOLD) {
-            reportWatched()
-          }
-        })
-
-        player.on(events.Error, event => {
-          if (cancelled || generation !== generationRef.current) {
-            return
-          }
-
-          clearReadyTimeout()
-          clearHideLoadingTimeout()
-          setIsLoading(false)
-          onErrorRef.current?.(normalizePlayerError(event.data.error))
+        subscribeToPlayerEvents({
+          player,
+          isStale,
+          markLoaded,
+          reportWatched,
+          handlePlayerError,
+          onEnded: onEndedRef.current,
+          onPlay: () => {
+            playbackStartedRef.current = true
+            onPlayRef.current?.()
+          },
+          onPause: onPauseRef.current,
         })
 
         startReadyTimeout()
       } catch (error) {
-        if (cancelled || generation !== generationRef.current) {
-          return
-        }
+        createPromiseRef.current = null
+        handlePlayerError(error)
+      }
+    }
 
-        clearReadyTimeout()
-        clearHideLoadingTimeout()
-        setIsLoading(false)
-        onErrorRef.current?.(normalizePlayerError(error))
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      if (isKinescopeConnectTimeout(event.reason)) {
+        event.preventDefault()
       }
     }
 
     void initPlayer()
+    window.addEventListener('unhandledrejection', handleUnhandledRejection)
 
     return () => {
       cancelled = true
+      window.removeEventListener(
+        'unhandledrejection',
+        handleUnhandledRejection
+      )
       void destroyCurrentPlayer()
     }
   }, [sourceUrl, stableOptions, retryNonce])
