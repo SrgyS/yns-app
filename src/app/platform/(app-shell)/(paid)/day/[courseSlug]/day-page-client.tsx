@@ -17,7 +17,9 @@ import { NoAccessCallout } from '@/features/course-enrollment/_ui/no-access-call
 import { CourseSlug } from '@/kernel/domain/course'
 import { useRouter } from 'next/navigation'
 
-export function DayPageClient({ courseSlug }: { courseSlug: CourseSlug }) {
+export function DayPageClient({
+  courseSlug,
+}: Readonly<{ courseSlug: CourseSlug }>) {
   const { data: session } = useAppSession()
   // Removed useCourseEnrollment
   const paidAccess = usePaidAccess()
@@ -29,13 +31,9 @@ export function DayPageClient({ courseSlug }: { courseSlug: CourseSlug }) {
 
   const hasServerAccess = Boolean(accessibleEntry)
 
-  const accessQuery = useCheckAccessByCourseSlugQuery(
-    session?.user?.id || '',
-    courseSlug,
-    {
-      enabled: !hasServerAccess && Boolean(session?.user?.id),
-    }
-  )
+  const accessQuery = useCheckAccessByCourseSlugQuery(courseSlug, {
+    enabled: !hasServerAccess && Boolean(session?.user?.id),
+  })
 
   const shouldShowInitialLoading = !hasServerAccess && accessQuery.isLoading
 
@@ -82,7 +80,7 @@ export function DayPageClient({ courseSlug }: { courseSlug: CourseSlug }) {
 
   if (!hasAccess || !enrollment) {
     return (
-      <div className="mx-auto flex w-full max-w-[640px] flex-col space-y-6 px-3 pb-4 sm:px-4 md:px-6">
+      <div className="mx-auto flex w-full max-w-160 flex-col space-y-6 px-3 pb-4 sm:px-4 md:px-6">
         <NoAccessCallout
           title="Доступ запрещен"
           description="У вас нет доступа к этому курсу. Приобретите курс, чтобы продолжить."
@@ -98,8 +96,8 @@ export function DayPageClient({ courseSlug }: { courseSlug: CourseSlug }) {
   }
 
   return (
-    <section className="mx-auto flex w-full max-w-[640px] flex-col space-y-5 px-3 py-4 sm:space-y-6 sm:px-4 md:px-6">
-      <Suspense fallback={<Skeleton className="h-6 w-[300px]" />}>
+    <section className="mx-auto flex w-full max-w-160 flex-col space-y-5 px-0 py-4 sm:space-y-6 sm:px-4 md:px-6">
+      <Suspense fallback={<Skeleton className="h-6 w-75" />}>
         <CourseBanner
           courseSlug={courseSlug}
           accessExpiresAt={accessExpiresAt}

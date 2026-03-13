@@ -7,7 +7,6 @@ import { WorkoutDaySelector } from './workout-day-selector'
 import { useUpdateWorkoutDays } from '../_vm/use-update-workout-days'
 import { useRouter } from 'next/navigation'
 import { useAppSession } from '@/kernel/lib/next-auth/client'
-import { useWorkoutCompletionStore } from '@/shared/store/workout-completion-store'
 import { workoutApi } from '@/features/daily-plan/_api'
 import { courseEnrollmentApi } from '@/features/course-enrollment/_api'
 import { WorkoutProgressDialog } from './workout-progress-dialog'
@@ -91,9 +90,6 @@ export function EditWorkoutDaysClient({
           courseEnrollmentUtils.course.getEnrollment.invalidate(),
           courseEnrollmentUtils.course.getEnrollmentByCourseSlug.invalidate(),
         ])
-
-        // Очищаем стор, чтобы состояние подтянулось из актуального плана
-        useWorkoutCompletionStore.setState({ completions: {} })
       } else {
         console.error('ошибка при обновлении дней тренировок')
         toast.error('Не удалось обновить дни тренировок!')

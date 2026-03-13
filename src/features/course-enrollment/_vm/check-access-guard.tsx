@@ -32,7 +32,7 @@ export function CheckAccessGuard({
     !hasServerAccess && status === 'authenticated' && Boolean(userId)
 
   const { data, error, isError, isSuccess, isPending } =
-    useCheckAccessByCourseSlugQuery(userId, courseSlug, {
+    useCheckAccessByCourseSlugQuery(courseSlug, {
       enabled: shouldFetch,
     })
 

@@ -1,6 +1,4 @@
-
 import { useAvailableWeeksQuery } from '@/features/course-enrollment/_vm/use-course-enrollment'
-import { useAppSession } from '@/kernel/lib/next-auth/client'
 
 export function useWorkoutCalendar(
   programStart: Date | null,
@@ -8,12 +6,8 @@ export function useWorkoutCalendar(
   courseSlug?: string,
   isSubscription?: boolean
 ) {
-  const { data: session } = useAppSession()
   // Получаем доступные недели для курса-подписки
-  const availableWeeksQuery = useAvailableWeeksQuery(
-    session?.user?.id || '',
-    courseSlug || ''
-  )
+  const availableWeeksQuery = useAvailableWeeksQuery(courseSlug || '')
 
   const totalWeeksFromApi = availableWeeksQuery.data?.totalWeeks ?? null
   const availableWeeksFromApi = availableWeeksQuery.data?.availableWeeks ?? null

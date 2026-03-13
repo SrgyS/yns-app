@@ -1,6 +1,7 @@
 import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { workoutApi } from '../_api'
 import { CACHE_SETTINGS } from '@/shared/lib/cache/cache-constants'
+import { shouldRetryQuery } from '@/shared/lib/query/errors'
 
 export function useDailyPlanQuery(
   enrollmentId: string,
@@ -9,15 +10,18 @@ export function useDailyPlanQuery(
   enabled: boolean = true
 ) {
   const { data: session } = useAppSession()
-  const userId = session?.user?.id || ''
   const isEnabled = enabled && Boolean(session?.user?.id)
 
   return workoutApi.getUserDailyPlan.useQuery(
-    { userId, enrollmentId, courseId, dayNumberInCourse },
+    { enrollmentId, courseId, dayNumberInCourse },
     {
       ...CACHE_SETTINGS.FREQUENT_UPDATE,
       enabled: isEnabled,
       placeholderData: previousData => previousData,
+      retry: shouldRetryQuery,
+      trpc: {
+        abortOnUnmount: true,
+      },
     }
   )
 }

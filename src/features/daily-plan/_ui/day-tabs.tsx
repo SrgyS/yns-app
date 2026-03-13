@@ -14,7 +14,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
 import { ExerciseCard } from './exercise-card'
 import { useDailyPlanQuery } from '../_vm/use-daily-plan'
 import { useEnrollmentQuery } from '@/features/course-enrollment/_vm/use-course-enrollment'
-import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { DailyContentType, DayOfWeek } from '@/shared/lib/client-enums'
 import { DAY_LABELS } from '@/features/select-training-days/constants'
 import { cn } from '@/shared/ui/utils'
@@ -268,8 +267,7 @@ export function DayTabs({
   onDayChange,
   isActiveWeek = false,
 }: Readonly<DayTabsProps>) {
-  const { data: session } = useAppSession()
-  const enrollmentQuery = useEnrollmentQuery(session?.user?.id || '', courseId)
+  const enrollmentQuery = useEnrollmentQuery(courseId)
   const tabsListRef = useRef<HTMLDivElement | null>(null)
 
   const weekStart = useMemo(() => displayWeekStart, [displayWeekStart])

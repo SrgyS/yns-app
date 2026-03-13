@@ -68,7 +68,6 @@ describe('CheckAccessGuard', () => {
     expect(getByText('content')).toBeInTheDocument()
     expect(getByTestId('spinner').textContent).toBe('idle')
     expect(useCheckAccessByCourseSlugQuery).toHaveBeenCalledWith(
-      'user-1',
       'course-1',
       { enabled: false }
     )

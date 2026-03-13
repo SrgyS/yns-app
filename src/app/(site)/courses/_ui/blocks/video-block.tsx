@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { VideoBlock } from '@/kernel/domain/course-page'
-import { KinescopePlayer } from '@/features/daily-plan/_ui/kinescope-player'
+import { KinescopePlayer } from '@/features/daily-plan/_ui/kinescope-player/kinescope-player'
 import { getImageUrl } from '@/shared/lib/images'
 import { AppImage } from '@/shared/ui/app-image'
 import { cn } from '@/shared/ui/utils'

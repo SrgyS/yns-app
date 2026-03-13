@@ -64,16 +64,15 @@ export class WorkoutController extends Controller {
     getUserDailyPlan: authorizedProcedure
       .input(
         z.object({
-          userId: z.string(),
           enrollmentId: z.string(),
           courseId: z.string(),
           dayNumberInCourse: z.number(),
         })
       )
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
         const plan = await logTiming('getUserDailyPlanService.exec', () =>
           this.getUserDailyPlanService.exec({
-            userId: input.userId,
+            userId: ctx.session.user.id,
             enrollmentId: input.enrollmentId,
             courseId: input.courseId,
             dayNumberInCourse: input.dayNumberInCourse,
@@ -95,7 +94,6 @@ export class WorkoutController extends Controller {
     updateWorkoutCompletion: authorizedProcedure
       .input(
         z.object({
-          userId: z.string(),
           workoutId: z.string(),
           enrollmentId: z.string(),
           isCompleted: z.boolean(),
@@ -103,24 +101,26 @@ export class WorkoutController extends Controller {
           stepIndex: z.number().int().nonnegative(),
         })
       )
-      .mutation(async ({ input }) => {
-        await this.updateWorkoutCompletionService.exec(input)
+      .mutation(async ({ input, ctx }) => {
+        await this.updateWorkoutCompletionService.exec({
+          ...input,
+          userId: ctx.session.user.id,
+        })
         return { success: true }
       }),
 
     getWorkoutCompletionStatus: authorizedProcedure
       .input(
         z.object({
-          userId: z.string(),
           workoutId: z.string(),
           enrollmentId: z.string(),
           contentType: z.nativeEnum(DailyContentType),
           stepIndex: z.number().int().nonnegative(),
         })
       )
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
         const isCompleted = await this.getWorkoutCompletionStatusService.exec(
-          input.userId,
+          ctx.session.user.id,
           input.workoutId,
           input.enrollmentId,
           input.contentType,
