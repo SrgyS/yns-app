@@ -39,47 +39,42 @@ export const isCourseAccessState = (
 
 // --- Query Hooks ---
 
-export function useEnrollmentQuery(userId: string, courseId: string) {
+export function useEnrollmentQuery(courseId: string) {
   return courseEnrollmentApi.course.getEnrollment.useQuery(
-    { userId, courseId },
+    { courseId },
     CACHE_SETTINGS.FREQUENT_UPDATE
   )
 }
 
-export function useUserEnrollmentsQuery(userId: string) {
-  return courseEnrollmentApi.course.getUserEnrollments.useQuery({ userId })
+export function useUserEnrollmentsQuery() {
+  return courseEnrollmentApi.course.getUserEnrollments.useQuery()
 }
 
-export function useActiveEnrollmentQuery(userId: string) {
-  return courseEnrollmentApi.course.getActiveEnrollment.useQuery({ userId })
+export function useActiveEnrollmentQuery() {
+  return courseEnrollmentApi.course.getActiveEnrollment.useQuery()
 }
 
-export function useUserWorkoutDaysQuery(userId: string, courseId: string) {
+export function useUserWorkoutDaysQuery(courseId: string) {
   return courseEnrollmentApi.course.getUserWorkoutDays.useQuery({
-    userId,
     courseId,
   })
 }
 
-export function useEnrollmentByCourseSlugQuery(
-  userId: string,
-  courseSlug: string
-) {
+export function useEnrollmentByCourseSlugQuery(courseSlug: string) {
   return courseEnrollmentApi.course.getEnrollmentByCourseSlug.useQuery(
-    { userId, courseSlug },
+    { courseSlug },
     CACHE_SETTINGS.FREQUENT_UPDATE
   )
 }
 
 export function useCheckAccessByCourseSlugQuery(
-  userId: string,
   courseSlug: string,
   options?: Parameters<
     typeof courseEnrollmentApi.course.checkAccessByCourseSlug.useQuery
   >[1]
 ) {
   return courseEnrollmentApi.course.checkAccessByCourseSlug.useQuery(
-    { userId, courseSlug },
+    { courseSlug },
     {
       ...CACHE_SETTINGS.FREQUENT_UPDATE,
       ...options,
@@ -87,9 +82,9 @@ export function useCheckAccessByCourseSlugQuery(
   )
 }
 
-export function useAvailableWeeksQuery(userId: string, courseSlug: string) {
+export function useAvailableWeeksQuery(courseSlug: string) {
   return courseEnrollmentApi.course.getAvailableWeeks.useQuery(
-    { userId, courseSlug },
+    { courseSlug },
     CACHE_SETTINGS.FREQUENT_UPDATE
   )
 }

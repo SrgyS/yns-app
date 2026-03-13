@@ -83,7 +83,6 @@ export default async function DayPage({ params }: Readonly<DayPageProps>) {
 
   const checkAccessOptions =
     courseEnrollmentHelpers.course.checkAccessByCourseSlug.queryOptions({
-      userId,
       courseSlug,
     })
 
@@ -93,7 +92,6 @@ export default async function DayPage({ params }: Readonly<DayPageProps>) {
   if (loadResult.enrollment) {
     const enrollmentBySlugOptions =
       courseEnrollmentHelpers.course.getEnrollmentByCourseSlug.queryOptions({
-        userId,
         courseSlug,
       })
 
@@ -102,7 +100,6 @@ export default async function DayPage({ params }: Readonly<DayPageProps>) {
 
     const enrollmentOptions =
       courseEnrollmentHelpers.course.getEnrollment.queryOptions({
-        userId,
         courseId: loadResult.enrollment.courseId,
       })
 
@@ -115,7 +112,6 @@ export default async function DayPage({ params }: Readonly<DayPageProps>) {
   if (loadResult.availableWeeks) {
     const availableWeeksOptions =
       courseEnrollmentHelpers.course.getAvailableWeeks.queryOptions({
-        userId,
         courseSlug,
       })
 
@@ -125,7 +121,6 @@ export default async function DayPage({ params }: Readonly<DayPageProps>) {
 
   if (loadResult.defaultDayNumber && loadResult.enrollment) {
     const dailyPlanOptions = workoutHelpers.getUserDailyPlan.queryOptions({
-      userId,
       courseId: loadResult.enrollment.courseId,
       dayNumberInCourse: loadResult.defaultDayNumber,
       enrollmentId: loadResult.enrollment.id,

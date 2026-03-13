@@ -127,7 +127,6 @@ export function ExerciseCard({
 
     try {
       await updateWorkoutCompletion({
-        userId,
         workoutId,
         enrollmentId,
         contentType,

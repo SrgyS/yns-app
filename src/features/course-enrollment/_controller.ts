@@ -25,6 +25,7 @@ import { GetEnrollmentByCourseSlugService } from './_services/get-enrollment-by-
 import { logger } from '@/shared/lib/logger'
 import type { PaidAccessState } from './_vm/paid-access-types'
 import { toUserCourseEnrollmentApi } from './_lib/map-user-course-enrollment'
+import { TRPCError } from '@trpc/server'
 
 const LOG_PREFIX = '[CourseEnrollmentController]'
 
@@ -138,15 +139,17 @@ export class CourseEnrollmentController extends Controller {
       getEnrollment: authorizedProcedure
         .input(
           z.object({
-            userId: z.string(),
             courseId: z.string(),
           })
         )
-        .query(async ({ input }) => {
+        .query(async ({ input, ctx }) => {
           const enrollment = await logTiming(
             'getCourseEnrollmentService.exec',
             () =>
-              this.getCourseEnrollmentService.exec(input.userId, input.courseId)
+              this.getCourseEnrollmentService.exec(
+                ctx.session.user.id,
+                input.courseId
+              )
           )
           return enrollment
         }),
@@ -154,16 +157,15 @@ export class CourseEnrollmentController extends Controller {
       getEnrollmentByCourseSlug: authorizedProcedure
         .input(
           z.object({
-            userId: z.string(),
             courseSlug: z.string(),
           })
         )
-        .query(async ({ input }) => {
+        .query(async ({ input, ctx }) => {
           const enrollment = await logTiming(
             'getEnrollmentByCourseSlugService.exec',
             () =>
               this.getEnrollmentByCourseSlugService.exec(
-                input.userId,
+                ctx.session.user.id,
                 input.courseSlug
               )
           )
@@ -172,11 +174,11 @@ export class CourseEnrollmentController extends Controller {
       checkAccessByCourseSlug: authorizedProcedure
         .input(
           z.object({
-            userId: z.string(),
             courseSlug: z.string(),
           })
         )
-        .query(async ({ input }) => {
+        .query(async ({ input, ctx }) => {
+          const userId = ctx.session.user.id
           const course = await logTiming('getCourseService.exec', () =>
             this.getCourseService.exec({
               slug: input.courseSlug,
@@ -198,7 +200,7 @@ export class CourseEnrollmentController extends Controller {
             'checkCourseAccessService.exec',
             () =>
               this.checkCourseAccessService.exec({
-                userId: input.userId,
+                userId,
                 course: {
                   id: course.id,
                   tariffs: course.tariffs,
@@ -211,14 +213,14 @@ export class CourseEnrollmentController extends Controller {
             'getEnrollmentByCourseSlugService.exec',
             () =>
               this.getEnrollmentByCourseSlugService.exec(
-                input.userId,
+                userId,
                 input.courseSlug
               )
           )
 
           const activeEnrollment = await logTiming(
             'getActiveEnrollmentService.exec',
-            () => this.getActiveEnrollmentService.exec(input.userId)
+            () => this.getActiveEnrollmentService.exec(userId)
           )
 
           const isActive = Boolean(
@@ -231,7 +233,7 @@ export class CourseEnrollmentController extends Controller {
             'userAccessRepository.findUserCourseAccess',
             () =>
               this.userAccessRepository.findUserCourseAccess(
-                input.userId,
+                userId,
                 course.id,
                 course.contentType
               )
@@ -248,40 +250,29 @@ export class CourseEnrollmentController extends Controller {
         }),
 
       getUserEnrollments: authorizedProcedure
-        .input(
-          z.object({
-            userId: z.string(),
-          })
-        )
-        .query(async ({ input }) => {
+        .query(async ({ ctx }) => {
           const enrollments = await this.getUserEnrollmentsService.exec(
-            input.userId
+            ctx.session.user.id
           )
           return enrollments
         }),
 
       getActiveEnrollment: authorizedProcedure
-        .input(
-          z.object({
-            userId: z.string(),
-          })
-        )
-        .query(async ({ input }) => {
+        .query(async ({ ctx }) => {
           const enrollment = await this.getActiveEnrollmentService.exec(
-            input.userId
+            ctx.session.user.id
           )
           return enrollment
         }),
       getUserWorkoutDays: authorizedProcedure
         .input(
           z.object({
-            userId: z.string(),
             courseId: z.string(),
           })
         )
-        .query(async ({ input }) => {
+        .query(async ({ input, ctx }) => {
           const workoutDays = await this.getUserWorkoutDaysService.exec(
-            input.userId,
+            ctx.session.user.id,
             input.courseId
           )
           return workoutDays
@@ -295,13 +286,20 @@ export class CourseEnrollmentController extends Controller {
             keepProgress: z.boolean().optional().default(false),
           })
         )
-        .mutation(async ({ input }) => {
+        .mutation(async ({ input, ctx }) => {
           const { enrollmentId, selectedWorkoutDays, keepProgress } = input
           const enrollment =
             await this.getEnrollmentByIdService.exec(enrollmentId)
 
           if (!enrollment) {
             throw new Error('Enrollment not found')
+          }
+
+          if (enrollment.userId !== ctx.session.user.id) {
+            throw new TRPCError({
+              code: 'FORBIDDEN',
+              message: 'Недостаточно прав для изменения записи',
+            })
           }
 
           const updatedEnrollment = await this.updateWorkoutDaysService.exec({
@@ -316,14 +314,14 @@ export class CourseEnrollmentController extends Controller {
       getAvailableWeeks: authorizedProcedure
         .input(
           z.object({
-            userId: z.string(),
             courseSlug: z.string(),
           })
         )
-        .query(async ({ input }) => {
+        .query(async ({ input, ctx }) => {
+          const userId = ctx.session.user.id
           // Получаем enrollment по courseSlug
           const enrollment = await this.getEnrollmentByCourseSlugService.exec(
-            input.userId,
+            userId,
             input.courseSlug
           )
 
@@ -339,7 +337,7 @@ export class CourseEnrollmentController extends Controller {
 
           // Получаем доступные недели
           const availableWeeks = await this.getAvailableWeeksService.exec({
-            userId: input.userId,
+            userId,
             courseId: course.id,
             enrollmentId: enrollment.id,
             enrollmentStartDate: enrollment.startDate,

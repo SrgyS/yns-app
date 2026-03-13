@@ -10,11 +10,10 @@ export function useDailyPlanQuery(
   enabled: boolean = true
 ) {
   const { data: session } = useAppSession()
-  const userId = session?.user?.id || ''
   const isEnabled = enabled && Boolean(session?.user?.id)
 
   return workoutApi.getUserDailyPlan.useQuery(
-    { userId, enrollmentId, courseId, dayNumberInCourse },
+    { enrollmentId, courseId, dayNumberInCourse },
     {
       ...CACHE_SETTINGS.FREQUENT_UPDATE,
       enabled: isEnabled,

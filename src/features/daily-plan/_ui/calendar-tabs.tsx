@@ -13,7 +13,6 @@ import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui/tabs'
 import { DayTabs } from './day-tabs'
 import { useEnrollmentByCourseSlugQuery } from '@/features/course-enrollment/_vm/use-course-enrollment'
-import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { useWorkoutCalendar } from '../_vm/use-worckout-calendar'
 import { CourseSlug } from '@/kernel/domain/course'
 import { Skeleton } from '@/shared/ui/skeleton/skeleton'
@@ -32,11 +31,7 @@ export function CalendarTabs({
   courseSlug,
 }: Readonly<{ courseSlug: CourseSlug }>) {
   const today = new Date()
-  const { data: session } = useAppSession()
-  const enrollmentQuery = useEnrollmentByCourseSlugQuery(
-    session?.user?.id || '',
-    courseSlug
-  )
+  const enrollmentQuery = useEnrollmentByCourseSlugQuery(courseSlug)
 
   const enrollment = enrollmentQuery.data
   const programStart = (() => {
@@ -112,7 +107,9 @@ export function CalendarTabs({
 
   const availableWeeksNumbers = [...availableWeeks].sort((a, b) => a - b)
   const fallbackWeekNumber = availableWeeksNumbers[0] ?? currentWeekIndex
-  const resolvedActiveWeekNumber = availableWeeksNumbers.includes(activeWeekNumber)
+  const resolvedActiveWeekNumber = availableWeeksNumbers.includes(
+    activeWeekNumber
+  )
     ? activeWeekNumber
     : fallbackWeekNumber
 

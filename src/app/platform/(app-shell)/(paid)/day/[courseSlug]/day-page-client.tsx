@@ -31,13 +31,9 @@ export function DayPageClient({
 
   const hasServerAccess = Boolean(accessibleEntry)
 
-  const accessQuery = useCheckAccessByCourseSlugQuery(
-    session?.user?.id || '',
-    courseSlug,
-    {
-      enabled: !hasServerAccess && Boolean(session?.user?.id),
-    }
-  )
+  const accessQuery = useCheckAccessByCourseSlugQuery(courseSlug, {
+    enabled: !hasServerAccess && Boolean(session?.user?.id),
+  })
 
   const shouldShowInitialLoading = !hasServerAccess && accessQuery.isLoading
 

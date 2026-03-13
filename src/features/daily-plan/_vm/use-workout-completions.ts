@@ -1,4 +1,5 @@
 import { DailyContentType } from '@/shared/lib/client-enums'
+import { useAppSession } from '@/kernel/lib/next-auth/client'
 import { workoutApi } from '../_api'
 import {
   useWorkoutCompletionStore,
@@ -7,6 +8,7 @@ import {
 import { isAbortLikeError } from '@/shared/lib/query/errors'
 
 export function useWorkoutCompletions() {
+  const { data: session } = useAppSession()
   // Получаем утилиты для инвалидации кэша
   const utils = workoutApi.useUtils()
 
@@ -15,11 +17,15 @@ export function useWorkoutCompletions() {
     workoutApi.updateWorkoutCompletion.useMutation({
       // При успешном обновлении инвалидируем кэш и обновляем стор
       onSuccess: (_, variables) => {
-        const { userId, enrollmentId, contentType, stepIndex, isCompleted } =
-          variables
+        const { enrollmentId, contentType, stepIndex, isCompleted } = variables
         const workoutId = variables.workoutId
+        const userId = session?.user?.id
 
         // Создаем ключ для хранения в сторе
+        if (!userId) {
+          return
+        }
+
         const key = createCompletionKey(
           userId,
           enrollmentId,
@@ -33,7 +39,6 @@ export function useWorkoutCompletions() {
 
         // Инвалидируем конкретный запрос в React Query
         utils.getWorkoutCompletionStatus.invalidate({
-          userId,
           workoutId,
           enrollmentId,
           contentType,
@@ -44,7 +49,6 @@ export function useWorkoutCompletions() {
 
   // Функция для обновления статуса выполнения тренировки
   const updateWorkoutCompletion = async (params: {
-    userId: string
     workoutId: string
     enrollmentId: string
     contentType: DailyContentType

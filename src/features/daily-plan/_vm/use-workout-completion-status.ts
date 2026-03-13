@@ -20,16 +20,14 @@ export function useWorkoutCompletionStatusQuery({
   enabled = true,
 }: Readonly<UseWorkoutCompletionStatusParams>) {
   const { data: session } = useAppSession()
-  const userId = session?.user?.id || ''
   const isEnabled =
     enabled &&
-    Boolean(userId) &&
+    Boolean(session?.user?.id) &&
     Boolean(workoutId) &&
     Boolean(enrollmentId)
 
   return workoutApi.getWorkoutCompletionStatus.useQuery(
     {
-      userId,
       workoutId,
       enrollmentId,
       contentType,
